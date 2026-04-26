@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem \"c:\\\\Users\\\\sanar\\\\Desktop\" | Where-Object { $_.Name -match \"logo|icon|villa\" -or $_.Extension -match \"png|jpg\" } | Select-Object Name)",
+      "Read(//c/Users/sanar/Desktop/**)",
+      "PowerShell($files = Get-ChildItem \"c:\\\\Users\\\\sanar\\\\Desktop\\\\Ma Villa Project\\\\backend\\\\storage\\\\app\\\\public\\\\uploads\\\\\"; Write-Host \"Total: $\\($files.Count\\)\"; $files | ForEach-Object { Write-Host $_.Name })"
+    ]
+  }
+}

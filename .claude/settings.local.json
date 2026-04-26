@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker exec *)",
+      "Bash(npx expo *)",
+      "Bash(npx tsc *)",
+      "Bash(ipconfig)",
+      "Bash(findstr /i \"IPv4\")",
+      "Bash(curl -s http://192.168.1.9:8000/api/villas)",
+      "Bash(npm install *)",
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(node_modules/.bin/tsc.cmd --noEmit)",
+      "Bash(node_modules/.bin/vite build *)",
+      "Bash(node_modules/.bin/vite --version)",
+      "Bash(node_modules/.bin/vite)",
+      "Bash(node -e \"require\\('lucide-react-native'\\); console.log\\('OK'\\)\")",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\('lucide-react-native:', p.dependencies['lucide-react-native']\\); console.log\\('react-native-svg:', p.dependencies['react-native-svg']\\)\")",
+      "Bash(npm run *)",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\('react-navigation/bottom-tabs:', p.dependencies['@react-navigation/bottom-tabs']\\); console.log\\('react-native-safe-area-context:', p.dependencies['react-native-safe-area-context']\\)\")",
+      "PowerShell(Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notmatch '^127\\\\.' -and $_.IPAddress -notmatch '^169\\\\.' } | Select-Object -ExpandProperty IPAddress)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://192.168.1.51:8000/api/villas)",
+      "Bash(netstat -ano)"
+    ]
+  }
+}
