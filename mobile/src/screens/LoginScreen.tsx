@@ -24,7 +24,7 @@ export default function LoginScreen({ navigation }: any) {
 
   return (
     <KeyboardAvoidingView style={s.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <Image source={require('../../assets/logo.png')} style={s.logoImg} resizeMode="contain" />
+      <Image source={require('../../assets/icon.png')} style={s.logoImg} resizeMode="contain" />
       <Text style={s.subtitle}>Connectez-vous à votre compte</Text>
 
       {!!error && (

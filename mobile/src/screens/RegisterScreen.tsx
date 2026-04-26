@@ -37,7 +37,7 @@ export default function RegisterScreen({ navigation }: any) {
   return (
     <KeyboardAvoidingView style={s.wrap} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={s.container}>
-        <Image source={require('../../assets/logo.png')} style={s.logoImg} resizeMode="contain" />
+        <Image source={require('../../assets/icon.png')} style={s.logoImg} resizeMode="contain" />
         <Text style={s.subtitle}>Créer un compte</Text>
 
         <TextInput style={s.input} placeholder="Nom complet" placeholderTextColor={colors.text3}
