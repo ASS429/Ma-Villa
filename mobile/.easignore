@@ -1,7 +1,7 @@
-../backend
-../Ma-Villa
-../villas
-../docker
-../.claude
-../docker-compose.yml
-../render.yaml
+backend/
+Ma-Villa/
+villas/
+docker/
+.claude/
+memory/
+*.mp4
