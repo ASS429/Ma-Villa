@@ -3,7 +3,7 @@ services:
   - type: web
     name: mavilla-web
     runtime: static
-    buildCommand: cd Ma-Villa && npm ci && npm run build
+    buildCommand: cd Ma-Villa && npm install && npm run build
     staticPublishPath: ./Ma-Villa/dist
     routes:
       - type: rewrite
