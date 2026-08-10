@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
-import { Users, Star } from 'lucide-react'
 import Badge from './ui/Badge'
-import type { VillaResume } from '../types'
+import { UNITE_TARIF, type VillaResume } from '../types'
 import { fcfa, noteLisible } from '../lib/format'
 
 interface VillaCardProps {
@@ -12,107 +11,122 @@ interface VillaCardProps {
   prioritaire?: boolean
 }
 
+function IconeLieu() {
+  return (
+    <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  )
+}
+
+/**
+ * Carte de villa — planche 02 du design system.
+ *
+ * Elle répond dans l'ordre aux questions du client : c'est où, combien, à quoi
+ * ça ressemble, est-ce fiable. Le prix est passé d'absent — l'API ne le
+ * renvoyait pas — à deuxième information la plus lourde, juste après la photo.
+ *
+ * Photo en 4/3 et non 3/4 : en 3/4 la carte dépassait 500 px de haut sur
+ * mobile et on n'en voyait qu'une par écran. En 4/3 on en voit deux, donc on
+ * compare — et c'est la comparaison qui fait défiler.
+ */
 export default function VillaCard({ villa, isFavori, onToggleFavori, prioritaire }: VillaCardProps) {
   const note = noteLisible(villa.note_moyenne)
   const nbAvis = villa.avis_count ?? 0
-  const photo = villa.photos?.[0]
+  const photos = villa.photos ?? []
+  const photo = photos[0]
+  const unite = villa.prix_min_unite ? UNITE_TARIF[villa.prix_min_unite] : null
+
+  const equipements = [
+    villa.a_piscine ? 'Piscine' : null,
+    villa.capacite_max ? `${villa.capacite_max} personnes` : null,
+    villa.a_climatisation ? 'Climatisation' : null,
+  ].filter(Boolean) as string[]
 
   return (
-    <Link to={`/villas/${villa.id}`} className="block group card-lift" style={{ textDecoration: 'none' }}>
-      <article
-        className="rounded-2xl overflow-hidden h-full flex flex-col"
-        style={{
-          background: 'var(--bg-surface)',
-          border: '1px solid var(--border)',
-          boxShadow: 'var(--shadow-sm)',
-        }}
-      >
-        {/* Photo */}
-        <div className="relative overflow-hidden" style={{ aspectRatio: '4/3' }}>
+    <Link to={`/villas/${villa.id}`} className="carte-villa" aria-label={`${villa.nom}, ${villa.ville}`}>
+      <article className="carte overflow-hidden h-full flex flex-col">
+        <div className="carte-villa-photo">
           {photo ? (
             <img
               src={photo.url}
               alt={photo.alt || `${villa.nom}, ${villa.ville}`}
               loading={prioritaire ? 'eager' : 'lazy'}
               decoding="async"
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              /* Dimensions déclarées : réserve la place et évite que la grille
+                 ne saute au chargement des images. */
+              width={640}
+              height={480}
             />
           ) : (
-            <div
-              className="w-full h-full"
-              style={{ background: 'linear-gradient(135deg, #C4846A 0%, #D4B896 40%, #A8C5D0 100%)' }}
-            />
+            <div className="carte-villa-sans-photo" aria-hidden="true" />
           )}
 
-          {villa.vedette && (
+          {/* Boolean() explicite : un entier 0 venant de SQL serait rendu tel quel
+              par JSX — c'est ainsi qu'un « 0 » s'affichait sur chaque carte. */}
+          {Boolean(villa.vedette) && (
             <Badge ton="vedette" className="absolute top-3 left-3">Vedette</Badge>
           )}
 
           {onToggleFavori && (
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavori(e) }}
-              className="absolute top-3 right-3 w-9 h-9 flex items-center justify-center rounded-full backdrop-blur-sm transition-all hover:scale-110 active:scale-95"
-              style={{ background: 'rgba(0,0,0,0.45)' }}
+              className="carte-villa-favori"
               aria-label={isFavori ? `Retirer ${villa.nom} des favoris` : `Ajouter ${villa.nom} aux favoris`}
               aria-pressed={isFavori}
             >
-              <svg viewBox="0 0 24 24" className="w-4 h-4" fill={isFavori ? '#ef4444' : 'none'} stroke={isFavori ? '#ef4444' : 'rgba(255,255,255,0.85)'} strokeWidth={2}>
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill={isFavori ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
               </svg>
             </button>
           )}
+
+          {photos.length > 1 && (
+            <span className="carte-villa-compteur">{photos.length} photos</span>
+          )}
         </div>
 
-        {/* Informations — hors de la photo : le texte posé sur une image de
-            luminosité arbitraire n'était pas lisible de façon fiable. */}
-        <div className="px-4 py-4 flex flex-col gap-2 flex-1">
+        {/* Nom et ville hors de la photo : en surimpression ils devenaient
+            illisibles sur une image claire et imposaient un dégradé permanent.
+            Sur fond opaque, le contraste se vérifie une fois pour toutes. */}
+        <div className="carte-villa-corps">
           <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h3 className="font-semibold th-text-1 leading-snug truncate">{villa.nom}</h3>
-              <p className="text-sm th-text-2 mt-0.5 flex items-center gap-1">
-                <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                {villa.ville}
-              </p>
-            </div>
-
+            <h3 className="carte-villa-nom">{villa.nom}</h3>
             {note && (
-              <span className="shrink-0 flex items-center gap-1 text-sm th-text-1 font-medium">
-                <Star size={13} fill="var(--gold-soft)" stroke="var(--gold-soft)" aria-hidden="true" />
+              <span className="carte-villa-note">
+                <span className="etoile" aria-hidden="true">★</span>
                 {note}
-                <span className="th-text-3 font-normal">({nbAvis})</span>
+                <span className="th-text-3 font-normal"> ({nbAvis})</span>
               </span>
             )}
           </div>
 
-          {villa.description && (
-            <p className="text-sm line-clamp-2 th-text-2" style={{ lineHeight: 1.5 }}>
-              {villa.description}
-            </p>
+          <p className="carte-villa-ville">
+            <IconeLieu />
+            {villa.ville}
+          </p>
+
+          {equipements.length > 0 && (
+            <ul className="carte-villa-equipements">
+              {equipements.map((e) => <li key={e}>{e}</li>)}
+            </ul>
           )}
 
-          {/* Le prix, l'information n°1 d'une place de marché. */}
-          <div
-            className="flex items-end justify-between gap-2 mt-auto pt-3"
-            style={{ borderTop: '1px solid var(--border)' }}
-          >
+          {/* Le prix est isolé sous un filet, et c'est la seule ligne dont la
+              graisse dépasse celle du nom : dans une grille, l'œil compare des
+              montants alignés, pas des noms. Chiffres tabulaires pour que les
+              colonnes de prix s'alignent réellement. */}
+          <div className="carte-villa-prix">
             {villa.prix_min != null ? (
-              <p className="th-text-1">
-                <span className="text-xs th-text-3">à partir de </span>
-                <span className="font-semibold">{fcfa(villa.prix_min)}</span>
+              <p>
+                <span className="th-text-3 text-xs">à partir de </span>
+                <span className="carte-villa-montant">{fcfa(villa.prix_min)}</span>
+                {unite && <span className="th-text-3 text-xs"> / {unite}</span>}
               </p>
             ) : (
               <p className="text-sm th-text-3">Tarif sur demande</p>
             )}
-
-            {villa.capacite_max ? (
-              <span className="shrink-0 inline-flex items-center gap-1 text-xs th-text-2">
-                <Users size={12} style={{ color: 'var(--accent)' }} />
-                {villa.capacite_max} pers.
-              </span>
-            ) : null}
           </div>
         </div>
       </article>

@@ -373,6 +373,302 @@ textarea.champ-controle {
   border-radius: var(--r-md);
 }
 
+/* ════════════════════════════════════════════════════════════════
+   CARTE DE VILLA — planche 02
+   ════════════════════════════════════════════════════════════════ */
+
+.carte-villa { display: block; text-decoration: none; height: 100%; }
+
+.carte-villa > .carte {
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.carte-villa:hover > .carte {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+.carte-villa:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-lg);
+}
+
+.carte-villa-photo {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--bg-elevated);
+}
+.carte-villa-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* 1,04 et non 1,10 : au-delà, le recadrage devient perceptible et
+     l'image paraît sauter plutôt que respirer. */
+  transition: transform var(--dur-slow) var(--ease);
+}
+.carte-villa:hover .carte-villa-photo img { transform: scale(1.04); }
+
+.carte-villa-sans-photo {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #C4846A 0%, #D4B896 40%, #A8C5D0 100%);
+}
+
+.carte-villa-favori {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-full);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass);
+  -webkit-backdrop-filter: var(--glass);
+  color: #fff;
+  transition: transform var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.carte-villa-favori:hover { transform: scale(1.08); }
+.carte-villa-favori[aria-pressed='true'] { color: #ef4444; }
+
+.carte-villa-compteur {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  padding: 4px 9px;
+  border-radius: var(--r-full);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass);
+  -webkit-backdrop-filter: var(--glass);
+  color: #fff;
+  font: var(--t-caption);
+}
+
+.carte-villa-corps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  flex: 1;
+}
+
+.carte-villa-nom {
+  font: var(--t-h3);
+  color: var(--text-1);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.carte-villa-note {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: var(--t-body-sm);
+  font-weight: 500;
+  color: var(--text-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.carte-villa-ville {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font: var(--t-body-sm);
+  color: var(--text-2);
+  margin: 0;
+}
+
+.carte-villa-equipements {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.carte-villa-equipements li {
+  font: var(--t-caption);
+  color: var(--text-2);
+  background: var(--bg-elevated);
+  border-radius: var(--r-sm);
+  padding: 4px 8px;
+}
+
+.carte-villa-prix {
+  margin-top: auto;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+.carte-villa-prix p { margin: 0; color: var(--text-1); }
+
+.carte-villa-montant {
+  font: var(--t-price);
+  /* Chiffres à chasse fixe : dans une grille, les montants doivent s'aligner
+     verticalement pour être comparables d'un coup d'œil. */
+  font-variant-numeric: tabular-nums;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   BLOC TARIFAIRE — planche 08
+   B : la grille, dans le corps de la page (on compare).
+   A : le parcours guidé, dans le panneau (on choisit).
+   ════════════════════════════════════════════════════════════════ */
+
+.grille-tarifs-defilement {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+}
+
+.grille-tarifs {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--t-body-sm);
+}
+
+.grille-tarifs th,
+.grille-tarifs td {
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.grille-tarifs tbody tr:last-child th,
+.grille-tarifs tbody tr:last-child td { border-bottom: 0; }
+
+.grille-tarifs thead th {
+  font: var(--t-label);
+  color: var(--text-2);
+  background: var(--bg-elevated);
+  white-space: nowrap;
+}
+.grille-tarifs thead th:not(:first-child),
+.grille-tarifs tbody td { text-align: right; }
+
+.grille-tarifs tbody th { font-weight: 400; }
+.grille-tarifs-nom { display: block; font: var(--t-label); color: var(--text-1); }
+.grille-tarifs-detail { display: block; font: var(--t-caption); color: var(--text-3); }
+
+.grille-tarifs-indispo { opacity: 0.55; }
+.grille-tarifs-vide { color: var(--text-3); }
+
+.grille-tarifs-prix {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 8px 12px;
+  min-height: 40px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-1);
+  font: var(--t-body-sm);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+.grille-tarifs-prix:hover:not(:disabled) { background: var(--bg-elevated); }
+.grille-tarifs-prix:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.grille-tarifs-prix:disabled { cursor: not-allowed; }
+.grille-tarifs-prix.est-choisi {
+  background: var(--accent-bg);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.grille-tarifs-etiquette {
+  font: var(--t-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--t-eyebrow-ls);
+}
+
+/* — A — */
+
+.parcours { display: flex; flex-direction: column; gap: var(--space-5); }
+.parcours-etape { display: flex; flex-direction: column; gap: var(--space-3); }
+
+.parcours-etape-titre {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font: var(--t-label);
+  color: var(--text-2);
+  margin: 0;
+}
+.parcours-etape-numero {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-full);
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 600;
+  display: grid;
+  place-items: center;
+}
+
+.parcours-choix { display: flex; flex-direction: column; gap: var(--space-2); }
+
+.parcours-option {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.parcours-option:hover { border-color: var(--border-strong); }
+.parcours-option:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.parcours-option.est-choisi {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+.parcours-option-nom { font: var(--t-body-sm); font-weight: 500; color: var(--text-1); }
+.parcours-option-detail {
+  font: var(--t-caption);
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.parcours-formules { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+.parcours-formule {
+  min-height: 40px;
+  padding: 9px 14px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  font: var(--t-body-sm);
+  color: var(--text-1);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.parcours-formule:hover:not(:disabled) { border-color: var(--border-strong); }
+.parcours-formule:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.parcours-formule.est-choisi {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 500;
+}
+/* Barrée plutôt que masquée : le client apprend l'offre sans la chercher. */
+.parcours-formule.est-impossible {
+  text-decoration: line-through;
+  color: var(--text-3);
+  cursor: not-allowed;
+  background: var(--bg-elevated);
+}
+
 /* ─── Typography helpers ─────────────────────────────────────── */
 
 .font-display { font-family: 'Cormorant Garamond', Georgia, serif; }

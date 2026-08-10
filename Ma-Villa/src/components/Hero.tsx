@@ -1,41 +1,52 @@
-import { Link } from 'react-router-dom'
 import FadeIn from './FadeIn'
 import BarreRecherche from './BarreRecherche'
+import { useConfig } from '../context/ConfigContext'
 
+const DESTINATIONS = ['Saly', 'Mbour', 'Dakar', 'Ziguinchor']
+
+/**
+ * Hero — planche 03. La recherche en est l'objet central : l'accueil n'en
+ * proposait aucune, et le visiteur devait atteindre /villas puis découvrir un
+ * panneau de filtres.
+ */
 export default function Hero() {
+  const { paiement } = useConfig()
+  const moyens = paiement.moyens.map((m) => m.nom).join(' ou ')
+
   return (
-    <div className="flex-1 flex flex-col px-6 md:px-12 lg:px-16 pb-16 lg:pb-24 justify-end">
-      <div className="max-w-4xl">
+    <div className="flex-1 flex flex-col justify-end px-6 md:px-12 lg:px-16 pb-14 lg:pb-20">
+      <div className="max-w-3xl">
+        <FadeIn delay={0} duration={600}>
+          <p
+            className="mb-4 text-white/80"
+            style={{ font: 'var(--t-eyebrow)', letterSpacing: 'var(--t-eyebrow-ls)', textTransform: 'uppercase' }}
+          >
+            {DESTINATIONS.join(' · ')}
+          </p>
+        </FadeIn>
+
         <h1
-          className="text-4xl md:text-5xl lg:text-6xl font-light mb-4 text-white"
-          style={{ letterSpacing: '-0.04em', fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+          className="mb-5 text-white"
+          style={{ font: 'var(--t-display)', letterSpacing: 'var(--t-display-ls)' }}
         >
-          Votre villa de rêve
-          <span className="block">au Sénégal.</span>
+          Votre villa au Sénégal,
+          <span className="block">réservée en trois gestes</span>
         </h1>
 
-        <FadeIn delay={200} duration={800}>
-          <p className="text-base md:text-lg mb-7 leading-relaxed text-white/85 max-w-2xl">
-            Villas, appartements et piscines à la journée — à Saly, Mbour, Dakar
-            et partout au Sénégal. Réservation directe auprès des propriétaires.
+        <FadeIn delay={200} duration={700}>
+          <p className="mb-8 text-white/85 max-w-2xl" style={{ font: 'var(--t-body-lg)' }}>
+            Villas, appartements, chambres — et même la piscine seule pour une journée.
+            {/* Le paiement est annoncé mais inactif : le dire au futur tant que
+                c'est le cas, plutôt que de laisser croire qu'on peut régler ici. */}
+            {paiement.actif
+              ? ` Paiement ${moyens}.`
+              : ` Paiement ${moyens} bientôt disponible.`}
           </p>
         </FadeIn>
       </div>
 
-      <FadeIn delay={400} duration={800}>
+      <FadeIn delay={350} duration={700}>
         <BarreRecherche variante="hero" />
-      </FadeIn>
-
-      <FadeIn delay={700} duration={800}>
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-5 text-sm text-white/75">
-          <Link to="/villas" className="underline underline-offset-4 hover:text-white transition-colors">
-            Voir toutes les villas
-          </Link>
-          <span className="hidden sm:inline text-white/30">·</span>
-          <Link to="/register" className="underline underline-offset-4 hover:text-white transition-colors">
-            Publier ma villa
-          </Link>
-        </div>
       </FadeIn>
     </div>
   )

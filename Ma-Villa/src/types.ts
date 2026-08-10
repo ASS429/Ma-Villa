@@ -65,8 +65,17 @@ interface VillaBase {
   photos: Photo[]
   vedette?: boolean
   statut?: StatutVilla
-  /** Agrégats calculés côté serveur — absents si la villa n'a ni tarif ni avis. */
-  prix_min?: number | null
+  /**
+   * Agrégats calculés côté serveur — absents si la villa n'a ni tarif ni avis.
+   * PostgreSQL renvoie les numériques en chaîne : `fcfa()` et `noteLisible()`
+   * acceptent les deux formes.
+   */
+  prix_min?: number | string | null
+  /** Type du tarif le moins cher, pour afficher la bonne unité à côté du prix. */
+  prix_min_unite?: TypeTarif | null
+  /** Déduits des logements et des formules : 1 ou null selon le moteur SQL. */
+  a_piscine?: number | boolean | null
+  a_climatisation?: number | boolean | null
   note_moyenne?: number | string | null
   avis_count?: number
   capacite_max?: number | null

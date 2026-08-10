@@ -22,6 +22,25 @@ class Villa extends Model
         'vedette' => false,
     ];
 
+    /**
+     * `vedette` remontait en entier 0/1 faute de transtypage. Côté React,
+     * `{villa.vedette && <Badge/>}` affichait alors un « 0 » sur chaque carte
+     * non mise en avant — JSX rend le nombre zéro, pas le vide.
+     *
+     * `a_piscine` et `a_climatisation` sont calculés par sous-requête dans
+     * VillaController : ils arrivent à 1 ou null selon le moteur.
+     */
+    protected function casts(): array
+    {
+        return [
+            'vedette'         => 'boolean',
+            'a_piscine'       => 'boolean',
+            'a_climatisation' => 'boolean',
+            'latitude'        => 'float',
+            'longitude'       => 'float',
+        ];
+    }
+
     public function proprietaire(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
