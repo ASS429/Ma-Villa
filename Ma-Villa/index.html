@@ -17,7 +17,11 @@
     <meta property="og:site_name" content="Ma Villa" />
     <meta property="og:title" content="Ma Villa — Location de villas au Sénégal" />
     <meta property="og:description" content="Villas, appartements et piscines à la journée à Saly, Mbour et Dakar. Tarifs affichés, réservation directe." />
-    <meta property="og:image" content="/og-image.jpg" />
+    <!-- URL absolue : les robots de partage (WhatsApp, Facebook) résolvent mal
+         les chemins relatifs. Vite remplace %VITE_SITE_URL% à la compilation ;
+         la valeur par défaut est dans .env.production. -->
+    <meta property="og:image" content="%VITE_SITE_URL%/og-image.jpg" />
+    <meta property="og:url" content="%VITE_SITE_URL%/" />
     <meta property="og:locale" content="fr_SN" />
     <meta name="twitter:card" content="summary_large_image" />
 
