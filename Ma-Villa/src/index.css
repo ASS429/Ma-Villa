@@ -1336,12 +1336,16 @@ html.video-mode[data-theme="dark"] {
 }
 .feuille-titre { margin: 0; font: var(--t-h3); color: var(--text-1); }
 .feuille-fermer {
-  width: 36px; height: 36px;
+  /* 44 px : c'est le bouton de sortie d'une feuille modale, celui qu'on doit
+     pouvoir atteindre sans viser. */
+  width: 44px; height: 44px;
   border: 0; border-radius: var(--r-full);
   background: var(--bg-elevated);
   color: var(--text-2);
+  font-size: 18px;
   cursor: pointer;
 }
+.feuille-fermer:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .feuille-fermer:hover { color: var(--text-1); }
 
 .feuille-corps {
@@ -1419,3 +1423,163 @@ html.video-mode[data-theme="dark"] {
   gap: var(--space-3);
   margin-top: var(--space-5);
 }
+
+/* ════════════════════════════════════════════════════════════════
+   RESPONSIVE MOBILE — planches 04 et 06
+
+   En 375 px, quatre champs côte à côte ne sont ni tapables ni lisibles :
+   le champ unique remplace la barre segmentée, et le détail vit dans une
+   feuille plein écran où chaque contrôle fait au moins 44 px.
+   ════════════════════════════════════════════════════════════════ */
+
+.recherche-compacte { display: none; }
+.recherche-etendue { display: block; }
+
+@media (max-width: 767px) {
+  .recherche-etendue { display: none; }
+
+  .recherche-compacte {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+    min-height: 60px;
+    padding: 10px 18px;
+    border-radius: var(--r-full);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-strong);
+    box-shadow: var(--shadow-md);
+    color: var(--text-1);
+    text-align: left;
+    cursor: pointer;
+  }
+  .recherche-compacte.sur-hero {
+    background: rgba(255, 255, 255, 0.94);
+    border-color: rgba(255, 255, 255, 0.5);
+  }
+  .recherche-compacte:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .recherche-compacte-texte { display: flex; flex-direction: column; min-width: 0; }
+  .recherche-compacte-titre {
+    font: var(--t-body-sm);
+    font-weight: 600;
+    color: var(--text-1);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .recherche-compacte-detail {
+    font: var(--t-caption);
+    color: var(--text-3);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+}
+
+/* — feuille de recherche plein écran — */
+
+.feuille-recherche {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+@media (min-width: 640px) {
+  .feuille-recherche {
+    inset: auto;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(560px, calc(100vw - 32px));
+    max-height: 88vh;
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border);
+  }
+}
+
+/* — incrémenteur de voyageurs — */
+
+.compteur {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 6px 6px 6px 16px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+}
+.compteur span { font: var(--t-body-sm); color: var(--text-1); }
+.compteur button {
+  width: 44px; height: 44px;
+  flex: none;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-surface);
+  color: var(--text-1);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.compteur button:disabled { opacity: 0.4; cursor: not-allowed; }
+.compteur button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* — cibles tactiles —
+   Le doigt n'a pas la précision du curseur : sous 44 px, on rate. */
+
+@media (max-width: 767px) {
+  .bascule-vue { display: none; }
+
+  /* La carte devient une bascule flottante : jamais la liste et le plan
+     à la fois sur un écran de cette taille. */
+  .bascule-carte-flottante {
+    position: fixed;
+    left: 50%;
+    bottom: 20px;
+    transform: translateX(-50%);
+    z-index: 40;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 48px;
+    padding: 12px 22px;
+    border-radius: var(--r-full);
+    background: var(--text-1);
+    color: var(--bg);
+    border: 0;
+    box-shadow: var(--shadow-lg);
+    font: var(--t-body-sm);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .bascule-carte-flottante:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  /* En vue carte, le plan occupe l'écran : la liste passe derrière. */
+  .vue-carte-mobile .vue-carte-liste { display: none; }
+  .vue-carte-mobile .vue-carte-plan { min-height: calc(100vh - 320px); }
+
+  /* Liens de pied de page et de navigation : zone tapable élargie sans
+     changer l'apparence. */
+  footer nav a,
+  .th-text-2[href],
+  .th-text-3[href] { display: inline-block; padding: 6px 0; min-height: 32px; }
+}
+
+@media (max-width: 767px) {
+  .bascule-carte-flottante { display: inline-flex; }
+}
+@media (min-width: 768px) {
+  .bascule-carte-flottante { display: none; }
+}
+
+/* Commandes d'en-tête (thème, menu) : elles faisaient 32 px, sous le seuil
+   où le doigt atteint sa cible de façon fiable. */
+.commande-entete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: var(--r-md);
+}
+.commande-entete:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

@@ -305,7 +305,7 @@ export default function Villas() {
             </p>
 
             {vueCarte ? (
-              <div className="vue-carte">
+              <div className={`vue-carte${vueCarte ? ' vue-carte-mobile' : ''}`}>
                 {/* Liste et carte côte à côte : survoler une carte de villa
                     met en avant son marqueur, et inversement. */}
                 <div className="vue-carte-liste">
@@ -387,6 +387,19 @@ export default function Villas() {
           </>
         )}
       </div>
+
+      {/* En mobile, la carte se prend en bascule flottante — afficher liste et
+          plan simultanément sur 375 px ne laisse de place ni à l'un ni à l'autre. */}
+      {!chargement && !erreur && villas.length > 0 && (
+        <button
+          type="button"
+          className="bascule-carte-flottante"
+          onClick={() => setVueCarte((v) => !v)}
+          aria-pressed={vueCarte}
+        >
+          {vueCarte ? '☰ Voir la liste' : '⌖ Voir sur la carte'}
+        </button>
+      )}
 
       <Footer />
     </div>

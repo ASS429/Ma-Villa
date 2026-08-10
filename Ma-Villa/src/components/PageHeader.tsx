@@ -70,7 +70,7 @@ export default function PageHeader() {
           <button
             onClick={toggleTheme}
             title={isDark ? 'Thème clair' : 'Thème sombre'}
-            className="p-2 rounded-xl transition-all th-text-2 hover:th-text-1 hover:scale-110"
+            className="commande-entete th-text-2 hover:th-text-1 transition-all hover:scale-110"
           >
             {isDark ? <IconSun /> : <IconMoon />}
           </button>
@@ -96,11 +96,11 @@ export default function PageHeader() {
         </div>
 
         <div className="md:hidden flex items-center gap-2">
-          <button onClick={toggleTheme} className="p-2 rounded-xl th-text-2">
+          <button onClick={toggleTheme} className="commande-entete th-text-2">
             {isDark ? <IconSun /> : <IconMoon />}
           </button>
           <button
-            className="p-1.5 rounded-xl th-text-1 transition-colors hover:th-elevated"
+            className="commande-entete th-text-1 transition-colors hover:th-elevated"
             onClick={() => setOpen((v) => !v)}
           >
             {open ? <IconX /> : <IconMenu />}

@@ -21,21 +21,31 @@ export default function Hero() {
             className="mb-4 text-white/80"
             style={{ font: 'var(--t-eyebrow)', letterSpacing: 'var(--t-eyebrow-ls)', textTransform: 'uppercase' }}
           >
-            {DESTINATIONS.join(' · ')}
+            <span className="md:hidden">{DESTINATIONS.slice(0, 3).join(' · ')}</span>
+            <span className="hidden md:inline">{DESTINATIONS.join(' · ')}</span>
           </p>
         </FadeIn>
 
+        {/* Le titre se raccourcit en mobile : « réservée en trois gestes »
+            occupe deux lignes de plus sur 375 px, au détriment de la recherche
+            qui doit rester visible sans défiler. */}
         <h1
           className="mb-5 text-white"
           style={{ font: 'var(--t-display)', letterSpacing: 'var(--t-display-ls)' }}
         >
-          Votre villa au Sénégal,
-          <span className="block">réservée en trois gestes</span>
+          Votre villa au Sénégal
+          <span className="hidden md:inline">,</span>
+          <span className="hidden md:block">réservée en trois gestes</span>
         </h1>
 
         <FadeIn delay={200} duration={700}>
           <p className="mb-8 text-white/85 max-w-2xl" style={{ font: 'var(--t-body-lg)' }}>
-            Villas, appartements, chambres — et même la piscine seule pour une journée.
+            <span className="hidden md:inline">
+              Villas, appartements, chambres — et même la piscine seule pour une journée.
+            </span>
+            <span className="md:hidden">
+              Villas, chambres, ou la piscine seule pour la journée.
+            </span>
             {/* Le paiement est annoncé mais inactif : le dire au futur tant que
                 c'est le cas, plutôt que de laisser croire qu'on peut régler ici. */}
             {paiement.actif

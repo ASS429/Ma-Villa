@@ -112,7 +112,7 @@ export default function Navbar() {
             <button
               onClick={toggleTheme}
               title={isDark ? 'Thème clair' : 'Thème sombre'}
-              className="p-2 rounded-xl transition-all hover:scale-110"
+              className="commande-entete transition-all hover:scale-110"
               style={{ color: transparent ? 'rgba(255,255,255,0.8)' : 'var(--text-2)' }}
             >
               {isDark ? <IconSun /> : <IconMoon />}
@@ -162,13 +162,13 @@ export default function Navbar() {
           <div className="md:hidden flex items-center gap-2">
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-xl transition-colors"
+              className="commande-entete transition-colors"
               style={{ color: transparent ? 'rgba(255,255,255,0.8)' : 'var(--text-2)' }}
             >
               {isDark ? <IconSun /> : <IconMoon />}
             </button>
             <button
-              className="p-1.5 rounded-xl transition-colors"
+              className="commande-entete transition-colors"
               style={{ color: transparent ? '#fff' : 'var(--text-1)' }}
               onClick={() => setOpen((v) => !v)}
               aria-label="Menu"
