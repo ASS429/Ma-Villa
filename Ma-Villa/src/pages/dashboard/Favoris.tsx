@@ -67,7 +67,7 @@ export default function Favoris() {
           <Link
             to="/villas"
             className="inline-block px-5 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-90"
-            style={{ background: 'var(--text-1)', color: 'var(--bg)' }}
+            style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
           >
             Explorer les villas
           </Link>

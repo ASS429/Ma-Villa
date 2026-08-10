@@ -105,7 +105,7 @@ export default function Profil() {
             type="submit"
             disabled={infoLoading}
             className="px-5 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-90 disabled:opacity-50 self-start"
-            style={{ background: 'var(--text-1)', color: 'var(--bg)' }}
+            style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
           >
             {infoLoading ? 'Enregistrement...' : 'Sauvegarder'}
           </button>
@@ -160,7 +160,7 @@ export default function Profil() {
             type="submit"
             disabled={pwdLoading || !pwd.current_password || !pwd.password}
             className="px-5 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-90 disabled:opacity-50 self-start"
-            style={{ background: 'var(--text-1)', color: 'var(--bg)' }}
+            style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
           >
             {pwdLoading ? 'Modification...' : 'Changer le mot de passe'}
           </button>

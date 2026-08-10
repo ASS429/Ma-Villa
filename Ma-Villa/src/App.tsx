@@ -10,6 +10,7 @@ import Hero from './components/Hero'
 import FondHero from './components/FondHero'
 import VillaCard from './components/VillaCard'
 import ScrollReveal from './components/ScrollReveal'
+import Destinations from './components/Destinations'
 import Footer from './components/Footer'
 import { ButtonLink } from './components/ui/Button'
 import Seo from './components/Seo'
@@ -310,6 +311,7 @@ function Home() {
         </div>
       </div>
 
+      <Destinations />
       <FeaturedVillas />
       <CommentCaMarche />
       <Features />

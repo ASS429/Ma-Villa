@@ -171,6 +171,22 @@ class VillaTest extends TestCase
         $this->assertEquals('Villa libre', $data[0]['nom']);
     }
 
+    public function test_destinations_lists_only_cities_with_published_villas(): void
+    {
+        $this->villaAvec('A Saly', 25000)->update(['ville' => 'Saly']);
+        $this->villaAvec('Aussi Saly', 40000)->update(['ville' => 'Saly']);
+        // Une ville en attente de modération ne doit pas être proposée :
+        // le visiteur cliquerait vers une page vide.
+        Villa::factory()->create(['ville' => 'Kaolack', 'statut' => 'en_attente']);
+
+        $data = $this->getJson('/api/destinations')->assertOk()->json();
+
+        $villes = array_column($data, 'ville');
+        $this->assertContains('Saly', $villes);
+        $this->assertNotContains('Kaolack', $villes);
+        $this->assertEquals(2, $data[array_search('Saly', $villes)]['nb']);
+    }
+
     // ── Filtre par note et tris ──────────────────────────────────
     //
     // Ces cas ne sont pas que fonctionnels : ils exercent le SQL de tri et de

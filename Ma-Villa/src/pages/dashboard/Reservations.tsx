@@ -154,7 +154,7 @@ export default function Reservations() {
                     <button
                       onClick={() => updateStatut(r.id, 'confirmee')}
                       className="flex-1 py-2 rounded-xl text-sm font-medium transition-all hover:opacity-90"
-                      style={{ background: 'var(--text-1)', color: 'var(--bg)' }}
+                      style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
                     >
                       ✓ Confirmer
                     </button>

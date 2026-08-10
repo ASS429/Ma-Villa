@@ -1069,3 +1069,180 @@ html.video-mode[data-theme="dark"] {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* ════════════════════════════════════════════════════════════════
+   DESTINATIONS — planche 03
+   ════════════════════════════════════════════════════════════════ */
+
+.destination {
+  position: relative;
+  display: block;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  text-decoration: none;
+  background: var(--bg-elevated);
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.destination:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+.destination:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.destination img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--dur-slow) var(--ease);
+}
+.destination:hover img { transform: scale(1.04); }
+
+.destination-sans-photo {
+  width: 100%; height: 100%;
+  background: linear-gradient(135deg, #C4846A 0%, #D4B896 40%, #A8C5D0 100%);
+}
+
+/* Voile constant : le nom de ville est posé sur des photos de luminosité
+   très variable, et doit rester lisible sur toutes. */
+.destination-voile {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(20,14,10,0) 35%, rgba(20,14,10,.72) 100%);
+}
+
+.destination-texte {
+  position: absolute;
+  left: var(--space-4);
+  right: var(--space-4);
+  bottom: var(--space-4);
+}
+.destination-ville {
+  margin: 0;
+  color: #fff;
+  font: var(--t-h3);
+}
+.destination-detail {
+  margin: 2px 0 0;
+  color: rgba(255, 255, 255, 0.82);
+  font: var(--t-caption);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   CARTE DE RECHERCHE — planche 05
+   ════════════════════════════════════════════════════════════════ */
+
+.carte-villas {
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  z-index: 0; /* sous les panneaux et l'en-tête collant */
+}
+
+.carte-villas-vide {
+  display: grid;
+  place-items: center;
+  min-height: 420px;
+  padding: var(--space-6);
+  text-align: center;
+  border-radius: var(--r-lg);
+  border: 1px dashed var(--border-strong);
+  background: var(--bg-elevated);
+}
+
+/* Le marqueur porte le prix : sur une carte de résultats, on compare des
+   montants situés, pas des épingles identiques. */
+.marqueur-prix-enveloppe { background: none; border: 0; }
+
+.marqueur-prix {
+  display: inline-block;
+  transform: translate(-50%, -50%);
+  padding: 5px 10px;
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-md);
+  color: var(--text-1);
+  font: var(--t-caption);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.marqueur-prix:hover,
+.marqueur-prix.est-survole {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+/* Leaflet impose ses couleurs : les ramener aux tokens pour que la carte
+   ne jure pas en thème sombre. */
+.leaflet-container { font-family: var(--font-ui); background: var(--bg-elevated); }
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: var(--bg-surface);
+  color: var(--text-1);
+  box-shadow: var(--shadow-lg);
+}
+.leaflet-popup-content { font: var(--t-body-sm); margin: 10px 14px; }
+.leaflet-control-attribution {
+  background: var(--bg-surface) !important;
+  color: var(--text-3) !important;
+  font-size: 10px;
+}
+.leaflet-control-attribution a { color: var(--text-2) !important; }
+
+/* Vue carte : liste à gauche qui défile, plan à droite qui reste fixe. */
+.vue-carte { display: grid; gap: var(--space-5); }
+
+.vue-carte-liste {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+.vue-carte-plan { min-height: 420px; }
+
+@media (min-width: 1024px) {
+  .vue-carte { grid-template-columns: 1fr 1fr; align-items: start; }
+  .vue-carte-liste {
+    grid-template-columns: 1fr 1fr;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    padding-right: var(--space-2);
+  }
+  .vue-carte-plan {
+    position: sticky;
+    top: 88px;
+    height: calc(100vh - 200px);
+  }
+}
+
+/* Bascule liste / carte. */
+.bascule-vue {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: var(--r-full);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+.bascule-vue button {
+  min-height: 34px;
+  padding: 6px 14px;
+  border-radius: var(--r-full);
+  border: 0;
+  background: transparent;
+  color: var(--text-2);
+  font: var(--t-body-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.bascule-vue button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.bascule-vue button.est-actif {
+  background: var(--bg-surface);
+  color: var(--text-1);
+  box-shadow: var(--shadow-sm);
+}

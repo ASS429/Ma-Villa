@@ -133,6 +133,41 @@ class VillaController extends Controller
         return response()->json($query->paginate(12)->withQueryString());
     }
 
+    /**
+     * Destinations proposées sur l'accueil : les villes où des villas sont
+     * réellement publiées, avec leur nombre d'annonces, le prix d'entrée et une
+     * photo représentative. Éviter d'annoncer une ville sans offre derrière.
+     */
+    public function destinations(): JsonResponse
+    {
+        $villes = Villa::query()
+            ->where('statut', 'validee')
+            ->selectRaw('ville, count(*) as nb')
+            ->groupBy('ville')
+            ->orderByDesc('nb')
+            ->limit(6)
+            ->get();
+
+        $destinations = $villes->map(function ($ligne) {
+            $vitrine = Villa::where('statut', 'validee')
+                ->where('ville', $ligne->ville)
+                ->with('photos')
+                ->withMin('tarifs as prix_min', 'prix')
+                ->has('photos')
+                ->first()
+                ?? Villa::where('statut', 'validee')->where('ville', $ligne->ville)->with('photos')->first();
+
+            return [
+                'ville'    => $ligne->ville,
+                'nb'       => (int) $ligne->nb,
+                'prix_min' => $vitrine?->prix_min,
+                'photo'    => $vitrine?->photos->first()?->url,
+            ];
+        });
+
+        return response()->json($destinations);
+    }
+
     /** Prix le plus bas de la villa ; $defaut place les villas sans tarif en fin de tri. */
     private function sousRequetePrix(string $defaut)
     {
