@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -36,7 +37,13 @@ class AuthController extends Controller
             'phone' => $data['phone'] ?? null,
         ]);
 
-        $user->sendEmailVerificationNotification();
+        // Un transport email mal configuré ne doit jamais empêcher la création
+        // d'un compte : sans ce garde-fou, l'inscription renvoyait une 500
+        // alors que l'utilisateur venait d'être enregistré.
+        $this->envoyerSansBloquer(
+            fn () => $user->sendEmailVerificationNotification(),
+            "Email de vérification non envoyé à {$user->email}"
+        );
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -90,7 +97,18 @@ class AuthController extends Controller
     {
         $request->validate(['email' => 'required|email']);
 
-        $statut = Password::sendResetLink($request->only('email'));
+        try {
+            $statut = Password::sendResetLink($request->only('email'));
+        } catch (\Throwable $e) {
+            // Transport email indisponible : on le journalise et on répond
+            // comme d'habitude, sans exposer la panne ni révéler si l'adresse
+            // existe. L'utilisateur réessaiera, l'exploitant verra le journal.
+            Log::error('Lien de réinitialisation non envoyé', ['erreur' => $e->getMessage()]);
+
+            return response()->json([
+                'message' => 'Si un compte existe avec cette adresse, un lien de réinitialisation vient d\'être envoyé.',
+            ]);
+        }
 
         // On répond toujours la même chose : indiquer qu'une adresse est
         // inconnue permettrait d'énumérer les comptes de la plateforme.
@@ -171,9 +189,34 @@ class AuthController extends Controller
         }
 
         RateLimiter::hit($cle, 300);
-        $user->sendEmailVerificationNotification();
+
+        if (! $this->envoyerSansBloquer(
+            fn () => $user->sendEmailVerificationNotification(),
+            "Renvoi de vérification impossible pour {$user->email}"
+        )) {
+            return response()->json([
+                'message' => "L'envoi a échoué. Réessayez plus tard ou contactez-nous.",
+            ], 503);
+        }
 
         return response()->json(['message' => 'Email de confirmation renvoyé.']);
+    }
+
+    /**
+     * Exécute un envoi d'email sans laisser une panne de transport interrompre
+     * l'action métier en cours. Renvoie false si l'envoi a échoué.
+     */
+    private function envoyerSansBloquer(callable $envoi, string $contexte): bool
+    {
+        try {
+            $envoi();
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::error($contexte, ['erreur' => $e->getMessage()]);
+
+            return false;
+        }
     }
 
     public function logout(Request $request): JsonResponse

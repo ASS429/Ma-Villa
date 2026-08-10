@@ -125,7 +125,20 @@ class Diagnostic extends Command
         $transport = config('mail.default');
         $expediteur = config('mail.from.address');
 
-        if ($transport === 'log') {
+        $connus = array_keys(config('mail.mailers', []));
+
+        if (! in_array($transport, $connus, true)) {
+            // Erreur classique : renseigner une adresse dans MAIL_MAILER, qui
+            // attend un type de transport. Tout envoi lève alors une exception.
+            $this->alerte(
+                "MAIL_MAILER vaut « {$transport} », qui n'est pas un transport valide. "
+                .'Valeurs acceptées : '.implode(', ', $connus).'. '
+                .(str_contains((string) $transport, '@')
+                    ? 'Une adresse email se renseigne dans MAIL_FROM_ADDRESS, pas ici — '
+                      .'pour Gmail, mettez MAIL_MAILER=smtp.'
+                    : '')
+            );
+        } elseif ($transport === 'log') {
             $this->alerte(
                 'MAIL_MAILER vaut « log » : aucun email ne part réellement. '
                 .'Les confirmations de réservation et les réinitialisations de mot de passe sont inopérantes.'
