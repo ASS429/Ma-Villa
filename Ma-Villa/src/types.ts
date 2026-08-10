@@ -1,0 +1,131 @@
+/**
+ * Formes de données renvoyées par l'API.
+ * Elles étaient recopiées dans chaque page, avec des champs qui n'existaient
+ * pas côté serveur (le prix, notamment) : la carte de villa attendait
+ * `prix_min` que l'API ne renvoyait jamais, donc aucun prix ne s'affichait.
+ */
+
+export type Role = 'client' | 'proprietaire' | 'admin'
+
+export type TypeLogement = 'villa_entiere' | 'appartement' | 'chambre' | 'piscine'
+
+export type TypeTarif = 'journee' | 'nuitee' | 'demi_journee' | 'pass'
+
+export type StatutReservation = 'en_attente' | 'confirmee' | 'annulee'
+
+export type StatutVilla = 'en_attente' | 'validee' | 'rejetee'
+
+export interface User {
+  id: number
+  name: string
+  email: string
+  role: Role
+  phone: string | null
+  avatar: string | null
+  email_verified_at?: string | null
+}
+
+export interface Photo {
+  url: string
+  alt: string
+}
+
+export interface Tarif {
+  id: number
+  type_tarif: TypeTarif
+  avec_clim: boolean
+  avec_buffet: boolean
+  prix: number
+}
+
+export interface Logement {
+  id: number
+  nom: string
+  type: TypeLogement
+  capacite: number
+  disponible: boolean
+  tarifs: Tarif[]
+}
+
+export interface Avis {
+  id: number
+  note: number
+  commentaire: string
+  client: { name: string }
+  created_at: string
+}
+
+/** Champs communs à la liste et à la fiche. */
+interface VillaBase {
+  id: number
+  nom: string
+  ville: string
+  description: string
+  telephone: string
+  photos: Photo[]
+  vedette?: boolean
+  statut?: StatutVilla
+  /** Agrégats calculés côté serveur — absents si la villa n'a ni tarif ni avis. */
+  prix_min?: number | null
+  note_moyenne?: number | string | null
+  avis_count?: number
+  capacite_max?: number | null
+}
+
+/** Villa telle que renvoyée par la liste `/villas`. */
+export type VillaResume = VillaBase
+
+/** Villa telle que renvoyée par la fiche `/villas/{id}`. */
+export interface VillaDetail extends VillaBase {
+  adresse: string
+  latitude: number | null
+  longitude: number | null
+  logements: Logement[]
+  avis: Avis[]
+  proprietaire: { name: string }
+}
+
+export interface Reservation {
+  id: number
+  date_debut: string
+  date_fin: string
+  nb_personnes: number
+  montant_total: number
+  statut: StatutReservation
+  client?: { name: string; email: string; phone?: string | null }
+  logement: { nom: string; villa: { nom: string } }
+  tarif: { type_tarif: TypeTarif }
+}
+
+/** Plages déjà occupées, par identifiant de logement. */
+export type Occupation = Record<string, { date_debut: string; date_fin: string }[]>
+
+export interface PageResult<T> {
+  data: T[]
+  current_page: number
+  last_page: number
+  total: number
+  per_page: number
+}
+
+export const LIBELLES_TARIF: Record<TypeTarif, string> = {
+  journee: 'Journée',
+  nuitee: 'Nuitée',
+  demi_journee: 'Demi-journée',
+  pass: 'Pass',
+}
+
+export const LIBELLES_LOGEMENT: Record<TypeLogement, string> = {
+  villa_entiere: 'Villa entière',
+  appartement: 'Appartement',
+  chambre: 'Chambre',
+  piscine: 'Piscine',
+}
+
+/** Unité affichée à côté du prix « à partir de ». */
+export const UNITE_TARIF: Record<TypeTarif, string> = {
+  journee: 'la journée',
+  nuitee: 'la nuit',
+  demi_journee: 'la demi-journée',
+  pass: 'le pass',
+}

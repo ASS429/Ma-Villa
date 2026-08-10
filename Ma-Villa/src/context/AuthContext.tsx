@@ -1,13 +1,13 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import api from '../services/api'
+import type { User } from '../types'
 
-interface User {
-  id: number
+interface RegisterData {
   name: string
   email: string
-  role: 'client' | 'proprietaire' | 'admin'
-  phone: string | null
-  avatar: string | null
+  password: string
+  password_confirmation: string
+  role: 'client' | 'proprietaire'
 }
 
 interface AuthContextType {
@@ -20,68 +20,82 @@ interface AuthContextType {
   isLoading: boolean
 }
 
-interface RegisterData {
-  name: string
-  email: string
-  password: string
-  password_confirmation: string
-  role: 'client' | 'proprietaire'
-}
-
 const AuthContext = createContext<AuthContextType | null>(null)
 
+function lireUtilisateurStocke(): User | null {
+  try {
+    const brut = localStorage.getItem('user')
+    return brut ? (JSON.parse(brut) as User) : null
+  } catch {
+    // Entrée corrompue : on repart d'une session propre plutôt que de planter.
+    localStorage.removeItem('user')
+    return null
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    const stored = localStorage.getItem('user')
-    return stored ? JSON.parse(stored) : null
-  })
+  const [user, setUser] = useState<User | null>(lireUtilisateurStocke)
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'))
   const [isLoading, setIsLoading] = useState(false)
 
-  useEffect(() => {
-    if (token && !user) {
-      api.get('/auth/me').then((res) => setUser(res.data)).catch(() => logout())
-    }
+  const effacerSession = useCallback(() => {
+    setToken(null)
+    setUser(null)
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
   }, [])
+
+  const enregistrerSession = useCallback((utilisateur: User, jeton: string) => {
+    setToken(jeton)
+    setUser(utilisateur)
+    localStorage.setItem('token', jeton)
+    localStorage.setItem('user', JSON.stringify(utilisateur))
+  }, [])
+
+  // Un jeton sans utilisateur en cache : on le valide auprès du serveur.
+  useEffect(() => {
+    if (!token || user) return
+
+    let annule = false
+    api.get('/auth/me')
+      .then((res) => { if (!annule) setUser(res.data) })
+      // Jeton invalide ou expiré : inutile d'appeler /auth/logout avec, on
+      // nettoie simplement la session locale.
+      .catch(() => { if (!annule) effacerSession() })
+
+    return () => { annule = true }
+  }, [token, user, effacerSession])
 
   const login = async (email: string, password: string) => {
     setIsLoading(true)
     try {
       const { data } = await api.post('/auth/login', { email, password })
-      setToken(data.token)
-      setUser(data.user)
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('user', JSON.stringify(data.user))
-      return { user: data.user }
+      enregistrerSession(data.user, data.token)
+      return { user: data.user as User }
     } finally {
       setIsLoading(false)
     }
   }
 
-  const register = async (data: RegisterData) => {
+  const register = async (donnees: RegisterData) => {
     setIsLoading(true)
     try {
-      const { data: res } = await api.post('/auth/register', data)
-      setToken(res.token)
-      setUser(res.user)
-      localStorage.setItem('token', res.token)
-      localStorage.setItem('user', JSON.stringify(res.user))
+      const { data } = await api.post('/auth/register', donnees)
+      enregistrerSession(data.user, data.token)
     } finally {
       setIsLoading(false)
     }
   }
 
   const logout = () => {
+    // On révoque le jeton côté serveur sans bloquer la déconnexion locale.
     api.post('/auth/logout').catch(() => {})
-    setToken(null)
-    setUser(null)
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+    effacerSession()
   }
 
-  const updateUser = (updated: User) => {
-    setUser(updated)
-    localStorage.setItem('user', JSON.stringify(updated))
+  const updateUser = (miseAJour: User) => {
+    setUser(miseAJour)
+    localStorage.setItem('user', JSON.stringify(miseAJour))
   }
 
   return (
@@ -91,8 +105,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- convention des modules de contexte : le hook vit auprès de son provider
 export function useAuth() {
   const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
+  if (!ctx) throw new Error('useAuth doit être utilisé dans un AuthProvider')
   return ctx
 }

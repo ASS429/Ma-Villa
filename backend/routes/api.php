@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AvisController;
+use App\Http\Controllers\Api\ConfigurationController;
 use App\Http\Controllers\Api\DisponibiliteController;
 use App\Http\Controllers\Api\FavoriController;
 use App\Http\Controllers\Api\LogementController;
@@ -13,12 +14,19 @@ use App\Http\Controllers\Api\VillaController;
 use Illuminate\Support\Facades\Route;
 
 // Auth
-Route::post('/auth/register', [AuthController::class, 'register']);
-Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
+Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:20,1');
+Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:6,1');
+Route::post('/auth/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:6,1');
+Route::get('/auth/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
+    ->middleware('signed')
+    ->name('verification.verify');
 
 // Public
+Route::get('/configuration', ConfigurationController::class);
 Route::get('/villas', [VillaController::class, 'index']);
 Route::get('/villas/{villa}', [VillaController::class, 'show']);
+Route::get('/villas/{villa}/occupation', [VillaController::class, 'occupation']);
 Route::get('/villas/{villa}/logements', [LogementController::class, 'index']);
 Route::get('/villas/{villa}/logements/{logement}', [LogementController::class, 'show']);
 Route::get('/logements/{logement}/tarifs', [TarifController::class, 'index']);
@@ -29,6 +37,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::patch('/auth/profile', [AuthController::class, 'updateProfile']);
+    Route::post('/auth/email/resend', [AuthController::class, 'resendVerification']);
 
     // Villas du propriétaire connecté
     Route::get('/proprietaire/villas', [VillaController::class, 'mesVillas']);
@@ -69,6 +78,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Avis
     Route::post('/avis', [AvisController::class, 'store']);
+    Route::get('/villas/{villa}/avis/eligibilite', [AvisController::class, 'eligibilite']);
 
     // Admin
     Route::middleware('admin')->prefix('admin')->group(function () {

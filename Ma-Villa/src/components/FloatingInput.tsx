@@ -1,4 +1,4 @@
-import { useState, type InputHTMLAttributes, type ReactNode } from 'react'
+import { useId, useState, type InputHTMLAttributes, type ReactNode } from 'react'
 
 interface FloatingInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'className'> {
   label: string
@@ -10,12 +10,21 @@ export default function FloatingInput({ label, error, rightElement, ...props }: 
   const [focused, setFocused] = useState(false)
   const [hasValue, setHasValue] = useState(!!props.value || !!props.defaultValue)
 
+  // Le libellé flottant n'était rattaché à aucun champ : les lecteurs d'écran
+  // annonçaient un champ sans nom, et cliquer sur le libellé ne focalisait rien.
+  const idGenere = useId()
+  const inputId = props.id ?? idGenere
+  const idErreur = `${inputId}-erreur`
+
   const floated = focused || hasValue || !!props.value
 
   return (
     <div className="relative">
       <input
         {...props}
+        id={inputId}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? idErreur : undefined}
         onFocus={(e) => { setFocused(true); props.onFocus?.(e) }}
         onBlur={(e)  => { setFocused(false); setHasValue(!!e.target.value); props.onBlur?.(e) }}
         placeholder=""
@@ -37,6 +46,7 @@ export default function FloatingInput({ label, error, rightElement, ...props }: 
       />
 
       <label
+        htmlFor={inputId}
         style={{
           position: 'absolute',
           left: '1rem',

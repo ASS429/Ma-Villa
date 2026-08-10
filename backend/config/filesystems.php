@@ -17,6 +17,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Disque des médias
+    |--------------------------------------------------------------------------
+    |
+    | Photos et vidéos des annonces. En production ce disque doit être un
+    | stockage objet : le système de fichiers d'un conteneur est réinitialisé à
+    | chaque déploiement, ce qui ferait disparaître toutes les photos mises en
+    | ligne par les propriétaires (les lignes en base survivraient, les images
+    | renverraient 404).
+    |
+    | Cloudflare R2, Backblaze B2 et AWS S3 utilisent tous le pilote « s3 ».
+    |
+    */
+
+    'media' => env('MEDIA_DISK', env('FILESYSTEM_DISK', 'public')),
+
+    /*
+    |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
     |

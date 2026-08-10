@@ -4,9 +4,15 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Password as PasswordRule;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -15,10 +21,11 @@ class AuthController extends Controller
     {
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8|confirmed',
+            'email' => 'required|email|max:255|unique:users,email',
+            'password' => ['required', 'confirmed', PasswordRule::min(8)],
+            // Un compte admin ne se crée jamais par inscription publique.
             'role' => 'sometimes|in:client,proprietaire',
-            'phone' => 'sometimes|string|max:50',
+            'phone' => 'sometimes|nullable|string|max:50',
         ]);
 
         $user = User::create([
@@ -28,6 +35,8 @@ class AuthController extends Controller
             'role' => $data['role'] ?? 'client',
             'phone' => $data['phone'] ?? null,
         ]);
+
+        $user->sendEmailVerificationNotification();
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -44,13 +53,28 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
+        // Sans limite, l'endpoint permet de tester des mots de passe en boucle.
+        $cle = 'login:'.Str::lower($data['email']).'|'.$request->ip();
+
+        if (RateLimiter::tooManyAttempts($cle, 5)) {
+            $secondes = RateLimiter::availableIn($cle);
+
+            throw ValidationException::withMessages([
+                'email' => ["Trop de tentatives. Réessayez dans {$secondes} secondes."],
+            ]);
+        }
+
         $user = User::where('email', $data['email'])->first();
 
         if (! $user || ! Hash::check($data['password'], $user->password)) {
+            RateLimiter::hit($cle, 60);
+
             throw ValidationException::withMessages([
                 'email' => ['Les identifiants sont incorrects.'],
             ]);
         }
+
+        RateLimiter::clear($cle);
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -58,6 +82,98 @@ class AuthController extends Controller
             'user' => $user,
             'token' => $token,
         ]);
+    }
+
+    /* ── Mot de passe oublié ────────────────────────────────────── */
+
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        $request->validate(['email' => 'required|email']);
+
+        $statut = Password::sendResetLink($request->only('email'));
+
+        // On répond toujours la même chose : indiquer qu'une adresse est
+        // inconnue permettrait d'énumérer les comptes de la plateforme.
+        if ($statut === Password::RESET_THROTTLED) {
+            return response()->json([
+                'message' => 'Un email vient déjà d\'être envoyé. Patientez quelques minutes.',
+            ], 429);
+        }
+
+        return response()->json([
+            'message' => 'Si un compte existe avec cette adresse, un lien de réinitialisation vient d\'être envoyé.',
+        ]);
+    }
+
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'token' => 'required|string',
+            'email' => 'required|email',
+            'password' => ['required', 'confirmed', PasswordRule::min(8)],
+        ]);
+
+        $statut = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function (User $user, string $password) {
+                $user->forceFill(['password' => $password])->save();
+
+                // Un mot de passe réinitialisé doit invalider les sessions
+                // ouvertes ailleurs : c'est souvent un compte compromis.
+                $user->tokens()->delete();
+            }
+        );
+
+        if ($statut !== Password::PASSWORD_RESET) {
+            throw ValidationException::withMessages([
+                'email' => ['Ce lien de réinitialisation est invalide ou expiré.'],
+            ]);
+        }
+
+        return response()->json(['message' => 'Mot de passe modifié. Vous pouvez vous connecter.']);
+    }
+
+    /* ── Vérification d'adresse email ───────────────────────────── */
+
+    public function verifyEmail(Request $request, int $id, string $hash): RedirectResponse
+    {
+        $front = rtrim(config('app.frontend_url'), '/');
+        $user = User::find($id);
+
+        if (! $user || ! hash_equals($hash, sha1($user->getEmailForVerification()))) {
+            return redirect($front.'/email-verifie?statut=invalide');
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return redirect($front.'/email-verifie?statut=deja');
+        }
+
+        $user->markEmailAsVerified();
+        event(new Verified($user));
+
+        return redirect($front.'/email-verifie?statut=ok');
+    }
+
+    public function resendVerification(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->hasVerifiedEmail()) {
+            return response()->json(['message' => 'Votre adresse est déjà confirmée.']);
+        }
+
+        $cle = 'verif:'.$user->id;
+
+        if (RateLimiter::tooManyAttempts($cle, 3)) {
+            return response()->json([
+                'message' => 'Trop d\'envois. Réessayez dans quelques minutes.',
+            ], 429);
+        }
+
+        RateLimiter::hit($cle, 300);
+        $user->sendEmailVerificationNotification();
+
+        return response()->json(['message' => 'Email de confirmation renvoyé.']);
     }
 
     public function logout(Request $request): JsonResponse

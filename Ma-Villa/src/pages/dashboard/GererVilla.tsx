@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import api from '../../services/api'
 import ConfirmModal from '../../components/ConfirmModal'
@@ -53,16 +53,15 @@ function Section({ title, action, children }: { title: string; action?: React.Re
   )
 }
 
-function SmallField({ label, children }: { label: string; children: React.ReactElement<any> }) {
+function SmallField({ label, children }: { label: string; children: React.ReactElement<{ className?: string }> }) {
   return (
     <div>
       <label className="text-xs mb-1 block" style={{ color: 'var(--text-3)' }}>{label}</label>
-      {(({ className: _c, ...props }) =>
-        <children.type
-          {...props}
-          className="w-full rounded-lg px-3 py-2 text-sm th-input-field resize-none"
-        />
-      )(children.props)}
+      {/* className est placé après le spread : il écrase celui de l'enfant. */}
+      <children.type
+        {...children.props}
+        className="w-full rounded-lg px-3 py-2 text-sm th-input-field resize-none"
+      />
     </div>
   )
 }
@@ -99,7 +98,9 @@ export default function GererVilla() {
   const [editingTarif, setEditingTarif] = useState<{ logementId: number; tarifId: number } | null>(null)
   const [editTarifForm, setEditTarifForm] = useState({ type_tarif: 'nuitee', prix: '', avec_clim: false, avec_buffet: false })
 
-  const fetchVilla = () => {
+  // Stable par identifiant : l'effet ci-dessous ne se relance qu'au changement
+  // de villa, et le rechargement manuel après édition reste possible.
+  const fetchVilla = useCallback(() => {
     api.get(`/villas/${id}`)
       .then((res) => {
         const v = res.data
@@ -111,9 +112,9 @@ export default function GererVilla() {
         })
       })
       .finally(() => setIsLoading(false))
-  }
+  }, [id])
 
-  useEffect(() => { fetchVilla() }, [id])
+  useEffect(() => { fetchVilla() }, [fetchVilla])
 
   const getLocation = () => {
     if (!navigator.geolocation) return

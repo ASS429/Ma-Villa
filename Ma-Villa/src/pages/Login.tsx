@@ -1,8 +1,10 @@
 import { useState } from 'react'
-import { Link, useNavigate, Navigate } from 'react-router-dom'
+import { Link, useNavigate, Navigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import FloatingInput from '../components/FloatingInput'
+import Seo from '../components/Seo'
+import { messageErreur } from '../lib/erreurs'
 
 function IconEye({ show }: { show: boolean }) {
   return show ? (
@@ -37,20 +39,27 @@ export default function Login() {
   const { login, isLoading, user } = useAuth()
   const { isDark, toggleTheme } = useTheme()
   const navigate = useNavigate()
+  const [params] = useSearchParams()
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
-  if (user) return <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace />
+  // Après une session expirée, on ramène l'utilisateur là où il était.
+  const retour = params.get('retour')
+
+  const destination = (role: string) =>
+    retour && retour.startsWith('/') ? retour : role === 'admin' ? '/admin' : '/dashboard'
+
+  if (user) return <Navigate to={destination(user.role)} replace />
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     try {
       const { user } = await login(form.email, form.password)
-      navigate(user.role === 'admin' ? '/admin' : '/dashboard')
-    } catch {
-      setError('Email ou mot de passe incorrect.')
+      navigate(destination(user.role))
+    } catch (err) {
+      setError(messageErreur(err, 'Email ou mot de passe incorrect.'))
     }
   }
 
@@ -59,6 +68,11 @@ export default function Login() {
       className="min-h-screen flex items-center justify-center px-4 relative"
       style={{ background: 'var(--bg)', color: 'var(--text-1)' }}
     >
+      <Seo
+        titre="Connexion"
+        description="Connectez-vous à votre espace Ma Villa."
+        chemin="/login"
+      />
       {/* Background decoration */}
       {!isDark && (
         <div
@@ -80,7 +94,7 @@ export default function Login() {
 
       <div className="w-full max-w-md relative z-10">
         <Link to="/" className="flex justify-center mb-10">
-          <img src="/logo.png" alt="Ma Villa" className="h-20 w-20 rounded-2xl object-contain" />
+          <img src="/logo.webp" alt="Ma Villa" width={80} height={80} className="h-20 w-20 rounded-2xl object-contain" />
         </Link>
 
         <div
@@ -129,6 +143,15 @@ export default function Login() {
                 </button>
               }
             />
+
+            <div className="-mt-2 text-right">
+              <Link
+                to="/mot-de-passe-oublie"
+                className="text-sm th-text-2 hover:th-text-1 transition-colors underline underline-offset-4"
+              >
+                Mot de passe oublié ?
+              </Link>
+            </div>
 
             <button
               type="submit"

@@ -1,0 +1,4 @@
+# Sources média hors dossier servi : la vidéo d'origine en 2560 px reste
+# récupérable dans l'historique git (Ma-Villa/public/video_backgroud.mp4,
+# avant sa suppression), inutile d'en versionner un doublon de 5 Mo.
+/media/

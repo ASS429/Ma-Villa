@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -20,6 +21,23 @@ class Reservation extends Model
             'date_fin' => 'date',
             'montant_total' => 'decimal:2',
         ];
+    }
+
+    /**
+     * Réservations qui occupent tout ou partie de la période demandée.
+     * Règle unique, partagée par la création de réservation et la recherche
+     * par dates : une villa proposée comme libre doit rester réservable.
+     */
+    public function scopeChevauchant(Builder $query, string $debut, string $fin): Builder
+    {
+        return $query->where('date_debut', '<=', $fin)
+                     ->where('date_fin', '>=', $debut);
+    }
+
+    /** Réservations qui bloquent réellement le calendrier (une annulation libère la date). */
+    public function scopeBloquante(Builder $query): Builder
+    {
+        return $query->where('statut', '!=', 'annulee');
     }
 
     public function client(): BelongsTo

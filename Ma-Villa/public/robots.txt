@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Espaces privés : rien à indexer, et les URL contiennent des identifiants.
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /reinitialiser-mot-de-passe
+Disallow: /email-verifie
+
+Sitemap: https://mavilla.sn/sitemap.xml

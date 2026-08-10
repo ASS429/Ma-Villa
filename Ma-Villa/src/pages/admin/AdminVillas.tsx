@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../../services/api'
+import { useRequete } from '../../lib/useRequete'
 
 interface Villa {
   id: number
@@ -39,30 +40,26 @@ function IconStar({ filled }: { filled: boolean }) {
 }
 
 export default function AdminVillas() {
-  const [villas, setVillas] = useState<Villa[]>([])
   const [statut, setStatut] = useState('en_attente')
-  const [isLoading, setIsLoading] = useState(true)
   const [togglingId, setTogglingId] = useState<number | null>(null)
 
-  const fetchVillas = (s: string) => {
-    setIsLoading(true)
-    api.get(`/admin/villas?statut=${s}`)
-      .then((res) => setVillas(res.data))
-      .finally(() => setIsLoading(false))
-  }
-
-  useEffect(() => { fetchVillas(statut) }, [statut])
+  const { donnees, chargement: isLoading, erreur, reessayer } = useRequete<Villa[]>(
+    async (signal) => (await api.get(`/admin/villas?statut=${statut}`, { signal })).data,
+    statut,
+    { messageErreurParDefaut: 'Impossible de charger les villas.' }
+  )
+  const villas = donnees ?? []
 
   const updateStatut = async (villa: Villa, newStatut: 'validee' | 'rejetee') => {
     await api.patch(`/admin/villas/${villa.id}/statut`, { statut: newStatut })
-    fetchVillas(statut)
+    reessayer()
   }
 
   const toggleVedette = async (villa: Villa) => {
     setTogglingId(villa.id)
     try {
-      const res = await api.patch(`/admin/villas/${villa.id}/vedette`)
-      setVillas((prev) => prev.map((v) => v.id === villa.id ? { ...v, vedette: res.data.vedette } : v))
+      await api.patch(`/admin/villas/${villa.id}/vedette`)
+      reessayer()
     } finally {
       setTogglingId(null)
     }
@@ -96,6 +93,23 @@ export default function AdminVillas() {
         <div className="flex items-center gap-2 mb-5 text-sm" style={{ color: 'var(--text-3)' }}>
           <IconStar filled />
           <span>{vedetteCount} villa{vedetteCount !== 1 ? 's' : ''} en vedette sur la page d'accueil</span>
+        </div>
+      )}
+
+      {erreur && !isLoading && (
+        <div
+          className="rounded-2xl p-6 mb-4 flex items-center justify-between gap-4 flex-wrap"
+          style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.22)' }}
+          role="alert"
+        >
+          <p className="text-sm" style={{ color: 'var(--danger)' }}>{erreur}</p>
+          <button
+            onClick={reessayer}
+            className="text-sm px-4 py-2 rounded-xl font-medium"
+            style={{ background: 'var(--accent)', color: '#fff' }}
+          >
+            Réessayer
+          </button>
         </div>
       )}
 

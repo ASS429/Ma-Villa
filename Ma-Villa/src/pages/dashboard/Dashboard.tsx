@@ -67,7 +67,7 @@ export default function Dashboard() {
         setStats((s) => ({ ...s, villas: res.data.length }))
       }).catch(() => {})
       api.get('/reservations').then((res) => {
-        const pending = (res.data as any[]).filter((r) => r.statut === 'en_attente').length
+        const pending = (res.data as { statut: string }[]).filter((r) => r.statut === 'en_attente').length
         setStats((s) => ({ ...s, reservations: res.data.length, enAttente: pending }))
       }).catch(() => {})
     }

@@ -7,8 +7,11 @@ use App\Http\Requests\ReservationRequest;
 use App\Models\Logement;
 use App\Models\Reservation;
 use App\Models\Tarif;
+use App\Notifications\NouvelleReservation;
+use App\Notifications\ReservationMiseAJour;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ReservationController extends Controller
 {
@@ -29,20 +32,35 @@ class ReservationController extends Controller
         $logement = Logement::findOrFail($request->logement_id);
         $tarif = Tarif::findOrFail($request->tarif_id);
 
-        // Vérification des conflits de dates
+        if (! $logement->disponible) {
+            return response()->json(['message' => 'Ce logement n\'est plus proposé à la réservation.'], 409);
+        }
+
+        // Même règle de chevauchement que la recherche par dates : une villa
+        // présentée comme libre doit rester réservable.
         $conflit = Reservation::where('logement_id', $logement->id)
-            ->where('statut', '!=', 'annulee')
-            ->where(function ($q) use ($request) {
-                $q->whereBetween('date_debut', [$request->date_debut, $request->date_fin])
-                  ->orWhereBetween('date_fin', [$request->date_debut, $request->date_fin])
-                  ->orWhere(function ($q) use ($request) {
-                      $q->where('date_debut', '<=', $request->date_debut)
-                        ->where('date_fin', '>=', $request->date_fin);
-                  });
-            })->exists();
+            ->bloquante()
+            ->chevauchant($request->date_debut, $request->date_fin)
+            ->exists();
 
         if ($conflit) {
             return response()->json(['message' => 'Ce logement est déjà réservé pour ces dates.'], 409);
+        }
+
+        $bloque = $logement->disponibilites()
+            ->where('disponible', false)
+            ->where('date_debut', '<=', $request->date_fin)
+            ->where('date_fin', '>=', $request->date_debut)
+            ->exists();
+
+        if ($bloque) {
+            return response()->json(['message' => 'Ce logement n\'est pas disponible sur cette période.'], 409);
+        }
+
+        if ($request->nb_personnes > $logement->capacite) {
+            return response()->json([
+                'message' => "Ce logement accueille au maximum {$logement->capacite} personnes.",
+            ], 422);
         }
 
         $jours = (int) (new \DateTime($request->date_debut))->diff(new \DateTime($request->date_fin))->days;
@@ -57,12 +75,23 @@ class ReservationController extends Controller
             'montant_total' => $montant,
         ]);
 
-        return response()->json($reservation->load(['logement.villa', 'tarif']), 201);
+        $reservation->load(['logement.villa.proprietaire', 'tarif', 'client']);
+
+        $this->notifier(
+            $reservation->logement->villa->proprietaire,
+            new NouvelleReservation($reservation)
+        );
+
+        return response()->json($reservation, 201);
     }
 
     public function show(Reservation $reservation): JsonResponse
     {
-        return response()->json($reservation->load(['logement.villa', 'tarif', 'paiement']));
+        // Sans cette vérification, n'importe quel compte connecté lisait la
+        // réservation de n'importe qui en incrémentant l'identifiant.
+        $this->authorize('view', $reservation);
+
+        return response()->json($reservation->load(['logement.villa', 'tarif', 'paiement', 'client']));
     }
 
     public function updateStatut(Request $request, Reservation $reservation): JsonResponse
@@ -77,6 +106,36 @@ class ReservationController extends Controller
 
         $reservation->update(['statut' => $request->statut]);
 
+        // Le client doit apprendre la décision autrement qu'en rouvrant le site.
+        // Inutile de se notifier soi-même quand c'est lui qui annule.
+        if ($request->user()->id !== $reservation->user_id) {
+            $this->notifier(
+                $reservation->loadMissing('client')->client,
+                new ReservationMiseAJour($reservation)
+            );
+        }
+
         return response()->json($reservation);
+    }
+
+    /**
+     * Un envoi d'email qui échoue ne doit jamais faire échouer la réservation
+     * elle-même : la donnée métier est déjà enregistrée.
+     */
+    private function notifier(?object $destinataire, object $notification): void
+    {
+        if (! $destinataire) {
+            return;
+        }
+
+        try {
+            $destinataire->notify($notification);
+        } catch (\Throwable $e) {
+            Log::error('Notification non envoyée', [
+                'notification' => $notification::class,
+                'destinataire' => $destinataire->id ?? null,
+                'erreur' => $e->getMessage(),
+            ]);
+        }
     }
 }
