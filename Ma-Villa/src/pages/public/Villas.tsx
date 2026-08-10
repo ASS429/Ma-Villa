@@ -5,6 +5,7 @@ import VillaCard from '../../components/VillaCard'
 import PageHeader from '../../components/PageHeader'
 import ScrollReveal from '../../components/ScrollReveal'
 import BarreRecherche from '../../components/BarreRecherche'
+import Button from '../../components/ui/Button'
 import Footer from '../../components/Footer'
 import Seo from '../../components/Seo'
 import { useAuth } from '../../context/AuthContext'
@@ -128,13 +129,7 @@ function PanneauFiltres({
       </div>
 
       <div className="flex items-center gap-3 mt-4">
-        <button
-          type="submit"
-          className="px-6 py-2 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90"
-          style={{ background: 'var(--accent)', color: '#fff', minHeight: 40 }}
-        >
-          Appliquer
-        </button>
+        <Button type="submit" variante="primaire" taille="sm">Appliquer</Button>
         {peutReinitialiser && (
           <button type="button" onClick={onReinitialiser} className="text-sm th-text-2 hover:th-text-1 transition-colors">
             Tout réinitialiser
@@ -314,13 +309,7 @@ export default function Villas() {
           <div className="text-center py-24">
             <p className="text-lg font-medium th-text-1 mb-2">Chargement impossible</p>
             <p className="text-sm th-text-2 mb-6">{erreur}</p>
-            <button
-              onClick={reessayer}
-              className="text-sm px-5 py-2.5 rounded-xl font-medium transition-opacity hover:opacity-90"
-              style={{ background: 'var(--accent)', color: '#fff' }}
-            >
-              Réessayer
-            </button>
+            <Button onClick={reessayer} variante="primaire" taille="sm">Réessayer</Button>
           </div>
         ) : villas.length === 0 ? (
           <div className="text-center py-24">
@@ -339,13 +328,9 @@ export default function Villas() {
                 : 'Essayez d\'autres critères de recherche.'}
             </p>
             {nbFiltresActifs > 0 && (
-              <button
-                onClick={reinitialiser}
-                className="mt-6 text-sm px-5 py-2.5 rounded-xl font-medium transition-opacity hover:opacity-90"
-                style={{ background: 'var(--accent)', color: '#fff' }}
-              >
+              <Button onClick={reinitialiser} variante="secondaire" taille="sm" className="mt-6">
                 Voir toutes les villas
-              </button>
+              </Button>
             )}
           </div>
         ) : (

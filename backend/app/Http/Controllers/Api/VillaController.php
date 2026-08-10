@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\VillaRequest;
+use App\Models\Logement;
 use App\Models\Reservation;
+use App\Models\Tarif;
 use App\Models\Villa;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -36,7 +38,28 @@ class VillaController extends Controller
             ->withMin('tarifs as prix_min', 'prix')
             ->withAvg('avis as note_moyenne', 'note')
             ->withCount('avis')
-            ->withMax('logements as capacite_max', 'capacite');
+            ->withMax('logements as capacite_max', 'capacite')
+            // Équipements affichés sur la carte de villa. Ils ne sont pas
+            // stockés tels quels : ils se déduisent des logements et des
+            // formules tarifaires, sans charger toute l'arborescence.
+            ->addSelect([
+                'a_piscine' => Logement::selectRaw('1')
+                    ->whereColumn('logements.villa_id', 'villas.id')
+                    ->where('type', 'piscine')
+                    ->limit(1),
+                'a_climatisation' => Tarif::selectRaw('1')
+                    ->join('logements as l_clim', 'l_clim.id', '=', 'tarifs.logement_id')
+                    ->whereColumn('l_clim.villa_id', 'villas.id')
+                    ->where('tarifs.avec_clim', true)
+                    ->limit(1),
+                // Unité du tarif le moins cher : « à partir de 45 000 FCFA »
+                // n'a pas le même sens à la nuitée qu'à la demi-journée.
+                'prix_min_unite' => Tarif::select('tarifs.type_tarif')
+                    ->join('logements as l_unite', 'l_unite.id', '=', 'tarifs.logement_id')
+                    ->whereColumn('l_unite.villa_id', 'villas.id')
+                    ->orderBy('tarifs.prix')
+                    ->limit(1),
+            ]);
 
         if ($request->ville) {
             $query->where('ville', 'like', "%{$request->ville}%");

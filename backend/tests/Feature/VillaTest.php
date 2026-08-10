@@ -197,6 +197,43 @@ class VillaTest extends TestCase
         return $villa;
     }
 
+    public function test_public_listing_exposes_booleans_as_booleans(): void
+    {
+        // `vedette` remontait en entier 0/1 : côté React, `{villa.vedette && …}`
+        // affichait alors un « 0 » sur chaque carte non mise en avant.
+        $villa = $this->villaAvec('Avec piscine', 25000);
+        $villa->logements()->create([
+            'type' => 'piscine', 'nom' => 'Piscine', 'capacite' => 20, 'disponible' => true,
+        ])->tarifs()->create(['type_tarif' => 'journee', 'prix' => 15000, 'avec_clim' => true]);
+
+        $data = $this->getJson('/api/villas')->assertOk()->json('data.0');
+
+        $this->assertIsBool($data['vedette']);
+        $this->assertIsBool($data['a_piscine']);
+        $this->assertIsBool($data['a_climatisation']);
+        $this->assertTrue($data['a_piscine']);
+        $this->assertTrue($data['a_climatisation']);
+        $this->assertFalse($data['vedette']);
+    }
+
+    public function test_public_listing_exposes_the_unit_of_the_cheapest_price(): void
+    {
+        $villa = Villa::factory()->validee()->create();
+        $logement = $villa->logements()->create([
+            'type' => 'chambre', 'nom' => 'Chambre', 'capacite' => 2, 'disponible' => true,
+        ]);
+        $logement->tarifs()->createMany([
+            ['type_tarif' => 'nuitee', 'prix' => 60000],
+            ['type_tarif' => 'demi_journee', 'prix' => 18000],
+        ]);
+
+        $data = $this->getJson('/api/villas')->assertOk()->json('data.0');
+
+        $this->assertEquals(18000, $data['prix_min']);
+        // « à partir de 18 000 FCFA » n'a pas le même sens à la nuitée.
+        $this->assertEquals('demi_journee', $data['prix_min_unite']);
+    }
+
     public function test_public_listing_filters_by_minimum_rating(): void
     {
         $this->villaAvec('Bien notee', 30000, [5, 4]);   // moyenne 4.5

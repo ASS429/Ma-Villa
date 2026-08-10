@@ -31,11 +31,15 @@ export function dateNumerique(iso: string): string {
   })
 }
 
-/** `note_moyenne` arrive en chaîne depuis SQL selon le pilote. */
+/**
+ * `note_moyenne` arrive en chaîne depuis SQL selon le pilote — et PostgreSQL
+ * renvoie un numérique à seize décimales. Le séparateur est la virgule :
+ * « 4,9 », pas « 4.9 ».
+ */
 export function noteLisible(note: number | string | null | undefined): string | null {
   const n = typeof note === 'string' ? parseFloat(note) : note
   if (n === null || n === undefined || Number.isNaN(n)) return null
-  return n.toFixed(1).replace('.0', '')
+  return n.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 1 })
 }
 
 export function nuits(debut: string, fin: string): number {

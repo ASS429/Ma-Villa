@@ -8,13 +8,11 @@ import PageHeader from '../../components/PageHeader'
 import Footer from '../../components/Footer'
 import Seo from '../../components/Seo'
 import MoyensPaiement from '../../components/MoyensPaiement'
+import { GrilleTarifaire, ParcoursReservation } from '../../components/BlocTarifaire'
 import { useRequete } from '../../lib/useRequete'
 import { messageErreur } from '../../lib/erreurs'
 import { fcfa, dateCourte, noteLisible, nuits, aujourdhui } from '../../lib/format'
-import {
-  LIBELLES_LOGEMENT, LIBELLES_TARIF, UNITE_TARIF,
-  type Occupation, type Tarif, type VillaDetail as Villa,
-} from '../../types'
+import { type Occupation, type VillaDetail as Villa } from '../../types'
 
 /* ─── Utilitaires ────────────────────────────────────────────── */
 
@@ -22,13 +20,6 @@ function estVideo(url: string) {
   return /\.(mp4|webm|mov)(\?.*)?$/i.test(url)
 }
 
-function libelleTarif(t: Tarif) {
-  return [
-    LIBELLES_TARIF[t.type_tarif],
-    t.avec_clim ? 'clim' : null,
-    t.avec_buffet ? 'buffet' : null,
-  ].filter(Boolean).join(' + ')
-}
 
 /** Une date tombe-t-elle dans une plage déjà prise ? */
 function chevauche(
@@ -525,44 +516,26 @@ export default function VillaDetail() {
               </section>
             )}
 
-            {/* Logements et tarifs */}
+            {/* Logements et tarifs — approche B : la grille, pour comparer.
+                Cliquer un prix renseigne le panneau de réservation (approche A). */}
             <section className="mb-10">
-              <h2 className="text-lg font-medium mb-4">Logements et tarifs</h2>
-              <div className="flex flex-col gap-3">
-                {villa.logements.map((l) => (
-                  <div key={l.id} className={`rounded-xl px-5 py-4 th-card ${!l.disponible ? 'opacity-60' : ''}`}>
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <div>
-                        <p className="font-medium th-text-1">{l.nom}</p>
-                        <p className="text-sm th-text-2">
-                          {LIBELLES_LOGEMENT[l.type]} · jusqu'à {l.capacite} personnes
-                        </p>
-                      </div>
-                      <span className={`shrink-0 badge ${l.disponible ? 'badge-success' : 'badge-danger'}`}>
-                        <span className="badge-dot" />
-                        {l.disponible ? 'Disponible' : 'Indisponible'}
-                      </span>
-                    </div>
-
-                    {l.tarifs.length > 0 ? (
-                      <ul className="flex flex-col gap-1.5">
-                        {l.tarifs.map((t) => (
-                          <li key={t.id} className="flex items-baseline justify-between gap-3 text-sm">
-                            <span className="th-text-2">{libelleTarif(t)}</span>
-                            <span className="th-text-3" style={{ flex: 1, borderBottom: '1px dotted var(--border-2)', margin: '0 4px' }} aria-hidden="true" />
-                            <span className="th-text-1 font-medium whitespace-nowrap">
-                              {fcfa(t.prix)}
-                              <span className="th-text-3 font-normal text-xs"> / {UNITE_TARIF[t.type_tarif]}</span>
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-sm th-text-3">Tarifs non renseignés — contactez le propriétaire.</p>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <h2 className="text-lg font-medium mb-2">Logements et tarifs</h2>
+              <p className="text-sm th-text-2 mb-4">
+                Sélectionnez un prix pour préparer votre réservation.
+              </p>
+              <GrilleTarifaire
+                logements={villa.logements}
+                tarifChoisi={tarif?.id ?? null}
+                onChoisir={(l, t) => {
+                  setReservation((r) => ({
+                    ...r,
+                    logement_id: String(l.id),
+                    tarif_id: String(t.id),
+                    nb_personnes: Math.min(Number(r.nb_personnes) || 1, l.capacite).toString(),
+                  }))
+                  document.getElementById('reserver')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }}
+              />
             </section>
 
             {/* Avis */}
@@ -673,37 +646,21 @@ export default function VillaDetail() {
                     </div>
                   )}
 
-                  <div>
-                    <label htmlFor="r-logement" className="text-xs th-text-2 mb-1.5 block">Logement</label>
-                    <select
-                      id="r-logement" required
-                      value={reservation.logement_id}
-                      onChange={(e) => setReservation({ ...reservation, logement_id: e.target.value, tarif_id: '' })}
-                      className="w-full rounded-xl px-4 py-2.5 text-sm th-input-field"
-                    >
-                      <option value="">Choisir un logement</option>
-                      {villa.logements.filter((l) => l.disponible).map((l) => (
-                        <option key={l.id} value={l.id}>{l.nom} — {l.capacite} pers.</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {logement && (
-                    <div>
-                      <label htmlFor="r-tarif" className="text-xs th-text-2 mb-1.5 block">Formule</label>
-                      <select
-                        id="r-tarif" required
-                        value={reservation.tarif_id}
-                        onChange={(e) => setReservation({ ...reservation, tarif_id: e.target.value })}
-                        className="w-full rounded-xl px-4 py-2.5 text-sm th-input-field"
-                      >
-                        <option value="">Choisir une formule</option>
-                        {logement.tarifs.map((t) => (
-                          <option key={t.id} value={t.id}>{libelleTarif(t)} — {fcfa(t.prix)}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
+                  {/* Approche A : un choix par étape, formules impossibles
+                      barrées. Les deux menus déroulants précédents obligeaient
+                      à ouvrir la liste pour découvrir ce qui existait. */}
+                  <ParcoursReservation
+                    logements={villa.logements}
+                    logementChoisi={logement ?? null}
+                    tarifChoisi={tarif ?? null}
+                    onChoisirLogement={(l) => setReservation((r) => ({
+                      ...r,
+                      logement_id: String(l.id),
+                      tarif_id: '',
+                      nb_personnes: Math.min(Number(r.nb_personnes) || 1, l.capacite).toString(),
+                    }))}
+                    onChoisirTarif={(t) => setReservation((r) => ({ ...r, tarif_id: String(t.id) }))}
+                  />
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>

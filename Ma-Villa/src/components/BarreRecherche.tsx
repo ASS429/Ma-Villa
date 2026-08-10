@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search } from 'lucide-react'
+import Button from './ui/Button'
 import { aujourdhui } from '../lib/format'
 
 const DESTINATIONS = ['Saly', 'Mbour', 'Dakar', 'Ziguinchor', 'Somone', 'Cap Skirring']
@@ -150,14 +151,15 @@ export default function BarreRecherche({ variante = 'hero', valeursInitiales, on
           />
         </div>
 
-        <button
+        <Button
           type="submit"
-          className="col-span-2 lg:col-span-1 inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90 active:scale-[0.98]"
-          style={{ background: 'var(--accent)', color: '#fff', minHeight: 44 }}
+          variante="primaire"
+          taille="sm"
+          className="col-span-2 lg:col-span-1"
+          iconeAvant={<Search size={16} aria-hidden="true" />}
         >
-          <Search size={16} />
           Rechercher
-        </button>
+        </Button>
       </div>
     </form>
   )
