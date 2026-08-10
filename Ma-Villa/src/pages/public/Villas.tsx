@@ -6,6 +6,11 @@ import PageHeader from '../../components/PageHeader'
 import ScrollReveal from '../../components/ScrollReveal'
 import BarreRecherche from '../../components/BarreRecherche'
 import Button from '../../components/ui/Button'
+import FiltresActifs from '../../components/recherche/FiltresActifs'
+import type { CleFiltre } from '../../lib/filtres'
+import FeuilleFiltres, { type Brouillon } from '../../components/recherche/FeuilleFiltres'
+import EtatVide from '../../components/recherche/EtatVide'
+import { useSuggestionsFiltres } from '../../components/recherche/useSuggestionsFiltres'
 
 // Leaflet ne concerne que cette page : le sortir du paquet initial évite de
 // le faire télécharger à tous les visiteurs de l'accueil.
@@ -19,25 +24,11 @@ import { messageErreur } from '../../lib/erreurs'
 import { useRequete } from '../../lib/useRequete'
 import type { PageResult, VillaResume } from '../../types'
 
-const TYPES = [
-  { value: '', label: 'Tous les types' },
-  { value: 'villa_entiere', label: 'Villa entière' },
-  { value: 'appartement', label: 'Appartement' },
-  { value: 'chambre', label: 'Chambre' },
-  { value: 'piscine', label: 'Piscine' },
-]
-
 const TRIS = [
   { value: '', label: 'Plus récentes' },
   { value: 'prix_asc', label: 'Prix croissant' },
   { value: 'prix_desc', label: 'Prix décroissant' },
   { value: 'note', label: 'Mieux notées' },
-]
-
-const NOTES = [
-  { value: '', label: 'Toutes les notes' },
-  { value: '4', label: '4 étoiles et plus' },
-  { value: '3', label: '3 étoiles et plus' },
 ]
 
 /** Critères pilotés par l'URL : une recherche reste partageable et rechargeable. */
@@ -66,84 +57,6 @@ function IconFilter() {
   )
 }
 
-/** Filtres secondaires. Son brouillon reste local tant qu'on n'a pas validé. */
-function PanneauFiltres({
-  initiaux,
-  peutReinitialiser,
-  onAppliquer,
-  onReinitialiser,
-}: {
-  initiaux: Filtres
-  peutReinitialiser: boolean
-  onAppliquer: (filtres: Partial<Filtres>) => void
-  onReinitialiser: () => void
-}) {
-  const [brouillon, setBrouillon] = useState<Filtres>(initiaux)
-  const maj = (cle: keyof Filtres, valeur: string) => setBrouillon((b) => ({ ...b, [cle]: valeur }))
-
-  return (
-    <form
-      onSubmit={(e) => { e.preventDefault(); onAppliquer(brouillon) }}
-      className="rounded-2xl p-5 mb-8"
-      style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}
-    >
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div>
-          <label htmlFor="f-prix-min" className="text-xs mb-1.5 block th-text-2">Prix min (FCFA)</label>
-          <input
-            id="f-prix-min" type="number" min={0} inputMode="numeric"
-            value={brouillon.prix_min}
-            onChange={(e) => maj('prix_min', e.target.value)}
-            placeholder="0"
-            className="w-full rounded-xl px-4 py-2.5 text-sm th-input-field"
-          />
-        </div>
-        <div>
-          <label htmlFor="f-prix-max" className="text-xs mb-1.5 block th-text-2">Prix max (FCFA)</label>
-          <input
-            id="f-prix-max" type="number" min={0} inputMode="numeric"
-            value={brouillon.prix_max}
-            onChange={(e) => maj('prix_max', e.target.value)}
-            placeholder="500 000"
-            className="w-full rounded-xl px-4 py-2.5 text-sm th-input-field"
-          />
-        </div>
-        <div>
-          <label htmlFor="f-type" className="text-xs mb-1.5 block th-text-2">Type de logement</label>
-          <select
-            id="f-type"
-            value={brouillon.type_logement}
-            onChange={(e) => maj('type_logement', e.target.value)}
-            className="w-full rounded-xl px-4 py-2.5 text-sm th-input-field"
-          >
-            {TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-          </select>
-        </div>
-        <div>
-          <label htmlFor="f-note" className="text-xs mb-1.5 block th-text-2">Note minimale</label>
-          <select
-            id="f-note"
-            value={brouillon.note_min}
-            onChange={(e) => maj('note_min', e.target.value)}
-            className="w-full rounded-xl px-4 py-2.5 text-sm th-input-field"
-          >
-            {NOTES.map((n) => <option key={n.value} value={n.value}>{n.label}</option>)}
-          </select>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3 mt-4">
-        <Button type="submit" variante="primaire" taille="sm">Appliquer</Button>
-        {peutReinitialiser && (
-          <button type="button" onClick={onReinitialiser} className="text-sm th-text-2 hover:th-text-1 transition-colors">
-            Tout réinitialiser
-          </button>
-        )}
-      </div>
-    </form>
-  )
-}
-
 export default function Villas() {
   const { user } = useAuth()
   const toast = useToast()
@@ -161,7 +74,12 @@ export default function Villas() {
   const page = Number(params.get('page') ?? 1)
   const requete = params.toString()
 
-  const nbFiltresActifs = CLES_FILTRES.filter((k) => k !== 'tri' && filtres[k]).length
+  // Paires [clé, valeur] des filtres réellement posés : sert aux pastilles
+  // retirables et au diagnostic de l'état vide.
+  const filtresActifs = CLES_FILTRES
+    .filter((k) => k !== 'tri' && filtres[k])
+    .map((k) => [k as CleFiltre, filtres[k]] as [CleFiltre, string])
+  const nbFiltresActifs = filtresActifs.length
 
   const { donnees, chargement, erreur, reessayer } = useRequete<PageResult<VillaResume>>(
     async (signal) => {
@@ -198,6 +116,23 @@ export default function Villas() {
   }
 
   const reinitialiser = () => setParams(new URLSearchParams())
+
+  /** Retire un seul critère, en gardant les autres. */
+  const retirerFiltre = (cle: CleFiltre) => {
+    const suivants = new URLSearchParams(params)
+    suivants.delete(cle)
+    suivants.delete('page')
+    // Une borne de dates seule n'a pas de sens.
+    if (cle === 'date_debut') suivants.delete('date_fin')
+    if (cle === 'date_fin') suivants.delete('date_debut')
+    setParams(suivants)
+  }
+
+  const { suggestions, recherche: chercheSuggestions } = useSuggestionsFiltres(
+    filtresActifs,
+    !chargement && !erreur && villas.length === 0,
+    requete
+  )
 
   const allerPage = (p: number) => {
     const suivants = new URLSearchParams(params)
@@ -316,15 +251,27 @@ export default function Villas() {
           </div>
         </div>
 
+        {/* Pastilles des filtres posés : sans elles, les critères devenaient
+            invisibles une fois la feuille refermée, et « aucun résultat »
+            s'affichait sans qu'on comprenne pourquoi. */}
+        <FiltresActifs
+          actifs={filtresActifs}
+          onRetirer={retirerFiltre}
+          onToutEffacer={reinitialiser}
+        />
+
         {panneauOuvert && (
-          // Remonté à chaque changement d'URL : son brouillon repart des
-          // filtres réellement appliqués, sans état à resynchroniser.
-          <PanneauFiltres
-            key={requete}
-            initiaux={filtres}
-            peutReinitialiser={nbFiltresActifs > 0}
-            onAppliquer={(v) => { appliquer(v); setPanneauOuvert(false) }}
-            onReinitialiser={reinitialiser}
+          <FeuilleFiltres
+            initiaux={{
+              prix_min: filtres.prix_min,
+              prix_max: filtres.prix_max,
+              type_logement: filtres.type_logement,
+              note_min: filtres.note_min,
+            } as Brouillon}
+            nbResultats={pagination.total}
+            onAppliquer={(b) => { appliquer(b); setPanneauOuvert(false) }}
+            onEffacer={() => { reinitialiser(); setPanneauOuvert(false) }}
+            onFermer={() => setPanneauOuvert(false)}
           />
         )}
 
@@ -340,27 +287,14 @@ export default function Villas() {
             <Button onClick={reessayer} variante="primaire" taille="sm">Réessayer</Button>
           </div>
         ) : villas.length === 0 ? (
-          <div className="text-center py-24">
-            <div
-              className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
-              style={{ background: 'var(--bg-elevated)' }}
-            >
-              <svg className="w-8 h-8" style={{ color: 'var(--text-3)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-            </div>
-            <p className="text-lg font-medium th-text-1 mb-2">Aucune villa ne correspond</p>
-            <p className="text-sm th-text-2">
-              {filtres.date_debut
-                ? 'Essayez d\'autres dates ou élargissez votre budget.'
-                : 'Essayez d\'autres critères de recherche.'}
-            </p>
-            {nbFiltresActifs > 0 && (
-              <Button onClick={reinitialiser} variante="secondaire" taille="sm" className="mt-6">
-                Voir toutes les villas
-              </Button>
-            )}
-          </div>
+          <EtatVide
+            actifs={filtresActifs}
+            suggestions={suggestions}
+            recherche={chercheSuggestions}
+            avecDates={Boolean(filtres.date_debut)}
+            onRetirer={retirerFiltre}
+            onToutEffacer={reinitialiser}
+          />
         ) : (
           <>
             <p className="text-sm mb-6 th-text-2">

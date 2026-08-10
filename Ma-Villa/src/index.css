@@ -1246,3 +1246,176 @@ html.video-mode[data-theme="dark"] {
   color: var(--text-1);
   box-shadow: var(--shadow-sm);
 }
+
+/* ════════════════════════════════════════════════════════════════
+   RECHERCHE — filtres actifs, feuille, état vide (planche 06)
+   ════════════════════════════════════════════════════════════════ */
+
+.filtres-actifs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0 0 var(--space-5);
+  padding: 0;
+}
+
+.pastille-filtre {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: var(--r-full);
+  border: 1px solid var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent);
+  font: var(--t-body-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+}
+.pastille-filtre:hover { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+.pastille-filtre:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.filtres-effacer {
+  background: none;
+  border: 0;
+  color: var(--text-2);
+  font: var(--t-body-sm);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  padding: 6px 4px;
+  min-height: 36px;
+}
+.filtres-effacer:hover { color: var(--text-1); }
+
+/* — feuille de filtres — */
+
+.feuille-fond {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(20, 14, 10, 0.5);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.feuille {
+  width: 100%;
+  max-width: 560px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  box-shadow: var(--shadow-xl);
+  animation: feuille-monte var(--dur-slow) var(--ease);
+}
+@keyframes feuille-monte { from { transform: translateY(16px); opacity: 0 } to { transform: none; opacity: 1 } }
+
+@media (min-width: 640px) {
+  .feuille-fond { align-items: center; }
+  .feuille { border-radius: var(--r-lg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feuille { animation: none; }
+}
+
+.feuille-entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border);
+}
+.feuille-titre { margin: 0; font: var(--t-h3); color: var(--text-1); }
+.feuille-fermer {
+  width: 36px; height: 36px;
+  border: 0; border-radius: var(--r-full);
+  background: var(--bg-elevated);
+  color: var(--text-2);
+  cursor: pointer;
+}
+.feuille-fermer:hover { color: var(--text-1); }
+
+.feuille-corps {
+  overflow-y: auto;
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.feuille-section { display: flex; flex-direction: column; gap: var(--space-3); }
+.feuille-section-titre { margin: 0; font: var(--t-label); color: var(--text-2); }
+.feuille-budget { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.feuille-budget label { display: flex; flex-direction: column; gap: var(--space-2); }
+.feuille-pastilles { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+.pastille-choix {
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-1);
+  font: var(--t-body-sm);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.pastille-choix:hover { border-color: var(--border-strong); }
+.pastille-choix:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pastille-choix.est-choisi {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.feuille-pied {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--border);
+}
+
+/* — état vide — */
+
+.etat-vide {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-9) var(--space-5);
+}
+.etat-vide-icone {
+  display: grid;
+  place-items: center;
+  width: 64px; height: 64px;
+  border-radius: var(--r-lg);
+  background: var(--bg-elevated);
+  color: var(--text-3);
+  margin-bottom: var(--space-5);
+}
+.etat-vide-titre { margin: 0 0 var(--space-3); font: var(--t-h3); color: var(--text-1); }
+.etat-vide-texte {
+  margin: 0;
+  max-width: 42ch;
+  font: var(--t-body-sm);
+  color: var(--text-2);
+}
+.etat-vide-texte strong { color: var(--text-1); font-weight: 600; }
+.etat-vide-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
