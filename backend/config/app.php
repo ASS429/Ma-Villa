@@ -56,6 +56,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | URL du front
+    |--------------------------------------------------------------------------
+    |
+    | Le back n'expose aucune interface : les emails transactionnels et les
+    | redirections après vérification doivent viser l'application React.
+    |
+    */
+
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

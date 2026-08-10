@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
+import { messageErreur } from '../../lib/erreurs'
 
 export default function Profil() {
   const { user, updateUser } = useAuth()
@@ -12,12 +13,6 @@ export default function Profil() {
   const [pwdLoading, setPwdLoading] = useState(false)
   const [pwdSuccess, setPwdSuccess] = useState(false)
   const [pwdError, setPwdError] = useState('')
-
-  const firstError = (err: any) => {
-    const errors = err.response?.data?.errors
-    const first = errors ? Object.values(errors).flat()[0] as string : null
-    return first || err.response?.data?.message || 'Une erreur est survenue.'
-  }
 
   const saveInfo = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,8 +27,8 @@ export default function Profil() {
       })
       updateUser(res.data)
       setInfoSuccess(true)
-    } catch (err: any) {
-      setInfoError(firstError(err))
+    } catch (err) {
+      setInfoError(messageErreur(err))
     } finally {
       setInfoLoading(false)
     }
@@ -48,8 +43,8 @@ export default function Profil() {
       await api.patch('/auth/profile', pwd)
       setPwdSuccess(true)
       setPwd({ current_password: '', password: '', password_confirmation: '' })
-    } catch (err: any) {
-      setPwdError(firstError(err))
+    } catch (err) {
+      setPwdError(messageErreur(err))
     } finally {
       setPwdLoading(false)
     }

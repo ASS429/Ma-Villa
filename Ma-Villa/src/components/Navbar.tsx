@@ -80,7 +80,7 @@ export default function Navbar() {
           }}
         >
           <Link to="/" onClick={close} className="flex items-center gap-2.5">
-            <img src="/logo.png" alt="Ma Villa" className="h-9 w-9 rounded-xl object-contain" />
+            <img src="/logo.webp" alt="Ma Villa" width={36} height={36} className="h-9 w-9 rounded-xl object-contain" />
             <span
               style={{
                 fontFamily: "'Cormorant Garamond', Georgia, serif",

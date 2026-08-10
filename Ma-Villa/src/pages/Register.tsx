@@ -3,6 +3,7 @@ import { Link, useNavigate, Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import FloatingInput from '../components/FloatingInput'
+import { messageErreur } from '../lib/erreurs'
 
 function IconEye({ show }: { show: boolean }) {
   return show ? (
@@ -58,9 +59,8 @@ export default function Register() {
     try {
       await register(form)
       navigate('/dashboard')
-    } catch (e: any) {
-      const errors = e.response?.data?.errors
-      setError(errors ? (Object.values(errors).flat()[0] as string) : e.response?.data?.message || 'Une erreur est survenue.')
+    } catch (err) {
+      setError(messageErreur(err))
     }
   }
 
@@ -88,7 +88,7 @@ export default function Register() {
 
       <div className="w-full max-w-md relative z-10">
         <Link to="/" className="flex justify-center mb-10">
-          <img src="/logo.png" alt="Ma Villa" className="h-20 w-20 rounded-2xl object-contain" />
+          <img src="/logo.webp" alt="Ma Villa" width={80} height={80} className="h-20 w-20 rounded-2xl object-contain" />
         </Link>
 
         <div

@@ -10,17 +10,44 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | null>(null)
 
+const CLE = 'theme'
+
+function themeInitial(): Theme {
+  const enregistre = localStorage.getItem(CLE)
+  if (enregistre === 'light' || enregistre === 'dark') return enregistre
+
+  // Aucun choix explicite : on suit la préférence du système plutôt que
+  // d'imposer le thème clair.
+  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    return (localStorage.getItem('theme') as Theme) || 'light'
-  })
+  const [theme, setTheme] = useState<Theme>(themeInitial)
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem('theme', theme)
+    // Colore la barre d'adresse du navigateur mobile.
+    const meta = document.head.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+    if (meta) meta.content = theme === 'dark' ? '#0C0A08' : '#F7F4EF'
   }, [theme])
 
-  const toggleTheme = () => setTheme((t) => (t === 'light' ? 'dark' : 'light'))
+  useEffect(() => {
+    // Tant que l'utilisateur n'a rien choisi, on suit le système en direct.
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const onChange = (e: MediaQueryListEvent) => {
+      if (!localStorage.getItem(CLE)) setTheme(e.matches ? 'dark' : 'light')
+    }
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+
+  const toggleTheme = () => {
+    setTheme((t) => {
+      const suivant = t === 'light' ? 'dark' : 'light'
+      localStorage.setItem(CLE, suivant)
+      return suivant
+    })
+  }
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme, isDark: theme === 'dark' }}>
@@ -29,6 +56,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- convention des modules de contexte : le hook vit auprès de son provider
 export function useTheme() {
   const ctx = useContext(ThemeContext)
   if (!ctx) throw new Error('useTheme must be used within ThemeProvider')

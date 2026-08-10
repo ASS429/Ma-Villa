@@ -1,78 +1,61 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
+import { useToast } from '../../context/ToastContext'
 import PageHeader from '../../components/PageHeader'
+import Footer from '../../components/Footer'
+import Seo from '../../components/Seo'
+import MoyensPaiement from '../../components/MoyensPaiement'
+import { useRequete } from '../../lib/useRequete'
+import { messageErreur } from '../../lib/erreurs'
+import { fcfa, dateCourte, noteLisible, nuits, aujourdhui } from '../../lib/format'
+import {
+  LIBELLES_LOGEMENT, LIBELLES_TARIF, UNITE_TARIF,
+  type Occupation, type Tarif, type VillaDetail as Villa,
+} from '../../types'
 
-interface Tarif {
-  id: number
-  type_tarif: string
-  avec_clim: boolean
-  avec_buffet: boolean
-  prix: number
+/* ─── Utilitaires ────────────────────────────────────────────── */
+
+function estVideo(url: string) {
+  return /\.(mp4|webm|mov)(\?.*)?$/i.test(url)
 }
 
-interface Logement {
-  id: number
-  nom: string
-  type: string
-  capacite: number
-  disponible: boolean
-  tarifs: Tarif[]
+function libelleTarif(t: Tarif) {
+  return [
+    LIBELLES_TARIF[t.type_tarif],
+    t.avec_clim ? 'clim' : null,
+    t.avec_buffet ? 'buffet' : null,
+  ].filter(Boolean).join(' + ')
 }
 
-interface Avis {
-  id: number
-  note: number
-  commentaire: string
-  client: { name: string }
-  created_at: string
+/** Une date tombe-t-elle dans une plage déjà prise ? */
+function chevauche(
+  debut: string, fin: string,
+  plages: { date_debut: string; date_fin: string }[]
+) {
+  return plages.some((p) => p.date_debut <= fin && p.date_fin >= debut)
 }
 
-interface Villa {
-  id: number
-  nom: string
-  description: string
-  adresse: string
-  ville: string
-  telephone: string
-  statut: string
-  latitude: number | null
-  longitude: number | null
-  photos: { url: string; alt: string }[]
-  logements: Logement[]
-  avis: Avis[]
-  proprietaire: { name: string }
-}
+/* ─── Barre de progression de lecture ────────────────────────── */
 
-const tarifLabels: Record<string, string> = {
-  journee: 'Journée', nuitee: 'Nuitée', demi_journee: 'Demi-journée', pass: 'Pass',
-}
+function ProgressionLecture() {
+  const [progression, setProgression] = useState(0)
 
-const typeLabels: Record<string, string> = {
-  villa_entiere: 'Villa entière', appartement: 'Appartement', chambre: 'Chambre', piscine: 'Piscine',
-}
-
-/* ─── Reading progress bar ───────────────────────────────────── */
-
-function ReadingProgress() {
-  const [progress, setProgress] = useState(0)
   useEffect(() => {
     const onScroll = () => {
       const el = document.documentElement
       const total = el.scrollHeight - el.clientHeight
-      setProgress(total > 0 ? (el.scrollTop / total) * 100 : 0)
+      setProgression(total > 0 ? (el.scrollTop / total) * 100 : 0)
     }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 h-0.5" style={{ background: 'var(--border)' }}>
-      <div
-        className="h-full"
-        style={{ width: `${progress}%`, background: 'var(--accent)', transition: 'width 60ms linear' }}
-      />
+    <div className="fixed top-0 left-0 right-0 z-50 h-0.5" style={{ background: 'var(--border)' }} aria-hidden="true">
+      <div className="h-full" style={{ width: `${progression}%`, background: 'var(--accent)', transition: 'width 60ms linear' }} />
     </div>
   )
 }
@@ -93,165 +76,86 @@ function Lightbox({ photos, idx, onClose, onPrev, onNext }: {
       else if (e.key === 'ArrowRight') onNext()
     }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    // La page derrière ne doit pas défiler pendant la visionneuse.
+    const overflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      document.body.style.overflow = overflow
+    }
   }, [onClose, onPrev, onNext])
 
-  const current = photos[idx]
-  const isVideo = isVideoUrl(current.url)
+  const courante = photos[idx]
 
   return (
     <div
       className="fixed inset-0 z-[60] flex items-center justify-center"
       style={{ background: 'rgba(0,0,0,0.96)' }}
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Photo ${idx + 1} sur ${photos.length}`}
     >
-      <button
-        onClick={onClose}
-        className="absolute top-4 right-5 text-white/50 hover:text-white text-4xl leading-none transition-colors"
-        aria-label="Fermer"
-      >
-        ×
-      </button>
+      <button onClick={onClose} className="absolute top-4 right-5 text-white/60 hover:text-white text-4xl leading-none" aria-label="Fermer">×</button>
+
       {photos.length > 1 && (
         <>
-          <button
-            onClick={(e) => { e.stopPropagation(); onPrev() }}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white text-5xl leading-none transition-colors select-none px-2"
-          >
-            ‹
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onNext() }}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white text-5xl leading-none transition-colors select-none px-2"
-          >
-            ›
-          </button>
+          <button onClick={(e) => { e.stopPropagation(); onPrev() }} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white text-5xl px-2" aria-label="Photo précédente">‹</button>
+          <button onClick={(e) => { e.stopPropagation(); onNext() }} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white text-5xl px-2" aria-label="Photo suivante">›</button>
         </>
       )}
-      <div
-        className="max-w-5xl w-full px-16 flex flex-col items-center"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {isVideo ? (
-          <video
-            src={current.url}
-            className="max-h-[85vh] w-full object-contain"
-            controls autoPlay loop muted playsInline
-          />
+
+      <div className="max-w-5xl w-full px-4 md:px-16 flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+        {estVideo(courante.url) ? (
+          <video src={courante.url} className="max-h-[85vh] w-full object-contain" controls autoPlay loop muted playsInline />
         ) : (
-          <img
-            src={current.url}
-            alt={current.alt}
-            className="max-h-[85vh] max-w-full object-contain rounded-xl"
-          />
+          <img src={courante.url} alt={courante.alt} className="max-h-[85vh] max-w-full object-contain rounded-xl" />
         )}
-        <p className="text-white/30 text-xs mt-3">{idx + 1} / {photos.length}</p>
+        <p className="text-white/40 text-xs mt-3">{idx + 1} / {photos.length}</p>
       </div>
     </div>
   )
 }
 
-/* ─── Helpers ────────────────────────────────────────────────── */
+/* ─── Galerie ────────────────────────────────────────────────── */
 
-function isVideoUrl(url: string) {
-  return /\.(mp4|webm|mov)(\?.*)?$/i.test(url)
-}
-
-function StarRating({ note }: { note: number }) {
-  return (
-    <span className="flex gap-0.5">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <span key={i} style={{ color: i <= note ? '#FBBF24' : 'var(--border-2)' }}>★</span>
-      ))}
-    </span>
-  )
-}
-
-/* ─── Photo gallery ──────────────────────────────────────────── */
-
-function PhotoGallery({
-  photos,
-  onLightbox,
-}: {
+function Galerie({ photos, onAgrandir }: {
   photos: { url: string; alt: string }[]
-  onLightbox: (idx: number) => void
+  onAgrandir: (i: number) => void
 }) {
   const [idx, setIdx] = useState(0)
 
   if (photos.length === 0) {
     return (
-      <div
-        className="aspect-video rounded-2xl flex items-center justify-center mb-8"
-        style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
-      >
+      <div className="aspect-video rounded-2xl flex items-center justify-center mb-8 th-card">
         <p className="th-text-3 text-sm">Aucune photo disponible</p>
       </div>
     )
   }
 
-  const prev = () => setIdx((i) => (i - 1 + photos.length) % photos.length)
-  const next = () => setIdx((i) => (i + 1) % photos.length)
-  const current = photos[idx]
-  const isVideo = isVideoUrl(current.url)
+  const courante = photos[idx]
+  const video = estVideo(courante.url)
 
   return (
     <div className="mb-8">
-      <div className="relative aspect-video rounded-2xl overflow-hidden mb-3 group">
-        {isVideo ? (
-          <video
-            key={current.url}
-            src={current.url}
-            className="w-full h-full object-cover"
-            controls autoPlay loop muted playsInline
-          />
+      <div className="relative aspect-video rounded-2xl overflow-hidden mb-3 group" style={{ background: 'var(--bg-elevated)' }}>
+        {video ? (
+          <video key={courante.url} src={courante.url} className="w-full h-full object-cover" controls autoPlay loop muted playsInline />
         ) : (
           <img
-            src={current.url}
-            alt={current.alt || `Photo ${idx + 1}`}
-            className="w-full h-full object-cover transition-opacity duration-300 cursor-zoom-in"
-            onClick={() => onLightbox(idx)}
+            src={courante.url}
+            alt={courante.alt || `Photo ${idx + 1}`}
+            className="w-full h-full object-cover cursor-zoom-in"
+            onClick={() => onAgrandir(idx)}
+            fetchPriority="high"
+            decoding="async"
           />
-        )}
-
-        {photos.length > 1 && !isVideo && (
-          <>
-            <button
-              onClick={prev}
-              className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full w-9 h-9 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 backdrop-blur-sm"
-            >
-              ‹
-            </button>
-            <button
-              onClick={next}
-              className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full w-9 h-9 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 backdrop-blur-sm"
-            >
-              ›
-            </button>
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-              {photos.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setIdx(i)}
-                  className={`rounded-full transition-all ${i === idx ? 'bg-white w-4 h-1.5' : 'bg-white/40 w-1.5 h-1.5'}`}
-                />
-              ))}
-            </div>
-          </>
         )}
 
         {photos.length > 1 && (
           <div className="absolute top-3 right-3 bg-black/60 text-white text-xs px-2.5 py-1 rounded-full backdrop-blur-sm">
             {idx + 1} / {photos.length}
           </div>
-        )}
-
-        {!isVideo && (
-          <button
-            onClick={() => onLightbox(idx)}
-            className="absolute bottom-3 left-3 bg-black/60 text-white text-xs px-2.5 py-1 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all"
-          >
-            ⤢ Agrandir
-          </button>
         )}
       </div>
 
@@ -262,17 +166,14 @@ function PhotoGallery({
               key={i}
               onClick={() => setIdx(i)}
               className={`shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${i === idx ? 'opacity-100' : 'opacity-50 hover:opacity-80'}`}
-              style={{ borderColor: i === idx ? 'var(--text-1)' : 'transparent' }}
+              style={{ borderColor: i === idx ? 'var(--accent)' : 'transparent' }}
+              aria-label={`Voir la photo ${i + 1}`}
+              aria-current={i === idx}
             >
-              {isVideoUrl(p.url) ? (
-                <div
-                  className="w-full h-full flex items-center justify-center text-lg th-text-1"
-                  style={{ background: 'var(--bg-elevated)' }}
-                >
-                  ▶
-                </div>
+              {estVideo(p.url) ? (
+                <span className="w-full h-full flex items-center justify-center text-lg th-text-1" style={{ background: 'var(--bg-elevated)' }}>▶</span>
               ) : (
-                <img src={p.url} alt="" className="w-full h-full object-cover" />
+                <img src={p.url} alt="" loading="lazy" className="w-full h-full object-cover" />
               )}
             </button>
           ))}
@@ -282,150 +183,267 @@ function PhotoGallery({
   )
 }
 
-/* ─── Main component ─────────────────────────────────────────── */
+/* ─── Étoiles ────────────────────────────────────────────────── */
+
+function Etoiles({ note }: { note: number }) {
+  return (
+    <span className="flex gap-0.5" aria-label={`${note} sur 5`}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <span key={i} aria-hidden="true" style={{ color: i <= note ? 'var(--accent-gold)' : 'var(--border-2)' }}>★</span>
+      ))}
+    </span>
+  )
+}
+
+/* ─── Page ───────────────────────────────────────────────────── */
 
 export default function VillaDetail() {
   const { id } = useParams()
   const { user } = useAuth()
   const { isDark } = useTheme()
+  const toast = useToast()
   const navigate = useNavigate()
-  const [villa, setVilla] = useState<Villa | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+
+  const { donnees: villa, chargement, erreur, reessayer } = useRequete<Villa>(
+    async (signal) => (await api.get(`/villas/${id}`, { signal })).data,
+    `villa-${id}`,
+    { messageErreurParDefaut: 'Impossible de charger cette villa.' }
+  )
+
+  const [occupation, setOccupation] = useState<Occupation>({})
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null)
+  const [estFavori, setEstFavori] = useState(false)
+  const [peutNoter, setPeutNoter] = useState(false)
+
   const [reservation, setReservation] = useState({
     logement_id: '', tarif_id: '', date_debut: '', date_fin: '', nb_personnes: '1',
   })
-  const [resError, setResError] = useState('')
-  const [resSuccess, setResSuccess] = useState(false)
-  const [resLoading, setResLoading] = useState(false)
-  const [avisForm, setAvisForm] = useState({ note: '5', commentaire: '' })
-  const [avisSuccess, setAvisSuccess] = useState(false)
-  const [isFavori, setIsFavori] = useState(false)
+  const [erreurResa, setErreurResa] = useState('')
+  const [resaEnvoyee, setResaEnvoyee] = useState(false)
+  const [envoiResa, setEnvoiResa] = useState(false)
 
+  const [avisForm, setAvisForm] = useState({ note: '5', commentaire: '' })
+  const [avisEnvoye, setAvisEnvoye] = useState(false)
+
+  // Dates déjà prises : le client les voyait seulement après un refus en 409.
   useEffect(() => {
-    api.get(`/villas/${id}`)
-      .then((res) => setVilla(res.data))
-      .finally(() => setIsLoading(false))
+    if (!id) return
+    api.get(`/villas/${id}/occupation`)
+      .then((res) => setOccupation(res.data))
+      .catch(() => { /* sans calendrier, le serveur reste l'arbitre à la soumission */ })
   }, [id])
 
   useEffect(() => {
-    if (user?.role === 'client' && id) {
-      api.get('/favoris').then((res) => {
-        setIsFavori(res.data.some((f: any) => f.villa_id === parseInt(id)))
-      }).catch(() => {})
-    }
+    if (user?.role !== 'client' || !id) return
+    api.get('/favoris')
+      .then((res) => setEstFavori(res.data.some((f: { villa_id: number }) => f.villa_id === Number(id))))
+      .catch(() => {})
+    api.get(`/villas/${id}/avis/eligibilite`)
+      .then((res) => setPeutNoter(Boolean(res.data.peut_noter)))
+      .catch(() => setPeutNoter(false))
   }, [user, id])
+
+  const logement = villa?.logements.find((l) => l.id === Number(reservation.logement_id))
+  const tarif = logement?.tarifs.find((t) => t.id === Number(reservation.tarif_id))
+
+  // Récapitulatif de prix : le client validait sans jamais voir le total.
+  const recapitulatif = tarif && reservation.date_debut && reservation.date_fin
+    ? (() => {
+        const unites = Math.max(nuits(reservation.date_debut, reservation.date_fin), 1)
+        return { unites, prixUnitaire: tarif.prix, total: tarif.prix * unites }
+      })()
+    : null
+
+  const plagesPrises = logement ? (occupation[String(logement.id)] ?? []) : []
+  const conflitDates =
+    reservation.date_debut && reservation.date_fin
+      ? chevauche(reservation.date_debut, reservation.date_fin, plagesPrises)
+      : false
 
   const toggleFavori = async () => {
     if (!user || user.role !== 'client') return
-    if (isFavori) {
-      await api.delete(`/villas/${id}/favoris`)
-      setIsFavori(false)
-    } else {
-      await api.post(`/villas/${id}/favoris`, {})
-      setIsFavori(true)
+    const etait = estFavori
+    setEstFavori(!etait)
+    try {
+      if (etait) await api.delete(`/villas/${id}/favoris`)
+      else await api.post(`/villas/${id}/favoris`, {})
+    } catch (err) {
+      setEstFavori(etait)
+      toast.erreur(messageErreur(err, 'Impossible de mettre à jour vos favoris.'))
     }
   }
 
-  const logementSelectionne = villa?.logements.find((l) => l.id === parseInt(reservation.logement_id))
+  const partager = async () => {
+    const url = window.location.href
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: villa?.nom, text: `${villa?.nom} — ${villa?.ville}`, url })
+      } else {
+        await navigator.clipboard.writeText(url)
+        toast.succes('Lien copié.')
+      }
+    } catch { /* partage annulé par l'utilisateur */ }
+  }
 
-  const handleReservation = async (e: React.FormEvent) => {
+  const envoyerReservation = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user) { navigate('/login'); return }
-    setResError('')
-    setResLoading(true)
+    if (!user) { navigate(`/login?retour=${encodeURIComponent(`/villas/${id}`)}`); return }
+
+    setErreurResa('')
+
+    if (conflitDates) {
+      setErreurResa('Ce logement est déjà réservé sur cette période. Choisissez d\'autres dates.')
+      return
+    }
+    if (logement && Number(reservation.nb_personnes) > logement.capacite) {
+      setErreurResa(`Ce logement accueille au maximum ${logement.capacite} personnes.`)
+      return
+    }
+
+    setEnvoiResa(true)
     try {
       await api.post('/reservations', {
-        logement_id: parseInt(reservation.logement_id),
-        tarif_id: parseInt(reservation.tarif_id),
+        logement_id: Number(reservation.logement_id),
+        tarif_id: Number(reservation.tarif_id),
         date_debut: reservation.date_debut,
         date_fin: reservation.date_fin,
-        nb_personnes: parseInt(reservation.nb_personnes),
+        nb_personnes: Number(reservation.nb_personnes),
       })
-      setResSuccess(true)
-    } catch (err: any) {
-      const errors = err.response?.data?.errors
-      const first = errors ? Object.values(errors).flat()[0] as string : null
-      setResError(first || err.response?.data?.message || 'Une erreur est survenue.')
+      setResaEnvoyee(true)
+      toast.succes('Demande envoyée. Le propriétaire va vous répondre.')
+    } catch (err) {
+      setErreurResa(messageErreur(err))
     } finally {
-      setResLoading(false)
+      setEnvoiResa(false)
     }
   }
 
-  const handleAvis = async (e: React.FormEvent) => {
+  const envoyerAvis = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user) { navigate('/login'); return }
-    await api.post('/avis', {
-      villa_id: parseInt(id!),
-      note: parseInt(avisForm.note),
-      commentaire: avisForm.commentaire,
-    })
-    setAvisSuccess(true)
-    api.get(`/villas/${id}`).then((res) => setVilla(res.data))
+    try {
+      await api.post('/avis', {
+        villa_id: Number(id),
+        note: Number(avisForm.note),
+        commentaire: avisForm.commentaire,
+      })
+      setAvisEnvoye(true)
+      toast.succes('Merci pour votre avis.')
+      reessayer()
+    } catch (err) {
+      toast.erreur(messageErreur(err, "Votre avis n'a pas pu être publié."))
+    }
   }
 
-  const fmt = (d: string) => new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+  /* ── États de page ── */
 
-  const openLightbox = (i: number) => setLightboxIdx(i)
-  const closeLightbox = () => setLightboxIdx(null)
-  const prevPhoto = () => setLightboxIdx((i) => i !== null ? (i - 1 + (villa?.photos.length ?? 1)) % (villa?.photos.length ?? 1) : 0)
-  const nextPhoto = () => setLightboxIdx((i) => i !== null ? (i + 1) % (villa?.photos.length ?? 1) : 0)
-
-  if (isLoading) return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text-1)' }}>
-      <PageHeader />
-      <div className="flex items-center justify-center py-32">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 rounded-full animate-spin" style={{ border: '2px solid var(--border)', borderTopColor: 'var(--text-1)' }} />
-          <p className="text-sm th-text-2">Chargement...</p>
+  if (chargement) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text-1)' }}>
+        <PageHeader />
+        <div className="max-w-5xl mx-auto px-6 py-10">
+          <div className="skeleton aspect-video rounded-2xl mb-8" />
+          <div className="skeleton h-8 w-2/3 rounded-lg mb-3" />
+          <div className="skeleton h-4 w-1/3 rounded-lg" />
         </div>
       </div>
-    </div>
-  )
+    )
+  }
 
-  if (!villa) return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text-1)' }}>
-      <PageHeader />
-      <div className="flex items-center justify-center py-32 flex-col gap-3">
-        <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: 'var(--bg-elevated)' }}>
-          <svg className="w-8 h-8" style={{ color: 'var(--text-3)' }} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>
+  if (erreur || !villa) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text-1)' }}>
+        <Seo titre="Villa introuvable" description="Cette villa n'est pas disponible." indexable={false} />
+        <PageHeader />
+        <div className="flex flex-col items-center justify-center py-32 gap-4 px-6 text-center">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: 'var(--bg-elevated)' }}>
+            <svg className="w-8 h-8" style={{ color: 'var(--text-3)' }} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75" />
+            </svg>
+          </div>
+          <p className="th-text-1 font-medium">Cette villa n'est pas disponible</p>
+          <p className="th-text-2 text-sm max-w-sm">{erreur || 'Elle a peut-être été retirée par son propriétaire.'}</p>
+          <div className="flex gap-3 mt-2">
+            <button onClick={reessayer} className="px-5 py-2.5 rounded-xl text-sm font-medium transition-opacity hover:opacity-90" style={{ background: 'var(--accent)', color: '#fff' }}>
+              Réessayer
+            </button>
+            <Link to="/villas" className="px-5 py-2.5 rounded-xl text-sm font-medium th-text-1" style={{ border: '1px solid var(--border-2)', textDecoration: 'none' }}>
+              Voir les villas
+            </Link>
+          </div>
         </div>
-        <p className="th-text-2">Villa introuvable.</p>
       </div>
-    </div>
-  )
+    )
+  }
 
-  const noteAvg = villa.avis.length
-    ? (villa.avis.reduce((s, a) => s + a.note, 0) / villa.avis.length).toFixed(1)
-    : null
+  const note = noteLisible(villa.note_moyenne)
+  const classeDate = `w-full rounded-xl px-4 py-2.5 text-sm th-input-field${isDark ? ' [color-scheme:dark]' : ''}`
+  const photoPartage = villa.photos.find((p) => !estVideo(p.url))?.url
 
-  const dateInputClass = `w-full rounded-xl px-4 py-2.5 text-sm th-input-field${isDark ? ' [color-scheme:dark]' : ''}`
+  const descriptionSeo = [
+    `${villa.nom} à ${villa.ville}.`,
+    villa.prix_min != null ? `À partir de ${fcfa(villa.prix_min)}.` : null,
+    note ? `Noté ${note}/5 (${villa.avis_count} avis).` : null,
+    (villa.description ?? '').slice(0, 100),
+  ].filter(Boolean).join(' ')
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text-1)' }}>
-      <ReadingProgress />
+      <Seo
+        titre={`${villa.nom} — ${villa.ville}`}
+        description={descriptionSeo}
+        image={photoPartage}
+        chemin={`/villas/${villa.id}`}
+        donneesStructurees={{
+          '@context': 'https://schema.org',
+          '@type': 'LodgingBusiness',
+          name: villa.nom,
+          description: villa.description,
+          address: { '@type': 'PostalAddress', streetAddress: villa.adresse, addressLocality: villa.ville, addressCountry: 'SN' },
+          image: villa.photos.filter((p) => !estVideo(p.url)).map((p) => p.url),
+          telephone: villa.telephone,
+          ...(villa.latitude && villa.longitude
+            ? { geo: { '@type': 'GeoCoordinates', latitude: villa.latitude, longitude: villa.longitude } }
+            : {}),
+          ...(villa.prix_min != null
+            ? { priceRange: `À partir de ${fcfa(villa.prix_min)}` }
+            : {}),
+          ...(note && villa.avis_count
+            ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: note, reviewCount: villa.avis_count, bestRating: 5 } }
+            : {}),
+        }}
+      />
+
+      <ProgressionLecture />
       <PageHeader />
 
       {lightboxIdx !== null && (
         <Lightbox
           photos={villa.photos}
           idx={lightboxIdx}
-          onClose={closeLightbox}
-          onPrev={prevPhoto}
-          onNext={nextPhoto}
+          onClose={() => setLightboxIdx(null)}
+          onPrev={() => setLightboxIdx((i) => ((i ?? 0) - 1 + villa.photos.length) % villa.photos.length)}
+          onNext={() => setLightboxIdx((i) => ((i ?? 0) + 1) % villa.photos.length)}
         />
       )}
 
-      {/* Mobile floating button — clients uniquement */}
-      {(!user || user.role === 'client') && (
+      {/* Barre d'action mobile */}
+      {(!user || user.role === 'client') && !resaEnvoyee && (
         <div
-          className="lg:hidden fixed bottom-0 left-0 right-0 z-30 backdrop-blur-md px-6 py-4"
+          className="lg:hidden fixed bottom-0 left-0 right-0 z-30 backdrop-blur-md px-5 py-3 flex items-center gap-4"
           style={{ background: 'var(--header-bg)', borderTop: '1px solid var(--border)' }}
         >
+          <div className="flex-1 min-w-0">
+            {villa.prix_min != null ? (
+              <p className="text-sm th-text-1"><span className="font-semibold">{fcfa(villa.prix_min)}</span></p>
+            ) : (
+              <p className="text-sm th-text-2">Tarif sur demande</p>
+            )}
+            <p className="text-xs th-text-3">à partir de</p>
+          </div>
           <button
-            onClick={() => document.getElementById('reservation-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-            className="w-full py-3 rounded-xl text-sm font-medium transition-all hover:scale-[1.02]"
-            style={{ background: 'var(--text-1)', color: 'var(--bg)' }}
+            onClick={() => document.getElementById('reserver')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            className="px-6 py-3 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90"
+            style={{ background: 'var(--accent)', color: '#fff', minHeight: 44 }}
           >
             Réserver
           </button>
@@ -433,307 +451,351 @@ export default function VillaDetail() {
       )}
 
       <div className="max-w-5xl mx-auto px-6 py-8 md:py-10 pb-28 lg:pb-10">
-        <PhotoGallery photos={villa.photos} onLightbox={openLightbox} />
+        <Galerie photos={villa.photos} onAgrandir={setLightboxIdx} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          {/* Left — Info */}
+          {/* Colonne gauche */}
           <div className="lg:col-span-2">
             <div className="flex items-start justify-between mb-2 gap-4">
               <h1 className="text-2xl md:text-3xl font-normal leading-tight">{villa.nom}</h1>
               <div className="shrink-0 flex items-center gap-2">
+                <button
+                  onClick={partager}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl transition-all hover:scale-110"
+                  style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', color: 'var(--text-2)' }}
+                  aria-label="Partager cette villa"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342a3 3 0 100-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684zm0-12a3 3 0 105.368-2.684 3 3 0 00-5.368 2.684z" />
+                  </svg>
+                </button>
+
                 {user?.role === 'client' && (
                   <button
                     onClick={toggleFavori}
-                    className="w-8 h-8 flex items-center justify-center rounded-xl transition-all hover:scale-110 active:scale-95"
+                    className="w-9 h-9 flex items-center justify-center rounded-xl transition-all hover:scale-110"
                     style={{
                       background: 'var(--bg-surface)',
                       border: '1px solid var(--border)',
-                      color: isFavori ? '#ef4444' : 'var(--text-3)',
+                      color: estFavori ? '#ef4444' : 'var(--text-3)',
                     }}
-                    aria-label={isFavori ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                    aria-label={estFavori ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                    aria-pressed={estFavori}
                   >
-                    <svg viewBox="0 0 24 24" className="w-4.5 h-4.5" fill={isFavori ? '#ef4444' : 'none'} stroke={isFavori ? '#ef4444' : 'currentColor'} strokeWidth={2}>
+                    <svg viewBox="0 0 24 24" className="w-4 h-4" fill={estFavori ? '#ef4444' : 'none'} stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
                     </svg>
                   </button>
                 )}
-                {noteAvg && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-amber-400">★</span>
-                    <span className="th-text-1 font-medium">{noteAvg}</span>
-                    <span className="th-text-3 text-sm">({villa.avis.length})</span>
-                  </div>
-                )}
               </div>
             </div>
-            <p className="th-text-2 mb-4">{villa.adresse}, {villa.ville}</p>
 
-            {/* Contact propriétaire */}
-            <div
-              className="rounded-xl px-4 py-3 mb-6 flex flex-wrap items-center gap-x-5 gap-y-2"
-              style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
-            >
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-5">
+              <p className="th-text-2">{villa.adresse}, {villa.ville}</p>
+              {note && (
+                <span className="flex items-center gap-1.5 text-sm">
+                  <span style={{ color: 'var(--accent-gold)' }}>★</span>
+                  <span className="th-text-1 font-medium">{note}</span>
+                  <span className="th-text-3">({villa.avis_count} avis)</span>
+                </span>
+              )}
+            </div>
+
+            <div className="rounded-xl px-4 py-3 mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 th-card">
               <span className="text-sm th-text-2">
                 Propriétaire : <span className="th-text-1 font-medium">{villa.proprietaire.name}</span>
               </span>
-              <a
-                href={`tel:${villa.telephone}`}
-                className="flex items-center gap-1.5 text-sm font-medium th-text-1 transition-opacity hover:opacity-70"
-              >
+              <a href={`tel:${villa.telephone}`} className="flex items-center gap-1.5 text-sm font-medium th-text-1 hover:opacity-70 transition-opacity">
                 📞 {villa.telephone}
               </a>
             </div>
 
-            <p className="th-text-2 leading-relaxed mb-10">{villa.description}</p>
+            <p className="th-text-2 leading-relaxed mb-10 whitespace-pre-line">{villa.description}</p>
 
-            {/* Map */}
             {villa.latitude && villa.longitude && (
-              <div className="mb-10">
+              <section className="mb-10">
                 <h2 className="text-lg font-medium mb-4">Localisation</h2>
                 <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
                   <iframe
                     src={`https://www.openstreetmap.org/export/embed.html?bbox=${villa.longitude - 0.01}%2C${villa.latitude - 0.01}%2C${villa.longitude + 0.01}%2C${villa.latitude + 0.01}&layer=mapnik&marker=${villa.latitude}%2C${villa.longitude}`}
-                    width="100%"
-                    height="280"
-                    style={{ border: 0, display: 'block' }}
-                    loading="lazy"
-                    title="Localisation de la villa"
+                    width="100%" height="280" style={{ border: 0, display: 'block' }}
+                    loading="lazy" title={`Localisation de ${villa.nom}`}
                   />
                 </div>
-              </div>
+              </section>
             )}
 
-            {/* Logements */}
-            <h2 className="text-lg font-medium mb-4">Logements disponibles</h2>
-            <div className="flex flex-col gap-3 mb-10">
-              {villa.logements.map((l) => (
-                <div
-                  key={l.id}
-                  className={`rounded-xl px-5 py-4 transition-opacity ${!l.disponible ? 'opacity-60' : ''}`}
-                  style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
-                >
-                  <div className="flex items-start justify-between gap-3 mb-1">
-                    <p className="font-medium th-text-1">
-                      {l.nom}
-                      <span className="th-text-2 font-normal text-sm ml-2">
-                        · {typeLabels[l.type]} · {l.capacite} pers.
+            {/* Logements et tarifs */}
+            <section className="mb-10">
+              <h2 className="text-lg font-medium mb-4">Logements et tarifs</h2>
+              <div className="flex flex-col gap-3">
+                {villa.logements.map((l) => (
+                  <div key={l.id} className={`rounded-xl px-5 py-4 th-card ${!l.disponible ? 'opacity-60' : ''}`}>
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div>
+                        <p className="font-medium th-text-1">{l.nom}</p>
+                        <p className="text-sm th-text-2">
+                          {LIBELLES_LOGEMENT[l.type]} · jusqu'à {l.capacite} personnes
+                        </p>
+                      </div>
+                      <span className={`shrink-0 badge ${l.disponible ? 'badge-success' : 'badge-danger'}`}>
+                        <span className="badge-dot" />
+                        {l.disponible ? 'Disponible' : 'Indisponible'}
                       </span>
-                    </p>
-                    <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full border ${
-                      l.disponible
-                        ? 'bg-green-500/10 border-green-500/20 text-green-600'
-                        : 'bg-red-500/10 border-red-500/20 text-red-500'
-                    }`}>
-                      {l.disponible ? 'Disponible' : 'Indisponible'}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {l.tarifs.map((t) => (
-                      <span
-                        key={t.id}
-                        className="text-xs px-3 py-1 rounded-full th-text-2"
-                        style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
-                      >
-                        {tarifLabels[t.type_tarif]}
-                        {t.avec_clim ? ' + clim' : ''}
-                        {t.avec_buffet ? ' + buffet' : ''}
-                        {' '}— {t.prix.toLocaleString('fr-FR')} FCFA
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Avis */}
-            <h2 className="text-lg font-medium mb-4">
-              Avis{villa.avis.length > 0 && <span className="th-text-3 font-normal ml-2">({villa.avis.length})</span>}
-            </h2>
-            {villa.avis.length === 0 ? (
-              <p className="th-text-3 text-sm mb-8">Aucun avis pour l'instant.</p>
-            ) : (
-              <div className="flex flex-col gap-3 mb-8">
-                {villa.avis.map((a) => (
-                  <div
-                    key={a.id}
-                    className="rounded-xl px-5 py-4"
-                    style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-medium th-text-1">{a.client.name}</p>
-                      <StarRating note={a.note} />
                     </div>
-                    {a.commentaire && <p className="text-sm th-text-2 leading-relaxed">{a.commentaire}</p>}
-                    <p className="text-xs th-text-3 mt-2">{fmt(a.created_at)}</p>
+
+                    {l.tarifs.length > 0 ? (
+                      <ul className="flex flex-col gap-1.5">
+                        {l.tarifs.map((t) => (
+                          <li key={t.id} className="flex items-baseline justify-between gap-3 text-sm">
+                            <span className="th-text-2">{libelleTarif(t)}</span>
+                            <span className="th-text-3" style={{ flex: 1, borderBottom: '1px dotted var(--border-2)', margin: '0 4px' }} aria-hidden="true" />
+                            <span className="th-text-1 font-medium whitespace-nowrap">
+                              {fcfa(t.prix)}
+                              <span className="th-text-3 font-normal text-xs"> / {UNITE_TARIF[t.type_tarif]}</span>
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm th-text-3">Tarifs non renseignés — contactez le propriétaire.</p>
+                    )}
                   </div>
                 ))}
               </div>
-            )}
+            </section>
 
-            {/* Formulaire avis — clients uniquement */}
-            {user && user.role === 'client' && !avisSuccess && (
-              <form
-                onSubmit={handleAvis}
-                className="rounded-xl p-5"
-                style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
-              >
-                <h3 className="text-sm font-medium mb-4 th-text-1">Laisser un avis</h3>
-                <div className="flex items-center gap-3 mb-4">
-                  <label className="text-sm th-text-2 shrink-0">Note</label>
-                  <select
-                    value={avisForm.note}
-                    onChange={(e) => setAvisForm({ ...avisForm, note: e.target.value })}
-                    className="rounded-lg px-3 py-1.5 text-sm th-input-field"
-                  >
-                    {[5, 4, 3, 2, 1].map((n) => (
-                      <option key={n} value={n} style={{ background: 'var(--bg)' }}>
-                        {'★'.repeat(n)} ({n}/5)
-                      </option>
-                    ))}
-                  </select>
+            {/* Avis */}
+            <section>
+              <h2 className="text-lg font-medium mb-4">
+                Avis{villa.avis.length > 0 && <span className="th-text-3 font-normal ml-2">({villa.avis.length})</span>}
+              </h2>
+
+              {villa.avis.length === 0 ? (
+                <p className="th-text-3 text-sm mb-8">Aucun avis pour l'instant.</p>
+              ) : (
+                <div className="flex flex-col gap-3 mb-8">
+                  {villa.avis.map((a) => (
+                    <div key={a.id} className="rounded-xl px-5 py-4 th-card">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm font-medium th-text-1">{a.client.name}</p>
+                        <Etoiles note={a.note} />
+                      </div>
+                      {a.commentaire && <p className="text-sm th-text-2 leading-relaxed">{a.commentaire}</p>}
+                      <p className="text-xs th-text-3 mt-2">{dateCourte(a.created_at)}</p>
+                    </div>
+                  ))}
                 </div>
-                <textarea
-                  value={avisForm.commentaire}
-                  onChange={(e) => setAvisForm({ ...avisForm, commentaire: e.target.value })}
-                  rows={3}
-                  placeholder="Votre commentaire..."
-                  className="w-full rounded-lg px-4 py-2.5 text-sm th-input-field resize-none mb-4"
-                />
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-90"
-                  style={{ background: 'var(--text-1)', color: 'var(--bg)' }}
-                >
-                  Publier
-                </button>
-              </form>
-            )}
-            {avisSuccess && (
-              <div className="bg-green-500/10 border border-green-500/20 text-green-600 rounded-xl px-5 py-4 text-sm">
-                Merci pour votre avis !
-              </div>
-            )}
+              )}
+
+              {/* Le formulaire n'apparaît qu'aux clients ayant réellement séjourné. */}
+              {peutNoter && !avisEnvoye && (
+                <form onSubmit={envoyerAvis} className="rounded-xl p-5 th-card">
+                  <h3 className="text-sm font-medium mb-4 th-text-1">Laisser un avis</h3>
+                  <div className="flex items-center gap-3 mb-4">
+                    <label htmlFor="avis-note" className="text-sm th-text-2 shrink-0">Note</label>
+                    <select
+                      id="avis-note"
+                      value={avisForm.note}
+                      onChange={(e) => setAvisForm({ ...avisForm, note: e.target.value })}
+                      className="rounded-lg px-3 py-1.5 text-sm th-input-field"
+                    >
+                      {[5, 4, 3, 2, 1].map((n) => (
+                        <option key={n} value={n}>{'★'.repeat(n)} ({n}/5)</option>
+                      ))}
+                    </select>
+                  </div>
+                  <textarea
+                    value={avisForm.commentaire}
+                    onChange={(e) => setAvisForm({ ...avisForm, commentaire: e.target.value })}
+                    rows={3}
+                    maxLength={1000}
+                    placeholder="Votre commentaire…"
+                    aria-label="Votre commentaire"
+                    className="w-full rounded-lg px-4 py-2.5 text-sm th-input-field resize-none mb-4"
+                  />
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90"
+                    style={{ background: 'var(--accent)', color: '#fff' }}
+                  >
+                    Publier
+                  </button>
+                </form>
+              )}
+
+              {user?.role === 'client' && !peutNoter && !avisEnvoye && (
+                <p className="text-sm th-text-3">
+                  Les avis sont réservés aux clients ayant terminé un séjour dans cette villa.
+                </p>
+              )}
+            </section>
           </div>
 
-          {/* Right — Réservation */}
-          <div className="lg:col-span-1" id="reservation-form">
-            <div
-              className="rounded-2xl p-6 sticky top-20"
-              style={{
-                background: 'var(--bg-surface)',
-                border: '1px solid var(--border)',
-                boxShadow: 'var(--shadow-md)',
-              }}
-            >
+          {/* Colonne droite — réservation */}
+          <div className="lg:col-span-1" id="reserver">
+            <div className="rounded-2xl p-6 sticky top-20" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-md)' }}>
+              {villa.prix_min != null && (
+                <p className="mb-5 th-text-1">
+                  <span className="text-2xl font-semibold">{fcfa(villa.prix_min)}</span>
+                  <span className="text-sm th-text-3"> à partir de</span>
+                </p>
+              )}
+
               <h2 className="text-lg font-medium mb-5">Réserver</h2>
 
               {user && user.role !== 'client' ? (
+                <p className="th-text-3 text-sm text-center py-6">
+                  {user.role === 'proprietaire'
+                    ? 'Aperçu de la fiche telle que la voient les clients.'
+                    : 'Les réservations sont réservées aux clients.'}
+                </p>
+              ) : resaEnvoyee ? (
                 <div className="text-center py-6">
-                  <p className="th-text-3 text-sm">
-                    {user.role === 'proprietaire'
-                      ? 'Aperçu de votre villa telle que vue par les clients.'
-                      : 'Les réservations sont réservées aux clients.'}
+                  <p className="text-2xl mb-3" aria-hidden="true">✅</p>
+                  <p className="font-medium mb-2" style={{ color: 'var(--success)' }}>Demande envoyée</p>
+                  <p className="th-text-2 text-sm mb-5">
+                    Le propriétaire va la confirmer. Vous recevrez un email dès sa réponse.
                   </p>
-                </div>
-              ) : resSuccess ? (
-                <div className="text-center py-6">
-                  <p className="text-2xl mb-3">✅</p>
-                  <p className="text-green-600 font-medium mb-2">Réservation envoyée !</p>
-                  <p className="th-text-2 text-sm">Le propriétaire va confirmer sous peu.</p>
+                  <Link to="/dashboard/reservations" className="text-sm th-text-1 underline underline-offset-4">
+                    Suivre ma demande
+                  </Link>
                 </div>
               ) : (
-                <form onSubmit={handleReservation} className="flex flex-col gap-4">
-                  {resError && (
-                    <div className="bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl px-4 py-3 text-sm">
-                      {resError}
+                <form onSubmit={envoyerReservation} className="flex flex-col gap-4">
+                  {erreurResa && (
+                    <div
+                      className="rounded-xl px-4 py-3 text-sm"
+                      style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.22)', color: 'var(--danger)' }}
+                      role="alert"
+                    >
+                      {erreurResa}
                     </div>
                   )}
 
                   <div>
-                    <label className="text-xs th-text-2 mb-1.5 block">Logement</label>
+                    <label htmlFor="r-logement" className="text-xs th-text-2 mb-1.5 block">Logement</label>
                     <select
-                      required
+                      id="r-logement" required
                       value={reservation.logement_id}
                       onChange={(e) => setReservation({ ...reservation, logement_id: e.target.value, tarif_id: '' })}
                       className="w-full rounded-xl px-4 py-2.5 text-sm th-input-field"
                     >
-                      <option value="" style={{ background: 'var(--bg)' }}>Choisir un logement</option>
+                      <option value="">Choisir un logement</option>
                       {villa.logements.filter((l) => l.disponible).map((l) => (
-                        <option key={l.id} value={l.id} style={{ background: 'var(--bg)' }}>{l.nom}</option>
+                        <option key={l.id} value={l.id}>{l.nom} — {l.capacite} pers.</option>
                       ))}
                     </select>
                   </div>
 
-                  {logementSelectionne && (
+                  {logement && (
                     <div>
-                      <label className="text-xs th-text-2 mb-1.5 block">Formule</label>
+                      <label htmlFor="r-tarif" className="text-xs th-text-2 mb-1.5 block">Formule</label>
                       <select
-                        required
+                        id="r-tarif" required
                         value={reservation.tarif_id}
                         onChange={(e) => setReservation({ ...reservation, tarif_id: e.target.value })}
                         className="w-full rounded-xl px-4 py-2.5 text-sm th-input-field"
                       >
-                        <option value="" style={{ background: 'var(--bg)' }}>Choisir un tarif</option>
-                        {logementSelectionne.tarifs.map((t) => (
-                          <option key={t.id} value={t.id} style={{ background: 'var(--bg)' }}>
-                            {tarifLabels[t.type_tarif]}
-                            {t.avec_clim ? ' + clim' : ''}
-                            {t.avec_buffet ? ' + buffet' : ''}
-                            {' '}— {t.prix.toLocaleString('fr-FR')} FCFA
-                          </option>
+                        <option value="">Choisir une formule</option>
+                        {logement.tarifs.map((t) => (
+                          <option key={t.id} value={t.id}>{libelleTarif(t)} — {fcfa(t.prix)}</option>
                         ))}
                       </select>
                     </div>
                   )}
 
-                  <div>
-                    <label className="text-xs th-text-2 mb-1.5 block">Arrivée</label>
-                    <input
-                      type="date"
-                      required
-                      value={reservation.date_debut}
-                      min={new Date().toISOString().split('T')[0]}
-                      onChange={(e) => setReservation({ ...reservation, date_debut: e.target.value })}
-                      className={dateInputClass}
-                    />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label htmlFor="r-debut" className="text-xs th-text-2 mb-1.5 block">Arrivée</label>
+                      <input
+                        id="r-debut" type="date" required
+                        min={aujourdhui()}
+                        value={reservation.date_debut}
+                        onChange={(e) => setReservation({ ...reservation, date_debut: e.target.value, date_fin: '' })}
+                        className={classeDate}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="r-fin" className="text-xs th-text-2 mb-1.5 block">Départ</label>
+                      <input
+                        id="r-fin" type="date" required
+                        min={reservation.date_debut || aujourdhui()}
+                        value={reservation.date_fin}
+                        onChange={(e) => setReservation({ ...reservation, date_fin: e.target.value })}
+                        className={classeDate}
+                      />
+                    </div>
                   </div>
+
+                  {/* Périodes déjà prises, connues avant de soumettre */}
+                  {logement && plagesPrises.length > 0 && (
+                    <div className="text-xs th-text-3 leading-relaxed">
+                      <p className="th-text-2 mb-1">Déjà réservé :</p>
+                      <ul className="flex flex-wrap gap-x-3 gap-y-0.5">
+                        {plagesPrises.slice(0, 6).map((p, i) => (
+                          <li key={i}>{dateCourte(p.date_debut)} → {dateCourte(p.date_fin)}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {conflitDates && (
+                    <p className="text-xs" style={{ color: 'var(--danger)' }} role="alert">
+                      Ces dates chevauchent une réservation existante.
+                    </p>
+                  )}
+
                   <div>
-                    <label className="text-xs th-text-2 mb-1.5 block">Départ</label>
+                    <label htmlFor="r-personnes" className="text-xs th-text-2 mb-1.5 block">
+                      Nombre de personnes{logement ? ` (max. ${logement.capacite})` : ''}
+                    </label>
                     <input
-                      type="date"
-                      required
-                      value={reservation.date_fin}
-                      min={reservation.date_debut || new Date().toISOString().split('T')[0]}
-                      onChange={(e) => setReservation({ ...reservation, date_fin: e.target.value })}
-                      className={dateInputClass}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs th-text-2 mb-1.5 block">Nombre de personnes</label>
-                    <input
-                      type="number"
-                      min="1"
-                      required
+                      id="r-personnes" type="number" required
+                      min={1} max={logement?.capacite}
                       value={reservation.nb_personnes}
                       onChange={(e) => setReservation({ ...reservation, nb_personnes: e.target.value })}
                       className="w-full rounded-xl px-4 py-2.5 text-sm th-input-field"
                     />
                   </div>
 
+                  {/* Total calculé avant validation */}
+                  {recapitulatif && (
+                    <div className="rounded-xl px-4 py-3 flex flex-col gap-1.5 text-sm" style={{ background: 'var(--bg-elevated)' }}>
+                      <div className="flex justify-between th-text-2">
+                        <span>{fcfa(recapitulatif.prixUnitaire)} × {recapitulatif.unites}</span>
+                        <span>{fcfa(recapitulatif.total)}</span>
+                      </div>
+                      <div className="flex justify-between font-semibold th-text-1 pt-1.5" style={{ borderTop: '1px solid var(--border)' }}>
+                        <span>Total</span>
+                        <span>{fcfa(recapitulatif.total)}</span>
+                      </div>
+                    </div>
+                  )}
+
                   <button
                     type="submit"
-                    disabled={resLoading}
-                    className="py-3 rounded-xl text-sm font-medium transition-all hover:opacity-90 disabled:opacity-50 mt-1"
-                    style={{ background: 'var(--text-1)', color: 'var(--bg)' }}
+                    disabled={envoiResa || conflitDates}
+                    className="py-3 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
+                    style={{ background: 'var(--accent)', color: '#fff', minHeight: 44 }}
                   >
-                    {resLoading ? 'Envoi...' : user ? 'Réserver' : 'Connexion pour réserver'}
+                    {envoiResa ? 'Envoi…' : user ? 'Demander à réserver' : 'Se connecter pour réserver'}
                   </button>
+
+                  <MoyensPaiement />
+
+                  <p className="text-xs th-text-3 text-center leading-relaxed">
+                    Vous ne payez rien maintenant. Voir la{' '}
+                    <Link to="/annulation" className="underline underline-offset-2">politique d'annulation</Link>.
+                  </p>
                 </form>
               )}
             </div>
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   )
 }

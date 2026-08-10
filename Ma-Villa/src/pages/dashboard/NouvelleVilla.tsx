@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../../services/api'
+import { messageErreur } from '../../lib/erreurs'
 
 type MediaFile = { file: File; preview: string; isVideo: boolean }
 
@@ -95,10 +96,8 @@ export default function NouvelleVilla() {
       }
 
       navigate(`/dashboard/villas/${villaId}`)
-    } catch (err: any) {
-      const errors = err.response?.data?.errors
-      const first = errors ? (Object.values(errors).flat()[0] as string) : null
-      setError(first || err.response?.data?.message || 'Une erreur est survenue.')
+    } catch (err) {
+      setError(messageErreur(err))
     } finally {
       setIsLoading(false)
       setUploadProgress({ current: 0, total: 0 })
@@ -287,19 +286,18 @@ export default function NouvelleVilla() {
   )
 }
 
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactElement<any> }) {
+function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactElement<{ className?: string }> }) {
   return (
     <div>
       <label className="text-sm mb-1.5 block" style={{ color: 'var(--text-2)' }}>
         {label}
         {required && <span className="ml-1" style={{ color: 'var(--text-3)' }}>*</span>}
       </label>
-      {(({ className: _c, ...props }) =>
-        <children.type
-          {...props}
-          className="w-full rounded-xl px-4 py-3 text-sm th-input-field resize-none"
-        />
-      )(children.props)}
+      {/* className est placé après le spread : il écrase celui de l'enfant. */}
+      <children.type
+        {...children.props}
+        className="w-full rounded-xl px-4 py-3 text-sm th-input-field resize-none"
+      />
     </div>
   )
 }

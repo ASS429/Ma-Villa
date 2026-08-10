@@ -1,42 +1,47 @@
-import { useEffect, useRef, useState } from 'react'
-import { Routes, Route, Navigate, Link, useLocation } from 'react-router-dom'
+import { Suspense, lazy, useEffect, useState } from 'react'
+import { Routes, Route, Navigate, Link } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
-import { useTheme } from './context/ThemeContext'
+import { useToast } from './context/ToastContext'
 import api from './services/api'
+import { messageErreur } from './lib/erreurs'
+import type { VillaResume } from './types'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
+import FondHero from './components/FondHero'
 import VillaCard from './components/VillaCard'
 import ScrollReveal from './components/ScrollReveal'
+import Footer from './components/Footer'
+import Seo from './components/Seo'
+import { VillaCardSkeleton } from './components/Skeleton'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import MotDePasseOublie from './pages/MotDePasseOublie'
+import ReinitialiserMotDePasse from './pages/ReinitialiserMotDePasse'
+import EmailVerifie from './pages/EmailVerifie'
 import NotFound from './pages/NotFound'
-import DashboardLayout from './pages/dashboard/DashboardLayout'
-import Dashboard from './pages/dashboard/Dashboard'
-import MesVillas from './pages/dashboard/MesVillas'
-import NouvelleVilla from './pages/dashboard/NouvelleVilla'
-import GererVilla from './pages/dashboard/GererVilla'
-import Reservations from './pages/dashboard/Reservations'
-import Favoris from './pages/dashboard/Favoris'
-import Profil from './pages/dashboard/Profil'
 import Villas from './pages/public/Villas'
 import VillaDetail from './pages/public/VillaDetail'
-import AdminLayout from './pages/admin/AdminLayout'
-import AdminDashboard from './pages/admin/AdminDashboard'
-import AdminVillas from './pages/admin/AdminVillas'
-import AdminUtilisateurs from './pages/admin/AdminUtilisateurs'
-import AdminAvis from './pages/admin/AdminAvis'
+import PageLegale from './pages/legal/PageLegale'
 
-interface Villa {
-  id: number
-  nom: string
-  ville: string
-  description: string
-  telephone: string
-  photos: { url: string; alt: string }[]
-  avis: { note: number }[]
-  vedette?: boolean
-  prix_min?: number
-}
+/* ─── Espaces privés : chargés à la demande ──────────────────────
+   Le tableau de bord et l'administration représentent l'essentiel du code
+   applicatif, alors que la grande majorité des visiteurs ne les ouvre jamais.
+   Les sortir du paquet initial allège la première visite.                    */
+
+const DashboardLayout = lazy(() => import('./pages/dashboard/DashboardLayout'))
+const Dashboard       = lazy(() => import('./pages/dashboard/Dashboard'))
+const MesVillas       = lazy(() => import('./pages/dashboard/MesVillas'))
+const NouvelleVilla   = lazy(() => import('./pages/dashboard/NouvelleVilla'))
+const GererVilla      = lazy(() => import('./pages/dashboard/GererVilla'))
+const Reservations    = lazy(() => import('./pages/dashboard/Reservations'))
+const Favoris         = lazy(() => import('./pages/dashboard/Favoris'))
+const Profil          = lazy(() => import('./pages/dashboard/Profil'))
+
+const AdminLayout       = lazy(() => import('./pages/admin/AdminLayout'))
+const AdminDashboard    = lazy(() => import('./pages/admin/AdminDashboard'))
+const AdminVillas       = lazy(() => import('./pages/admin/AdminVillas'))
+const AdminUtilisateurs = lazy(() => import('./pages/admin/AdminUtilisateurs'))
+const AdminAvis         = lazy(() => import('./pages/admin/AdminAvis'))
 
 /* ─── Route guards ───────────────────────────────────────────── */
 
@@ -57,122 +62,138 @@ function ProprietaireRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-/* ─── Global video background (all routes except /) ─────────── */
-
-function VideoBackground() {
-  const location = useLocation()
-  const isHome = location.pathname === '/'
-
-  useEffect(() => {
-    if (isHome) {
-      document.documentElement.classList.remove('video-mode')
-    } else {
-      document.documentElement.classList.add('video-mode')
-    }
-    return () => document.documentElement.classList.remove('video-mode')
-  }, [isHome])
-
-  if (isHome) return null
-
+function ChargementPage() {
   return (
-    <>
-      <video
-        className="fixed inset-0 w-full h-full object-cover"
-        style={{ zIndex: -2 }}
-        src="/video_backgroud.mp4"
-        autoPlay loop muted playsInline
-      />
-      <div
-        className="fixed inset-0"
-        style={{ zIndex: -1, background: 'var(--video-overlay)' }}
-      />
-    </>
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg)' }}>
+      <div className="flex flex-col items-center gap-3">
+        <div
+          className="w-8 h-8 rounded-full animate-spin"
+          style={{ border: '2px solid var(--border)', borderTopColor: 'var(--accent)' }}
+        />
+        <p className="text-sm th-text-2">Chargement…</p>
+      </div>
+    </div>
   )
 }
 
-/* ─── Cinematic curtain transition ───────────────────────────── */
-
-function CurtainTransition() {
-  const location = useLocation()
-  const [active, setActive] = useState(false)
-  const isFirst = useRef(true)
-
-  useEffect(() => {
-    if (isFirst.current) { isFirst.current = false; return }
-    setActive(true)
-    const t = setTimeout(() => setActive(false), 750)
-    return () => clearTimeout(t)
-  }, [location.pathname])
-
-  return <div className={`curtain ${active ? 'active' : ''}`} />
-}
-
-/* ─── Featured villas section ────────────────────────────────── */
+/* ─── Villas en vedette ──────────────────────────────────────── */
 
 function FeaturedVillas() {
   const { user } = useAuth()
-  const [villas, setVillas] = useState<Villa[]>([])
+  const toast = useToast()
+  const [villas, setVillas] = useState<VillaResume[]>([])
+  const [chargement, setChargement] = useState(true)
   const [favorisIds, setFavorisIds] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     api.get('/villas', { params: { vedette: 1 } })
-      .then((res) => {
-        const data: Villa[] = res.data.data ?? res.data
-        setVillas(data.slice(0, 3))
-      })
-      .catch(() => {})
+      .then((res) => setVillas((res.data.data ?? res.data).slice(0, 3)))
+      .catch(() => setVillas([]))
+      .finally(() => setChargement(false))
   }, [])
 
   useEffect(() => {
-    if (user?.role === 'client') {
-      api.get('/favoris').then((res) => {
-        setFavorisIds(new Set(res.data.map((f: any) => f.villa_id)))
-      }).catch(() => {})
-    }
+    if (user?.role !== 'client') return
+    api.get('/favoris')
+      .then((res) => setFavorisIds(new Set(res.data.map((f: { villa_id: number }) => f.villa_id))))
+      .catch(() => { /* liste de favoris indisponible : la page reste utilisable */ })
   }, [user])
 
   const toggleFavori = async (e: React.MouseEvent, villaId: number) => {
     e.preventDefault()
     if (!user || user.role !== 'client') return
-    if (favorisIds.has(villaId)) {
-      await api.delete(`/villas/${villaId}/favoris`)
-      setFavorisIds((prev) => { const next = new Set(prev); next.delete(villaId); return next })
-    } else {
-      await api.post(`/villas/${villaId}/favoris`, {})
-      setFavorisIds((prev) => new Set(prev).add(villaId))
+
+    const etaitFavori = favorisIds.has(villaId)
+    try {
+      if (etaitFavori) {
+        await api.delete(`/villas/${villaId}/favoris`)
+        setFavorisIds((p) => { const n = new Set(p); n.delete(villaId); return n })
+      } else {
+        await api.post(`/villas/${villaId}/favoris`, {})
+        setFavorisIds((p) => new Set(p).add(villaId))
+      }
+    } catch (err) {
+      toast.erreur(messageErreur(err, 'Impossible de mettre à jour vos favoris.'))
     }
   }
 
-  if (villas.length === 0) return null
+  if (!chargement && villas.length === 0) return null
 
   return (
     <section className="px-6 md:px-12 lg:px-16 py-20" style={{ borderTop: '1px solid var(--border)' }}>
       <div className="max-w-6xl mx-auto">
         <ScrollReveal className="flex items-end justify-between mb-10">
           <div>
-            <p className="text-xs mb-2 uppercase tracking-widest font-medium" style={{ color: 'var(--accent)' }}>
+            <p className="text-xs mb-2 uppercase tracking-widest font-semibold" style={{ color: 'var(--accent)' }}>
               Sélection
             </p>
             <h2 className="text-3xl md:text-4xl font-normal th-text-1" style={{ letterSpacing: '-0.02em' }}>
               Villas en vedette
             </h2>
           </div>
-          <Link
-            to="/villas"
-            className="text-sm transition-colors th-text-2 hover:th-text-1"
-          >
+          <Link to="/villas" className="text-sm transition-colors th-text-2 hover:th-text-1">
             Voir toutes →
           </Link>
         </ScrollReveal>
 
-        <ScrollReveal className="sr-stagger grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {villas.map((v) => (
-            <VillaCard
-              key={v.id}
-              villa={v}
-              isFavori={favorisIds.has(v.id)}
-              onToggleFavori={user?.role === 'client' ? (e) => toggleFavori(e, v.id) : undefined}
-            />
+        {chargement ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((n) => <VillaCardSkeleton key={n} />)}
+          </div>
+        ) : (
+          <ScrollReveal className="sr-stagger grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {villas.map((v) => (
+              <VillaCard
+                key={v.id}
+                villa={v}
+                isFavori={favorisIds.has(v.id)}
+                onToggleFavori={user?.role === 'client' ? (e) => toggleFavori(e, v.id) : undefined}
+              />
+            ))}
+          </ScrollReveal>
+        )}
+      </div>
+    </section>
+  )
+}
+
+/* ─── Comment ça marche ──────────────────────────────────────── */
+
+function CommentCaMarche() {
+  const etapes = [
+    { n: '1', titre: 'Cherchez', texte: 'Filtrez par ville, dates et budget. Les prix sont affichés, sans surprise.' },
+    { n: '2', titre: 'Réservez', texte: 'Choisissez un logement et une formule : nuitée, journée, ou piscine seule.' },
+    { n: '3', titre: 'Profitez', texte: 'Le propriétaire confirme, vous recevez ses coordonnées par email.' },
+  ]
+
+  return (
+    <section className="px-6 md:px-12 lg:px-16 py-20" style={{ borderTop: '1px solid var(--border)' }}>
+      <div className="max-w-6xl mx-auto">
+        <ScrollReveal>
+          <p className="text-xs mb-2 uppercase tracking-widest font-semibold" style={{ color: 'var(--accent)' }}>
+            Comment ça marche
+          </p>
+          <h2 className="text-3xl md:text-4xl font-normal th-text-1 mb-10" style={{ letterSpacing: '-0.02em' }}>
+            Réserver en trois étapes
+          </h2>
+        </ScrollReveal>
+
+        <ScrollReveal className="sr-stagger grid grid-cols-1 md:grid-cols-3 gap-5">
+          {etapes.map(({ n, titre, texte }) => (
+            <div
+              key={n}
+              className="rounded-2xl px-6 py-8"
+              style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}
+            >
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center mb-5 font-semibold"
+                style={{ background: 'var(--accent-bg)', color: 'var(--accent)' }}
+              >
+                {n}
+              </div>
+              <p className="font-semibold mb-2 th-text-1">{titre}</p>
+              <p className="text-sm th-text-2 leading-relaxed">{texte}</p>
+            </div>
           ))}
         </ScrollReveal>
       </div>
@@ -180,24 +201,24 @@ function FeaturedVillas() {
   )
 }
 
-/* ─── Features section ───────────────────────────────────────── */
+/* ─── Arguments ──────────────────────────────────────────────── */
 
 function Features() {
-  const features: { svg: React.ReactNode; label: string; sub: string }[] = [
+  const features = [
     {
       svg: <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3c-4.97 0-9 4.03-9 9 0 2.39.94 4.57 2.46 6.18M12 3c4.97 0 9 4.03 9 9 0 2.39-.94 4.57-2.46 6.18M12 3v18M3 12h18" /></svg>,
       label: 'Partout au Sénégal',
-      sub: 'Dakar, Saly, Mbour, Ziguinchor et plus encore',
+      sub: 'Saly, Mbour, Dakar, Ziguinchor et plus encore',
     },
     {
       svg: <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>,
-      label: 'Propriétaires vérifiés',
-      sub: 'Chaque annonce est validée par notre équipe',
+      label: 'Annonces vérifiées',
+      sub: 'Chaque villa est contrôlée par notre équipe avant publication',
     },
     {
-      svg: <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>,
-      label: 'Réservation simple',
-      sub: 'Disponibilités en temps réel, confirmation rapide',
+      svg: <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 8v-.5A2.5 2.5 0 0013.5 5h-3A2.5 2.5 0 008 7.5v9a2.5 2.5 0 002.5 2.5h3a2.5 2.5 0 002.5-2.5V16M12 12h9m0 0l-2.5-2.5M21 12l-2.5 2.5" /></svg>,
+      label: 'Avis de vrais séjours',
+      sub: 'Seuls les clients ayant séjourné peuvent laisser une note',
     },
   ]
 
@@ -209,11 +230,7 @@ function Features() {
             <div
               key={label}
               className="rounded-2xl px-6 py-8 transition-all hover:-translate-y-1"
-              style={{
-                background: 'var(--bg-surface)',
-                border: '1px solid var(--border)',
-                boxShadow: 'var(--shadow-sm)',
-              }}
+              style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}
             >
               <div
                 className="w-11 h-11 rounded-xl flex items-center justify-center mb-5"
@@ -231,104 +248,71 @@ function Features() {
   )
 }
 
-/* ─── Footer ─────────────────────────────────────────────────── */
+/* ─── Appel aux propriétaires ────────────────────────────────── */
 
-function Footer() {
-  const { user } = useAuth()
-  const dashLink = user?.role === 'admin' ? '/admin' : '/dashboard'
+function AppelProprietaires() {
   return (
-    <footer className="px-6 md:px-12 lg:px-16 py-8" style={{ borderTop: '1px solid var(--border)' }}>
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-        <Link
-          to="/"
-          style={{
-            fontFamily: "'Cormorant Garamond', Georgia, serif",
-            fontSize: '1.35rem',
-            fontWeight: 400,
-            letterSpacing: '-0.02em',
-            color: 'var(--text-1)',
-            textDecoration: 'none',
-          }}
-        >
-          Ma Villa
-        </Link>
-        <div className="flex items-center gap-6 text-sm th-text-2">
-          <Link to="/villas" className="hover:th-text-1 transition-colors">Villas</Link>
-          {user ? (
-            <Link to={dashLink} className="hover:th-text-1 transition-colors">Mon espace</Link>
-          ) : (
-            <>
-              <Link to="/login" className="hover:th-text-1 transition-colors">Connexion</Link>
-              <Link to="/register" className="hover:th-text-1 transition-colors">S'inscrire</Link>
-            </>
-          )}
-        </div>
-        <span className="text-sm th-text-3">© {new Date().getFullYear()} Ma Villa · Sénégal</span>
+    <section className="px-6 md:px-12 lg:px-16 py-20" style={{ borderTop: '1px solid var(--border)' }}>
+      <div className="max-w-6xl mx-auto">
+        <ScrollReveal className="rounded-2xl px-6 py-12 md:px-12 text-center th-card">
+          <p className="text-xs mb-3 uppercase tracking-widest font-semibold" style={{ color: 'var(--accent)' }}>
+            Propriétaires
+          </p>
+          <h2 className="text-3xl md:text-4xl font-normal th-text-1 mb-4" style={{ letterSpacing: '-0.02em' }}>
+            Publiez votre villa gratuitement
+          </h2>
+          <p className="text-sm th-text-2 max-w-xl mx-auto mb-8 leading-relaxed">
+            Créez votre annonce, fixez vos tarifs par formule — nuitée, journée,
+            piscine seule — et gérez vos disponibilités depuis un tableau de bord simple.
+          </p>
+          <Link
+            to="/register"
+            className="inline-block px-7 py-3 rounded-xl font-semibold transition-opacity hover:opacity-90"
+            style={{ background: 'var(--accent)', color: '#fff', textDecoration: 'none' }}
+          >
+            Publier ma villa
+          </Link>
+        </ScrollReveal>
       </div>
-    </footer>
+    </section>
   )
 }
 
-/* ─── Scroll indicator ───────────────────────────────────────── */
-
-function ScrollIndicator() {
-  const { isDark } = useTheme()
-  const [visible, setVisible] = useState(true)
-  useEffect(() => {
-    const onScroll = () => setVisible(window.scrollY < 80)
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-  return (
-    <div
-      className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 cursor-pointer select-none"
-      style={{ opacity: visible ? 1 : 0, transition: 'opacity 400ms ease' }}
-      onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
-    >
-      <span className="text-xs tracking-widest uppercase" style={{ color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(28,25,23,0.4)' }}>
-        Découvrir
-      </span>
-      <svg
-        className="w-4 h-4 animate-bounce"
-        style={{ color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(28,25,23,0.4)' }}
-        fill="none" stroke="currentColor" viewBox="0 0 24 24"
-      >
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-      </svg>
-    </div>
-  )
-}
-
-/* ─── Home ───────────────────────────────────────────────────── */
+/* ─── Accueil ────────────────────────────────────────────────── */
 
 function Home() {
   return (
     <div style={{ background: 'var(--bg)', color: 'var(--text-1)' }}>
-      {/* Hero */}
+      <Seo
+        titre="Ma Villa"
+        description="Louez une villa, un appartement ou une piscine à la journée au Sénégal — Saly, Mbour, Dakar. Tarifs affichés, disponibilités en temps réel, réservation directe auprès des propriétaires."
+        chemin="/"
+        donneesStructurees={{
+          '@context': 'https://schema.org',
+          '@type': 'WebSite',
+          name: 'Ma Villa',
+          description: 'Location de villas et logements de vacances au Sénégal',
+          inLanguage: 'fr',
+          potentialAction: {
+            '@type': 'SearchAction',
+            target: `${window.location.origin}/villas?ville={search_term_string}`,
+            'query-input': 'required name=search_term_string',
+          },
+        }}
+      />
+
       <div className="min-h-screen flex flex-col relative overflow-hidden">
-
-        {/* Video — les deux thèmes */}
-        <div className="absolute inset-0" style={{
-          background: 'radial-gradient(ellipse at 20% 60%, #0f172a 0%, #000 70%)'
-        }} />
-        <video
-          className="absolute inset-0 w-full h-full object-cover"
-          src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260403_050628_c4e32401-fab4-4a27-b7a8-6e9291cd5959.mp4"
-          autoPlay loop muted playsInline
-        />
-        {/* Léger assombrissement pour la lisibilité du texte */}
-        <div className="absolute inset-0 bg-black/25" />
-
-        {/* Content */}
+        <FondHero />
         <div className="relative z-10 flex flex-col flex-1">
           <Navbar />
           <Hero />
-          <ScrollIndicator />
         </div>
       </div>
 
       <FeaturedVillas />
+      <CommentCaMarche />
       <Features />
+      <AppelProprietaires />
       <Footer />
     </div>
   )
@@ -338,32 +322,58 @@ function Home() {
 
 export default function App() {
   return (
-    <>
-      <VideoBackground />
-      <CurtainTransition />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/villas" element={<Villas />} />
-        <Route path="/villas/:id" element={<VillaDetail />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<PrivateRoute><DashboardLayout /></PrivateRoute>}>
-          <Route index element={<Dashboard />} />
-          <Route path="villas" element={<ProprietaireRoute><MesVillas /></ProprietaireRoute>} />
-          <Route path="villas/nouvelle" element={<ProprietaireRoute><NouvelleVilla /></ProprietaireRoute>} />
-          <Route path="villas/:id" element={<ProprietaireRoute><GererVilla /></ProprietaireRoute>} />
-          <Route path="reservations" element={<Reservations />} />
-          <Route path="favoris" element={<Favoris />} />
-          <Route path="profil" element={<Profil />} />
-        </Route>
-        <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="villas" element={<AdminVillas />} />
-          <Route path="utilisateurs" element={<AdminUtilisateurs />} />
-          <Route path="avis" element={<AdminAvis />} />
-        </Route>
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </>
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/villas" element={<Villas />} />
+      <Route path="/villas/:id" element={<VillaDetail />} />
+
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/mot-de-passe-oublie" element={<MotDePasseOublie />} />
+      <Route path="/reinitialiser-mot-de-passe" element={<ReinitialiserMotDePasse />} />
+      <Route path="/email-verifie" element={<EmailVerifie />} />
+
+      <Route path="/conditions-generales" element={<PageLegale document="cgu" />} />
+      <Route path="/confidentialite" element={<PageLegale document="confidentialite" />} />
+      <Route path="/annulation" element={<PageLegale document="annulation" />} />
+      <Route path="/mentions-legales" element={<PageLegale document="mentions" />} />
+
+      <Route
+        path="/dashboard"
+        element={
+          <PrivateRoute>
+            <Suspense fallback={<ChargementPage />}>
+              <DashboardLayout />
+            </Suspense>
+          </PrivateRoute>
+        }
+      >
+        <Route index element={<Dashboard />} />
+        <Route path="villas" element={<ProprietaireRoute><MesVillas /></ProprietaireRoute>} />
+        <Route path="villas/nouvelle" element={<ProprietaireRoute><NouvelleVilla /></ProprietaireRoute>} />
+        <Route path="villas/:id" element={<ProprietaireRoute><GererVilla /></ProprietaireRoute>} />
+        <Route path="reservations" element={<Reservations />} />
+        <Route path="favoris" element={<Favoris />} />
+        <Route path="profil" element={<Profil />} />
+      </Route>
+
+      <Route
+        path="/admin"
+        element={
+          <AdminRoute>
+            <Suspense fallback={<ChargementPage />}>
+              <AdminLayout />
+            </Suspense>
+          </AdminRoute>
+        }
+      >
+        <Route index element={<AdminDashboard />} />
+        <Route path="villas" element={<AdminVillas />} />
+        <Route path="utilisateurs" element={<AdminUtilisateurs />} />
+        <Route path="avis" element={<AdminAvis />} />
+      </Route>
+
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   )
 }

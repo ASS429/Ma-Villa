@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
+use App\Notifications\ReinitialiserMotDePasse;
+use App\Notifications\VerifierAdresseEmail;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
@@ -24,6 +27,17 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /** Emails transactionnels en français, pointant vers le front. */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ReinitialiserMotDePasse($token));
+    }
+
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new VerifierAdresseEmail());
     }
 
     public function villas(): HasMany

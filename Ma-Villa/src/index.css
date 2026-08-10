@@ -42,7 +42,7 @@
   --bg-input:     rgba(255, 255, 255, 0.05);
   --text-1:       #F5F0EB;
   --text-2:       #8A837D;
-  --text-3:       #4A4540;
+  --text-3:       #7A7470;
   --border:       rgba(255, 240, 220, 0.08);
   --border-2:     rgba(255, 240, 220, 0.18);
   --accent:       #E8845A;
@@ -365,7 +365,7 @@ html.video-mode[data-theme="dark"] {
   --bg-input:      rgba(255, 255, 255, 0.06);
   --text-1:        #F5F0EB;
   --text-2:        #8A837D;
-  --text-3:        #4A4540;
+  --text-3:        #7A7470;
   --border:        rgba(255, 240, 220, 0.10);
   --border-2:      rgba(255, 240, 220, 0.22);
   --accent:        #E8845A;
