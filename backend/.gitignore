@@ -1,8 +1,9 @@
 *.log
 .DS_Store
 .env
-.env.backup
-.env.production
+# Toute variante de .env : elles contiennent APP_KEY et des identifiants.
+.env.*
+!.env.example
 .phpactor.json
 .phpunit.result.cache
 /.cursor/
