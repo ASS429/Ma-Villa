@@ -216,6 +216,20 @@ class VillaTest extends TestCase
         $this->assertFalse($data['vedette']);
     }
 
+    public function test_absent_amenities_are_false_not_null(): void
+    {
+        // Un SELECT 1 limité renvoyait `null` en l'absence de résultat : le
+        // champ valait tantôt true, tantôt null, jamais false.
+        $this->villaAvec('Sans piscine ni clim', 30000);
+
+        $data = $this->getJson('/api/villas')->assertOk()->json('data.0');
+
+        $this->assertIsBool($data['a_piscine']);
+        $this->assertIsBool($data['a_climatisation']);
+        $this->assertFalse($data['a_piscine']);
+        $this->assertFalse($data['a_climatisation']);
+    }
+
     public function test_public_listing_exposes_the_unit_of_the_cheapest_price(): void
     {
         $villa = Villa::factory()->validee()->create();

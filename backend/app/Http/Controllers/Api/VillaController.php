@@ -42,16 +42,24 @@ class VillaController extends Controller
             // Équipements affichés sur la carte de villa. Ils ne sont pas
             // stockés tels quels : ils se déduisent des logements et des
             // formules tarifaires, sans charger toute l'arborescence.
+            // EXISTS plutôt qu'un SELECT 1 limité : ce dernier renvoyait `null`
+            // en l'absence de résultat, si bien que le champ valait tantôt
+            // true, tantôt null — jamais false. EXISTS renvoie toujours une
+            // valeur, que le transtypage du modèle ramène à un booléen sur les
+            // trois moteurs. L'alias vit dans le SQL : `addSelect` ne sait pas
+            // nommer une expression brute par clé de tableau.
+            ->addSelect(DB::raw(
+                "(exists (select 1 from logements"
+                ." where logements.villa_id = villas.id and logements.type = 'piscine'))"
+                .' as a_piscine'
+            ))
+            ->addSelect(DB::raw(
+                '(exists (select 1 from tarifs'
+                .' inner join logements as l_clim on l_clim.id = tarifs.logement_id'
+                .' where l_clim.villa_id = villas.id and tarifs.avec_clim = true))'
+                .' as a_climatisation'
+            ))
             ->addSelect([
-                'a_piscine' => Logement::selectRaw('1')
-                    ->whereColumn('logements.villa_id', 'villas.id')
-                    ->where('type', 'piscine')
-                    ->limit(1),
-                'a_climatisation' => Tarif::selectRaw('1')
-                    ->join('logements as l_clim', 'l_clim.id', '=', 'tarifs.logement_id')
-                    ->whereColumn('l_clim.villa_id', 'villas.id')
-                    ->where('tarifs.avec_clim', true)
-                    ->limit(1),
                 // Unité du tarif le moins cher : « à partir de 45 000 FCFA »
                 // n'a pas le même sens à la nuitée qu'à la demi-journée.
                 'prix_min_unite' => Tarif::select('tarifs.type_tarif')
