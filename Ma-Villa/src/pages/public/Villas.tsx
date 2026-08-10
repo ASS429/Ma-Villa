@@ -200,7 +200,7 @@ export default function Villas() {
         <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
           <button
             className="flex items-center gap-2 text-sm px-4 py-2 rounded-xl transition-colors th-text-1"
-            style={{ border: '1px solid var(--border)', background: 'var(--bg-surface)', minHeight: 40 }}
+            style={{ border: '1px solid var(--border)', background: 'var(--bg-surface)', minHeight: 44 }}
             onClick={() => setPanneauOuvert((v) => !v)}
             aria-expanded={panneauOuvert}
           >
@@ -244,7 +244,8 @@ export default function Villas() {
               id="tri"
               value={filtres.tri}
               onChange={(e) => appliquer({ tri: e.target.value })}
-              className="rounded-xl px-3 py-2 text-sm th-input-field"
+              className="rounded-xl px-3 text-sm th-input-field"
+              style={{ minHeight: 44 }}
             >
               {TRIS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
@@ -349,7 +350,7 @@ export default function Villas() {
                   onClick={() => allerPage(pagination.page - 1)}
                   disabled={pagination.page === 1}
                   className="px-3.5 py-2 rounded-xl text-sm transition-all disabled:opacity-30 th-text-1"
-                  style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', minHeight: 40 }}
+                  style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', minHeight: 44 }}
                   aria-label="Page précédente"
                 >
                   ←
@@ -361,7 +362,7 @@ export default function Villas() {
                     <button
                       key={p}
                       onClick={() => allerPage(p as number)}
-                      className="w-10 h-10 rounded-xl text-sm font-medium transition-all"
+                      className="w-11 h-11 rounded-xl text-sm font-medium transition-all"
                       aria-current={p === pagination.page ? 'page' : undefined}
                       style={
                         p === pagination.page
@@ -377,7 +378,7 @@ export default function Villas() {
                   onClick={() => allerPage(pagination.page + 1)}
                   disabled={pagination.page === pagination.dernierePage}
                   className="px-3.5 py-2 rounded-xl text-sm transition-all disabled:opacity-30 th-text-1"
-                  style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', minHeight: 40 }}
+                  style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', minHeight: 44 }}
                   aria-label="Page suivante"
                 >
                   →

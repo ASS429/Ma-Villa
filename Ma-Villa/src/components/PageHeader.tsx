@@ -49,7 +49,13 @@ export default function PageHeader() {
           borderBottom: '1px solid var(--border)',
         }}
       >
-        <Link to="/" className="text-xl font-semibold tracking-tight th-text-1">Ma Villa</Link>
+        <Link
+          to="/"
+          className="text-xl font-semibold tracking-tight th-text-1 inline-flex items-center"
+          style={{ minHeight: 44 }}
+        >
+          Ma Villa
+        </Link>
 
         <nav className="hidden md:flex items-center gap-6">
           <NavLink to="/villas" className={({ isActive }) =>
