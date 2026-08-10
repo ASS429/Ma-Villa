@@ -5,60 +5,138 @@
   --font-display: 'Cormorant Garamond', Georgia, serif;
 }
 
-/* ─── Colour tokens — Light ──────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════════
+   TOKENS — design system Ma Villa (Claude Design, planche 01)
+
+   Source de vérité de la couleur, de la typographie, de la forme et du
+   rythme. Toute valeur écrite en dur dans un composant est un défaut à
+   corriger, pas une exception à tolérer.
+
+   Les couleurs sont calibrées pour atteindre WCAG AA sur leur fond :
+   `--accent` sur `--bg` = 5,3:1, blanc sur `--accent` = 5,8:1,
+   `--text-3` sur `--bg` = 4,8:1. Ne pas les éclaircir.
+   ════════════════════════════════════════════════════════════════ */
 
 :root {
-  --bg:           #F7F4EF;
-  --bg-surface:   #FFFFFF;
-  --bg-elevated:  #F0EDE6;
-  --bg-input:     rgba(0, 0, 0, 0.04);
-  --text-1:       #1A1614;
-  --text-2:       #6B6560;
-  --text-3:       #A09890;
-  --border:       rgba(0, 0, 0, 0.07);
-  --border-2:     rgba(0, 0, 0, 0.14);
-  --accent:       #C4622D;
-  --accent-warm:  #E8845A;
-  --accent-gold:  #D4A843;
-  --accent-bg:    rgba(196, 98, 45, 0.10);
-  --success:      #22875A;
-  --warning:      #D97706;
-  --danger:       #DC2626;
-  --header-bg:    rgba(247, 244, 239, 0.88);
-  --glass-bg:     rgba(255, 255, 255, 0.72);
-  --shadow-sm:    0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md:    0 4px 16px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.05);
-  --shadow-lg:    0 12px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
-  --shadow-xl:    0 24px 64px rgba(0,0,0,0.16), 0 8px 24px rgba(0,0,0,0.08);
-  --shadow-accent: 0 8px 24px rgba(196,98,45,0.40), 0 2px 8px rgba(196,98,45,0.20);
+  /* — couleur, thème clair — */
+  --bg:            #F7F4EF;
+  --bg-surface:    #FFFFFF;
+  --bg-elevated:   #F0EDE6;
+  --text-1:        #1A1614;
+  --text-2:        #5C5650;
+  --text-3:        #726A62;
+  --border:        rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.14);
+  --accent:        #A34D1F;
+  --accent-hover:  #8A3F19;
+  --accent-bg:     rgba(163, 77, 31, 0.10);
+  --accent-soft:   #E8845A;   /* décoratif seulement — jamais sous du texte */
+  --gold:          #8A6A12;
+  --gold-soft:     #D4A843;   /* décoratif seulement */
+  --success:       #1F7A4F;
+  --warning:       #9A5203;
+  --danger:        #C42020;
+  --on-accent:     #FFFFFF;
+
+  /* Absents de la planche, déduits des tokens ci-dessus. */
+  --bg-input:      rgba(0, 0, 0, 0.04);
+  --header-bg:     rgba(247, 244, 239, 0.88);
+
+  /* — typographie — */
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-ui:      'DM Sans', system-ui, sans-serif;
+
+  --t-display:    300 clamp(40px, 7vw, 72px)/1.02 var(--font-display);
+  --t-display-ls: -0.04em;
+  --t-h1:         300 clamp(32px, 4.4vw, 48px)/1.05 var(--font-display);
+  --t-h1-ls:      -0.03em;
+  --t-h2:         400 clamp(26px, 3vw, 34px)/1.12 var(--font-display);
+  --t-h2-ls:      -0.02em;
+  --t-h3:         600 clamp(18px, 1.6vw, 20px)/1.3 var(--font-ui);
+  --t-body-lg:    400 clamp(17px, 1.4vw, 18px)/1.6 var(--font-ui);
+  --t-body:       400 clamp(15px, 1.2vw, 16px)/1.6 var(--font-ui);
+  --t-body-sm:    400 clamp(13px, 1vw, 14px)/1.5 var(--font-ui);
+  --t-price:      600 clamp(18px, 1.7vw, 22px)/1.2 var(--font-ui);
+  --t-label:      500 13px/1.4 var(--font-ui);
+  --t-caption:    400 12px/1.4 var(--font-ui);
+  --t-eyebrow:    600 11px/1.2 var(--font-ui);
+  --t-eyebrow-ls: 0.16em;
+
+  /* — forme, profondeur, rythme — */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-full: 999px;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.05);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,.12), 0 4px 12px rgba(0,0,0,.06);
+  --shadow-xl: 0 24px 64px rgba(0,0,0,.16), 0 8px 24px rgba(0,0,0,.08);
+
+  /* Une seule recette de verre — réservée aux surfaces posées sur une photo. */
+  --glass:    blur(20px) saturate(150%);
+  --glass-bg: rgba(20, 14, 10, 0.42);
+
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px;
+  --space-9: 96px;
+
+  --gutter: 20px;
+  --content-max: 1200px;
+
+  --dur-fast: 150ms;
+  --dur:      220ms;
+  --dur-slow: 300ms;
+  --ease:     cubic-bezier(.2, .7, .3, 1);
 }
 
-/* ─── Colour tokens — Dark ───────────────────────────────────── */
+@media (min-width: 768px)  { :root { --gutter: 40px; } }
+@media (min-width: 1024px) { :root { --gutter: 64px; } }
 
-[data-theme="dark"] {
-  --bg:           #0C0A08;
-  --bg-surface:   #161210;
-  --bg-elevated:  #1E1A17;
-  --bg-input:     rgba(255, 255, 255, 0.05);
-  --text-1:       #F5F0EB;
-  --text-2:       #8A837D;
-  --text-3:       #7A7470;
-  --border:       rgba(255, 240, 220, 0.08);
-  --border-2:     rgba(255, 240, 220, 0.18);
-  --accent:       #E8845A;
-  --accent-warm:  #F0A07A;
-  --accent-gold:  #E8C060;
-  --accent-bg:    rgba(232, 132, 90, 0.12);
-  --success:      #34D399;
-  --warning:      #FBBF24;
-  --danger:       #F87171;
-  --header-bg:    rgba(12, 10, 8, 0.92);
-  --glass-bg:     rgba(22, 18, 14, 0.72);
-  --shadow-sm:    0 1px 3px rgba(0,0,0,0.50);
-  --shadow-md:    0 4px 16px rgba(0,0,0,0.70);
-  --shadow-lg:    0 12px 40px rgba(0,0,0,0.90);
-  --shadow-xl:    0 24px 64px rgba(0,0,0,0.95);
-  --shadow-accent: 0 8px 24px rgba(232,132,90,0.45), 0 2px 8px rgba(232,132,90,0.25);
+/* — couleur, thème sombre —
+   Seuls les tokens qui changent sont redéfinis : forme, rythme et
+   typographie restent ceux du bloc clair. */
+
+:root[data-theme="dark"] {
+  --bg:            #0C0A08;
+  --bg-surface:    #161210;
+  --bg-elevated:   #1E1A17;
+  --text-1:        #F5F0EB;
+  --text-2:        #A69E97;
+  --text-3:        #8A837D;
+  --border:        rgba(255, 240, 220, 0.10);
+  --border-strong: rgba(255, 240, 220, 0.18);
+  --accent:        #E8845A;
+  --accent-hover:  #F09A75;
+  --accent-bg:     rgba(232, 132, 90, 0.14);
+  --gold:          #E8C060;
+  --success:       #34D399;
+  --warning:       #FBBF24;
+  --danger:        #F87171;
+  --on-accent:     #1A1614;
+
+  --bg-input:      rgba(255, 255, 255, 0.05);
+  --header-bg:     rgba(12, 10, 8, 0.92);
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.40);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.50), 0 2px 6px rgba(0,0,0,.30);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,.55), 0 4px 12px rgba(0,0,0,.35);
+  --shadow-xl: 0 24px 64px rgba(0,0,0,.60), 0 8px 24px rgba(0,0,0,.40);
+  --glass-bg:  rgba(12, 10, 8, 0.55);
+}
+
+/* ─── Compatibilité pendant la migration ─────────────────────────
+   Anciens noms, conservés le temps que les composants passent aux
+   nouveaux. À supprimer quand plus rien ne les référence — vérifier
+   avec : grep -rn "border-2\|accent-gold\|accent-warm" src/
+   ──────────────────────────────────────────────────────────────── */
+
+:root, :root[data-theme="dark"] {
+  --border-2:      var(--border-strong);
+  --accent-gold:   var(--gold);
+  --accent-warm:   var(--accent-soft);
+  --shadow-accent: 0 8px 24px color-mix(in srgb, var(--accent) 40%, transparent),
+                   0 2px 8px  color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 /* ─── Base ───────────────────────────────────────────────────── */

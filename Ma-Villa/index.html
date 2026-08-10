@@ -36,6 +36,21 @@
     />
   </head>
   <body>
+    <script>
+      // Pose le thème avant le premier rendu. Sans cela, un appareil réglé en
+      // sombre affiche un éclair de thème clair le temps que React monte.
+      // Même règle que ThemeContext : choix enregistré, sinon préférence système.
+      (function () {
+        try {
+          var choix = localStorage.getItem('theme')
+          var sombre = choix === 'dark' || (!choix &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches)
+          document.documentElement.setAttribute('data-theme', sombre ? 'dark' : 'light')
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'light')
+        }
+      })()
+    </script>
     <div id="root"></div>
     <noscript>
       Ma Villa nécessite JavaScript pour fonctionner. Veuillez l'activer dans votre navigateur.
