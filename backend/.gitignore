@@ -25,4 +25,4 @@ Homestead.yaml
 Thumbs.db
 
 # Environnement local pour le travail design (SQLite + front sur 4174)
-.env.local.design
+.env.design

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Users, Star } from 'lucide-react'
+import Badge from './ui/Badge'
 import type { VillaResume } from '../types'
 import { fcfa, noteLisible } from '../lib/format'
 
@@ -44,15 +45,7 @@ export default function VillaCard({ villa, isFavori, onToggleFavori, prioritaire
           )}
 
           {villa.vedette && (
-            <span
-              className="absolute top-3 left-3 px-2.5 py-1 rounded-lg text-xs font-bold text-white uppercase"
-              style={{
-                background: 'linear-gradient(135deg, var(--accent-gold), var(--accent))',
-                letterSpacing: '0.08em',
-              }}
-            >
-              Vedette
-            </span>
+            <Badge ton="vedette" className="absolute top-3 left-3">Vedette</Badge>
           )}
 
           {onToggleFavori && (
@@ -87,7 +80,7 @@ export default function VillaCard({ villa, isFavori, onToggleFavori, prioritaire
 
             {note && (
               <span className="shrink-0 flex items-center gap-1 text-sm th-text-1 font-medium">
-                <Star size={13} fill="var(--accent-gold)" stroke="var(--accent-gold)" />
+                <Star size={13} fill="var(--gold-soft)" stroke="var(--gold-soft)" aria-hidden="true" />
                 {note}
                 <span className="th-text-3 font-normal">({nbAvis})</span>
               </span>

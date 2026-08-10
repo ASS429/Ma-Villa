@@ -11,6 +11,7 @@ import FondHero from './components/FondHero'
 import VillaCard from './components/VillaCard'
 import ScrollReveal from './components/ScrollReveal'
 import Footer from './components/Footer'
+import { ButtonLink } from './components/ui/Button'
 import Seo from './components/Seo'
 import { VillaCardSkeleton } from './components/Skeleton'
 import Login from './pages/Login'
@@ -265,13 +266,13 @@ function AppelProprietaires() {
             Créez votre annonce, fixez vos tarifs par formule — nuitée, journée,
             piscine seule — et gérez vos disponibilités depuis un tableau de bord simple.
           </p>
-          <Link
-            to="/register"
-            className="inline-block px-7 py-3 rounded-xl font-semibold transition-opacity hover:opacity-90"
-            style={{ background: 'var(--accent)', color: '#fff', textDecoration: 'none' }}
-          >
+          {/* Seul endroit où « Publier ma villa » prend l'accent : c'est la
+              section qui lui est consacrée, donc la conversion du parcours en
+              cours. Ailleurs, elle reste secondaire pour ne pas détourner la
+              couleur d'action vers une action qui ne concerne pas le client. */}
+          <ButtonLink to="/register" variante="primaire" taille="md">
             Publier ma villa
-          </Link>
+          </ButtonLink>
         </ScrollReveal>
       </div>
     </section>

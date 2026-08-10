@@ -154,6 +154,108 @@ body {
   transition: background 350ms ease, color 350ms ease;
 }
 
+/* ════════════════════════════════════════════════════════════════
+   PRIMITIFS — boutons
+
+   Règle d'emploi de l'accent, arrêtée en revue de design :
+   l'accent signale la conversion du parcours en cours — « Rechercher »
+   et « Réserver ». « Publier ma villa » est secondaire partout, sauf sur
+   la page qui lui est dédiée : sinon, sur une page destinée au client,
+   la couleur d'action pointe vers une action qui ne le concerne pas.
+
+   Hauteur minimale 44 px partout : cible tactile confortable.
+   ════════════════════════════════════════════════════════════════ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease),
+              border-color var(--dur-fast) var(--ease),
+              color var(--dur-fast) var(--ease),
+              opacity var(--dur-fast) var(--ease);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* — tailles — */
+.btn-sm { min-height: 44px; padding: 12px 16px; font-size: 14px; }
+.btn-md { min-height: 48px; padding: 16px 24px; font-size: 16px; }
+.btn-lg { min-height: 52px; padding: 18px 24px; font-size: 16px; }
+.btn-bloc { display: flex; width: 100%; }
+
+/* — variantes — */
+.btn-primaire {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.btn-primaire:hover:not(:disabled) { background: var(--accent-hover); }
+
+.btn-secondaire {
+  background: var(--bg-surface);
+  border-color: var(--border-strong);
+  color: var(--text-1);
+}
+.btn-secondaire:hover:not(:disabled) { background: var(--bg-elevated); }
+
+.btn-discret {
+  background: transparent;
+  color: var(--text-2);
+}
+.btn-discret:hover:not(:disabled) {
+  background: var(--bg-elevated);
+  color: var(--text-1);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+.btn-danger:hover:not(:disabled) { opacity: 0.9; }
+
+/* Bouton posé sur une photo ou une vidéo : seul emploi du verre. */
+.btn-verre {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass);
+  -webkit-backdrop-filter: var(--glass);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+.btn-verre:hover:not(:disabled) { background: rgba(20, 14, 10, 0.58); }
+
+/* Indicateur de chargement, hérite de la couleur du texte. */
+.btn-spinner {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: btn-spin 600ms linear infinite;
+}
+@keyframes btn-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-spinner { animation-duration: 2s; }
+}
+
 /* ─── Theme utilities ────────────────────────────────────────── */
 
 .th-bg       { background: var(--bg); }
@@ -178,13 +280,97 @@ body {
   background: var(--bg-input);
   border: 1px solid var(--border);
   color: var(--text-1);
-  transition: border-color 200ms ease, box-shadow 200ms ease;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
 .th-input-field::placeholder { color: var(--text-3); }
 .th-input-field:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   PRIMITIFS — champs de formulaire
+   ════════════════════════════════════════════════════════════════ */
+
+.champ {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.champ-label {
+  font: var(--t-label);
+  color: var(--text-2);
+}
+
+.champ-obligatoire {
+  color: var(--accent);
+  margin-left: 2px;
+}
+
+.champ-controle {
+  width: 100%;
+  /* 44 px de haut minimum : sous ce seuil, la cible est trop petite au doigt. */
+  min-height: 44px;
+  padding: 11px 14px;
+  border-radius: var(--r-md);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--text-1);
+  font: var(--t-body);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+
+.champ-controle::placeholder { color: var(--text-3); }
+
+.champ-controle:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.champ-controle:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.champ-controle[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+.champ-controle[aria-invalid='true']:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 15%, transparent);
+}
+
+textarea.champ-controle {
+  resize: vertical;
+  min-height: 96px;
+}
+
+.champ-aide { font: var(--t-caption); color: var(--text-3); }
+.champ-erreur {
+  font: var(--t-caption);
+  color: var(--danger);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   PRIMITIFS — surfaces
+   ════════════════════════════════════════════════════════════════ */
+
+.carte {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.carte-encart {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
 }
 
 /* ─── Typography helpers ─────────────────────────────────────── */
@@ -247,8 +433,9 @@ h1.display, .text-display {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 10px;
-  border-radius: 99px;
+  padding: 4px 10px;
+  border-radius: var(--r-full);
+  font-family: var(--font-ui);
   font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.01em;
@@ -258,14 +445,33 @@ h1.display, .text-display {
   border-radius: 50%;
   flex-shrink: 0;
 }
-.badge-success { background: rgba(34,135,90,0.12);  color: var(--success); }
-.badge-success .badge-dot  { background: var(--success); }
-.badge-warning { background: rgba(217,119,6,0.12);  color: var(--warning); }
-.badge-warning .badge-dot  { background: var(--warning); }
-.badge-danger  { background: rgba(220,38,38,0.10);  color: var(--danger);  }
-.badge-danger  .badge-dot  { background: var(--danger);  }
-.badge-gold    { background: rgba(212,168,67,0.15);  color: var(--accent-gold); }
-.badge-gold    .badge-dot  { background: var(--accent-gold); }
+
+/* Teinte de fond dérivée de la couleur de statut : une seule source. */
+.badge-success { background: color-mix(in srgb, var(--success) 12%, transparent); color: var(--success); }
+.badge-success .badge-dot { background: var(--success); }
+.badge-warning { background: color-mix(in srgb, var(--warning) 12%, transparent); color: var(--warning); }
+.badge-warning .badge-dot { background: var(--warning); }
+.badge-danger  { background: color-mix(in srgb, var(--danger) 10%, transparent);  color: var(--danger); }
+.badge-danger  .badge-dot { background: var(--danger); }
+.badge-neutre  { background: var(--bg-elevated); color: var(--text-2); }
+.badge-neutre  .badge-dot { background: var(--text-3); }
+
+/* « Vedette » : fond or plein et texte blanc. Assombri pour l'AA, --gold vire
+   au bronze olive — c'est précisément ce qui le rend utilisable en fond. */
+.badge-vedette {
+  background: var(--gold);
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: var(--t-eyebrow-ls);
+  font-size: 0.62rem;
+  padding: 5px 10px;
+}
+
+/* Étoiles de notation : décoratives, jamais porteuses d'information seules —
+   la note chiffrée à côté porte le sens. On garde donc l'or clair de la
+   marque plutôt que le bronze assombri. */
+.etoile { color: var(--gold-soft); }
+.etoile-vide { color: var(--border-strong); }
 
 /* ─── Skeleton shimmer ───────────────────────────────────────── */
 
