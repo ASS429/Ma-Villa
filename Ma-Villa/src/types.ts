@@ -65,6 +65,9 @@ interface VillaBase {
   photos: Photo[]
   vedette?: boolean
   statut?: StatutVilla
+  /** Coordonnées GPS — chaînes en PostgreSQL, nombres ailleurs. */
+  latitude?: number | string | null
+  longitude?: number | string | null
   /**
    * Agrégats calculés côté serveur — absents si la villa n'a ni tarif ni avis.
    * PostgreSQL renvoie les numériques en chaîne : `fcfa()` et `noteLisible()`

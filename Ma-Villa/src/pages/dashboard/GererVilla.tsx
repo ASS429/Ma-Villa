@@ -362,7 +362,7 @@ export default function GererVilla() {
                 type="submit"
                 disabled={infoSaving}
                 className="flex-1 py-2 rounded-xl text-sm font-medium transition-all hover:opacity-90 disabled:opacity-50"
-                style={{ background: 'var(--text-1)', color: 'var(--bg)' }}
+                style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
               >
                 {infoSaving ? 'Enregistrement...' : 'Enregistrer'}
               </button>
@@ -437,7 +437,7 @@ export default function GererVilla() {
         <button
           onClick={() => setShowLogementForm(!showLogementForm)}
           className="px-4 py-1.5 rounded-xl text-sm font-medium transition-all hover:opacity-90"
-          style={{ background: 'var(--text-1)', color: 'var(--bg)' }}
+          style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
         >
           + Logement
         </button>
@@ -472,7 +472,7 @@ export default function GererVilla() {
             </button>
             <button type="submit"
               className="flex-1 py-2 rounded-xl text-sm font-medium transition-all hover:opacity-90"
-              style={{ background: 'var(--text-1)', color: 'var(--bg)' }}>
+              style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}>
               Ajouter
             </button>
           </div>
@@ -517,7 +517,7 @@ export default function GererVilla() {
                     </button>
                     <button type="submit"
                       className="flex-1 py-2 rounded-xl text-xs font-medium transition-all hover:opacity-90"
-                      style={{ background: 'var(--text-1)', color: 'var(--bg)' }}>
+                      style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}>
                       Enregistrer
                     </button>
                   </div>
@@ -615,7 +615,7 @@ export default function GererVilla() {
                     </button>
                     <button type="submit"
                       className="flex-1 py-2 rounded-xl text-xs font-medium transition-all hover:opacity-90"
-                      style={{ background: 'var(--text-1)', color: 'var(--bg)' }}>
+                      style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}>
                       Ajouter ce tarif
                     </button>
                   </div>
@@ -666,7 +666,7 @@ export default function GererVilla() {
                           </button>
                           <button type="submit"
                             className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-90"
-                            style={{ background: 'var(--text-1)', color: 'var(--bg)' }}>
+                            style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}>
                             Enregistrer
                           </button>
                         </div>

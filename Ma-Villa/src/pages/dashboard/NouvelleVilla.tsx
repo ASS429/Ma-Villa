@@ -276,7 +276,7 @@ export default function NouvelleVilla() {
             type="submit"
             disabled={isLoading}
             className="flex-1 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-90 disabled:opacity-50"
-            style={{ background: 'var(--text-1)', color: 'var(--bg)' }}
+            style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
           >
             {isLoading ? (isUploading ? 'Upload en cours...' : 'Enregistrement...') : 'Créer la villa'}
           </button>

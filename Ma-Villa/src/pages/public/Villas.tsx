@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import api from '../../services/api'
 import VillaCard from '../../components/VillaCard'
@@ -6,6 +6,10 @@ import PageHeader from '../../components/PageHeader'
 import ScrollReveal from '../../components/ScrollReveal'
 import BarreRecherche from '../../components/BarreRecherche'
 import Button from '../../components/ui/Button'
+
+// Leaflet ne concerne que cette page : le sortir du paquet initial évite de
+// le faire télécharger à tous les visiteurs de l'accueil.
+const CarteVillas = lazy(() => import('../../components/CarteVillas'))
 import Footer from '../../components/Footer'
 import Seo from '../../components/Seo'
 import { useAuth } from '../../context/AuthContext'
@@ -146,6 +150,8 @@ export default function Villas() {
   const [params, setParams] = useSearchParams()
 
   const [panneauOuvert, setPanneauOuvert] = useState(false)
+  const [vueCarte, setVueCarte] = useState(false)
+  const [villaSurvolee, setVillaSurvolee] = useState<number | null>(null)
   const [favorisIds, setFavorisIds] = useState<Set<number>>(new Set())
 
   // Les filtres sont dérivés de l'URL, pas dupliqués dans un état parallèle :
@@ -275,7 +281,29 @@ export default function Villas() {
             )}
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {/* Bascule liste / carte : la carte n'est pas décorative — à Saly,
+                « à 300 m de la plage » et « à 3 km » sont deux produits
+                différents au même prix. */}
+            <div className="bascule-vue" role="group" aria-label="Affichage des résultats">
+              <button
+                type="button"
+                onClick={() => setVueCarte(false)}
+                aria-pressed={!vueCarte}
+                className={vueCarte ? undefined : 'est-actif'}
+              >
+                Liste
+              </button>
+              <button
+                type="button"
+                onClick={() => setVueCarte(true)}
+                aria-pressed={vueCarte}
+                className={vueCarte ? 'est-actif' : undefined}
+              >
+                Carte
+              </button>
+            </div>
+
             <label htmlFor="tri" className="text-sm th-text-2">Trier par</label>
             <select
               id="tri"
@@ -342,17 +370,44 @@ export default function Villas() {
               )}
             </p>
 
-            <ScrollReveal className="sr-stagger grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {villas.map((villa, i) => (
-                <VillaCard
-                  key={villa.id}
-                  villa={villa}
-                  prioritaire={i < 3}
-                  isFavori={favorisIds.has(villa.id)}
-                  onToggleFavori={user?.role === 'client' ? (e) => toggleFavori(e, villa.id) : undefined}
-                />
-              ))}
-            </ScrollReveal>
+            {vueCarte ? (
+              <div className="vue-carte">
+                {/* Liste et carte côte à côte : survoler une carte de villa
+                    met en avant son marqueur, et inversement. */}
+                <div className="vue-carte-liste">
+                  {villas.map((villa) => (
+                    <div
+                      key={villa.id}
+                      onMouseEnter={() => setVillaSurvolee(villa.id)}
+                      onMouseLeave={() => setVillaSurvolee(null)}
+                    >
+                      <VillaCard
+                        villa={villa}
+                        isFavori={favorisIds.has(villa.id)}
+                        onToggleFavori={user?.role === 'client' ? (e) => toggleFavori(e, villa.id) : undefined}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="vue-carte-plan">
+                  <Suspense fallback={<div className="carte-villas-vide"><p className="th-text-3 text-sm">Chargement de la carte…</p></div>}>
+                    <CarteVillas villas={villas} villaSurvolee={villaSurvolee} />
+                  </Suspense>
+                </div>
+              </div>
+            ) : (
+              <ScrollReveal className="sr-stagger grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {villas.map((villa, i) => (
+                  <VillaCard
+                    key={villa.id}
+                    villa={villa}
+                    prioritaire={i < 3}
+                    isFavori={favorisIds.has(villa.id)}
+                    onToggleFavori={user?.role === 'client' ? (e) => toggleFavori(e, villa.id) : undefined}
+                  />
+                ))}
+              </ScrollReveal>
+            )}
 
             {pagination.dernierePage > 1 && (
               <nav className="flex items-center justify-center gap-1.5 mt-10 flex-wrap" aria-label="Pagination">

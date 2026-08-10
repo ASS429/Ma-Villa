@@ -25,6 +25,7 @@ Route::get('/auth/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmai
 // Public
 Route::get('/configuration', ConfigurationController::class);
 Route::get('/villas', [VillaController::class, 'index']);
+Route::get('/destinations', [VillaController::class, 'destinations']);
 Route::get('/villas/{villa}', [VillaController::class, 'show']);
 Route::get('/villas/{villa}/occupation', [VillaController::class, 'occupation']);
 Route::get('/villas/{villa}/logements', [LogementController::class, 'index']);

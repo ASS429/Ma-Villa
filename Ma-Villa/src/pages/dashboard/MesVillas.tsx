@@ -42,7 +42,7 @@ export default function MesVillas() {
         <Link
           to="/dashboard/villas/nouvelle"
           className="px-5 py-2 rounded-xl text-sm font-medium transition-all hover:opacity-90"
-          style={{ background: 'var(--text-1)', color: 'var(--bg)' }}
+          style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
         >
           + Nouvelle villa
         </Link>
@@ -63,7 +63,7 @@ export default function MesVillas() {
           <Link
             to="/dashboard/villas/nouvelle"
             className="inline-block px-6 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-90"
-            style={{ background: 'var(--text-1)', color: 'var(--bg)' }}
+            style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
           >
             Ajouter ma première villa
           </Link>

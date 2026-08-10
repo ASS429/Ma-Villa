@@ -80,7 +80,7 @@ export default function AdminVillas() {
             className="px-4 py-1.5 rounded-xl text-sm transition-all"
             style={
               statut === t.value
-                ? { background: 'var(--text-1)', color: 'var(--bg)' }
+                ? { background: 'var(--accent)', color: 'var(--on-accent)' }
                 : { border: '1px solid var(--border)', color: 'var(--text-2)' }
             }
           >
@@ -174,7 +174,7 @@ export default function AdminVillas() {
                       <button
                         onClick={() => updateStatut(villa, 'validee')}
                         className="px-4 py-1.5 rounded-xl text-sm font-medium transition-all hover:opacity-90"
-                        style={{ background: 'var(--text-1)', color: 'var(--bg)' }}
+                        style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
                       >
                         Valider
                       </button>

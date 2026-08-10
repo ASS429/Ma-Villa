@@ -17,7 +17,7 @@ export default function NotFound() {
         <Link
           to="/"
           className="px-6 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-90 hover:scale-[1.02]"
-          style={{ background: 'var(--text-1)', color: 'var(--bg)' }}
+          style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
         >
           Accueil
         </Link>
