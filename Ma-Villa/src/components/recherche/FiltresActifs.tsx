@@ -8,10 +8,13 @@ import { libelleFiltre, type CleFiltre } from '../../lib/filtres'
  */
 export default function FiltresActifs({
   actifs,
+  nomsCategories = {},
   onRetirer,
   onToutEffacer,
 }: {
   actifs: [CleFiltre, string][]
+  /** Noms lisibles des catégories, venus de la base. */
+  nomsCategories?: Record<string, string>
   onRetirer: (cle: CleFiltre) => void
   onToutEffacer: () => void
 }) {
@@ -25,9 +28,9 @@ export default function FiltresActifs({
             type="button"
             className="pastille-filtre"
             onClick={() => onRetirer(cle)}
-            aria-label={`Retirer le filtre ${libelleFiltre(cle, valeur)}`}
+            aria-label={`Retirer le filtre ${libelleFiltre(cle, valeur, nomsCategories)}`}
           >
-            {libelleFiltre(cle, valeur)}
+            {libelleFiltre(cle, valeur, nomsCategories)}
             <span aria-hidden="true">✕</span>
           </button>
         </li>

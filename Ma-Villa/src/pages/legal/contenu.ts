@@ -1,12 +1,14 @@
 /**
- * Textes légaux.
+ * Textes légaux — version relue par le juriste, intégrée le 12 août 2026.
  *
- * ⚠️ Ce sont des trames rédigées pour couvrir les obligations usuelles d'une
- * place de marché de location au Sénégal (loi n° 2008-12 sur la protection des
- * données à caractère personnel, exigences des agrégateurs de paiement mobile).
- * Elles doivent être relues par un juriste avant mise en ligne, et toutes les
- * mentions « [À COMPLÉTER] » renseignées — elles sont volontairement visibles
- * pour qu'aucune page ne parte en production incomplète.
+ * Source de vérité : docs/juridique/corriges/. Toute correction doit repartir
+ * de ces fichiers, pas de ce module.
+ *
+ * ⚠️ Ces textes décrivent une plateforme qui n'encaisse aucun paiement.
+ * L'ouverture du paiement en ligne (PayDunya, commission) et celle de la
+ * boutique d'œuvres d'art appellent une seconde relecture : l'article
+ * « Tarifs et paiement » et la politique d'annulation deviendront faux, et la
+ * vente à distance — rétractation, livraison — n'est couverte nulle part ici.
  */
 
 export interface Section {
@@ -25,18 +27,20 @@ export interface DocumentLegal {
 }
 
 const MAJ = '10 août 2026'
-const EXPLOITANT = '[À COMPLÉTER : raison sociale]'
-const CONTACT = '[À COMPLÉTER : adresse email de contact]'
+const EXPLOITANT = 'Ma Villa'
+const CONTACT = 'contactsmavilla@gmail.com'
 
 /**
- * Affiche un avertissement en tête des pages légales tant que les textes sont
- * en cours de validation juridique. Les mentions « [À COMPLÉTER] » restent
- * visibles à dessein — mais sans explication, elles donneraient une impression
- * de négligence au visiteur.
+ * Bandeau d'avertissement en tête des pages légales.
  *
- * À passer à `false` dès que la version validée est intégrée.
+ * Passé à false le 12 août 2026 : les textes relus sont intégrés et toutes les
+ * mentions sont renseignées.
+ *
+ * ⚠️ À repasser à `true`, après relecture, avant d'ouvrir le paiement ou la
+ * boutique : une clause fausse sur les remboursements est précisément ce qu'un
+ * agrégateur de paiement examine à l'ouverture d'un compte marchand.
  */
-export const TEXTES_PROVISOIRES = true
+export const TEXTES_PROVISOIRES = false
 
 export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
   cgu: {
@@ -249,11 +253,11 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
         paragraphes: [],
         liste: [
           `Dénomination : ${EXPLOITANT}`,
-          'Forme juridique : [À COMPLÉTER]',
-          'Registre du commerce (RCCM) : [À COMPLÉTER]',
-          'NINEA : [À COMPLÉTER]',
-          'Siège social : [À COMPLÉTER : adresse]',
-          'Directeur de la publication : [À COMPLÉTER]',
+          'Forme juridique : projet en cours de formalisation',
+          'Registre du commerce (RCCM) : non encore attribué',
+          'NINEA : non encore attribué',
+          'Siège social : Mbour, Sénégal',
+          'Directeur de la publication : Abdou Ndour',
           `Contact : ${CONTACT}`,
         ],
       },
@@ -261,8 +265,9 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
         titre: 'Hébergement',
         paragraphes: [],
         liste: [
-          'Application web : [À COMPLÉTER : hébergeur et adresse]',
-          'API et base de données : [À COMPLÉTER : hébergeur et adresse]',
+          'Application web : Render Services, Inc. — San Francisco, Californie, États-Unis',
+          'API et base de données : Railway Corp. — San Francisco, Californie, États-Unis',
+          'Photographies : Cloudflare R2 — Cloudflare, Inc., San Francisco, Californie, États-Unis',
         ],
       },
       {

@@ -9,9 +9,15 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Logement extends Model
 {
-    protected $fillable = ['villa_id', 'type', 'nom', 'description', 'capacite', 'disponible'];
+    protected $fillable = [
+        'categorie_id', 'meuble','villa_id', 'type', 'nom', 'description', 'capacite', 'disponible'];
 
     protected $casts = ['disponible' => 'boolean'];
+
+    public function categorie(): BelongsTo
+    {
+        return $this->belongsTo(Categorie::class);
+    }
 
     public function villa(): BelongsTo
     {

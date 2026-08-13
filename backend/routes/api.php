@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\ConfigurationController;
 use App\Http\Controllers\Api\DisponibiliteController;
 use App\Http\Controllers\Api\FavoriController;
 use App\Http\Controllers\Api\LogementController;
+use App\Http\Controllers\Api\PaiementController;
 use App\Http\Controllers\Api\PhotoController;
 use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\TarifController;
@@ -24,6 +25,10 @@ Route::get('/auth/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmai
 
 // Public
 Route::get('/configuration', ConfigurationController::class);
+
+// Notification de paiement PayDunya. Publique par nature — le prestataire
+// n'a pas de session — mais authentifiée par le hash de la clé maîtresse.
+Route::post('/paiements/ipn', [PaiementController::class, 'ipn'])->name('paiements.ipn');
 Route::get('/villas', [VillaController::class, 'index']);
 Route::get('/destinations', [VillaController::class, 'destinations']);
 Route::get('/villas/{villa}', [VillaController::class, 'show']);
@@ -62,6 +67,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Disponibilités
     Route::post('/logements/{logement}/disponibilites', [DisponibiliteController::class, 'store']);
     Route::delete('/logements/{logement}/disponibilites/{disponibilite}', [DisponibiliteController::class, 'destroy']);
+
+    // Paiement
+    Route::post('/reservations/{reservation}/paiement', [PaiementController::class, 'initier']);
+    Route::get('/reservations/{reservation}/paiement', [PaiementController::class, 'statut']);
 
     // Réservations
     Route::get('/reservations', [ReservationController::class, 'index']);

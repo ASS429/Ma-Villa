@@ -1,14 +1,39 @@
 import { useConfig } from '../context/ConfigContext'
 
 /**
- * Annonce les moyens de paiement à venir, sans jamais laisser croire qu'un
- * règlement en ligne est possible : tant que le serveur renvoie
- * `paiement.actif = false`, le texte dit explicitement que le règlement se fait
- * avec le propriétaire.
+ * Logos des moyens de paiement — on les reconnaît d'un coup d'œil, là où un
+ * nom écrit demande d'être lu. Ce sont eux qui rassurent sur le fait qu'on
+ * paiera comme d'habitude.
  *
- * Quand la stratégie d'encaissement sera arrêtée, il suffira de passer
- * PAIEMENT_ACTIF à true côté API — le parcours de paiement viendra se brancher
- * ici, sans redéployer le front.
+ * Déclaré hors du composant parent : un composant créé pendant le rendu perd
+ * son état à chaque passage.
+ */
+const LOGOS: Record<string, string> = {
+  wave: '/wave.webp',
+  orange_money: '/orange-money.webp',
+}
+
+function Logos({ moyens }: { moyens: { cle: string; nom: string }[] }) {
+  const connus = moyens.filter((m) => LOGOS[m.cle])
+  if (connus.length === 0) return null
+
+  return (
+    <span className="moyens-logos">
+      {connus.map((m) => (
+        <img key={m.cle} src={LOGOS[m.cle]} alt={m.nom} width={28} height={28} loading="lazy" />
+      ))}
+    </span>
+  )
+}
+
+/**
+ * Annonce les moyens de paiement, sans jamais laisser croire qu'un règlement
+ * en ligne est possible tant qu'il ne l'est pas : si le serveur renvoie
+ * `paiement.actif = false`, le texte dit explicitement que le règlement se
+ * fait avec le propriétaire.
+ *
+ * Le passage à `true` côté API suffit à basculer l'affichage, sans redéployer
+ * le front.
  */
 export default function MoyensPaiement({ compact = false }: { compact?: boolean }) {
   const { paiement } = useConfig()
@@ -16,7 +41,8 @@ export default function MoyensPaiement({ compact = false }: { compact?: boolean 
 
   if (paiement.actif) {
     return (
-      <p className="text-xs th-text-2 leading-relaxed">
+      <p className="text-xs th-text-2 leading-relaxed flex items-center gap-2">
+        <Logos moyens={paiement.moyens} />
         Paiement sécurisé par {noms}.
       </p>
     )
@@ -36,16 +62,8 @@ export default function MoyensPaiement({ compact = false }: { compact?: boolean 
       className="rounded-xl px-4 py-3 flex items-start gap-3"
       style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
     >
-      <svg
-        className="w-4 h-4 shrink-0 mt-0.5"
-        style={{ color: 'var(--accent)' }}
-        viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}
-        aria-hidden="true"
-      >
-        <rect x="2" y="5" width="20" height="14" rx="2" />
-        <path d="M2 10h20" />
-      </svg>
-      <div className="text-xs leading-relaxed">
+      <Logos moyens={paiement.moyens} />
+      <div className="text-xs leading-relaxed flex-1">
         <p className="th-text-1 font-medium mb-0.5">
           Paiement en ligne bientôt disponible
         </p>

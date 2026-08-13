@@ -14,10 +14,12 @@ export default function EtatVide({
   suggestions,
   recherche,
   avecDates,
+  nomsCategories = {},
   onRetirer,
   onToutEffacer,
 }: {
   actifs: [CleFiltre, string][]
+  nomsCategories?: Record<string, string>
   suggestions: Suggestion[]
   recherche: boolean
   avecDates: boolean
@@ -47,7 +49,7 @@ export default function EtatVide({
       {!recherche && meilleure && valeur !== undefined && (
         <>
           <p className="etat-vide-texte">
-            En retirant <strong>{libelleFiltre(meilleure.cle, valeur)}</strong>,{' '}
+            En retirant <strong>{libelleFiltre(meilleure.cle, valeur, nomsCategories)}</strong>,{' '}
             <strong>{meilleure.resultats}</strong> villa{meilleure.resultats > 1 ? 's' : ''}{' '}
             correspond{meilleure.resultats > 1 ? 'ent' : ''}.
           </p>
@@ -57,7 +59,7 @@ export default function EtatVide({
               taille="sm"
               onClick={() => onRetirer(meilleure.cle)}
             >
-              Retirer « {libelleFiltre(meilleure.cle, valeur)} »
+              Retirer « {libelleFiltre(meilleure.cle, valeur, nomsCategories)} »
             </Button>
             <Button variante="discret" taille="sm" onClick={onToutEffacer}>
               Tout effacer

@@ -1,12 +1,28 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import api from '../services/api'
+import type { TypeTarif } from '../types'
 
 interface MoyenPaiement {
   cle: string
   nom: string
 }
 
+/**
+ * Une catégorie est un triplet : unité de prix, formules autorisées, jeu de
+ * filtres. Elle vient de la base — ajouter « studio meublé » ne doit pas
+ * demander de redéployer le front.
+ */
+export interface Categorie {
+  cle: string
+  nom: string
+  nom_pluriel: string
+  unite_prix: TypeTarif
+  formules: TypeTarif[]
+  filtres: string[] | null
+}
+
 interface Configuration {
+  categories: Categorie[]
   paiement: {
     actif: boolean
     moyens: MoyenPaiement[]
@@ -19,6 +35,7 @@ interface Configuration {
  * règlement qui n'aboutirait pas.
  */
 const DEFAUT: Configuration = {
+  categories: [],
   paiement: {
     actif: false,
     moyens: [

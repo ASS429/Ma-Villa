@@ -22,7 +22,9 @@ import { useToast } from '../../context/ToastContext'
 import { VillaCardSkeleton } from '../../components/Skeleton'
 import { messageErreur } from '../../lib/erreurs'
 import { useRequete } from '../../lib/useRequete'
-import type { PageResult, VillaResume } from '../../types'
+import { useConfig } from '../../context/ConfigContext'
+import ChoixCategorie from '../../components/recherche/ChoixCategorie'
+import { UNITE_TARIF, type PageResult, type VillaResume } from '../../types'
 
 const TRIS = [
   { value: '', label: 'Plus récentes' },
@@ -33,8 +35,8 @@ const TRIS = [
 
 /** Critères pilotés par l'URL : une recherche reste partageable et rechargeable. */
 const CLES_FILTRES = [
-  'ville', 'date_debut', 'date_fin', 'capacite',
-  'prix_min', 'prix_max', 'type_logement', 'note_min', 'tri',
+  'categorie', 'ville', 'date_debut', 'date_fin', 'capacite',
+  'prix_min', 'prix_max', 'type_logement', 'note_min', 'meuble', 'tri',
 ] as const
 
 type Filtres = Record<(typeof CLES_FILTRES)[number], string>
@@ -60,6 +62,7 @@ function IconFilter() {
 export default function Villas() {
   const { user } = useAuth()
   const toast = useToast()
+  const { categories } = useConfig()
   const [params, setParams] = useSearchParams()
 
   const [panneauOuvert, setPanneauOuvert] = useState(false)
@@ -80,6 +83,12 @@ export default function Villas() {
     .filter((k) => k !== 'tri' && filtres[k])
     .map((k) => [k as CleFiltre, filtres[k]] as [CleFiltre, string])
   const nbFiltresActifs = filtresActifs.length
+
+  // La catégorie choisie détermine ce qui est affiché sous le prix et quels
+  // filtres ont un sens : « nombre de chambres » sur une piscine seule n'en a
+  // aucun. Le reste de l'écran — carte, grille, tri — ne bouge pas.
+  const categorieActive = categories.find((c) => c.cle === filtres.categorie) ?? null
+  const nomsCategories = Object.fromEntries(categories.map((c) => [c.cle, c.nom]))
 
   const { donnees, chargement, erreur, reessayer } = useRequete<PageResult<VillaResume>>(
     async (signal) => {
@@ -178,13 +187,21 @@ export default function Villas() {
       <PageHeader />
 
       <div className="max-w-6xl mx-auto px-6 py-10 md:py-14">
-        <div className="mb-8">
+        <div className="mb-6">
           <p className="text-xs uppercase tracking-widest font-semibold mb-1" style={{ color: 'var(--accent)' }}>
-            Toutes les annonces
+            {categorieActive ? categorieActive.nom_pluriel : 'Toutes les annonces'}
           </p>
           <h1 className="text-2xl md:text-3xl font-normal th-text-1" style={{ letterSpacing: '-0.02em' }}>
-            Villas disponibles
+            {categorieActive
+              ? `${categorieActive.nom_pluriel}${filtres.ville ? ` à ${filtres.ville}` : ' au Sénégal'}`
+              : 'Villas disponibles'}
           </h1>
+        </div>
+
+        {/* Changer de catégorie sans repasser par l'accueil : c'est la
+            décision la plus structurante, elle doit rester à un geste. */}
+        <div className="mb-6">
+          <ChoixCategorie compact />
         </div>
 
         {/* Destination + dates + voyageurs, cohérente avec l'accueil */}
@@ -257,6 +274,7 @@ export default function Villas() {
             s'affichait sans qu'on comprenne pourquoi. */}
         <FiltresActifs
           actifs={filtresActifs}
+          nomsCategories={nomsCategories}
           onRetirer={retirerFiltre}
           onToutEffacer={reinitialiser}
         />
@@ -290,6 +308,7 @@ export default function Villas() {
         ) : villas.length === 0 ? (
           <EtatVide
             actifs={filtresActifs}
+            nomsCategories={nomsCategories}
             suggestions={suggestions}
             recherche={chercheSuggestions}
             avecDates={Boolean(filtres.date_debut)}
@@ -299,7 +318,13 @@ export default function Villas() {
         ) : (
           <>
             <p className="text-sm mb-6 th-text-2">
-              {pagination.total} villa{pagination.total > 1 ? 's' : ''} trouvée{pagination.total > 1 ? 's' : ''}
+              {pagination.total} {categorieActive
+                ? (pagination.total > 1 ? categorieActive.nom_pluriel.toLowerCase() : categorieActive.nom.toLowerCase())
+                : `villa${pagination.total > 1 ? 's' : ''}`}{' '}
+              trouvée{pagination.total > 1 ? 's' : ''}
+              {categorieActive && (
+                <span className="th-text-3"> · prix en FCFA / {UNITE_TARIF[categorieActive.unite_prix]}</span>
+              )}
               {pagination.dernierePage > 1 && (
                 <span className="th-text-3"> · page {pagination.page}/{pagination.dernierePage}</span>
               )}

@@ -22,7 +22,11 @@ class VillaController extends Controller
             'ville'          => 'nullable|string|max:100',
             'prix_min'       => 'nullable|numeric|min:0',
             'prix_max'       => 'nullable|numeric|min:0',
+            // `type_logement` reste accepté le temps que les liens partagés
+            // avec l'ancien paramètre cessent de circuler.
             'type_logement'  => 'nullable|in:villa_entiere,appartement,chambre,piscine',
+            'categorie'      => 'nullable|string|exists:categories,cle',
+            'meuble'         => 'nullable|boolean',
             'note_min'       => 'nullable|numeric|between:1,5',
             'date_debut'     => 'nullable|date',
             'date_fin'       => 'nullable|date|after_or_equal:date_debut',
@@ -82,6 +86,14 @@ class VillaController extends Controller
 
         if ($request->type_logement) {
             $query->whereHas('logements', fn ($q) => $q->where('type', $request->type_logement));
+        }
+
+        if ($request->categorie) {
+            $query->whereHas('logements.categorie', fn ($q) => $q->where('cle', $request->categorie));
+        }
+
+        if ($request->filled('meuble')) {
+            $query->whereHas('logements', fn ($q) => $q->where('meuble', $request->boolean('meuble')));
         }
 
         if ($request->filled('capacite')) {

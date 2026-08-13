@@ -4,6 +4,7 @@ import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
 import { useToast } from '../../context/ToastContext'
+import { useConfig } from '../../context/ConfigContext'
 import PageHeader from '../../components/PageHeader'
 import Footer from '../../components/Footer'
 import Seo from '../../components/Seo'
@@ -193,6 +194,7 @@ export default function VillaDetail() {
   const { user } = useAuth()
   const { isDark } = useTheme()
   const toast = useToast()
+  const { paiement } = useConfig()
   const navigate = useNavigate()
 
   const { donnees: villa, chargement, erreur, reessayer } = useRequete<Villa>(
@@ -211,6 +213,7 @@ export default function VillaDetail() {
   })
   const [erreurResa, setErreurResa] = useState('')
   const [resaEnvoyee, setResaEnvoyee] = useState(false)
+  const [reservationCreee, setReservationCreee] = useState<number | null>(null)
   const [envoiResa, setEnvoiResa] = useState(false)
 
   const [avisForm, setAvisForm] = useState({ note: '5', commentaire: '' })
@@ -293,13 +296,14 @@ export default function VillaDetail() {
 
     setEnvoiResa(true)
     try {
-      await api.post('/reservations', {
+      const { data: creee } = await api.post('/reservations', {
         logement_id: Number(reservation.logement_id),
         tarif_id: Number(reservation.tarif_id),
         date_debut: reservation.date_debut,
         date_fin: reservation.date_fin,
         nb_personnes: Number(reservation.nb_personnes),
       })
+      setReservationCreee(creee?.id ?? null)
       setResaEnvoyee(true)
       toast.succes('Demande envoyée. Le propriétaire va vous répondre.')
     } catch (err) {
@@ -627,12 +631,31 @@ export default function VillaDetail() {
                 <div className="text-center py-6">
                   <p className="text-2xl mb-3" aria-hidden="true">✅</p>
                   <p className="font-medium mb-2" style={{ color: 'var(--success)' }}>Demande envoyée</p>
-                  <p className="th-text-2 text-sm mb-5">
-                    Le propriétaire va la confirmer. Vous recevrez un email dès sa réponse.
-                  </p>
-                  <Link to="/dashboard/reservations" className="text-sm th-text-1 underline underline-offset-4">
-                    Suivre ma demande
-                  </Link>
+                  {paiement.actif && reservationCreee ? (
+                    <>
+                      <p className="th-text-2 text-sm mb-5">
+                        Réglez maintenant pour confirmer immédiatement votre place.
+                      </p>
+                      <Link
+                        to={`/reservation/${reservationCreee}/paiement`}
+                        className="btn btn-primaire btn-md w-full justify-center"
+                      >
+                        Payer {fcfa(recapitulatif?.total ?? 0)}
+                      </Link>
+                      <Link to="/dashboard/reservations" className="text-sm th-text-2 underline underline-offset-4 mt-4 inline-block">
+                        Payer plus tard
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <p className="th-text-2 text-sm mb-5">
+                        Le propriétaire va la confirmer. Vous recevrez un email dès sa réponse.
+                      </p>
+                      <Link to="/dashboard/reservations" className="text-sm th-text-1 underline underline-offset-4">
+                        Suivre ma demande
+                      </Link>
+                    </>
+                  )}
                 </div>
               ) : (
                 <form onSubmit={envoyerReservation} className="flex flex-col gap-4">

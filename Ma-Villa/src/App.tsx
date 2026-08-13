@@ -10,8 +10,10 @@ import Hero from './components/Hero'
 import FondHero from './components/FondHero'
 import VillaCard from './components/VillaCard'
 import ScrollReveal from './components/ScrollReveal'
+import ChoixCategorie from './components/recherche/ChoixCategorie'
 import Destinations from './components/Destinations'
 import Footer from './components/Footer'
+import NavigationBasse from './components/app/NavigationBasse'
 import { ButtonLink } from './components/ui/Button'
 import Seo from './components/Seo'
 import { VillaCardSkeleton } from './components/Skeleton'
@@ -38,6 +40,11 @@ const GererVilla      = lazy(() => import('./pages/dashboard/GererVilla'))
 const Reservations    = lazy(() => import('./pages/dashboard/Reservations'))
 const Favoris         = lazy(() => import('./pages/dashboard/Favoris'))
 const Profil          = lazy(() => import('./pages/dashboard/Profil'))
+
+// Le tunnel de paiement ne concerne qu'un client qui réserve : hors du
+// paquet initial, comme les espaces privés.
+const Paiement  = lazy(() => import('./pages/paiement/Paiement'))
+const Confirmee = lazy(() => import('./pages/paiement/Confirmee'))
 
 const AdminLayout       = lazy(() => import('./pages/admin/AdminLayout'))
 const AdminDashboard    = lazy(() => import('./pages/admin/AdminDashboard'))
@@ -311,6 +318,26 @@ function Home() {
         </div>
       </div>
 
+      {/* « Que cherchez-vous ? » avant « Où ? » : chercher un lieu sans
+          savoir ce qu'on loue oblige à filtrer ensuite dans un catalogue
+          mélangé, où une piscine à la journée côtoie un studio au mois. */}
+      <section className="px-6 md:px-12 lg:px-16 py-16" style={{ borderTop: '1px solid var(--border)' }}>
+        <div className="max-w-3xl mx-auto">
+          <ScrollReveal className="mb-8">
+            <p
+              className="mb-2"
+              style={{ font: 'var(--t-eyebrow)', letterSpacing: 'var(--t-eyebrow-ls)', textTransform: 'uppercase', color: 'var(--accent)' }}
+            >
+              Par catégorie
+            </p>
+            <h2 className="th-text-1" style={{ font: 'var(--t-h2)', letterSpacing: 'var(--t-h2-ls)' }}>
+              Que cherchez-vous ?
+            </h2>
+          </ScrollReveal>
+          <ChoixCategorie />
+        </div>
+      </section>
+
       <Destinations />
       <FeaturedVillas />
       <CommentCaMarche />
@@ -325,7 +352,8 @@ function Home() {
 
 export default function App() {
   return (
-    <Routes>
+    <>
+      <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/villas" element={<Villas />} />
       <Route path="/villas/:id" element={<VillaDetail />} />
@@ -335,6 +363,15 @@ export default function App() {
       <Route path="/mot-de-passe-oublie" element={<MotDePasseOublie />} />
       <Route path="/reinitialiser-mot-de-passe" element={<ReinitialiserMotDePasse />} />
       <Route path="/email-verifie" element={<EmailVerifie />} />
+
+        <Route
+          path="/reservation/:id/paiement"
+          element={<PrivateRoute><Suspense fallback={<ChargementPage />}><Paiement /></Suspense></PrivateRoute>}
+        />
+        <Route
+          path="/reservation/:id/confirmee"
+          element={<PrivateRoute><Suspense fallback={<ChargementPage />}><Confirmee /></Suspense></PrivateRoute>}
+        />
 
       <Route path="/conditions-generales" element={<PageLegale document="cgu" />} />
       <Route path="/confidentialite" element={<PageLegale document="confidentialite" />} />
@@ -376,7 +413,12 @@ export default function App() {
         <Route path="avis" element={<AdminAvis />} />
       </Route>
 
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+
+      {/* Châssis d'application : la destination est atteinte au pouce,
+          sans remonter chercher un menu en haut d'écran. */}
+      <NavigationBasse />
+    </>
   )
 }
