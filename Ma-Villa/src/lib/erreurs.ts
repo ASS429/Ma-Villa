@@ -10,9 +10,20 @@ export function messageErreur(erreur: unknown, repli = 'Une erreur est survenue.
     return erreur instanceof Error ? erreur.message : repli
   }
 
-  // Réseau injoignable : cas fréquent en mobilité, il mérite son propre message.
+  // Aucune réponse reçue. Trois pannes très différentes se cachaient derrière
+  // un message unique — appareil hors ligne, serveur trop lent, requête coupée —
+  // et les confondre rendait le diagnostic impossible : le client décrit ce
+  // qu'il voit, et « vérifiez votre réseau » envoyait chercher au mauvais endroit.
   if (!erreur.response) {
-    return 'Connexion impossible. Vérifiez votre réseau et réessayez.'
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      return 'Vous semblez hors ligne. Vérifiez votre connexion et réessayez.'
+    }
+
+    if (erreur.code === 'ECONNABORTED' || erreur.code === 'ETIMEDOUT') {
+      return 'Le serveur met trop de temps à répondre. Réessayez dans un instant.'
+    }
+
+    return 'Le serveur est injoignable. Réessayez dans un instant.'
   }
 
   const { status, data } = erreur.response

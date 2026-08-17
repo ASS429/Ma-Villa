@@ -89,7 +89,20 @@ class Diagnostic extends Command
         $connexion = config('queue.default');
 
         if ($connexion === 'sync') {
-            $this->ok("File d'attente en mode synchrone : aucun worker nécessaire");
+            if (app()->environment('production')) {
+                // En synchrone, l'email part *pendant* la requête HTTP. Une
+                // poignée de main SMTP lente fait dépasser le délai du
+                // navigateur, et le client voit « connexion impossible » sur
+                // une réservation pourtant enregistrée. Le symptôme accuse le
+                // réseau ; la cause est ici.
+                $this->alerte(
+                    'QUEUE_CONNECTION vaut « sync » : les emails partent pendant la requête. '
+                    .'Une réservation attend la poignée de main SMTP avant de répondre, et le '
+                    .'navigateur peut abandonner avant. Mettez QUEUE_CONNECTION=database.'
+                );
+            } else {
+                $this->ok("File d'attente en mode synchrone : aucun worker nécessaire");
+            }
 
             return;
         }
