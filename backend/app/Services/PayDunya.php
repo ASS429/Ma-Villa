@@ -51,6 +51,25 @@ class PayDunya
             && $this->cle('token') !== '';
     }
 
+    /** Les clés de test PayDunya se reconnaissent à leur préfixe. */
+    public function clesDeTest(): bool
+    {
+        return str_starts_with($this->cle('cle_privee'), 'test_');
+    }
+
+    /**
+     * Vrai quand aucun franc réel ne peut transiter — soit le mode l'annonce,
+     * soit les clés le trahissent.
+     *
+     * Sert à décider si la cause d'un refus peut être montrée. Se fier au seul
+     * mode laissait muet le cas qu'on a le plus besoin de diagnostiquer :
+     * `PAYDUNYA_MODE=live` posé par erreur sur des clés de test.
+     */
+    public function sansEncaissementReel(): bool
+    {
+        return ($this->config['mode'] ?? 'test') !== 'live' || $this->clesDeTest();
+    }
+
     /**
      * Crée la facture et renvoie son jeton.
      *
@@ -185,6 +204,17 @@ class PayDunya
     {
         if (! $this->estConfigure()) {
             throw new RuntimeException('Les clés PayDunya ne sont pas configurées.');
+        }
+
+        // Router silencieusement vers le bac à sable serait pire que d'échouer :
+        // on croirait encaisser sans qu'aucun franc n'arrive. Le mode déclaré
+        // fait donc foi, et l'incohérence se dit.
+        if (($this->config['mode'] ?? 'test') === 'live' && $this->clesDeTest()) {
+            throw new RuntimeException(
+                'PAYDUNYA_MODE vaut « live » mais les clés fournies sont des clés de test '
+                .'(« test_… »), que l\'API réelle refuse. Mettez PAYDUNYA_MODE=test pour '
+                .'tester, ou renseignez vos clés de production pour encaisser.'
+            );
         }
 
         return Http::withHeaders([

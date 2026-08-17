@@ -15,6 +15,11 @@ class ConfigurationController extends Controller
     public function __invoke(): JsonResponse
     {
         return response()->json([
+            // Version déployée, en clair. Sans elle, « mon correctif est-il en
+            // ligne ? » ne se répond qu'en devinant : on relit du code qui n'est
+            // peut-être pas celui qui tourne. Le dépôt étant public, un identifiant
+            // de commit n'apprend rien à personne.
+            'version' => config('app.version'),
             // Les catégories viennent de la base : ajouter « studio meublé »
             // ne doit pas demander de redéployer le front.
             'categories' => Categorie::actives()

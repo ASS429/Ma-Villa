@@ -121,7 +121,11 @@ class PaiementController extends Controller
             // elle, un échec n'est lisible que dans les journaux du serveur :
             // celui qui teste voit « réessayez » et n'a rien sur quoi agir,
             // alors que « clé maîtresse refusée » se corrige en une minute.
-            if (config('paiement.paydunya.mode') !== 'live') {
+            //
+            // La question est posée au service, pas à la configuration : des
+            // clés de test sous un mode « live » ne prennent aucun franc, et
+            // c'est précisément le cas qu'il faut pouvoir diagnostiquer.
+            if ($this->paydunya->sansEncaissementReel()) {
                 $reponse['raison'] = $e->getMessage();
             }
 

@@ -68,6 +68,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Version déployée
+    |--------------------------------------------------------------------------
+    |
+    | Identifiant du commit qui tourne réellement, renseigné par l'hébergeur.
+    | Sans lui, « mon correctif est-il en ligne ? » ne se répond qu'en devinant,
+    | et l'on finit par relire du code qui n'est pas celui qui s'exécute.
+    |
+    */
+
+    'version' => substr((string) env('RAILWAY_GIT_COMMIT_SHA', 'inconnue'), 0, 7),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

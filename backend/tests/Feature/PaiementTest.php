@@ -229,7 +229,10 @@ class PaiementTest extends TestCase
     {
         // Le message du prestataire peut nommer nos clés ou notre boutique : il
         // n'a rien à faire dans le navigateur d'un client qui paie vraiment.
-        config(['paiement.paydunya.mode' => 'live']);
+        config([
+            'paiement.paydunya.mode' => 'live',
+            'paiement.paydunya.cle_privee' => 'live_private_reelle',
+        ]);
         Http::fake(['*' => Http::response([
             'response_code' => '1001', 'response_text' => 'Invalid Masterkey Specified',
         ], 200)]);
@@ -242,6 +245,27 @@ class PaiementTest extends TestCase
 
         $this->assertNull($reponse->json('raison'));
         $reponse->assertDontSee('Masterkey');
+    }
+
+    public function test_le_mode_live_sur_des_cles_de_test_est_dit_franchement(): void
+    {
+        // Router en douce vers le bac à sable serait pire : on croirait
+        // encaisser sans qu'aucun franc n'arrive. Et taire la cause laisserait
+        // muet exactement le réglage qu'il faut corriger.
+        config([
+            'paiement.paydunya.mode' => 'live',
+            'paiement.paydunya.cle_privee' => 'test_private_IHEGXFz',
+        ]);
+        Http::fake();
+
+        $reservation = $this->reservation();
+        $reponse = $this->actingAs($reservation->client, 'sanctum')
+            ->postJson("/api/reservations/{$reservation->id}/paiement", [
+                'methode' => 'wave', 'telephone' => '770000000',
+            ])->assertStatus(502);
+
+        $this->assertStringContainsString('PAYDUNYA_MODE', $reponse->json('raison'));
+        Http::assertNothingSent();
     }
 
     public function test_une_cle_avec_un_espace_au_bout_reste_utilisable(): void
