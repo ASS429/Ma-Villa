@@ -29,8 +29,12 @@ class Paiement extends Model
     /**
      * Les clés du prestataire n'ont rien à faire dans une réponse d'API, et la
      * réponse brute peut contenir des données du payeur.
+     *
+     * `token_paydunya` est un identifiant de facture chez le prestataire : qui
+     * le détient peut agir sur la transaction. Le front n'en a jamais besoin —
+     * il reçoit l'URL de paiement directement à l'initiation.
      */
-    protected $hidden = ['reponse_prestataire'];
+    protected $hidden = ['reponse_prestataire', 'token_paydunya'];
 
     public function reservation(): BelongsTo
     {

@@ -47,17 +47,39 @@ const DEFAUT: Configuration = {
 
 const ConfigContext = createContext<Configuration>(DEFAUT)
 
+/** Attentes entre tentatives. La dernière couvre un démarrage à froid de l'API. */
+const REPRISES = [1000, 3000, 8000]
+
 export function ConfigProvider({ children }: { children: React.ReactNode }) {
   const [config, setConfig] = useState<Configuration>(DEFAUT)
 
   useEffect(() => {
     const controleur = new AbortController()
+    let minuteur: ReturnType<typeof setTimeout> | undefined
 
-    api.get('/configuration', { signal: controleur.signal })
-      .then((res) => setConfig({ ...DEFAUT, ...res.data }))
-      .catch(() => { /* le repli s'applique : l'interface reste cohérente */ })
+    // Une seule requête ne suffit pas. L'API redémarre à chaque changement de
+    // variable d'environnement, et l'hébergement s'endort entre deux visites :
+    // pendant ces quelques secondes, l'appel échoue. Sans reprise, le repli
+    // s'installe pour toute la session — les catégories disparaissent de la
+    // recherche et le paiement s'annonce « bientôt disponible » alors qu'il est
+    // ouvert. Le symptôme ne ressemble en rien à sa cause, qui est réseau.
+    const demander = (essai = 0) => {
+      api.get('/configuration', { signal: controleur.signal })
+        .then((res) => setConfig({ ...DEFAUT, ...res.data }))
+        .catch((err) => {
+          if (controleur.signal.aborted || err?.code === 'ERR_CANCELED') return
+          const attente = REPRISES[essai]
+          if (attente === undefined) return // le repli s'applique, l'interface reste cohérente
+          minuteur = setTimeout(() => demander(essai + 1), attente)
+        })
+    }
 
-    return () => controleur.abort()
+    demander()
+
+    return () => {
+      controleur.abort()
+      clearTimeout(minuteur)
+    }
   }, [])
 
   return <ConfigContext.Provider value={config}>{children}</ConfigContext.Provider>

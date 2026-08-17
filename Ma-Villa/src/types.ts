@@ -97,6 +97,17 @@ export interface VillaDetail extends VillaBase {
   proprietaire: { name: string }
 }
 
+/**
+ * Paiement rattaché à une réservation, tel que l'API le renvoie. Le jeton du
+ * prestataire n'en fait jamais partie : il permettrait d'agir sur la facture.
+ */
+export interface PaiementReservation {
+  statut: 'en_attente' | 'reussi' | 'echoue'
+  reference: string | null
+  montant?: number | null
+  paye_le: string | null
+}
+
 export interface Reservation {
   id: number
   date_debut: string
@@ -107,6 +118,7 @@ export interface Reservation {
   client?: { name: string; email: string; phone?: string | null }
   logement: { nom: string; villa: { nom: string } }
   tarif: { type_tarif: TypeTarif }
+  paiement?: PaiementReservation | null
 }
 
 /** Plages déjà occupées, par identifiant de logement. */

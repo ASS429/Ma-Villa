@@ -19,10 +19,18 @@ class ReservationController extends Controller
     {
         $user = $request->user();
 
+        // Le paiement fait partie de la liste : sans lui, le client ne sait pas
+        // ce qui lui reste à régler, et n'a aucun chemin de retour vers le
+        // tunnel une fois la page de la villa quittée.
+        //
+        // Colonnes choisies une par une : le jeton du prestataire et la
+        // répartition de commission n'ont rien à faire dans une liste.
+        $paiement = 'paiement:id,reservation_id,statut,reference,montant,paye_le';
+
         $reservations = $user->role === 'proprietaire'
             ? Reservation::whereHas('logement.villa', fn($q) => $q->where('user_id', $user->id))
-                ->with(['logement.villa', 'tarif', 'client'])->get()
-            : $user->reservations()->with(['logement.villa', 'tarif'])->get();
+                ->with(['logement.villa', 'tarif', 'client', $paiement])->get()
+            : $user->reservations()->with(['logement.villa', 'tarif', $paiement])->get();
 
         return response()->json($reservations);
     }

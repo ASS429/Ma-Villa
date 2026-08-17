@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
+import { useConfig } from '../../context/ConfigContext'
 
 interface Reservation {
   id: number
@@ -12,6 +14,11 @@ interface Reservation {
   client?: { name: string; email: string }
   logement: { nom: string; villa: { nom: string } }
   tarif: { type_tarif: string }
+  paiement?: {
+    statut: 'en_attente' | 'reussi' | 'echoue'
+    reference: string | null
+    paye_le: string | null
+  } | null
 }
 
 const tarifLabels: Record<string, string> = {
@@ -42,8 +49,19 @@ function nightsLabel(debut: string, fin: string) {
   return `${diff} nuit${diff > 1 ? 's' : ''}`
 }
 
+/**
+ * Une réservation reste à régler tant qu'elle n'est pas annulée et qu'aucun
+ * paiement n'a abouti. C'est ici que le client revient : le tunnel n'était
+ * atteignable que dans les secondes suivant la demande, sur la fiche de la
+ * villa — passé cet écran, plus aucun chemin n'y menait.
+ */
+function resteARegler(r: Reservation) {
+  return r.statut !== 'annulee' && r.paiement?.statut !== 'reussi'
+}
+
 export default function Reservations() {
   const { user } = useAuth()
+  const { paiement } = useConfig()
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -143,7 +161,17 @@ export default function Reservations() {
                       {r.client.name} · {r.client.email}
                     </p>
                   ) : <span />}
-                  <p className="text-sm font-medium">{r.montant_total.toLocaleString('fr-FR')} FCFA</p>
+                  <p className="text-sm font-medium flex items-center gap-2">
+                    {/* Le propriétaire doit voir aussi vite que le client si
+                        l'argent est arrivé : c'est ce qui décide s'il remet
+                        les clés. */}
+                    {r.paiement?.statut === 'reussi' && (
+                      <span className="text-xs font-normal" style={{ color: 'var(--success)' }}>
+                        ✓ Payé
+                      </span>
+                    )}
+                    {r.montant_total.toLocaleString('fr-FR')} FCFA
+                  </p>
                 </div>
 
                 {user?.role === 'proprietaire' && r.statut === 'en_attente' && (
@@ -168,18 +196,29 @@ export default function Reservations() {
                   </div>
                 )}
 
-                {user?.role === 'client' && r.statut === 'en_attente' && (
+                {user?.role === 'client' && (paiement.actif ? resteARegler(r) : r.statut === 'en_attente') && (
                   <div
-                    className="flex justify-end mt-4 pt-4"
+                    className="flex flex-wrap items-center justify-end gap-3 mt-4 pt-4"
                     style={{ borderTop: '1px solid var(--border)' }}
                   >
-                    <button
-                      onClick={() => updateStatut(r.id, 'annulee')}
-                      className="px-4 py-1.5 rounded-xl text-sm transition-all th-text-2 hover:th-text-1"
-                      style={{ border: '1px solid var(--border)' }}
-                    >
-                      Annuler la demande
-                    </button>
+                    {r.statut === 'en_attente' && (
+                      <button
+                        onClick={() => updateStatut(r.id, 'annulee')}
+                        className="px-4 py-1.5 rounded-xl text-sm transition-all th-text-2 hover:th-text-1"
+                        style={{ border: '1px solid var(--border)', minHeight: 44 }}
+                      >
+                        Annuler la demande
+                      </button>
+                    )}
+
+                    {paiement.actif && resteARegler(r) && (
+                      <Link
+                        to={`/reservation/${r.id}/paiement`}
+                        className="btn btn-primaire btn-sm"
+                      >
+                        {r.paiement?.statut === 'en_attente' ? 'Reprendre le paiement' : 'Régler'}
+                      </Link>
+                    )}
                   </div>
                 )}
               </div>

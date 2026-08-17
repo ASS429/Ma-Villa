@@ -238,4 +238,73 @@ class PaiementTest extends TestCase
             ->assertJsonPath('statut', 'en_attente')
             ->assertJsonPath('reference', 'MV-ABC');
     }
+
+    /* ── Reprise du paiement depuis la liste ────────────────── */
+
+    public function test_la_liste_des_reservations_porte_l_etat_du_paiement(): void
+    {
+        // Sans cette information, le client n'a aucun moyen de savoir ce qui
+        // lui reste à régler : le tunnel n'était atteignable que dans les
+        // secondes suivant la demande, sur la fiche de la villa.
+        $reservation = $this->reservation();
+        Paiement::create([
+            'reservation_id' => $reservation->id, 'methode' => 'wave',
+            'montant' => 200000, 'reference' => 'MV-XYZ', 'statut' => 'en_attente',
+        ]);
+
+        $this->actingAs($reservation->client, 'sanctum')
+            ->getJson('/api/reservations')
+            ->assertOk()
+            ->assertJsonPath('0.paiement.statut', 'en_attente')
+            ->assertJsonPath('0.paiement.reference', 'MV-XYZ');
+    }
+
+    public function test_une_reservation_sans_paiement_le_dit_explicitement(): void
+    {
+        // `null` plutôt qu'absent : le front distingue « rien à régler encore »
+        // d'une clé oubliée dans la réponse.
+        $reservation = $this->reservation();
+
+        $this->actingAs($reservation->client, 'sanctum')
+            ->getJson('/api/reservations')
+            ->assertOk()
+            ->assertJsonPath('0.paiement', null);
+    }
+
+    public function test_le_jeton_du_prestataire_ne_sort_jamais_de_l_api(): void
+    {
+        // Qui détient ce jeton peut agir sur la facture chez PayDunya.
+        $reservation = $this->reservation();
+        Paiement::create([
+            'reservation_id' => $reservation->id, 'methode' => 'wave',
+            'montant' => 200000, 'reference' => 'MV-XYZ', 'statut' => 'en_attente',
+            'token_paydunya' => 'JETON-SECRET',
+        ]);
+
+        $this->actingAs($reservation->client, 'sanctum')
+            ->getJson("/api/reservations/{$reservation->id}")
+            ->assertOk()
+            ->assertDontSee('JETON-SECRET');
+
+        $this->actingAs($reservation->client, 'sanctum')
+            ->getJson('/api/reservations')
+            ->assertOk()
+            ->assertDontSee('JETON-SECRET');
+    }
+
+    public function test_le_proprietaire_voit_si_la_reservation_est_payee(): void
+    {
+        // C'est ce qui décide s'il remet les clés.
+        $reservation = $this->reservation();
+        Paiement::create([
+            'reservation_id' => $reservation->id, 'methode' => 'wave',
+            'montant' => 200000, 'reference' => 'MV-OK', 'statut' => 'reussi',
+            'paye_le' => now(),
+        ]);
+
+        $this->actingAs($reservation->logement->villa->proprietaire, 'sanctum')
+            ->getJson('/api/reservations')
+            ->assertOk()
+            ->assertJsonPath('0.paiement.statut', 'reussi');
+    }
 }

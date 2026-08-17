@@ -98,6 +98,22 @@ export default function Paiement() {
     )
   }
 
+  // Déjà réglée : le serveur répondrait 409 au moment de payer. Autant montrer
+  // tout de suite la confirmation plutôt qu'un formulaire condamné.
+  if (reservation.paiement?.statut === 'reussi') {
+    return (
+      <div className="tunnel">
+        <p className="th-text-1 font-medium mb-2">Cette réservation est déjà réglée</p>
+        <p className="th-text-2 text-sm mb-6">
+          Référence {reservation.paiement.reference ?? '—'}.
+        </p>
+        <Button variante="secondaire" taille="sm" onClick={() => navigate(`/reservation/${id}/confirmee`)}>
+          Voir la confirmation
+        </Button>
+      </div>
+    )
+  }
+
   if (!config.actif) {
     return (
       <div className="tunnel">
