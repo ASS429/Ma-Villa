@@ -136,9 +136,15 @@ class PaiementController extends Controller
     /**
      * Notification instantanée de PayDunya (IPN).
      *
-     * C'est la seule source de vérité sur l'issue d'un paiement, et c'est une
-     * URL publique : sans vérification du hash, n'importe qui pourrait annoncer
-     * « paiement réussi » et s'offrir une réservation.
+     * Règle non négociable : **le corps reçu n'est jamais une source de vérité.**
+     * C'est un POST sur une URL publique ; n'importe qui peut y annoncer
+     * « paiement réussi » et s'offrir une réservation. La signature est un
+     * rempart, mais c'est un secret partagé constant : il suffit qu'il fuite une
+     * fois pour que tout le passé et l'avenir soient forgeables.
+     *
+     * La notification ne sert donc qu'à *retrouver* la facture. L'issue, elle,
+     * est redemandée à PayDunya par un appel sortant authentifié par nos clés.
+     * Seul ce retour-là confirme une réservation.
      */
     public function ipn(Request $request): JsonResponse
     {
@@ -161,27 +167,101 @@ class PaiementController extends Controller
             return response()->json(['message' => 'Inconnu.']);
         }
 
-        $statut = match ($donnees['status'] ?? '') {
+        if ($paiement->estRegle()) {
+            return response()->json(['message' => 'Déjà traité.']);
+        }
+
+        $this->reglerDepuisPrestataire($paiement);
+
+        return response()->json(['message' => 'Reçu.']);
+    }
+
+    /**
+     * État d'un paiement, interrogé par l'écran d'attente.
+     *
+     * Tant que le paiement est en cours, on redemande son issue à PayDunya au
+     * lieu d'attendre une notification qui peut ne jamais venir — c'est le cas
+     * courant en bac à sable, et cela arrive en production quand l'IPN se perd.
+     * Sans cela, l'écran « Confirmez sur votre téléphone » tourne indéfiniment
+     * sur un paiement pourtant abouti.
+     */
+    public function statut(Request $request, Reservation $reservation): JsonResponse
+    {
+        $this->authorize('view', $reservation);
+        $paiement = $reservation->paiement;
+        $cotePrestataire = null;
+
+        if ($paiement && $paiement->statut === 'en_attente' && $paiement->token_paydunya) {
+            $cotePrestataire = $this->reglerDepuisPrestataire($paiement);
+            $paiement->refresh();
+            $reservation->refresh();
+        }
+
+        $reponse = [
+            'statut'              => $paiement?->statut ?? 'aucun',
+            'reference'           => $paiement?->reference,
+            'montant'             => $paiement?->montant,
+            'reservation_statut'  => $reservation->statut,
+        ];
+
+        // Hors encaissement réel : ce que le prestataire répond, mot pour mot.
+        // « Rien ne se passe » est indéchiffrable ; « PayDunya répond pending »
+        // dit où regarder — la facture n'a pas encore été réglée chez eux.
+        if ($cotePrestataire !== null && $this->paydunya->sansEncaissementReel()) {
+            $reponse['prestataire'] = $cotePrestataire;
+        }
+
+        return response()->json($reponse);
+    }
+
+    /**
+     * Demande l'issue à PayDunya et l'applique — la seule voie par laquelle une
+     * réservation devient « confirmée ».
+     *
+     * Ne fait rien tant que le prestataire ne répond pas ou n'a pas tranché :
+     * ne rien savoir doit rester distinct de « refusé », sous peine d'annuler
+     * un paiement en cours sur une simple coupure réseau.
+     *
+     * @return string|null Le statut brut du prestataire, ou null s'il n'a pas répondu.
+     */
+    private function reglerDepuisPrestataire(Paiement $paiement): ?string
+    {
+        $verifie = $this->paydunya->statutFacture((string) $paiement->token_paydunya);
+
+        if ($verifie === null) {
+            return null;
+        }
+
+        $statut = match ($verifie['statut']) {
             'completed' => 'reussi',
             'cancelled', 'failed' => 'echoue',
             default => null,
         };
 
         if ($statut === null) {
-            return response()->json(['message' => 'Statut ignoré.']);
+            return $verifie['statut'];
         }
 
-        // L'IPN peut arriver plusieurs fois pour la même transaction : le
-        // traitement doit être idempotent, sinon une réservation serait
-        // confirmée deux fois.
-        if ($paiement->estRegle()) {
-            return response()->json(['message' => 'Déjà traité.']);
+        // Le montant encaissé doit être celui qu'on a demandé. Un écart signale
+        // une facture qui n'est pas la nôtre, ou un barème changé en cours de
+        // route : dans les deux cas, mieux vaut ne rien confirmer.
+        $attendu = (int) round((float) $paiement->montant);
+        $recu = $verifie['montant'] !== null ? (int) round((float) $verifie['montant']) : $attendu;
+
+        if ($statut === 'reussi' && $recu !== $attendu) {
+            Log::error('Montant encaissé différent du montant attendu', [
+                'paiement' => $paiement->id,
+                'attendu'  => $attendu,
+                'recu'     => $recu,
+            ]);
+
+            return $verifie['statut'];
         }
 
-        DB::transaction(function () use ($paiement, $statut, $donnees) {
+        DB::transaction(function () use ($paiement, $statut, $verifie) {
             $paiement->update([
                 'statut'              => $statut,
-                'reponse_prestataire' => $donnees,
+                'reponse_prestataire' => $verifie['brut'],
                 'paye_le'             => $statut === 'reussi' ? now() : null,
             ]);
 
@@ -192,20 +272,6 @@ class PaiementController extends Controller
             }
         });
 
-        return response()->json(['message' => 'Reçu.']);
-    }
-
-    /** État d'un paiement, interrogé par le front pendant l'attente. */
-    public function statut(Request $request, Reservation $reservation): JsonResponse
-    {
-        $this->authorize('view', $reservation);
-        $paiement = $reservation->paiement;
-
-        return response()->json([
-            'statut'              => $paiement?->statut ?? 'aucun',
-            'reference'           => $paiement?->reference,
-            'montant'             => $paiement?->montant,
-            'reservation_statut'  => $reservation->statut,
-        ]);
+        return $verifie['statut'];
     }
 }

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 /**
@@ -184,6 +185,51 @@ class PayDunya
     }
 
     /**
+     * Redemande à PayDunya l'état d'une facture.
+     *
+     * C'est la seule source de vérité réellement fiable : l'IPN est un POST sur
+     * une URL publique, tandis que ceci est un appel sortant vers PayDunya,
+     * authentifié par nos clés. Sert à deux choses — vérifier une notification
+     * avant d'y croire, et suivre un paiement quand la notification n'arrive
+     * jamais, ce qui est le cas courant en bac à sable.
+     *
+     * Renvoie `null` si PayDunya n'a pas répondu : ne rien savoir doit rester
+     * distinct de « pas encore payé ».
+     */
+    public function statutFacture(string $jetonFacture): ?array
+    {
+        try {
+            // Ni reprise ni long délai : cette méthode est appelée en boucle
+            // par l'écran d'attente, et le serveur applicatif est mono-processus.
+            $reponse = Http::withHeaders($this->entetes())
+                ->timeout(10)
+                ->get($this->base().'/checkout-invoice/confirm/'.$jetonFacture);
+
+            $corps = $reponse->json() ?? [];
+
+            if (! $reponse->successful() || ! isset($corps['status'])) {
+                Log::warning('Statut de facture illisible', [
+                    'http'   => $reponse->status(),
+                    'reponse' => $corps['response_text'] ?? null,
+                ]);
+
+                return null;
+            }
+
+            return [
+                'statut'      => $corps['status'],
+                'montant'     => $corps['invoice']['total_amount'] ?? null,
+                'personnalise' => $corps['custom_data'] ?? [],
+                'brut'        => $corps,
+            ];
+        } catch (\Throwable $e) {
+            Log::warning('Statut de facture injoignable', ['erreur' => $e->getMessage()]);
+
+            return null;
+        }
+    }
+
+    /**
      * Vérifie qu'une notification vient bien de PayDunya.
      *
      * Le hash transmis est le SHA-512 de la clé maîtresse. Sans cette
@@ -217,12 +263,21 @@ class PayDunya
             );
         }
 
-        return Http::withHeaders([
-            'Content-Type'          => 'application/json',
-            'PAYDUNYA-MASTER-KEY'   => $this->cle('cle_maitre'),
-            'PAYDUNYA-PRIVATE-KEY'  => $this->cle('cle_privee'),
-            'PAYDUNYA-TOKEN'        => $this->cle('token'),
-        ])->timeout(30)->retry(2, 500, throw: false);
+        return Http::withHeaders($this->entetes())
+            ->timeout(30)
+            ->retry(2, 500, throw: false);
+    }
+
+    /** @return array<string, string> */
+    private function entetes(): array
+    {
+        return [
+            'Content-Type'         => 'application/json',
+            'PAYDUNYA-MASTER-KEY'  => $this->cle('cle_maitre'),
+            'PAYDUNYA-PUBLIC-KEY'  => $this->cle('cle_publique'),
+            'PAYDUNYA-PRIVATE-KEY' => $this->cle('cle_privee'),
+            'PAYDUNYA-TOKEN'       => $this->cle('token'),
+        ];
     }
 
     /**

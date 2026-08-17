@@ -48,6 +48,9 @@ export default function Paiement() {
   // affichée à part : « clé maîtresse refusée » n'a rien à dire à un client,
   // et tout à dire à qui teste l'intégration.
   const [raison, setRaison] = useState('')
+  // Ce que PayDunya répond, mot pour mot, hors encaissement réel. « Rien ne se
+  // passe » est indéchiffrable ; « PayDunya répond pending » dit où regarder.
+  const [cotePrestataire, setCotePrestataire] = useState('')
   const [attente, setAttente] = useState<{ reference: string; url: string } | null>(null)
   // La réservation n'est chargée qu'une fois : sans ce drapeau, un paiement
   // refusé laisserait l'écran d'attente tourner sur une donnée périmée.
@@ -76,6 +79,7 @@ export default function Paiement() {
     const minuteur = setInterval(async () => {
       try {
         const { data } = await api.get(`/reservations/${id}/paiement`)
+        setCotePrestataire(typeof data.prestataire === 'string' ? data.prestataire : '')
         if (data.statut === 'reussi') {
           clearInterval(minuteur)
           navigate(`/reservation/${id}/confirmee`, { replace: true })
@@ -177,7 +181,12 @@ export default function Paiement() {
 
           <div className="tunnel-attente" role="status" aria-live="polite">
             <span className="tunnel-pulsation" aria-hidden="true" />
-            <span className="th-text-2 text-sm">En attente de votre confirmation…</span>
+            <span className="th-text-2 text-sm">
+              En attente de votre confirmation…
+              {cotePrestataire && (
+                <span className="tunnel-attente-detail">PayDunya répond « {cotePrestataire} »</span>
+              )}
+            </span>
           </div>
 
           <dl className="tunnel-recap">

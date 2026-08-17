@@ -1883,6 +1883,15 @@ html.video-mode[data-theme="dark"] {
   font: var(--t-body-sm);
 }
 
+/* Réponse du prestataire pendant l'attente, en mode test uniquement. */
+.tunnel-attente-detail {
+  display: block;
+  margin-top: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  color: var(--text-3);
+}
+
 /* Cause technique du refus, en mode test uniquement. Détachée du message et
    posée en monospace : c'est une trace à recopier, pas une phrase à lire. */
 .tunnel-erreur-detail {

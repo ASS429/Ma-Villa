@@ -54,6 +54,39 @@ class PaiementTest extends TestCase
         ]);
     }
 
+    /**
+     * Jeu de réponses PayDunya : création de facture, softpay, et surtout
+     * `checkout-invoice/confirm`, qui est désormais la seule chose capable de
+     * confirmer une réservation.
+     *
+     * @return array<string, mixed>
+     */
+    private function reponsesPayDunya(string $confirmation = 'pending', int $montant = 200000): array
+    {
+        return [
+            '*checkout-invoice/create' => Http::response([
+                'response_code' => '00', 'response_text' => 'https://paydunya/x', 'token' => 'JETON123',
+            ]),
+            '*softpay/wave-senegal' => Http::response([
+                'success' => true, 'url' => 'https://pay.wave.com/c/abc',
+            ]),
+            '*checkout-invoice/confirm/*' => Http::response([
+                'response_code' => '00',
+                'status'        => $confirmation,
+                'invoice'       => ['token' => 'JETON123', 'total_amount' => $montant],
+            ]),
+        ];
+    }
+
+    private function paiementEnAttente(Reservation $reservation, int $montant = 200000): Paiement
+    {
+        return Paiement::create([
+            'reservation_id' => $reservation->id, 'methode' => 'wave',
+            'montant' => $montant, 'reference' => 'MV-TEST',
+            'token_paydunya' => 'JETON123', 'statut' => 'en_attente',
+        ]);
+    }
+
     private function ipn(string $token, string $statut, ?string $hash = null): array
     {
         return ['data' => [
@@ -273,10 +306,7 @@ class PaiementTest extends TestCase
         // Les clés sont recopiées à la main dans un tableau de bord : un retour
         // à la ligne au bout suffisait à faire refuser toutes les IPN.
         config(['paiement.paydunya.cle_maitre' => self::CLE_MAITRE."\n"]);
-        Http::fake([
-            '*checkout-invoice/create' => Http::response(['response_code' => '00', 'response_text' => 'u', 'token' => 'JETON123']),
-            '*softpay/wave-senegal' => Http::response(['success' => true, 'url' => 'https://pay.wave.com/c/a']),
-        ]);
+        Http::fake($this->reponsesPayDunya('completed'));
 
         $reservation = $this->reservation();
         $this->actingAs($reservation->client, 'sanctum')
@@ -297,26 +327,23 @@ class PaiementTest extends TestCase
     {
         // Sans ce rempart, n'importe qui s'offrirait une réservation en
         // annonçant « paiement réussi » sur une URL publique.
+        Http::fake($this->reponsesPayDunya('completed'));
         $reservation = $this->reservation();
-        $paiement = Paiement::create([
-            'reservation_id' => $reservation->id, 'methode' => 'wave',
-            'montant' => 200000, 'token_paydunya' => 'JETON123', 'statut' => 'en_attente',
-        ]);
+        $paiement = $this->paiementEnAttente($reservation);
 
         $this->postJson('/api/paiements/ipn', $this->ipn('JETON123', 'completed', 'hash-bidon'))
              ->assertForbidden();
 
         $this->assertEquals('en_attente', $paiement->fresh()->statut);
         $this->assertEquals('en_attente', $reservation->fresh()->statut);
+        Http::assertNothingSent();
     }
 
     public function test_une_notification_authentique_confirme_la_reservation(): void
     {
+        Http::fake($this->reponsesPayDunya('completed'));
         $reservation = $this->reservation();
-        Paiement::create([
-            'reservation_id' => $reservation->id, 'methode' => 'wave',
-            'montant' => 200000, 'token_paydunya' => 'JETON123', 'statut' => 'en_attente',
-        ]);
+        $this->paiementEnAttente($reservation);
 
         $this->postJson('/api/paiements/ipn', $this->ipn('JETON123', 'completed'))->assertOk();
 
@@ -325,15 +352,42 @@ class PaiementTest extends TestCase
         $this->assertNotNull($reservation->fresh()->paiement->paye_le);
     }
 
+    public function test_une_notification_qui_ment_ne_confirme_rien(): void
+    {
+        // Le cœur du dispositif : la signature est un secret partagé constant,
+        // qui n'a besoin de fuiter qu'une fois. Le corps annonce « completed »,
+        // PayDunya dit « pending » — c'est PayDunya qui tranche.
+        Http::fake($this->reponsesPayDunya('pending'));
+        $reservation = $this->reservation();
+        $this->paiementEnAttente($reservation);
+
+        $this->postJson('/api/paiements/ipn', $this->ipn('JETON123', 'completed'))->assertOk();
+
+        $this->assertEquals('en_attente', $reservation->fresh()->paiement->statut);
+        $this->assertEquals('en_attente', $reservation->fresh()->statut);
+    }
+
+    public function test_un_montant_encaisse_different_ne_confirme_rien(): void
+    {
+        // Facture qui n'est pas la nôtre, ou barème changé en cours de route :
+        // dans les deux cas, il n'y a rien à confirmer.
+        Http::fake($this->reponsesPayDunya('completed', montant: 500));
+        $reservation = $this->reservation();
+        $this->paiementEnAttente($reservation, 200000);
+
+        $this->postJson('/api/paiements/ipn', $this->ipn('JETON123', 'completed'))->assertOk();
+
+        $this->assertEquals('en_attente', $reservation->fresh()->paiement->statut);
+        $this->assertEquals('en_attente', $reservation->fresh()->statut);
+    }
+
     public function test_une_notification_repetee_ne_confirme_pas_deux_fois(): void
     {
         // PayDunya peut renvoyer la même notification : le traitement doit
         // être idempotent.
+        Http::fake($this->reponsesPayDunya('completed'));
         $reservation = $this->reservation();
-        Paiement::create([
-            'reservation_id' => $reservation->id, 'methode' => 'wave',
-            'montant' => 200000, 'token_paydunya' => 'JETON123', 'statut' => 'en_attente',
-        ]);
+        $this->paiementEnAttente($reservation);
 
         $this->postJson('/api/paiements/ipn', $this->ipn('JETON123', 'completed'))->assertOk();
         $paye = $reservation->fresh()->paiement->paye_le;
@@ -346,11 +400,9 @@ class PaiementTest extends TestCase
 
     public function test_un_paiement_echoue_ne_confirme_rien(): void
     {
+        Http::fake($this->reponsesPayDunya('cancelled'));
         $reservation = $this->reservation();
-        Paiement::create([
-            'reservation_id' => $reservation->id, 'methode' => 'wave',
-            'montant' => 200000, 'token_paydunya' => 'JETON123', 'statut' => 'en_attente',
-        ]);
+        $this->paiementEnAttente($reservation);
 
         $this->postJson('/api/paiements/ipn', $this->ipn('JETON123', 'failed'))->assertOk();
 
@@ -379,6 +431,55 @@ class PaiementTest extends TestCase
             ->assertOk()
             ->assertJsonPath('statut', 'en_attente')
             ->assertJsonPath('reference', 'MV-ABC');
+    }
+
+    /* ── L'écran d'attente n'attend pas l'IPN ───────────────── */
+
+    public function test_l_ecran_d_attente_confirme_sans_aucune_notification(): void
+    {
+        // En bac à sable l'IPN n'arrive jamais, et en production elle se perd.
+        // Sans interrogation active, « Confirmez sur votre téléphone » tourne
+        // indéfiniment sur un paiement pourtant abouti.
+        Http::fake($this->reponsesPayDunya('completed'));
+        $reservation = $this->reservation();
+        $this->paiementEnAttente($reservation);
+
+        $this->actingAs($reservation->client, 'sanctum')
+            ->getJson("/api/reservations/{$reservation->id}/paiement")
+            ->assertOk()
+            ->assertJsonPath('statut', 'reussi')
+            ->assertJsonPath('reservation_statut', 'confirmee');
+
+        $this->assertEquals('confirmee', $reservation->fresh()->statut);
+    }
+
+    public function test_un_prestataire_injoignable_laisse_le_paiement_en_cours(): void
+    {
+        // Ne rien savoir doit rester distinct de « refusé » : une coupure
+        // réseau ne doit pas annuler un paiement en cours.
+        Http::fake(['*' => Http::response(null, 500)]);
+        $reservation = $this->reservation();
+        $this->paiementEnAttente($reservation);
+
+        $this->actingAs($reservation->client, 'sanctum')
+            ->getJson("/api/reservations/{$reservation->id}/paiement")
+            ->assertOk()
+            ->assertJsonPath('statut', 'en_attente');
+
+        $this->assertEquals('en_attente', $reservation->fresh()->statut);
+    }
+
+    public function test_un_tiers_ne_peut_pas_interroger_le_paiement_d_un_autre(): void
+    {
+        Http::fake($this->reponsesPayDunya('completed'));
+        $reservation = $this->reservation();
+        $this->paiementEnAttente($reservation);
+
+        $this->actingAs(User::factory()->client()->create(), 'sanctum')
+            ->getJson("/api/reservations/{$reservation->id}/paiement")
+            ->assertForbidden();
+
+        $this->assertEquals('en_attente', $reservation->fresh()->statut);
     }
 
     /* ── Reprise du paiement depuis la liste ────────────────── */
