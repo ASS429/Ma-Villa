@@ -21,9 +21,22 @@ use RuntimeException;
 class PayDunya
 {
     private const BASE_LIVE = 'https://app.paydunya.com/api/v1';
+    private const BASE_TEST = 'https://app.paydunya.com/sandbox-api/v1';
 
     public function __construct(private readonly array $config)
     {
+    }
+
+    /**
+     * Les clés de test (`test_private_…`) ne valent que sur le bac à sable, et
+     * les clés de production que sur l'API réelle : les croiser fait échouer la
+     * création de facture avec un message qui n'évoque jamais le mode.
+     */
+    private function base(): string
+    {
+        return ($this->config['mode'] ?? 'test') === 'live'
+            ? self::BASE_LIVE
+            : self::BASE_TEST;
     }
 
     public static function depuisConfig(): self
@@ -50,8 +63,12 @@ class PayDunya
         string $description,
         array $articles = [],
         array $donneesPersonnalisees = [],
+        ?string $urlRetour = null,
+        ?string $urlAnnulation = null,
     ): array {
-        $reponse = $this->requete()->post(self::BASE_LIVE.'/checkout-invoice/create', [
+        $front = rtrim((string) config('app.frontend_url'), '/');
+
+        $reponse = $this->requete()->post($this->base().'/checkout-invoice/create', [
             'invoice' => [
                 'total_amount' => $montant,
                 'description'  => $description,
@@ -60,13 +77,16 @@ class PayDunya
             'store' => [
                 'name'        => $this->config['boutique']['nom'],
                 'tagline'     => $this->config['boutique']['description'],
-                'website_url' => rtrim((string) config('app.frontend_url'), '/'),
+                'website_url' => $front,
             ],
             'custom_data' => $donneesPersonnalisees ?: (object) [],
             'actions' => [
                 'callback_url' => route('paiements.ipn'),
-                'return_url'   => rtrim((string) config('app.frontend_url'), '/').'/paiement/retour',
-                'cancel_url'   => rtrim((string) config('app.frontend_url'), '/').'/paiement/annule',
+                // Ramener le payeur sur son propre tunnel, qui interroge le
+                // serveur jusqu'à l'IPN. Une page générique le laisserait
+                // ignorer si son paiement a été pris en compte.
+                'return_url'   => $urlRetour ?? $front,
+                'cancel_url'   => $urlAnnulation ?? $urlRetour ?? $front,
             ],
         ]);
 
@@ -122,7 +142,7 @@ class PayDunya
 
     private function softpay(string $chemin, array $donnees): array
     {
-        $reponse = $this->requete()->post(self::BASE_LIVE.'/softpay/'.$chemin, $donnees);
+        $reponse = $this->requete()->post($this->base().'/softpay/'.$chemin, $donnees);
         $corps = $reponse->json() ?? [];
 
         if (! ($corps['success'] ?? false)) {

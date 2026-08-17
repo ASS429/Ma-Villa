@@ -106,6 +106,8 @@ export interface PaiementReservation {
   reference: string | null
   montant?: number | null
   paye_le: string | null
+  /** Présente sur le détail d'une réservation, pas sur la liste. */
+  url_paiement?: string | null
 }
 
 export interface Reservation {

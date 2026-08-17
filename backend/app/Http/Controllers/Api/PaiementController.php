@@ -74,6 +74,10 @@ class PaiementController extends Controller
                     'reservation_id' => (string) $reservation->id,
                     'reference'      => $reference = 'MV-'.Str::upper(Str::random(10)),
                 ],
+                // Wave et Orange Money renvoient le payeur ici : son propre
+                // écran d'attente, qui interroge le serveur jusqu'à l'IPN.
+                urlRetour: rtrim((string) config('app.frontend_url'), '/')
+                    ."/reservation/{$reservation->id}/paiement",
             );
 
             $paiement = $reservation->paiement ?? new Paiement(['reservation_id' => $reservation->id]);

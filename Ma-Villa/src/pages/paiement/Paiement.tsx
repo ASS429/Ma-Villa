@@ -35,6 +35,9 @@ export default function Paiement() {
   const [envoi, setEnvoi] = useState(false)
   const [erreurEnvoi, setErreurEnvoi] = useState('')
   const [attente, setAttente] = useState<{ reference: string; url: string } | null>(null)
+  // La réservation n'est chargée qu'une fois : sans ce drapeau, un paiement
+  // refusé laisserait l'écran d'attente tourner sur une donnée périmée.
+  const [refuse, setRefuse] = useState(false)
 
   const { donnees: reservation, chargement, erreur } = useRequete<Reservation>(
     async (signal) => (await api.get(`/reservations/${id}`, { signal })).data,
@@ -42,10 +45,19 @@ export default function Paiement() {
     { messageErreurParDefaut: 'Réservation introuvable.' }
   )
 
+  // Wave et Orange Money ramènent le payeur sur cette page une fois son code
+  // saisi. Il doit y retrouver son suivi, pas le formulaire qu'il vient de
+  // remplir : rien ne serait plus inquiétant que de revoir « Payer » après
+  // avoir payé.
+  const dejaLance = !refuse && reservation?.paiement?.statut === 'en_attente'
+  const enCours = attente ?? (dejaLance && reservation?.paiement
+    ? { reference: reservation.paiement.reference ?? '—', url: reservation.paiement.url_paiement ?? '' }
+    : null)
+
   // Une fois le payeur parti sur Wave ou Orange Money, seule l'IPN nous dira
   // que c'est réglé : on interroge le serveur, on ne devine pas.
   useEffect(() => {
-    if (!attente) return
+    if (!attente && !dejaLance) return
 
     const minuteur = setInterval(async () => {
       try {
@@ -56,13 +68,14 @@ export default function Paiement() {
         } else if (data.statut === 'echoue') {
           clearInterval(minuteur)
           setAttente(null)
+          setRefuse(true)
           setErreurEnvoi('Le paiement n\'a pas abouti. Vous pouvez réessayer.')
         }
       } catch { /* réseau instable : on retentera au tour suivant */ }
     }, 4000)
 
     return () => clearInterval(minuteur)
-  }, [attente, id, navigate])
+  }, [attente, dejaLance, id, navigate])
 
   const lancer = async () => {
     setErreurEnvoi('')
@@ -135,10 +148,10 @@ export default function Paiement() {
       <header className="tunnel-entete">
         <Link to="/dashboard/reservations" className="tunnel-retour" aria-label="Retour">‹</Link>
         <span className="tunnel-titre">Votre réservation</span>
-        <span className="tunnel-etape">{attente ? '2 / 2' : '1 / 2'}</span>
+        <span className="tunnel-etape">{enCours ? '2 / 2' : '1 / 2'}</span>
       </header>
 
-      {attente ? (
+      {enCours ? (
         <section className="tunnel-corps">
           <h1 className="tunnel-h1">Confirmez sur votre téléphone</h1>
           <p className="th-text-2 text-sm mb-6">
@@ -152,16 +165,18 @@ export default function Paiement() {
           </div>
 
           <dl className="tunnel-recap">
-            <div><dt>Référence</dt><dd>{attente.reference}</dd></div>
+            <div><dt>Référence</dt><dd>{enCours.reference}</dd></div>
             <div><dt>Montant</dt><dd>{fcfa(reservation.montant_total)}</dd></div>
           </dl>
 
-          <p className="text-xs th-text-3 mt-6">
-            L'application ne s'est pas ouverte ?{' '}
-            <a href={attente.url} target="_blank" rel="noopener noreferrer" className="th-text-1 underline">
-              Rouvrir la page de paiement
-            </a>
-          </p>
+          {enCours.url && (
+            <p className="text-xs th-text-3 mt-6">
+              L'application ne s'est pas ouverte ?{' '}
+              <a href={enCours.url} target="_blank" rel="noopener noreferrer" className="th-text-1 underline">
+                Rouvrir la page de paiement
+              </a>
+            </p>
+          )}
         </section>
       ) : (
         <section className="tunnel-corps">

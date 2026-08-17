@@ -115,6 +115,63 @@ class PaiementTest extends TestCase
             || $r['wave_senegal_phone'] === '771234567');
     }
 
+    public function test_les_cles_de_test_partent_vers_le_bac_a_sable(): void
+    {
+        // Une clé `test_private_…` envoyée à l'API réelle fait échouer la
+        // création de facture, avec un message qui n'évoque jamais le mode.
+        config(['paiement.paydunya.mode' => 'test']);
+        Http::fake([
+            '*checkout-invoice/create' => Http::response(['response_code' => '00', 'response_text' => 'u', 'token' => 'T']),
+            '*softpay/wave-senegal' => Http::response(['success' => true, 'url' => 'https://pay.wave.com/c/a']),
+        ]);
+
+        $reservation = $this->reservation();
+        $this->actingAs($reservation->client, 'sanctum')
+            ->postJson("/api/reservations/{$reservation->id}/paiement", [
+                'methode' => 'wave', 'telephone' => '770000000',
+            ])->assertOk();
+
+        Http::assertSent(fn ($r) => str_contains($r->url(), '/sandbox-api/v1/'));
+        Http::assertNotSent(fn ($r) => str_contains($r->url(), '/api/v1/'));
+    }
+
+    public function test_le_mode_live_vise_l_api_reelle(): void
+    {
+        config(['paiement.paydunya.mode' => 'live']);
+        Http::fake([
+            '*checkout-invoice/create' => Http::response(['response_code' => '00', 'response_text' => 'u', 'token' => 'T']),
+            '*softpay/wave-senegal' => Http::response(['success' => true, 'url' => 'https://pay.wave.com/c/a']),
+        ]);
+
+        $reservation = $this->reservation();
+        $this->actingAs($reservation->client, 'sanctum')
+            ->postJson("/api/reservations/{$reservation->id}/paiement", [
+                'methode' => 'wave', 'telephone' => '770000000',
+            ])->assertOk();
+
+        Http::assertNotSent(fn ($r) => str_contains($r->url(), 'sandbox'));
+    }
+
+    public function test_le_payeur_revient_sur_son_ecran_d_attente(): void
+    {
+        // Une page générique le laisserait ignorer si son paiement a été pris
+        // en compte : seul son propre tunnel interroge le serveur.
+        config(['app.frontend_url' => 'https://mavilla.test']);
+        Http::fake([
+            '*checkout-invoice/create' => Http::response(['response_code' => '00', 'response_text' => 'u', 'token' => 'T']),
+            '*softpay/wave-senegal' => Http::response(['success' => true, 'url' => 'https://pay.wave.com/c/a']),
+        ]);
+
+        $reservation = $this->reservation();
+        $this->actingAs($reservation->client, 'sanctum')
+            ->postJson("/api/reservations/{$reservation->id}/paiement", [
+                'methode' => 'wave', 'telephone' => '770000000',
+            ])->assertOk();
+
+        Http::assertSent(fn ($r) => ! str_contains($r->url(), 'checkout-invoice')
+            || $r['actions']['return_url'] === "https://mavilla.test/reservation/{$reservation->id}/paiement");
+    }
+
     public function test_un_tiers_ne_peut_pas_payer_la_reservation_d_un_autre(): void
     {
         $reservation = $this->reservation();
