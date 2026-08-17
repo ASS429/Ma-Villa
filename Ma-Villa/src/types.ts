@@ -103,6 +103,7 @@ export interface VillaDetail extends VillaBase {
  */
 export interface PaiementReservation {
   statut: 'en_attente' | 'reussi' | 'echoue'
+  methode?: string | null
   reference: string | null
   montant?: number | null
   paye_le: string | null

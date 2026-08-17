@@ -1883,6 +1883,26 @@ html.video-mode[data-theme="dark"] {
   font: var(--t-body-sm);
 }
 
+/* Code QR — sur ordinateur, le seul pont vers le téléphone qui paie.
+   Fond blanc imposé quel que soit le thème : un lecteur attend du noir sur
+   blanc, et l'inversion fait échouer la plupart d'entre eux. */
+.tunnel-qr {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-5);
+}
+
+.code-qr {
+  padding: 12px;
+  background: #fff;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  box-sizing: content-box;
+}
+
+.code-qr svg { display: block; }
+
 /* Réponse du prestataire pendant l'attente, en mode test uniquement. */
 .tunnel-attente-detail {
   display: block;

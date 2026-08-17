@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import api from '../../services/api'
 import { useConfig } from '../../context/ConfigContext'
@@ -6,12 +6,32 @@ import { useRequete } from '../../lib/useRequete'
 import { messageErreur } from '../../lib/erreurs'
 import { fcfa, dateCourte } from '../../lib/format'
 import Button from '../../components/ui/Button'
+import CodeQR from '../../components/paiement/CodeQR'
 import Seo from '../../components/Seo'
 import type { Reservation } from '../../types'
 
 const LOGOS: Record<string, string> = {
   wave: '/wave.webp',
   orange_money: '/orange-money.webp',
+}
+
+/** Au-delà, on cesse d'interroger et on rend la main : chaque vérification est
+ *  un appel sortant vers le prestataire, et le serveur est mono-processus. */
+const DUREE_SUIVI = 90_000
+
+/**
+ * L'appareil peut-il ouvrir Wave ou Orange Money ?
+ *
+ * Les URL renvoyées par le prestataire sont des liens d'application : sur un
+ * ordinateur elles ne mènent nulle part, et c'est là qu'un code QR prend le
+ * relais. Le pointeur grossier est un meilleur signal que la chaîne d'agent,
+ * qui ment de plus en plus.
+ */
+function surAppareilMobile(): boolean {
+  if (typeof window === 'undefined') return false
+
+  return window.matchMedia?.('(pointer: coarse)').matches === true
+    || /android|iphone|ipad|ipod/i.test(navigator.userAgent)
 }
 
 /**
@@ -55,6 +75,10 @@ export default function Paiement() {
   // La réservation n'est chargée qu'une fois : sans ce drapeau, un paiement
   // refusé laisserait l'écran d'attente tourner sur une donnée périmée.
   const [refuse, setRefuse] = useState(false)
+  // Le suivi automatique s'arrête au bout de DUREE_SUIVI et rend la main.
+  const [suiviEpuise, setSuiviEpuise] = useState(false)
+  const [verification, setVerification] = useState(false)
+  const dejaRedirige = useRef(false)
 
   const { donnees: reservation, chargement, erreur } = useRequete<Reservation>(
     async (signal) => (await api.get(`/reservations/${id}`, { signal })).data,
@@ -71,29 +95,81 @@ export default function Paiement() {
     ? { reference: reservation.paiement.reference ?? '—', url: reservation.paiement.url_paiement ?? '' }
     : null)
 
-  // Une fois le payeur parti sur Wave ou Orange Money, seule l'IPN nous dira
-  // que c'est réglé : on interroge le serveur, on ne devine pas.
-  useEffect(() => {
-    if (!attente && !dejaLance) return
+  const suivi = (attente !== null || dejaLance) && !suiviEpuise
+  const mobile = surAppareilMobile()
 
-    const minuteur = setInterval(async () => {
-      try {
-        const { data } = await api.get(`/reservations/${id}/paiement`)
-        setCotePrestataire(typeof data.prestataire === 'string' ? data.prestataire : '')
-        if (data.statut === 'reussi') {
-          clearInterval(minuteur)
-          navigate(`/reservation/${id}/confirmee`, { replace: true })
-        } else if (data.statut === 'echoue') {
-          clearInterval(minuteur)
-          setAttente(null)
-          setRefuse(true)
-          setErreurEnvoi('Le paiement n\'a pas abouti. Vous pouvez réessayer.')
-        }
-      } catch { /* réseau instable : on retentera au tour suivant */ }
+  // Nommer l'application plutôt que dire « votre application » : le payeur sait
+  // alors quoi chercher sur son écran d'accueil. Au rechargement, le moyen vient
+  // du paiement enregistré, pas du formulaire qu'on n'a plus.
+  const cleMoyen = methode || reservation?.paiement?.methode || ''
+  const nomMoyen = config.moyens.find((m) => m.cle === cleMoyen)?.nom ?? 'votre application'
+
+  /** Une vérification, partagée par le suivi automatique et le bouton manuel. */
+  const verifierUneFois = async () => {
+    const { data } = await api.get(`/reservations/${id}/paiement`)
+    setCotePrestataire(typeof data.prestataire === 'string' ? data.prestataire : '')
+
+    if (data.statut === 'reussi') {
+      navigate(`/reservation/${id}/confirmee`, { replace: true })
+      return true
+    }
+
+    if (data.statut === 'echoue') {
+      setAttente(null)
+      setRefuse(true)
+      setSuiviEpuise(false)
+      setErreurEnvoi('Le paiement n\'a pas abouti. Vous pouvez réessayer.')
+      return true
+    }
+
+    return false
+  }
+
+  // Sur téléphone, le lien renvoyé ouvre directement Wave ou Orange Money.
+  //
+  // Ce n'était pas fait par `window.open()` : appelé après un `await`, il sort
+  // du geste de l'utilisateur et les navigateurs le bloquent. Rien ne s'ouvrait,
+  // et l'écran d'attente tournait devant une application jamais lancée. Une
+  // navigation, elle, n'est jamais bloquée.
+  useEffect(() => {
+    if (!mobile || dejaRedirige.current || !attente?.url) return
+
+    dejaRedirige.current = true
+    const minuteur = setTimeout(() => { window.location.href = attente.url }, 1200)
+
+    return () => clearTimeout(minuteur)
+  }, [mobile, attente])
+
+  // Le prestataire ne prévient pas toujours : on lui redemande l'issue.
+  useEffect(() => {
+    if (!suivi) return
+
+    const minuteur = setInterval(() => {
+      verifierUneFois().then((fini) => { if (fini) clearInterval(minuteur) })
+        .catch(() => { /* réseau instable : on retentera au tour suivant */ })
     }, 4000)
 
-    return () => clearInterval(minuteur)
-  }, [attente, dejaLance, id, navigate])
+    // Interroger indéfiniment coûterait un appel sortant toutes les quatre
+    // secondes, sur un serveur mono-processus, pour un paiement peut-être
+    // abandonné. Passé ce délai, on rend la main plutôt que de faire tourner
+    // une roue devant quelqu'un qui n'attend plus.
+    const fin = setTimeout(() => setSuiviEpuise(true), DUREE_SUIVI)
+
+    return () => { clearInterval(minuteur); clearTimeout(fin) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- verifierUneFois est recréée à chaque rendu
+  }, [suivi, id, navigate])
+
+  const verifierMaintenant = async () => {
+    setVerification(true)
+    try {
+      const fini = await verifierUneFois()
+      if (!fini) setSuiviEpuise(true)
+    } catch {
+      setSuiviEpuise(true)
+    } finally {
+      setVerification(false)
+    }
+  }
 
   const lancer = async () => {
     setErreurEnvoi('')
@@ -101,12 +177,15 @@ export default function Paiement() {
     setEnvoi(true)
     try {
       const { data } = await api.post(`/reservations/${id}/paiement`, { methode, telephone })
-      setAttente({ reference: data.reference, url: data.url })
 
-      // L'application du payeur est plus directe qu'un QR code à scanner sur
-      // l'écran qu'on tient déjà dans la main.
-      const cible = data.url_application || data.url
-      if (cible) window.open(cible, '_blank', 'noopener')
+      // Sur téléphone, le lien d'application prime : il ouvre Wave ou Orange
+      // Money sans étape intermédiaire. Sur ordinateur c'est l'inverse — un
+      // lien d'application n'y mène nulle part, et c'est la page du prestataire
+      // qu'il faut encoder dans le code QR.
+      const lien = (mobile ? data.url_application || data.url : data.url) as string
+      setSuiviEpuise(false)
+      dejaRedirige.current = false
+      setAttente({ reference: data.reference, url: lien ?? '' })
     } catch (err) {
       setErreurEnvoi(messageErreur(err, 'Le paiement n\'a pas pu être lancé.'))
       setRaison(raisonTechnique(err))
@@ -173,21 +252,61 @@ export default function Paiement() {
 
       {enCours ? (
         <section className="tunnel-corps">
-          <h1 className="tunnel-h1">Confirmez sur votre téléphone</h1>
+          <h1 className="tunnel-h1">
+            {mobile ? 'Confirmez sur votre téléphone' : 'Scannez pour payer'}
+          </h1>
           <p className="th-text-2 text-sm mb-6">
-            Validez le paiement dans votre application. Cet écran se met à jour tout seul —
-            ne le fermez pas.
+            {mobile
+              ? `${nomMoyen} va s'ouvrir pour valider ${fcfa(reservation.montant_total)}. Cet écran se met à jour tout seul.`
+              : `Ouvrez ${nomMoyen} sur votre téléphone et scannez ce code. Cet écran se met à jour tout seul.`}
           </p>
 
-          <div className="tunnel-attente" role="status" aria-live="polite">
-            <span className="tunnel-pulsation" aria-hidden="true" />
-            <span className="th-text-2 text-sm">
-              En attente de votre confirmation…
-              {cotePrestataire && (
-                <span className="tunnel-attente-detail">PayDunya répond « {cotePrestataire} »</span>
-              )}
-            </span>
-          </div>
+          {/* Sur ordinateur, le lien du prestataire ne mène nulle part : c'est
+              le téléphone qui paie. Le code QR est le seul pont entre les deux. */}
+          {!mobile && enCours.url && (
+            <div className="tunnel-qr">
+              <CodeQR valeur={enCours.url} taille={200} />
+            </div>
+          )}
+
+          {mobile && enCours.url && (
+            <a href={enCours.url} className="btn btn-primaire btn-md w-full justify-center mb-4">
+              Ouvrir {nomMoyen}
+            </a>
+          )}
+
+          {suiviEpuise ? (
+            <div className="tunnel-attente" role="status">
+              <span className="th-text-2 text-sm">
+                Toujours rien reçu. Validez le paiement, puis vérifiez.
+                {cotePrestataire && (
+                  <span className="tunnel-attente-detail">PayDunya répond « {cotePrestataire} »</span>
+                )}
+              </span>
+            </div>
+          ) : (
+            <div className="tunnel-attente" role="status" aria-live="polite">
+              <span className="tunnel-pulsation" aria-hidden="true" />
+              <span className="th-text-2 text-sm">
+                En attente de votre confirmation…
+                {cotePrestataire && (
+                  <span className="tunnel-attente-detail">PayDunya répond « {cotePrestataire} »</span>
+                )}
+              </span>
+            </div>
+          )}
+
+          {suiviEpuise && (
+            <Button
+              variante="secondaire"
+              taille="md"
+              className="w-full mt-4"
+              disabled={verification}
+              onClick={verifierMaintenant}
+            >
+              {verification ? 'Vérification…' : 'Vérifier maintenant'}
+            </Button>
+          )}
 
           <dl className="tunnel-recap">
             <div><dt>Référence</dt><dd>{enCours.reference}</dd></div>
@@ -196,9 +315,9 @@ export default function Paiement() {
 
           {enCours.url && (
             <p className="text-xs th-text-3 mt-6">
-              L'application ne s'est pas ouverte ?{' '}
+              {mobile ? "L'application ne s'est pas ouverte ? " : 'Impossible de scanner ? '}
               <a href={enCours.url} target="_blank" rel="noopener noreferrer" className="th-text-1 underline">
-                Rouvrir la page de paiement
+                Ouvrir la page de paiement
               </a>
             </p>
           )}
