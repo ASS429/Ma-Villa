@@ -14,6 +14,7 @@ import ChoixCategorie from './components/recherche/ChoixCategorie'
 import Destinations from './components/Destinations'
 import Footer from './components/Footer'
 import NavigationBasse from './components/app/NavigationBasse'
+import NouvelleVersion from './components/NouvelleVersion'
 import { ButtonLink } from './components/ui/Button'
 import Seo from './components/Seo'
 import { VillaCardSkeleton } from './components/Skeleton'
@@ -353,6 +354,7 @@ function Home() {
 export default function App() {
   return (
     <>
+      <NouvelleVersion />
       <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/villas" element={<Villas />} />

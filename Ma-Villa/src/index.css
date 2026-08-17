@@ -1883,6 +1883,43 @@ html.video-mode[data-theme="dark"] {
   font: var(--t-body-sm);
 }
 
+/* Bandeau « nouvelle version ». Posé sous la barre de navigation plutôt qu'en
+   travers de l'écran : il informe, il n'interrompt pas. */
+.bandeau-version {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  top: calc(var(--space-4) + env(safe-area-inset-top, 0px));
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: calc(100vw - var(--space-4) * 2);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  border-radius: 999px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  font: var(--t-body-sm);
+  color: var(--text-2);
+}
+
+.bandeau-version button {
+  flex-shrink: 0;
+  min-height: 44px; /* règle du projet : aucune cible tactile en dessous */
+  padding: 0 var(--space-4);
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 500;
+}
+
+.bandeau-version button:hover { background: var(--accent-hover); }
+
+@media (max-width: 480px) {
+  .bandeau-version { font-size: 13px; padding-left: var(--space-3); }
+}
+
 /* Code QR — sur ordinateur, le seul pont vers le téléphone qui paie.
    Fond blanc imposé quel que soit le thème : un lecteur attend du noir sur
    blanc, et l'inversion fait échouer la plupart d'entre eux. */
