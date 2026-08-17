@@ -1,7 +1,16 @@
 import axios from 'axios'
 
+/**
+ * Adresse de l'API, exportée : le téléversement de fichiers passe par `fetch`
+ * et non par cette instance — il doit laisser le navigateur poser lui-même
+ * l'en-tête `multipart/form-data` avec sa frontière. Sans cette constante
+ * partagée, l'adresse finit recopiée à la main, et la copie reste sur
+ * localhost.
+ */
+export const URL_API = (import.meta.env.VITE_API_URL as string) || 'http://localhost:8000/api'
+
 const api = axios.create({
-  baseURL: (import.meta.env.VITE_API_URL as string) || 'http://localhost:8000/api',
+  baseURL: URL_API,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',

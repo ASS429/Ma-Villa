@@ -1,26 +1,13 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../../services/api'
+import { televerserFichier as uploadFile } from '../../services/televerser'
 import { messageErreur } from '../../lib/erreurs'
 
 type MediaFile = { file: File; preview: string; isVideo: boolean }
 
 function isVideoFile(file: File) {
   return file.type.startsWith('video/')
-}
-
-async function uploadFile(file: File): Promise<string> {
-  const token = localStorage.getItem('token')
-  const form = new FormData()
-  form.append('file', file)
-  const res = await fetch('http://localhost:8000/api/upload', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token ?? ''}`, Accept: 'application/json' },
-    body: form,
-  })
-  if (!res.ok) throw new Error('Upload échoué')
-  const data = await res.json()
-  return data.url
 }
 
 export default function NouvelleVilla() {

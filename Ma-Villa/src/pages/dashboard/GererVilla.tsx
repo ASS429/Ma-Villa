@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import api from '../../services/api'
+import { televerserFichier as uploadFile } from '../../services/televerser'
+import { messageErreur } from '../../lib/erreurs'
 import ConfirmModal from '../../components/ConfirmModal'
 
 interface Photo { id: number; url: string; alt: string }
@@ -21,19 +23,6 @@ const tarifLabels: Record<string, string> = {
 
 function isVideoUrl(url: string) {
   return /\.(mp4|webm|mov)(\?.*)?$/i.test(url)
-}
-
-async function uploadFile(file: File): Promise<string> {
-  const token = localStorage.getItem('token')
-  const form = new FormData()
-  form.append('file', file)
-  const res = await fetch('http://localhost:8000/api/upload', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token ?? ''}`, Accept: 'application/json' },
-    body: form,
-  })
-  if (!res.ok) throw new Error('Upload échoué')
-  return (await res.json()).url
 }
 
 /* ─── Sub-components ─────────────────────────────────────────── */
@@ -88,6 +77,7 @@ export default function GererVilla() {
   const [infoSaving, setInfoSaving] = useState(false)
   const [geoLoading, setGeoLoading] = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [erreurPhotos, setErreurPhotos] = useState('')
   const [confirmModal, setConfirmModal] = useState<{ message: string; detail?: string; onConfirm: () => void } | null>(null)
   const [showLogementForm, setShowLogementForm] = useState(false)
   const [showTarifForm, setShowTarifForm] = useState<number | null>(null)
@@ -148,6 +138,7 @@ export default function GererVilla() {
     const files = Array.from(e.target.files ?? [])
     if (!files.length) return
     setUploadingPhoto(true)
+    setErreurPhotos('')
     try {
       const photos = []
       const existingCount = villa?.photos.length ?? 0
@@ -156,6 +147,11 @@ export default function GererVilla() {
       }
       await api.post(`/villas/${id}/photos`, { photos })
       fetchVilla()
+    } catch (err) {
+      // Sans ce filet, un envoi refusé ne laissait qu'une trace en console :
+      // le propriétaire voyait l'attente s'arrêter et ses photos absentes,
+      // sans savoir si c'était le format, le poids, ou le réseau.
+      setErreurPhotos(messageErreur(err, "L'ajout de photos a échoué."))
     } finally {
       setUploadingPhoto(false)
       e.target.value = ''
@@ -392,11 +388,25 @@ export default function GererVilla() {
               className="text-sm px-3 py-1.5 rounded-xl transition-all disabled:opacity-50 hover:opacity-80"
               style={{ border: '1px solid var(--border)', color: 'var(--text-2)' }}
             >
-              {uploadingPhoto ? 'Upload...' : '+ Ajouter'}
+              {uploadingPhoto ? 'Envoi…' : '+ Ajouter'}
             </button>
           </>
         }
       >
+        {erreurPhotos && (
+          <p
+            className="rounded-xl px-4 py-3 text-sm mb-4"
+            role="alert"
+            style={{
+              background: 'color-mix(in srgb, var(--danger) 10%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--danger) 25%, transparent)',
+              color: 'var(--danger)',
+            }}
+          >
+            {erreurPhotos}
+          </p>
+        )}
+
         {villa.photos.length === 0 ? (
           <p className="text-sm" style={{ color: 'var(--text-3)' }}>
             Aucun média. Ajoutez des photos ou vidéos pour illustrer votre villa.
