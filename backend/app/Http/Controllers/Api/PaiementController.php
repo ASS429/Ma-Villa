@@ -98,7 +98,22 @@ class PaiementController extends Controller
                     $facture['token'], $request->user()->name, $request->user()->email, $donnees['telephone']
                 );
 
-            $paiement->update(['url_paiement' => $resultat['url']]);
+            $lienApplication = $resultat['url_application'] ?? $resultat['url'];
+
+            if (! $resultat['url'] && ! $lienApplication) {
+                // Un paiement accepté sans lien ne mène nulle part. Le dire vaut
+                // mieux qu'un écran d'attente devant lequel il n'y a rien à faire.
+                throw new \RuntimeException(
+                    'PayDunya a accepté le paiement sans renvoyer de lien à ouvrir.'
+                );
+            }
+
+            // Conservés en base : l'écran d'attente doit pouvoir reproposer le
+            // lien après un rechargement ou un retour depuis l'application.
+            $paiement->update([
+                'url_paiement'    => $resultat['url'] ?? $lienApplication,
+                'url_application' => $lienApplication,
+            ]);
 
             return response()->json([
                 'reference'       => $reference,

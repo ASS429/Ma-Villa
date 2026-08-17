@@ -71,7 +71,9 @@ export default function Paiement() {
   // Ce que PayDunya répond, mot pour mot, hors encaissement réel. « Rien ne se
   // passe » est indéchiffrable ; « PayDunya répond pending » dit où regarder.
   const [cotePrestataire, setCotePrestataire] = useState('')
-  const [attente, setAttente] = useState<{ reference: string; url: string } | null>(null)
+  // `url` est ce qu'on encode dans le code QR (une page atteignable depuis
+  // n'importe quel appareil), `lien` ce qu'on ouvre sur téléphone.
+  const [attente, setAttente] = useState<{ reference: string; url: string; lien: string } | null>(null)
   // La réservation n'est chargée qu'une fois : sans ce drapeau, un paiement
   // refusé laisserait l'écran d'attente tourner sur une donnée périmée.
   const [refuse, setRefuse] = useState(false)
@@ -92,7 +94,11 @@ export default function Paiement() {
   // avoir payé.
   const dejaLance = !refuse && reservation?.paiement?.statut === 'en_attente'
   const enCours = attente ?? (dejaLance && reservation?.paiement
-    ? { reference: reservation.paiement.reference ?? '—', url: reservation.paiement.url_paiement ?? '' }
+    ? {
+        reference: reservation.paiement.reference ?? '—',
+        url: reservation.paiement.url_paiement ?? reservation.paiement.url_application ?? '',
+        lien: reservation.paiement.url_application ?? reservation.paiement.url_paiement ?? '',
+      }
     : null)
 
   const suivi = (attente !== null || dejaLance) && !suiviEpuise
@@ -132,10 +138,10 @@ export default function Paiement() {
   // et l'écran d'attente tournait devant une application jamais lancée. Une
   // navigation, elle, n'est jamais bloquée.
   useEffect(() => {
-    if (!mobile || dejaRedirige.current || !attente?.url) return
+    if (!mobile || dejaRedirige.current || !attente?.lien) return
 
     dejaRedirige.current = true
-    const minuteur = setTimeout(() => { window.location.href = attente.url }, 1200)
+    const minuteur = setTimeout(() => { window.location.href = attente.lien }, 1200)
 
     return () => clearTimeout(minuteur)
   }, [mobile, attente])
@@ -178,14 +184,13 @@ export default function Paiement() {
     try {
       const { data } = await api.post(`/reservations/${id}/paiement`, { methode, telephone })
 
-      // Sur téléphone, le lien d'application prime : il ouvre Wave ou Orange
-      // Money sans étape intermédiaire. Sur ordinateur c'est l'inverse — un
-      // lien d'application n'y mène nulle part, et c'est la page du prestataire
-      // qu'il faut encoder dans le code QR.
-      const lien = (mobile ? data.url_application || data.url : data.url) as string
       setSuiviEpuise(false)
       dejaRedirige.current = false
-      setAttente({ reference: data.reference, url: lien ?? '' })
+      setAttente({
+        reference: data.reference,
+        url: data.url || data.url_application || '',
+        lien: data.url_application || data.url || '',
+      })
     } catch (err) {
       setErreurEnvoi(messageErreur(err, 'Le paiement n\'a pas pu être lancé.'))
       setRaison(raisonTechnique(err))
@@ -252,13 +257,20 @@ export default function Paiement() {
 
       {enCours ? (
         <section className="tunnel-corps">
+          {/* Ne jamais annoncer un code qu'on n'a pas : si le prestataire n'a
+              renvoyé aucun lien, l'écran doit le dire au lieu de faire attendre
+              devant une consigne impossible à suivre. */}
           <h1 className="tunnel-h1">
-            {mobile ? 'Confirmez sur votre téléphone' : 'Scannez pour payer'}
+            {!enCours.url && !enCours.lien
+              ? 'Paiement lancé'
+              : mobile ? 'Confirmez sur votre téléphone' : 'Scannez pour payer'}
           </h1>
           <p className="th-text-2 text-sm mb-6">
-            {mobile
-              ? `${nomMoyen} va s'ouvrir pour valider ${fcfa(reservation.montant_total)}. Cet écran se met à jour tout seul.`
-              : `Ouvrez ${nomMoyen} sur votre téléphone et scannez ce code. Cet écran se met à jour tout seul.`}
+            {!enCours.url && !enCours.lien
+              ? `Ouvrez ${nomMoyen} sur votre téléphone : la demande de ${fcfa(reservation.montant_total)} vous y attend. Cet écran se met à jour tout seul.`
+              : mobile
+                ? `${nomMoyen} va s'ouvrir pour valider ${fcfa(reservation.montant_total)}. Cet écran se met à jour tout seul.`
+                : `Ouvrez ${nomMoyen} sur votre téléphone et scannez ce code. Cet écran se met à jour tout seul.`}
           </p>
 
           {/* Sur ordinateur, le lien du prestataire ne mène nulle part : c'est
@@ -269,8 +281,8 @@ export default function Paiement() {
             </div>
           )}
 
-          {mobile && enCours.url && (
-            <a href={enCours.url} className="btn btn-primaire btn-md w-full justify-center mb-4">
+          {mobile && enCours.lien && (
+            <a href={enCours.lien} className="btn btn-primaire btn-md w-full justify-center mb-4">
               Ouvrir {nomMoyen}
             </a>
           )}
@@ -313,10 +325,15 @@ export default function Paiement() {
             <div><dt>Montant</dt><dd>{fcfa(reservation.montant_total)}</dd></div>
           </dl>
 
-          {enCours.url && (
+          {(enCours.url || enCours.lien) && (
             <p className="text-xs th-text-3 mt-6">
               {mobile ? "L'application ne s'est pas ouverte ? " : 'Impossible de scanner ? '}
-              <a href={enCours.url} target="_blank" rel="noopener noreferrer" className="th-text-1 underline">
+              <a
+                href={mobile ? enCours.lien || enCours.url : enCours.url || enCours.lien}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="th-text-1 underline"
+              >
                 Ouvrir la page de paiement
               </a>
             </p>

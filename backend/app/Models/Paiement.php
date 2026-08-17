@@ -11,7 +11,7 @@ class Paiement extends Model
     protected $fillable = [
         'reservation_id', 'methode', 'montant', 'statut', 'reference',
         'commission', 'montant_proprietaire', 'taux_commission',
-        'token_paydunya', 'url_paiement', 'reponse_prestataire', 'paye_le',
+        'token_paydunya', 'url_paiement', 'url_application', 'reponse_prestataire', 'paye_le',
     ];
 
     protected function casts(): array

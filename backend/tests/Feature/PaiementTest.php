@@ -130,6 +130,74 @@ class PaiementTest extends TestCase
         ]);
     }
 
+    public function test_orange_money_expose_et_conserve_ses_deux_liens(): void
+    {
+        // Orange Money ne met pas son URL au premier niveau : les liens vivent
+        // dans `other_url`. Ne lire que `url` laissait l'écran sans rien à
+        // afficher — ni bouton à toucher, ni code à scanner.
+        Http::fake([
+            '*checkout-invoice/create' => Http::response(['response_code' => '00', 'response_text' => 'u', 'token' => 'T']),
+            '*softpay/new-orange-money-senegal' => Http::response([
+                'success'   => true,
+                'other_url' => [
+                    'om_url'    => 'https://orangemoneysn.page.link/abc',
+                    'maxit_url' => 'https://sugu.orange-sonatel.com/mp/abc',
+                ],
+            ]),
+        ]);
+
+        $reservation = $this->reservation();
+        $reponse = $this->actingAs($reservation->client, 'sanctum')
+            ->postJson("/api/reservations/{$reservation->id}/paiement", [
+                'methode' => 'orange_money', 'telephone' => '770000000',
+            ])->assertOk();
+
+        $this->assertEquals('https://orangemoneysn.page.link/abc', $reponse->json('url_application'));
+        $this->assertNotNull($reponse->json('url'));
+
+        // Et surtout : ils survivent au rechargement de l'écran d'attente.
+        $paiement = $reservation->fresh()->paiement;
+        $this->assertEquals('https://orangemoneysn.page.link/abc', $paiement->url_application);
+        $this->assertNotNull($paiement->url_paiement);
+    }
+
+    public function test_un_paiement_sans_aucun_lien_est_refuse(): void
+    {
+        // Mieux vaut le dire que d'afficher un écran d'attente devant lequel il
+        // n'y a rien à faire.
+        Http::fake([
+            '*checkout-invoice/create' => Http::response(['response_code' => '00', 'response_text' => 'u', 'token' => 'T']),
+            '*softpay/wave-senegal' => Http::response(['success' => true]),
+        ]);
+
+        $reservation = $this->reservation();
+        $reponse = $this->actingAs($reservation->client, 'sanctum')
+            ->postJson("/api/reservations/{$reservation->id}/paiement", [
+                'methode' => 'wave', 'telephone' => '770000000',
+            ])->assertStatus(502);
+
+        $this->assertStringContainsString('sans renvoyer de lien', $reponse->json('raison'));
+    }
+
+    public function test_une_url_logee_ailleurs_est_quand_meme_trouvee(): void
+    {
+        // PayDunya ne loge pas l'URL au même endroit selon le moyen et la
+        // version de l'API.
+        Http::fake([
+            '*checkout-invoice/create' => Http::response(['response_code' => '00', 'response_text' => 'u', 'token' => 'T']),
+            '*softpay/wave-senegal' => Http::response([
+                'success' => true, 'redirect_url' => 'https://pay.wave.com/c/secours',
+            ]),
+        ]);
+
+        $reservation = $this->reservation();
+        $this->actingAs($reservation->client, 'sanctum')
+            ->postJson("/api/reservations/{$reservation->id}/paiement", [
+                'methode' => 'wave', 'telephone' => '770000000',
+            ])->assertOk()
+            ->assertJsonPath('url', 'https://pay.wave.com/c/secours');
+    }
+
     public function test_le_numero_est_normalise_avant_envoi(): void
     {
         // PayDunya attend neuf chiffres : « +221 77 123 45 67 » serait refusé.

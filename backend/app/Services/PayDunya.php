@@ -137,12 +137,18 @@ class PayDunya
      */
     public function payerAvecWave(string $jetonFacture, string $nom, string $email, string $telephone): array
     {
-        return $this->softpay('wave-senegal', [
+        $resultat = $this->softpay('wave-senegal', [
             'wave_senegal_fullName'      => $nom,
             'wave_senegal_email'         => $email,
             'wave_senegal_phone'         => $this->normaliserTelephone($telephone),
             'wave_senegal_payment_token' => $jetonFacture,
         ]);
+
+        // Wave sert le même lien aux deux usages : sur téléphone il ouvre
+        // l'application, sur ordinateur il ouvre une page scannable.
+        $resultat['url_application'] = $resultat['url'];
+
+        return $resultat;
     }
 
     /**
@@ -159,8 +165,16 @@ class PayDunya
             'invoice_token'  => $jetonFacture,
         ]);
 
-        $resultat['url_application'] = $resultat['brut']['other_url']['om_url'] ?? null;
-        $resultat['url_maxit']       = $resultat['brut']['other_url']['maxit_url'] ?? null;
+        $om    = $resultat['brut']['other_url']['om_url'] ?? null;
+        $maxit = $resultat['brut']['other_url']['maxit_url'] ?? null;
+
+        $resultat['url_application'] = $om ?? $maxit ?? $resultat['url'];
+        $resultat['url_maxit']       = $maxit;
+
+        // Orange Money ne renvoie pas toujours d'URL au premier niveau : la page
+        // à QR code peut n'exister que dans `other_url`. Sans ce repli, on
+        // n'avait plus rien à afficher — ni lien, ni code à scanner.
+        $resultat['url'] ??= $maxit ?? $om;
 
         return $resultat;
     }
@@ -179,9 +193,31 @@ class PayDunya
         }
 
         return [
-            'url'  => $corps['url'] ?? null,
+            'url'  => $this->premiereUrl($corps, ['url', 'redirect_url', 'payment_url', 'launch_url', 'response_text']),
             'brut' => $corps,
         ];
+    }
+
+    /**
+     * PayDunya ne loge pas l'URL de paiement au même endroit selon le moyen et
+     * la version de l'API. Lire un seul champ suffisait à se retrouver sans
+     * rien à afficher — ni lien à ouvrir, ni code à scanner — pour un paiement
+     * pourtant accepté.
+     *
+     * @param array<string, mixed> $corps
+     * @param list<string> $chemins
+     */
+    private function premiereUrl(array $corps, array $chemins): ?string
+    {
+        foreach ($chemins as $chemin) {
+            $valeur = data_get($corps, $chemin);
+
+            if (is_string($valeur) && filter_var($valeur, FILTER_VALIDATE_URL)) {
+                return $valeur;
+            }
+        }
+
+        return null;
     }
 
     /**

@@ -107,8 +107,10 @@ export interface PaiementReservation {
   reference: string | null
   montant?: number | null
   paye_le: string | null
-  /** Présente sur le détail d'une réservation, pas sur la liste. */
+  /** Présentes sur le détail d'une réservation, pas sur la liste. */
   url_paiement?: string | null
+  /** Lien qui ouvre directement Wave ou Orange Money, sur téléphone. */
+  url_application?: string | null
 }
 
 export interface Reservation {
