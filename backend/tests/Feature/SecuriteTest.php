@@ -310,4 +310,16 @@ class SecuriteTest extends TestCase
             'nb_personnes' => 2,
         ])->assertStatus(409);
     }
+
+    public function test_une_route_api_ouverte_dans_un_navigateur_repond_401_pas_500(): void
+    {
+        // Ce back n'expose aucune route « login » : sans règle explicite,
+        // Laravel cherchait une redirection inexistante et répondait « Server
+        // Error ». Un diagnostic devenait alors un second bug à élucider.
+        $this->get('/api/admin/diagnostic/paiement', ['Accept' => 'text/html'])
+             ->assertStatus(401);
+
+        $this->get('/api/reservations', ['Accept' => 'text/html'])
+             ->assertStatus(401);
+    }
 }
