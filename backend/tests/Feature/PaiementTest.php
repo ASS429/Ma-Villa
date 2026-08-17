@@ -230,6 +230,45 @@ class PaiementTest extends TestCase
         $this->assertStringContainsString('sans renvoyer de lien', $reponse->json('raison'));
     }
 
+    /* ── Sonde d'administration ─────────────────────────────── */
+
+    public function test_un_admin_sonde_la_configuration_de_paiement(): void
+    {
+        // Clés de production en place, la cause d'un refus n'est plus montrée
+        // au payeur : sans cette sonde, il ne reste que les journaux.
+        Http::fake(['*checkout-invoice/create' => Http::response([
+            'response_code' => '00', 'response_text' => 'https://paydunya/x', 'token' => 'SONDE',
+        ])]);
+
+        $this->actingAs(User::factory()->admin()->create(), 'sanctum')
+            ->getJson('/api/admin/diagnostic/paiement')
+            ->assertOk()
+            ->assertJsonPath('facture.ok', true)
+            ->assertJsonPath('facture.jeton', 'SONDE')
+            ->assertJsonPath('paiement_actif', true);
+    }
+
+    public function test_la_sonde_ne_divulgue_jamais_les_cles(): void
+    {
+        config(['paiement.paydunya.cle_maitre' => 'cle-maitresse-tres-secrete ']);
+        Http::fake(['*' => Http::response(['response_code' => '00', 'response_text' => 'u', 'token' => 'T'])]);
+
+        $reponse = $this->actingAs(User::factory()->admin()->create(), 'sanctum')
+            ->getJson('/api/admin/diagnostic/paiement')
+            ->assertOk();
+
+        $reponse->assertDontSee('cle-maitresse-tres-secrete');
+        // Mais elle signale l'espace au bout, panne courante et invisible.
+        $this->assertTrue($reponse->json('cles.maitre.espaces_au_bout'));
+    }
+
+    public function test_la_sonde_est_refusee_a_un_client(): void
+    {
+        $this->actingAs(User::factory()->client()->create(), 'sanctum')
+            ->getJson('/api/admin/diagnostic/paiement')
+            ->assertForbidden();
+    }
+
     /* ── Repli sur la page du prestataire ───────────────────── */
 
     public function test_un_softpay_muet_replie_sur_la_page_de_paiement(): void

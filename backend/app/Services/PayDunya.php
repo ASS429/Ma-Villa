@@ -218,15 +218,19 @@ class PayDunya
             // un corps vide peut être un 404 (service non ouvert sur ce compte),
             // un 403 (clés refusées) ou un 200 sans contenu, et ces trois-là se
             // corrigent à trois endroits différents.
+            // Le corps brut accompagne toujours le message : PayDunya loge
+            // parfois la vraie cause dans `errors`, que `message` ne résume pas.
+            // Se contenter du résumé a déjà coûté un aller-retour.
             $brut = trim((string) $reponse->body());
+            $resume = $corps['message'] ?? $corps['response_text'] ?? null;
 
             throw new RuntimeException(sprintf(
                 'PayDunya a refusé le paiement %s (HTTP %d) : %s',
                 $chemin,
                 $reponse->status(),
-                $corps['message']
-                    ?? $corps['response_text']
-                    ?? ($brut !== '' ? mb_substr($brut, 0, 300) : 'réponse vide')
+                is_string($resume) && $resume !== ''
+                    ? $resume.' — réponse : '.mb_substr($brut, 0, 400)
+                    : ($brut !== '' ? mb_substr($brut, 0, 400) : 'réponse vide')
             ));
         }
 

@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AvisController;
 use App\Http\Controllers\Api\ConfigurationController;
+use App\Http\Controllers\Api\DiagnosticPaiementController;
 use App\Http\Controllers\Api\DisponibiliteController;
 use App\Http\Controllers\Api\FavoriController;
 use App\Http\Controllers\Api\LogementController;
@@ -100,6 +101,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/utilisateurs/{user}', [AdminController::class, 'supprimerUtilisateur']);
         Route::get('/avis', [AdminController::class, 'avis']);
         Route::delete('/avis/{avi}', [AdminController::class, 'supprimerAvis']);
+
+        // Sonde PayDunya : dit ce que le prestataire répond, sans réservation
+        // ni paiement. Le seul moyen de diagnostiquer une fois les clés de
+        // production en place, la cause d'un refus n'étant plus montrée au payeur.
+        Route::get('/diagnostic/paiement', DiagnosticPaiementController::class);
     });
 
     // Favoris
