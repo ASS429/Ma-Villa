@@ -21,27 +21,45 @@ use RuntimeException;
  */
 class PayDunya
 {
-    /**
-     * Base unique, celle que documente PayDunya pour tous ses endpoints.
-     *
-     * Il existe bien un `sandbox-api/v1`, et il répond pour la création de
-     * facture — mais **SoftPay n'y est pas déployé** : `softpay/wave-senegal`
-     * y renvoie une page 404, donc un corps vide, donc un refus incompréhensible.
-     * Vérifié à la sonde le 17 août 2026 : 404 sur le bac à sable, 500 sur la
-     * base réelle, c'est-à-dire un endpoint qui existe et rejette la requête.
-     *
-     * Le mode ne voyage pas dans l'URL : il est porté par les clés, choisies à
-     * la création de l'application (`test_private_…` ou `live_private_…`).
-     */
-    private const BASE = 'https://app.paydunya.com/api/v1';
+    private const BASE_LIVE = 'https://app.paydunya.com/api/v1';
+    private const BASE_TEST = 'https://app.paydunya.com/sandbox-api/v1';
 
     public function __construct(private readonly array $config)
     {
     }
 
+    /**
+     * Chaque jeu de clés a sa base, et une seule.
+     *
+     * Relevé le 17 août 2026, après avoir essayé les deux :
+     *
+     *   api/v1 + clés de test  → 1001 « LIVE Private Key and Token combination
+     *                            is invalid »
+     *   sandbox-api/v1         → accepte les clés de test
+     *   sandbox-api/v1/softpay → 404, l'endpoint n'y existe pas
+     *   api/v1/softpay         → existe
+     *
+     * La base est donc déduite des **clés**, seule chose que PayDunya valide
+     * réellement — un réglage déclaratif pourrait la contredire.
+     */
     private function base(): string
     {
-        return rtrim((string) ($this->config['base_url'] ?: self::BASE), '/');
+        if ($surcharge = $this->config['base_url'] ?? null) {
+            return rtrim((string) $surcharge, '/');
+        }
+
+        return $this->clesDeTest() ? self::BASE_TEST : self::BASE_LIVE;
+    }
+
+    /**
+     * SoftPay n'est pas servi par le bac à sable : il ne peut pas être essayé
+     * avec des clés de test. Ce n'est pas une panne à contourner, c'est une
+     * limite de la plateforme — le repli sur la page de paiement est alors le
+     * parcours normal, pas un incident.
+     */
+    public function softpayDisponible(): bool
+    {
+        return ! $this->clesDeTest();
     }
 
     public static function depuisConfig(): self

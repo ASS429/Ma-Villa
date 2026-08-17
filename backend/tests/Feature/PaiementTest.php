@@ -271,22 +271,50 @@ class PaiementTest extends TestCase
             || $r['wave_senegal_phone'] === '771234567');
     }
 
-    public function test_tout_part_vers_la_base_documentee_meme_en_test(): void
+    public function test_des_cles_de_test_visent_le_bac_a_sable_et_evitent_softpay(): void
     {
-        // `sandbox-api/v1` existe pour la création de facture mais **ne sert
-        // pas SoftPay** : on y récolte une page 404, donc un corps vide, donc
-        // un refus sans message. Le mode voyage dans les clés, pas dans l'URL.
-        config(['paiement.paydunya.mode' => 'test']);
+        // La base réelle répond « LIVE Private Key and Token combination is
+        // invalid » à des clés de test ; le bac à sable les accepte mais ne
+        // sert pas SoftPay. Les deux ensemble : en test, la page de paiement
+        // est le parcours normal, pas un incident.
+        config([
+            'paiement.paydunya.mode' => 'test',
+            'paiement.paydunya.cle_privee' => 'test_private_IHEGXFz',
+        ]);
+        Http::fake([
+            '*checkout-invoice/create' => Http::response([
+                'response_code' => '00',
+                'response_text' => 'https://paydunya.com/sandbox-checkout/invoice/T',
+                'token' => 'T',
+            ]),
+        ]);
+
+        $reservation = $this->reservation();
+        $this->actingAs($reservation->client, 'sanctum')
+            ->postJson("/api/reservations/{$reservation->id}/paiement", [
+                'methode' => 'wave', 'telephone' => '770000000',
+            ])->assertOk()
+            ->assertJsonPath('repli', true)
+            ->assertJsonPath('url', 'https://paydunya.com/sandbox-checkout/invoice/T');
+
+        Http::assertSent(fn ($r) => str_contains($r->url(), '/sandbox-api/v1/'));
+        // Pas d'appel SoftPay : ce serait une 404 certaine.
+        Http::assertNotSent(fn ($r) => str_contains($r->url(), 'softpay'));
+    }
+
+    public function test_des_cles_reelles_visent_l_api_reelle_et_utilisent_softpay(): void
+    {
         Http::fake($this->reponsesPayDunya());
 
         $reservation = $this->reservation();
         $this->actingAs($reservation->client, 'sanctum')
             ->postJson("/api/reservations/{$reservation->id}/paiement", [
                 'methode' => 'wave', 'telephone' => '770000000',
-            ])->assertOk();
+            ])->assertOk()
+            ->assertJsonPath('repli', false);
 
         Http::assertNotSent(fn ($r) => str_contains($r->url(), 'sandbox'));
-        Http::assertSent(fn ($r) => str_starts_with($r->url(), 'https://app.paydunya.com/api/v1/'));
+        Http::assertSent(fn ($r) => str_contains($r->url(), '/api/v1/softpay/wave-senegal'));
     }
 
     public function test_la_base_reste_reglable_sans_redeploiement(): void

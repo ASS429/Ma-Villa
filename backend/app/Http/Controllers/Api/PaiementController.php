@@ -165,6 +165,17 @@ class PaiementController extends Controller
      */
     private function lancerSoftpay(array $facture, string $methode, object $payeur, string $telephone): array
     {
+        // Avec des clés de test, SoftPay n'existe pas : l'essayer coûterait une
+        // requête pour une 404 certaine, et un avertissement dans le journal à
+        // chaque paiement — de quoi noyer le signal qu'on veut y voir.
+        if (! $this->paydunya->softpayDisponible() && $facture['url']) {
+            return [
+                'url'             => $facture['url'],
+                'url_application' => $facture['url'],
+                'repli'           => true,
+            ];
+        }
+
         try {
             return $methode === 'wave'
                 ? $this->paydunya->payerAvecWave($facture['token'], $payeur->name, $payeur->email, $telephone)
