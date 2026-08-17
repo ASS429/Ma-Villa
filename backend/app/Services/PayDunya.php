@@ -21,23 +21,27 @@ use RuntimeException;
  */
 class PayDunya
 {
-    private const BASE_LIVE = 'https://app.paydunya.com/api/v1';
-    private const BASE_TEST = 'https://app.paydunya.com/sandbox-api/v1';
+    /**
+     * Base unique, celle que documente PayDunya pour tous ses endpoints.
+     *
+     * Il existe bien un `sandbox-api/v1`, et il répond pour la création de
+     * facture — mais **SoftPay n'y est pas déployé** : `softpay/wave-senegal`
+     * y renvoie une page 404, donc un corps vide, donc un refus incompréhensible.
+     * Vérifié à la sonde le 17 août 2026 : 404 sur le bac à sable, 500 sur la
+     * base réelle, c'est-à-dire un endpoint qui existe et rejette la requête.
+     *
+     * Le mode ne voyage pas dans l'URL : il est porté par les clés, choisies à
+     * la création de l'application (`test_private_…` ou `live_private_…`).
+     */
+    private const BASE = 'https://app.paydunya.com/api/v1';
 
     public function __construct(private readonly array $config)
     {
     }
 
-    /**
-     * Les clés de test (`test_private_…`) ne valent que sur le bac à sable, et
-     * les clés de production que sur l'API réelle : les croiser fait échouer la
-     * création de facture avec un message qui n'évoque jamais le mode.
-     */
     private function base(): string
     {
-        return ($this->config['mode'] ?? 'test') === 'live'
-            ? self::BASE_LIVE
-            : self::BASE_TEST;
+        return rtrim((string) ($this->config['base_url'] ?: self::BASE), '/');
     }
 
     public static function depuisConfig(): self
@@ -297,14 +301,16 @@ class PayDunya
             throw new RuntimeException('Les clés PayDunya ne sont pas configurées.');
         }
 
-        // Router silencieusement vers le bac à sable serait pire que d'échouer :
-        // on croirait encaisser sans qu'aucun franc n'arrive. Le mode déclaré
-        // fait donc foi, et l'incohérence se dit.
+        // Le danger n'est pas un refus — l'API accepte les clés de test et joue
+        // la transaction pour de faux. C'est qu'on se croie en train
+        // d'encaisser : des réservations se confirment, aucun franc n'arrive.
+        // Laisser passer en silence serait la pire des options.
         if (($this->config['mode'] ?? 'test') === 'live' && $this->clesDeTest()) {
             throw new RuntimeException(
                 'PAYDUNYA_MODE vaut « live » mais les clés fournies sont des clés de test '
-                .'(« test_… »), que l\'API réelle refuse. Mettez PAYDUNYA_MODE=test pour '
-                .'tester, ou renseignez vos clés de production pour encaisser.'
+                .'(« test_… ») : aucun paiement réel ne serait encaissé, alors que les '
+                .'réservations se confirmeraient. Mettez PAYDUNYA_MODE=test pour tester, '
+                .'ou renseignez vos clés de production pour encaisser.'
             );
         }
 

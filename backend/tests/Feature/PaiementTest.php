@@ -271,33 +271,13 @@ class PaiementTest extends TestCase
             || $r['wave_senegal_phone'] === '771234567');
     }
 
-    public function test_les_cles_de_test_partent_vers_le_bac_a_sable(): void
+    public function test_tout_part_vers_la_base_documentee_meme_en_test(): void
     {
-        // Une clé `test_private_…` envoyée à l'API réelle fait échouer la
-        // création de facture, avec un message qui n'évoque jamais le mode.
+        // `sandbox-api/v1` existe pour la création de facture mais **ne sert
+        // pas SoftPay** : on y récolte une page 404, donc un corps vide, donc
+        // un refus sans message. Le mode voyage dans les clés, pas dans l'URL.
         config(['paiement.paydunya.mode' => 'test']);
-        Http::fake([
-            '*checkout-invoice/create' => Http::response(['response_code' => '00', 'response_text' => 'u', 'token' => 'T']),
-            '*softpay/wave-senegal' => Http::response(['success' => true, 'url' => 'https://pay.wave.com/c/a']),
-        ]);
-
-        $reservation = $this->reservation();
-        $this->actingAs($reservation->client, 'sanctum')
-            ->postJson("/api/reservations/{$reservation->id}/paiement", [
-                'methode' => 'wave', 'telephone' => '770000000',
-            ])->assertOk();
-
-        Http::assertSent(fn ($r) => str_contains($r->url(), '/sandbox-api/v1/'));
-        Http::assertNotSent(fn ($r) => str_contains($r->url(), '/api/v1/'));
-    }
-
-    public function test_le_mode_live_vise_l_api_reelle(): void
-    {
-        config(['paiement.paydunya.mode' => 'live']);
-        Http::fake([
-            '*checkout-invoice/create' => Http::response(['response_code' => '00', 'response_text' => 'u', 'token' => 'T']),
-            '*softpay/wave-senegal' => Http::response(['success' => true, 'url' => 'https://pay.wave.com/c/a']),
-        ]);
+        Http::fake($this->reponsesPayDunya());
 
         $reservation = $this->reservation();
         $this->actingAs($reservation->client, 'sanctum')
@@ -306,6 +286,21 @@ class PaiementTest extends TestCase
             ])->assertOk();
 
         Http::assertNotSent(fn ($r) => str_contains($r->url(), 'sandbox'));
+        Http::assertSent(fn ($r) => str_starts_with($r->url(), 'https://app.paydunya.com/api/v1/'));
+    }
+
+    public function test_la_base_reste_reglable_sans_redeploiement(): void
+    {
+        config(['paiement.paydunya.base_url' => 'https://exemple.test/api/v9']);
+        Http::fake(['*' => Http::response(['response_code' => '00', 'response_text' => 'u', 'token' => 'T'])]);
+
+        $reservation = $this->reservation();
+        $this->actingAs($reservation->client, 'sanctum')
+            ->postJson("/api/reservations/{$reservation->id}/paiement", [
+                'methode' => 'wave', 'telephone' => '770000000',
+            ]);
+
+        Http::assertSent(fn ($r) => str_starts_with($r->url(), 'https://exemple.test/api/v9/'));
     }
 
     public function test_le_payeur_revient_sur_son_ecran_d_attente(): void

@@ -72,7 +72,17 @@ return [
     |--------------------------------------------------------------------------
     */
     'paydunya' => [
+        // Le mode est porté par les clés, pas par l'URL : il se choisit à la
+        // création de l'application chez PayDunya, qui délivre alors des clés
+        // « test_… » ou « live_… ». Ce réglage ne sert donc qu'à repérer une
+        // incohérence entre ce qu'on déclare et ce qu'on utilise réellement.
         'mode'         => env('PAYDUNYA_MODE', 'test'), // test | live
+
+        // Une seule base pour tous les endpoints, celle que documente PayDunya.
+        // `sandbox-api/v1` existe mais ne sert pas SoftPay : on y récolte des
+        // 404, donc des refus sans message. Laissé réglable pour n'avoir jamais
+        // à redéployer si PayDunya déplace ses URL.
+        'base_url'     => env('PAYDUNYA_BASE_URL'),
         'cle_maitre'   => env('PAYDUNYA_MASTER_KEY'),
         'cle_privee'   => env('PAYDUNYA_PRIVATE_KEY'),
         'cle_publique' => env('PAYDUNYA_PUBLIC_KEY'),
