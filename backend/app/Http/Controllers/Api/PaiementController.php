@@ -110,12 +110,22 @@ class PaiementController extends Controller
         } catch (\Throwable $e) {
             Log::error('Initiation de paiement échouée', [
                 'reservation' => $reservation->id,
+                'methode'     => $donnees['methode'],
+                'mode'        => config('paiement.paydunya.mode'),
                 'erreur'      => $e->getMessage(),
             ]);
 
-            return response()->json([
-                'message' => 'Le paiement n\'a pas pu être lancé. Réessayez dans un instant.',
-            ], 502);
+            $reponse = ['message' => 'Le paiement n\'a pas pu être lancé. Réessayez dans un instant.'];
+
+            // Hors encaissement réel, la cause exacte accompagne le refus. Sans
+            // elle, un échec n'est lisible que dans les journaux du serveur :
+            // celui qui teste voit « réessayez » et n'a rien sur quoi agir,
+            // alors que « clé maîtresse refusée » se corrige en une minute.
+            if (config('paiement.paydunya.mode') !== 'live') {
+                $reponse['raison'] = $e->getMessage();
+            }
+
+            return response()->json($reponse, 502);
         }
     }
 

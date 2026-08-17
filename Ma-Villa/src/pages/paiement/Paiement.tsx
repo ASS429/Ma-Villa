@@ -15,6 +15,16 @@ const LOGOS: Record<string, string> = {
 }
 
 /**
+ * Cause technique que le serveur joint au refus hors encaissement réel — le
+ * message du prestataire, code compris. En production sur clés réelles, le
+ * champ est absent et rien ne s'affiche.
+ */
+function raisonTechnique(err: unknown): string {
+  const donnees = (err as { response?: { data?: { raison?: unknown } } })?.response?.data
+  return typeof donnees?.raison === 'string' ? donnees.raison : ''
+}
+
+/**
  * Tunnel de paiement — planche 12.
  *
  * Aucune animation décorative ici : chaque milliseconde ajoutée entre un
@@ -34,6 +44,10 @@ export default function Paiement() {
   const [telephone, setTelephone] = useState('')
   const [envoi, setEnvoi] = useState(false)
   const [erreurEnvoi, setErreurEnvoi] = useState('')
+  // Cause technique renvoyée par le serveur hors encaissement réel. Elle est
+  // affichée à part : « clé maîtresse refusée » n'a rien à dire à un client,
+  // et tout à dire à qui teste l'intégration.
+  const [raison, setRaison] = useState('')
   const [attente, setAttente] = useState<{ reference: string; url: string } | null>(null)
   // La réservation n'est chargée qu'une fois : sans ce drapeau, un paiement
   // refusé laisserait l'écran d'attente tourner sur une donnée périmée.
@@ -79,6 +93,7 @@ export default function Paiement() {
 
   const lancer = async () => {
     setErreurEnvoi('')
+    setRaison('')
     setEnvoi(true)
     try {
       const { data } = await api.post(`/reservations/${id}/paiement`, { methode, telephone })
@@ -90,6 +105,7 @@ export default function Paiement() {
       if (cible) window.open(cible, '_blank', 'noopener')
     } catch (err) {
       setErreurEnvoi(messageErreur(err, 'Le paiement n\'a pas pu être lancé.'))
+      setRaison(raisonTechnique(err))
     } finally {
       setEnvoi(false)
     }
@@ -229,7 +245,12 @@ export default function Paiement() {
           )}
 
           {erreurEnvoi && (
-            <p className="tunnel-erreur" role="alert">{erreurEnvoi}</p>
+            <p className="tunnel-erreur" role="alert">
+              {erreurEnvoi}
+              {raison && (
+                <span className="tunnel-erreur-detail">{raison}</span>
+              )}
+            </p>
           )}
 
           <Button

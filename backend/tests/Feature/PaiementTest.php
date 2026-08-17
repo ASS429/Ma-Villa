@@ -206,6 +206,67 @@ class PaiementTest extends TestCase
         $this->assertEquals('en_attente', $reservation->fresh()->statut);
     }
 
+    public function test_un_refus_en_mode_test_dit_pourquoi(): void
+    {
+        // Sans cette raison, un échec n'est lisible que dans les journaux du
+        // serveur : celui qui teste voit « réessayez » et n'a rien sur quoi agir.
+        config(['paiement.paydunya.mode' => 'test']);
+        Http::fake(['*' => Http::response([
+            'response_code' => '1001', 'response_text' => 'Invalid Masterkey Specified',
+        ], 200)]);
+
+        $reservation = $this->reservation();
+        $reponse = $this->actingAs($reservation->client, 'sanctum')
+            ->postJson("/api/reservations/{$reservation->id}/paiement", [
+                'methode' => 'wave', 'telephone' => '770000000',
+            ])->assertStatus(502);
+
+        $this->assertStringContainsString('Invalid Masterkey Specified', $reponse->json('raison'));
+        $this->assertStringContainsString('1001', $reponse->json('raison'));
+    }
+
+    public function test_un_refus_en_encaissement_reel_ne_dit_rien_de_technique(): void
+    {
+        // Le message du prestataire peut nommer nos clés ou notre boutique : il
+        // n'a rien à faire dans le navigateur d'un client qui paie vraiment.
+        config(['paiement.paydunya.mode' => 'live']);
+        Http::fake(['*' => Http::response([
+            'response_code' => '1001', 'response_text' => 'Invalid Masterkey Specified',
+        ], 200)]);
+
+        $reservation = $this->reservation();
+        $reponse = $this->actingAs($reservation->client, 'sanctum')
+            ->postJson("/api/reservations/{$reservation->id}/paiement", [
+                'methode' => 'wave', 'telephone' => '770000000',
+            ])->assertStatus(502);
+
+        $this->assertNull($reponse->json('raison'));
+        $reponse->assertDontSee('Masterkey');
+    }
+
+    public function test_une_cle_avec_un_espace_au_bout_reste_utilisable(): void
+    {
+        // Les clés sont recopiées à la main dans un tableau de bord : un retour
+        // à la ligne au bout suffisait à faire refuser toutes les IPN.
+        config(['paiement.paydunya.cle_maitre' => self::CLE_MAITRE."\n"]);
+        Http::fake([
+            '*checkout-invoice/create' => Http::response(['response_code' => '00', 'response_text' => 'u', 'token' => 'JETON123']),
+            '*softpay/wave-senegal' => Http::response(['success' => true, 'url' => 'https://pay.wave.com/c/a']),
+        ]);
+
+        $reservation = $this->reservation();
+        $this->actingAs($reservation->client, 'sanctum')
+            ->postJson("/api/reservations/{$reservation->id}/paiement", [
+                'methode' => 'wave', 'telephone' => '770000000',
+            ])->assertOk();
+
+        Http::assertSent(fn ($r) => $r->header('PAYDUNYA-MASTER-KEY')[0] === self::CLE_MAITRE);
+
+        // Et la signature de l'IPN reste reconnue.
+        $this->postJson('/api/paiements/ipn', $this->ipn('JETON123', 'completed'))->assertOk();
+        $this->assertEquals('confirmee', $reservation->fresh()->statut);
+    }
+
     /* ── IPN — le point sensible ────────────────────────────── */
 
     public function test_une_notification_sans_signature_valide_est_rejetee(): void

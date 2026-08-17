@@ -46,9 +46,9 @@ class PayDunya
 
     public function estConfigure(): bool
     {
-        return ! empty($this->config['cle_maitre'])
-            && ! empty($this->config['cle_privee'])
-            && ! empty($this->config['token']);
+        return $this->cle('cle_maitre') !== ''
+            && $this->cle('cle_privee') !== ''
+            && $this->cle('token') !== '';
     }
 
     /**
@@ -95,9 +95,14 @@ class PayDunya
         // PayDunya répond 200 même en cas de refus : c'est `response_code` qui
         // fait foi, pas le statut HTTP.
         if (($corps['response_code'] ?? null) !== '00') {
-            throw new RuntimeException(
-                'Création de facture refusée : '.($corps['response_text'] ?? 'réponse illisible')
-            );
+            // Le code accompagne le texte : « 1001 » désigne une clé maîtresse
+            // refusée, ce qu'un message seul laisse deviner.
+            throw new RuntimeException(sprintf(
+                'PayDunya a refusé la facture (code %s, mode %s) : %s',
+                $corps['response_code'] ?? 'absent',
+                $this->config['mode'] ?? 'test',
+                $corps['response_text'] ?? 'réponse illisible'
+            ));
         }
 
         return [
@@ -146,7 +151,11 @@ class PayDunya
         $corps = $reponse->json() ?? [];
 
         if (! ($corps['success'] ?? false)) {
-            throw new RuntimeException($corps['message'] ?? 'Le paiement a été refusé.');
+            throw new RuntimeException(sprintf(
+                'PayDunya a refusé le paiement %s : %s',
+                $chemin,
+                $corps['message'] ?? json_encode($corps) ?: 'réponse illisible'
+            ));
         }
 
         return [
@@ -169,7 +178,7 @@ class PayDunya
             return false;
         }
 
-        return hash_equals(hash('sha512', (string) $this->config['cle_maitre']), $hash);
+        return hash_equals(hash('sha512', $this->cle('cle_maitre')), $hash);
     }
 
     private function requete(): PendingRequest
@@ -180,10 +189,21 @@ class PayDunya
 
         return Http::withHeaders([
             'Content-Type'          => 'application/json',
-            'PAYDUNYA-MASTER-KEY'   => $this->config['cle_maitre'],
-            'PAYDUNYA-PRIVATE-KEY'  => $this->config['cle_privee'],
-            'PAYDUNYA-TOKEN'        => $this->config['token'],
+            'PAYDUNYA-MASTER-KEY'   => $this->cle('cle_maitre'),
+            'PAYDUNYA-PRIVATE-KEY'  => $this->cle('cle_privee'),
+            'PAYDUNYA-TOKEN'        => $this->cle('token'),
         ])->timeout(30)->retry(2, 500, throw: false);
+    }
+
+    /**
+     * Les clés sont recopiées à la main dans le tableau de bord d'un hébergeur :
+     * un espace ou un retour à la ligne au bout suffit à faire répondre
+     * « Invalid Masterkey Specified », ou à faire rejeter toutes les IPN dont
+     * la signature ne correspondra plus. Rien ne le laisse voir.
+     */
+    private function cle(string $nom): string
+    {
+        return trim((string) ($this->config[$nom] ?? ''));
     }
 
     /**
