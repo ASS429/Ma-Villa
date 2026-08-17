@@ -262,6 +262,31 @@ class PaiementTest extends TestCase
         $this->assertTrue($reponse->json('cles.maitre.espaces_au_bout'));
     }
 
+    public function test_la_sonde_ne_declenche_softpay_que_sur_demande(): void
+    {
+        // Un appel SoftPay envoie une demande de paiement sur un téléphone :
+        // rien ne doit partir par surprise en ouvrant une page de diagnostic.
+        Http::fake($this->reponsesPayDunya());
+
+        $this->actingAs(User::factory()->admin()->create(), 'sanctum')
+            ->getJson('/api/admin/diagnostic/paiement')
+            ->assertOk()
+            ->assertJsonPath('softpay.essaye', false);
+
+        Http::assertNotSent(fn ($r) => str_contains($r->url(), 'softpay'));
+    }
+
+    public function test_la_sonde_teste_softpay_quand_un_numero_est_donne(): void
+    {
+        Http::fake($this->reponsesPayDunya());
+
+        $this->actingAs(User::factory()->admin()->create(), 'sanctum')
+            ->getJson('/api/admin/diagnostic/paiement?telephone=770000000&methode=wave')
+            ->assertOk()
+            ->assertJsonPath('softpay.ok', true)
+            ->assertJsonPath('softpay.url', 'https://pay.wave.com/c/abc');
+    }
+
     public function test_la_sonde_est_refusee_a_un_client(): void
     {
         $this->actingAs(User::factory()->client()->create(), 'sanctum')

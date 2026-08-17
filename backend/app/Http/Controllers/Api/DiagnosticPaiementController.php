@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Services\PayDunya;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 /**
  * Sonde l'intégration PayDunya sans passer par une réservation.
@@ -23,7 +24,7 @@ class DiagnosticPaiementController extends Controller
     {
     }
 
-    public function __invoke(): JsonResponse
+    public function __invoke(Request $request): JsonResponse
     {
         $etat = [
             'paiement_actif'     => (bool) config('paiement.actif'),
@@ -46,17 +47,46 @@ class DiagnosticPaiementController extends Controller
                 montant: 100,
                 description: 'Sonde de configuration Ma Villa',
             );
+        } catch (\Throwable $e) {
+            return response()->json($etat + [
+                'facture' => ['ok' => false, 'erreur' => $e->getMessage()],
+            ]);
+        }
+
+        $etat['facture'] = ['ok' => true, 'jeton' => $facture['token'], 'url' => $facture['url']];
+
+        // La création de facture n'est que la moitié du parcours : SoftPay est
+        // un second appel, qui peut échouer seul. Il n'est tenté que si un
+        // numéro est fourni — il déclenche une demande de paiement sur ce
+        // téléphone, et rien ne doit partir par surprise. Aucun débit n'a lieu
+        // sans confirmation du porteur.
+        $telephone = $request->query('telephone');
+        if (! is_string($telephone) || $telephone === '') {
+            return response()->json($etat + [
+                'softpay' => ['essaye' => false, 'note' => 'Ajoutez ?telephone=77XXXXXXX&methode=wave pour tester aussi SoftPay.'],
+            ]);
+        }
+
+        $methode = $request->query('methode') === 'orange_money' ? 'orange_money' : 'wave';
+
+        try {
+            $resultat = $methode === 'wave'
+                ? $this->paydunya->payerAvecWave($facture['token'], 'Sonde Ma Villa', (string) $request->user()->email, $telephone)
+                : $this->paydunya->payerAvecOrangeMoney($facture['token'], 'Sonde Ma Villa', (string) $request->user()->email, $telephone);
 
             return response()->json($etat + [
-                'facture' => [
-                    'ok'    => true,
-                    'jeton' => $facture['token'],
-                    'url'   => $facture['url'],
+                'softpay' => [
+                    'essaye'          => true,
+                    'methode'         => $methode,
+                    'ok'              => true,
+                    'url'             => $resultat['url'],
+                    'url_application' => $resultat['url_application'] ?? null,
+                    'url_maxit'       => $resultat['url_maxit'] ?? null,
                 ],
             ]);
         } catch (\Throwable $e) {
             return response()->json($etat + [
-                'facture' => ['ok' => false, 'erreur' => $e->getMessage()],
+                'softpay' => ['essaye' => true, 'methode' => $methode, 'ok' => false, 'erreur' => $e->getMessage()],
             ]);
         }
     }
