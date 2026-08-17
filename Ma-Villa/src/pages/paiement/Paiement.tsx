@@ -74,7 +74,16 @@ export default function Paiement() {
   // `url` est ce qu'on encode dans le code QR (une page atteignable depuis
   // n'importe quel appareil), `lien` ce qu'on ouvre sur téléphone.
   const [attente, setAttente] = useState<
-    { reference: string; url: string; lien: string; repli?: boolean } | null
+    {
+      reference: string
+      url: string
+      lien: string
+      repli?: boolean
+      /** Autre application du payeur, proposée en second si elle diffère. */
+      secours?: string
+      /** Page à QR code du prestataire, dernier recours. */
+      page?: string
+    } | null
   >(null)
   // La réservation n'est chargée qu'une fois : sans ce drapeau, un paiement
   // refusé laisserait l'écran d'attente tourner sur une donnée périmée.
@@ -188,11 +197,16 @@ export default function Paiement() {
 
       setSuiviEpuise(false)
       dejaRedirige.current = false
+      const principal: string = data.url_application || data.url || ''
       setAttente({
         reference: data.reference,
         url: data.url || data.url_application || '',
-        lien: data.url_application || data.url || '',
+        lien: principal,
         repli: Boolean(data.repli),
+        secours: [data.url_maxit, data.url_om].find(
+          (u: string | null) => typeof u === 'string' && u && u !== principal
+        ) ?? undefined,
+        page: data.url_page ?? undefined,
       })
     } catch (err) {
       setErreurEnvoi(messageErreur(err, 'Le paiement n\'a pas pu être lancé.'))
@@ -294,6 +308,14 @@ export default function Paiement() {
             </a>
           )}
 
+          {/* L'autre application du même opérateur : le payeur a peut-être
+              Maxit sans Orange Money, ou l'inverse. */}
+          {mobile && enCours.secours && (
+            <a href={enCours.secours} className="btn btn-secondaire btn-md w-full justify-center mb-4">
+              Essayer avec l'autre application
+            </a>
+          )}
+
           {suiviEpuise ? (
             <div className="tunnel-attente" role="status">
               <span className="th-text-2 text-sm">
@@ -336,7 +358,7 @@ export default function Paiement() {
             <p className="text-xs th-text-3 mt-6">
               {mobile ? "L'application ne s'est pas ouverte ? " : 'Impossible de scanner ? '}
               <a
-                href={mobile ? enCours.lien || enCours.url : enCours.url || enCours.lien}
+                href={enCours.page ?? (mobile ? enCours.lien || enCours.url : enCours.url || enCours.lien)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="th-text-1 underline"

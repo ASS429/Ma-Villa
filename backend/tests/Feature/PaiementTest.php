@@ -152,20 +152,70 @@ class PaiementTest extends TestCase
                 'methode' => 'orange_money', 'telephone' => '770000000',
             ])->assertOk();
 
-        $this->assertEquals('https://orangemoneysn.page.link/abc', $reponse->json('url_application'));
-        $this->assertNotNull($reponse->json('url'));
+        // Maxit d'abord : « page.link » est un domaine Firebase Dynamic Links,
+        // éteint par Google en août 2025. Ces liens ne résolvent plus.
+        $this->assertEquals('https://sugu.orange-sonatel.com/mp/abc', $reponse->json('url_application'));
+        $this->assertEquals('https://sugu.orange-sonatel.com/mp/abc', $reponse->json('url'));
+        $this->assertEquals('https://orangemoneysn.page.link/abc', $reponse->json('url_om'));
 
         // Et surtout : ils survivent au rechargement de l'écran d'attente.
         $paiement = $reservation->fresh()->paiement;
-        $this->assertEquals('https://orangemoneysn.page.link/abc', $paiement->url_application);
-        $this->assertNotNull($paiement->url_paiement);
+        $this->assertEquals('https://sugu.orange-sonatel.com/mp/abc', $paiement->url_application);
+        $this->assertEquals('https://sugu.orange-sonatel.com/mp/abc', $paiement->url_paiement);
+    }
+
+    public function test_le_code_qr_encode_un_lien_qui_ouvre_l_application(): void
+    {
+        // Encoder la page à QR code du prestataire dans notre propre QR ferait
+        // scanner un écran pour en afficher un autre. C'est le lien qui ouvre
+        // l'application qu'il faut y mettre.
+        Http::fake([
+            '*checkout-invoice/create' => Http::response(['response_code' => '00', 'response_text' => 'u', 'token' => 'T']),
+            '*softpay/new-orange-money-senegal' => Http::response([
+                'success'   => true,
+                'url'       => 'https://app.paydunya.com/recharge-orange-sn?data=xxx',
+                'other_url' => ['maxit_url' => 'https://sugu.orange-sonatel.com/mp/abc'],
+            ]),
+        ]);
+
+        $reservation = $this->reservation();
+        $this->actingAs($reservation->client, 'sanctum')
+            ->postJson("/api/reservations/{$reservation->id}/paiement", [
+                'methode' => 'orange_money', 'telephone' => '770000000',
+            ])->assertOk()
+            ->assertJsonPath('url', 'https://sugu.orange-sonatel.com/mp/abc')
+            ->assertJsonPath('url_page', 'https://app.paydunya.com/recharge-orange-sn?data=xxx');
+    }
+
+    public function test_des_cles_reelles_ne_laissent_jamais_fuiter_la_cause(): void
+    {
+        // Le mode est déclaratif, donc en retard : brancher des clés de
+        // production en oubliant PAYDUNYA_MODE exposerait le message du
+        // prestataire à de vrais clients. Les clés ne peuvent pas mentir.
+        config([
+            'paiement.paydunya.mode'       => 'test',
+            'paiement.paydunya.cle_privee' => 'live_private_reelle',
+            'paiement.repli_checkout'      => false,
+        ]);
+        Http::fake(['*' => Http::response(['response_code' => '1001', 'response_text' => 'Invalid Masterkey'], 200)]);
+
+        $reservation = $this->reservation();
+        $reponse = $this->actingAs($reservation->client, 'sanctum')
+            ->postJson("/api/reservations/{$reservation->id}/paiement", [
+                'methode' => 'wave', 'telephone' => '770000000',
+            ])->assertStatus(502);
+
+        $this->assertNull($reponse->json('raison'));
     }
 
     public function test_un_paiement_sans_aucun_lien_est_refuse(): void
     {
         // Mieux vaut le dire que d'afficher un écran d'attente devant lequel il
         // n'y a rien à faire. Repli désactivé : c'est lui qu'on écarte ici.
-        config(['paiement.repli_checkout' => false]);
+        config([
+            'paiement.repli_checkout' => false,
+            'paiement.paydunya.cle_privee' => 'test_private_IHEGXFz',
+        ]);
         Http::fake([
             '*checkout-invoice/create' => Http::response(['response_code' => '00', 'response_text' => 'u', 'token' => 'T']),
             '*softpay/wave-senegal' => Http::response(['success' => true]),
@@ -215,7 +265,10 @@ class PaiementTest extends TestCase
     public function test_le_repli_peut_etre_refuse(): void
     {
         // Qui préfère l'échec au parcours dégradé doit pouvoir le choisir.
-        config(['paiement.repli_checkout' => false]);
+        config([
+            'paiement.repli_checkout' => false,
+            'paiement.paydunya.cle_privee' => 'test_private_IHEGXFz',
+        ]);
         Http::fake([
             '*checkout-invoice/create' => Http::response([
                 'response_code' => '00', 'response_text' => 'https://paydunya.com/checkout/invoice/T', 'token' => 'T',
@@ -389,7 +442,7 @@ class PaiementTest extends TestCase
     {
         // Sans cette raison, un échec n'est lisible que dans les journaux du
         // serveur : celui qui teste voit « réessayez » et n'a rien sur quoi agir.
-        config(['paiement.paydunya.mode' => 'test']);
+        config(['paiement.paydunya.cle_privee' => 'test_private_IHEGXFz']);
         Http::fake(['*' => Http::response([
             'response_code' => '1001', 'response_text' => 'Invalid Masterkey Specified',
         ], 200)]);

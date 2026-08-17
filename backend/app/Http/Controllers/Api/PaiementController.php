@@ -115,7 +115,11 @@ class PaiementController extends Controller
                 'reference'       => $reference,
                 'url'             => $resultat['url'],
                 'url_application' => $resultat['url_application'] ?? null,
+                // Secours affichés en second : l'autre application du payeur,
+                // et la page à QR code du prestataire.
                 'url_maxit'       => $resultat['url_maxit'] ?? null,
+                'url_om'          => $resultat['url_om'] ?? null,
+                'url_page'        => $resultat['url_page'] ?? null,
                 'montant'         => $repartition->montantClient,
                 // Vrai quand on est passé par la page du prestataire faute de
                 // SoftPay : l'interface annonce alors une étape de plus.
@@ -168,7 +172,7 @@ class PaiementController extends Controller
         // Avec des clés de test, SoftPay n'existe pas : l'essayer coûterait une
         // requête pour une 404 certaine, et un avertissement dans le journal à
         // chaque paiement — de quoi noyer le signal qu'on veut y voir.
-        if (! $this->paydunya->softpayDisponible() && $facture['url']) {
+        if (! $this->paydunya->softpayDisponible() && $facture['url'] && config('paiement.repli_checkout')) {
             return [
                 'url'             => $facture['url'],
                 'url_application' => $facture['url'],

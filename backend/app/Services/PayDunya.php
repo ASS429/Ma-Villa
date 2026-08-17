@@ -81,16 +81,17 @@ class PayDunya
     }
 
     /**
-     * Vrai quand aucun franc réel ne peut transiter — soit le mode l'annonce,
-     * soit les clés le trahissent.
+     * Vrai quand aucun franc réel ne peut transiter.
      *
-     * Sert à décider si la cause d'un refus peut être montrée. Se fier au seul
-     * mode laissait muet le cas qu'on a le plus besoin de diagnostiquer :
-     * `PAYDUNYA_MODE=live` posé par erreur sur des clés de test.
+     * Décidé par les clés seules. Un réglage déclaratif se met à jour à la
+     * main, donc en retard : brancher des clés de production en oubliant
+     * `PAYDUNYA_MODE` exposerait le message du prestataire — nos clés, notre
+     * boutique — dans le navigateur de vrais clients. Les clés, elles, ne
+     * peuvent pas mentir sur ce qu'elles encaissent.
      */
     public function sansEncaissementReel(): bool
     {
-        return ($this->config['mode'] ?? 'test') !== 'live' || $this->clesDeTest();
+        return $this->clesDeTest();
     }
 
     /**
@@ -189,14 +190,20 @@ class PayDunya
 
         $om    = $resultat['brut']['other_url']['om_url'] ?? null;
         $maxit = $resultat['brut']['other_url']['maxit_url'] ?? null;
+        $page  = $resultat['url']; // page à QR code de PayDunya
 
-        $resultat['url_application'] = $om ?? $maxit ?? $resultat['url'];
+        // Maxit d'abord, et ce n'est pas un détail de préférence : `om_url`
+        // pointe vers un domaine `page.link`, c'est-à-dire Firebase Dynamic
+        // Links, éteint par Google en août 2025. Ces liens ne résolvent plus.
+        // `maxit_url` est une URL HTTPS ordinaire, qui s'ouvre au scan comme au
+        // clic. Le lien de secours reste exposé si PayDunya le remet en service.
+        $meilleur = $maxit ?? $om ?? $page;
+
+        $resultat['url_application'] = $meilleur;
+        $resultat['url']             = $meilleur; // cible du code QR
         $resultat['url_maxit']       = $maxit;
-
-        // Orange Money ne renvoie pas toujours d'URL au premier niveau : la page
-        // à QR code peut n'exister que dans `other_url`. Sans ce repli, on
-        // n'avait plus rien à afficher — ni lien, ni code à scanner.
-        $resultat['url'] ??= $maxit ?? $om;
+        $resultat['url_om']          = $om;
+        $resultat['url_page']        = $page;
 
         return $resultat;
     }
