@@ -185,10 +185,19 @@ class PayDunya
         $corps = $reponse->json() ?? [];
 
         if (! ($corps['success'] ?? false)) {
+            // Le statut HTTP et le corps brut, pas seulement le JSON décodé :
+            // un corps vide peut être un 404 (service non ouvert sur ce compte),
+            // un 403 (clés refusées) ou un 200 sans contenu, et ces trois-là se
+            // corrigent à trois endroits différents.
+            $brut = trim((string) $reponse->body());
+
             throw new RuntimeException(sprintf(
-                'PayDunya a refusé le paiement %s : %s',
+                'PayDunya a refusé le paiement %s (HTTP %d) : %s',
                 $chemin,
-                $corps['message'] ?? json_encode($corps) ?: 'réponse illisible'
+                $reponse->status(),
+                $corps['message']
+                    ?? $corps['response_text']
+                    ?? ($brut !== '' ? mb_substr($brut, 0, 300) : 'réponse vide')
             ));
         }
 

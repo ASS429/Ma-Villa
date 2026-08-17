@@ -73,7 +73,9 @@ export default function Paiement() {
   const [cotePrestataire, setCotePrestataire] = useState('')
   // `url` est ce qu'on encode dans le code QR (une page atteignable depuis
   // n'importe quel appareil), `lien` ce qu'on ouvre sur téléphone.
-  const [attente, setAttente] = useState<{ reference: string; url: string; lien: string } | null>(null)
+  const [attente, setAttente] = useState<
+    { reference: string; url: string; lien: string; repli?: boolean } | null
+  >(null)
   // La réservation n'est chargée qu'une fois : sans ce drapeau, un paiement
   // refusé laisserait l'écran d'attente tourner sur une donnée périmée.
   const [refuse, setRefuse] = useState(false)
@@ -190,6 +192,7 @@ export default function Paiement() {
         reference: data.reference,
         url: data.url || data.url_application || '',
         lien: data.url_application || data.url || '',
+        repli: Boolean(data.repli),
       })
     } catch (err) {
       setErreurEnvoi(messageErreur(err, 'Le paiement n\'a pas pu être lancé.'))
@@ -266,11 +269,15 @@ export default function Paiement() {
               : mobile ? 'Confirmez sur votre téléphone' : 'Scannez pour payer'}
           </h1>
           <p className="th-text-2 text-sm mb-6">
-            {!enCours.url && !enCours.lien
-              ? `Ouvrez ${nomMoyen} sur votre téléphone : la demande de ${fcfa(reservation.montant_total)} vous y attend. Cet écran se met à jour tout seul.`
-              : mobile
-                ? `${nomMoyen} va s'ouvrir pour valider ${fcfa(reservation.montant_total)}. Cet écran se met à jour tout seul.`
-                : `Ouvrez ${nomMoyen} sur votre téléphone et scannez ce code. Cet écran se met à jour tout seul.`}
+            {/* Le repli passe par la page du prestataire : annoncer l'étape de
+                plus plutôt que de laisser découvrir un écran inattendu. */}
+            {enCours.repli
+              ? `Une page de paiement sécurisée va s'ouvrir : choisissez-y ${nomMoyen} pour régler ${fcfa(reservation.montant_total)}. Cet écran se met à jour tout seul.`
+              : !enCours.url && !enCours.lien
+                ? `Ouvrez ${nomMoyen} sur votre téléphone : la demande de ${fcfa(reservation.montant_total)} vous y attend. Cet écran se met à jour tout seul.`
+                : mobile
+                  ? `${nomMoyen} va s'ouvrir pour valider ${fcfa(reservation.montant_total)}. Cet écran se met à jour tout seul.`
+                  : `Ouvrez ${nomMoyen} sur votre téléphone et scannez ce code. Cet écran se met à jour tout seul.`}
           </p>
 
           {/* Sur ordinateur, le lien du prestataire ne mène nulle part : c'est
@@ -283,7 +290,7 @@ export default function Paiement() {
 
           {mobile && enCours.lien && (
             <a href={enCours.lien} className="btn btn-primaire btn-md w-full justify-center mb-4">
-              Ouvrir {nomMoyen}
+              {enCours.repli ? 'Ouvrir la page de paiement' : `Ouvrir ${nomMoyen}`}
             </a>
           )}
 

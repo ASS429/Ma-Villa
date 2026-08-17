@@ -164,7 +164,8 @@ class PaiementTest extends TestCase
     public function test_un_paiement_sans_aucun_lien_est_refuse(): void
     {
         // Mieux vaut le dire que d'afficher un écran d'attente devant lequel il
-        // n'y a rien à faire.
+        // n'y a rien à faire. Repli désactivé : c'est lui qu'on écarte ici.
+        config(['paiement.repli_checkout' => false]);
         Http::fake([
             '*checkout-invoice/create' => Http::response(['response_code' => '00', 'response_text' => 'u', 'token' => 'T']),
             '*softpay/wave-senegal' => Http::response(['success' => true]),
@@ -177,6 +178,60 @@ class PaiementTest extends TestCase
             ])->assertStatus(502);
 
         $this->assertStringContainsString('sans renvoyer de lien', $reponse->json('raison'));
+    }
+
+    /* ── Repli sur la page du prestataire ───────────────────── */
+
+    public function test_un_softpay_muet_replie_sur_la_page_de_paiement(): void
+    {
+        // SoftPay demande une activation côté PayDunya : tant qu'elle n'est pas
+        // faite, l'appel répond sans rien. La facture, elle, reste payable.
+        // Renoncer coûterait la vente ; se replier coûte une étape.
+        Http::fake([
+            '*checkout-invoice/create' => Http::response([
+                'response_code' => '00',
+                'response_text' => 'https://paydunya.com/checkout/invoice/T',
+                'token' => 'T',
+            ]),
+            '*softpay/wave-senegal' => Http::response([], 404),
+        ]);
+
+        $reservation = $this->reservation();
+        $reponse = $this->actingAs($reservation->client, 'sanctum')
+            ->postJson("/api/reservations/{$reservation->id}/paiement", [
+                'methode' => 'wave', 'telephone' => '770000000',
+            ])->assertOk();
+
+        $this->assertTrue($reponse->json('repli'));
+        $this->assertEquals('https://paydunya.com/checkout/invoice/T', $reponse->json('url'));
+
+        // Le paiement reste suivi normalement : c'est la même facture.
+        $paiement = $reservation->fresh()->paiement;
+        $this->assertEquals('en_attente', $paiement->statut);
+        $this->assertEquals('T', $paiement->token_paydunya);
+        $this->assertEquals('https://paydunya.com/checkout/invoice/T', $paiement->url_paiement);
+    }
+
+    public function test_le_repli_peut_etre_refuse(): void
+    {
+        // Qui préfère l'échec au parcours dégradé doit pouvoir le choisir.
+        config(['paiement.repli_checkout' => false]);
+        Http::fake([
+            '*checkout-invoice/create' => Http::response([
+                'response_code' => '00', 'response_text' => 'https://paydunya.com/checkout/invoice/T', 'token' => 'T',
+            ]),
+            '*softpay/wave-senegal' => Http::response([], 404),
+        ]);
+
+        $reservation = $this->reservation();
+        $reponse = $this->actingAs($reservation->client, 'sanctum')
+            ->postJson("/api/reservations/{$reservation->id}/paiement", [
+                'methode' => 'wave', 'telephone' => '770000000',
+            ])->assertStatus(502);
+
+        // Et la cause nomme le statut HTTP : « [] » ne disait pas si c'était un
+        // 404, un 403 ou un 200 vide, qui se corrigent à trois endroits.
+        $this->assertStringContainsString('HTTP 404', $reponse->json('raison'));
     }
 
     public function test_une_url_logee_ailleurs_est_quand_meme_trouvee(): void

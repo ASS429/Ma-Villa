@@ -25,6 +25,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Repli sur la page de paiement PayDunya
+    |--------------------------------------------------------------------------
+    |
+    | SoftPay ouvre Wave ou Orange Money sans étape intermédiaire — c'est le
+    | parcours qu'on veut. Mais il demande une activation côté PayDunya et
+    | n'est pas servi partout : il répond alors sans rien, et la facture créée
+    | juste avant reste parfaitement payable sur la page du prestataire.
+    |
+    | Basculer sur cette page plutôt que d'échouer coûte une étape au client.
+    | Renoncer coûte la vente. On replie donc par défaut, en le journalisant :
+    | un repli permanent signale un SoftPay à faire activer, pas un état normal.
+    |
+    */
+    'repli_checkout' => (bool) env('PAIEMENT_REPLI_CHECKOUT', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | Commission
     |--------------------------------------------------------------------------
     |

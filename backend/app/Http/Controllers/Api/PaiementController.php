@@ -90,13 +90,9 @@ class PaiementController extends Controller
             $paiement->appliquerRepartition($repartition);
             $paiement->save();
 
-            $resultat = $donnees['methode'] === 'wave'
-                ? $this->paydunya->payerAvecWave(
-                    $facture['token'], $request->user()->name, $request->user()->email, $donnees['telephone']
-                )
-                : $this->paydunya->payerAvecOrangeMoney(
-                    $facture['token'], $request->user()->name, $request->user()->email, $donnees['telephone']
-                );
+            $resultat = $this->lancerSoftpay(
+                $facture, $donnees['methode'], $request->user(), $donnees['telephone']
+            );
 
             $lienApplication = $resultat['url_application'] ?? $resultat['url'];
 
@@ -121,6 +117,9 @@ class PaiementController extends Controller
                 'url_application' => $resultat['url_application'] ?? null,
                 'url_maxit'       => $resultat['url_maxit'] ?? null,
                 'montant'         => $repartition->montantClient,
+                // Vrai quand on est passé par la page du prestataire faute de
+                // SoftPay : l'interface annonce alors une étape de plus.
+                'repli'           => $resultat['repli'] ?? false,
             ]);
         } catch (\Throwable $e) {
             Log::error('Initiation de paiement échouée', [
@@ -145,6 +144,46 @@ class PaiementController extends Controller
             }
 
             return response()->json($reponse, 502);
+        }
+    }
+
+    /**
+     * Déclenche SoftPay, ou se replie sur la page de paiement du prestataire.
+     *
+     * SoftPay ouvre Wave ou Orange Money sans étape intermédiaire — c'est le
+     * parcours qu'on veut, et il faut le préférer. Mais il demande une
+     * activation côté PayDunya : tant qu'elle n'est pas faite, l'appel répond
+     * sans rien, alors que la facture créée juste avant reste parfaitement
+     * payable sur leur page.
+     *
+     * Renoncer à ce moment-là coûte la vente ; se replier coûte une étape au
+     * client. Le repli est journalisé en avertissement : permanent, il signale
+     * un SoftPay à faire activer, pas un fonctionnement normal.
+     *
+     * @param array{token: string, url: ?string, brut: array} $facture
+     * @return array<string, mixed>
+     */
+    private function lancerSoftpay(array $facture, string $methode, object $payeur, string $telephone): array
+    {
+        try {
+            return $methode === 'wave'
+                ? $this->paydunya->payerAvecWave($facture['token'], $payeur->name, $payeur->email, $telephone)
+                : $this->paydunya->payerAvecOrangeMoney($facture['token'], $payeur->name, $payeur->email, $telephone);
+        } catch (\Throwable $e) {
+            if (! config('paiement.repli_checkout') || ! $facture['url']) {
+                throw $e;
+            }
+
+            Log::warning('SoftPay indisponible, repli sur la page de paiement', [
+                'methode' => $methode,
+                'erreur'  => $e->getMessage(),
+            ]);
+
+            return [
+                'url'             => $facture['url'],
+                'url_application' => $facture['url'],
+                'repli'           => true,
+            ];
         }
     }
 
