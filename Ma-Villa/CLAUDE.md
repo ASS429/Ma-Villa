@@ -70,18 +70,44 @@ API Laravel dans `../backend/`. `VITE_API_URL` pointe vers `.../api`.
 
 ---
 
-## Design : refonte en cours
+## Design
 
-La direction artistique est en cours de refonte via Claude Design, avec le brief
-`../docs/03-PROMPT-CLAUDE-DESIGN.md`. Le relevé de l'existant est dans
+Le design system est en place : tokens dans `src/index.css`, primitifs
+`Button` / `Champ` / `Badge` dans `src/components/ui/`. Relevé de l'existant dans
 `../docs/02-DESIGN-SYSTEM-EXTRAIT.md`.
 
-**En attendant : ne pas engager de restylage de fond.** Rester dans le langage visuel
-actuel (sable / terracotta / or, Cormorant Garamond en display + DM Sans en interface).
+**Couche de profondeur** (`src/styles/profondeur.css`, 18 août 2026) : perspective
+commune, `Inclinable` pour les cartes, élévations, entrée en scène, transition
+d'écran. Trois règles à tenir :
 
-Ce qui est connu et sera traité par la refonte, inutile de le corriger à la main :
-absence de composants primitifs (`Button`, `Input`, `Card`…), styles inline nombreux,
-doublon `Navbar` / `PageHeader`.
+1. **Aucun effet ne porte d'information** — retirer toutes les animations doit
+   laisser un produit complet.
+2. **Trois couches composées simultanées au maximum** par écran.
+3. **Le tunnel de paiement reste nu** — chaque milliseconde entre un montant et sa
+   validation est un abandon.
+
+**Pas de WebGL.** Une scène 3D coûte 300 à 600 Ko avant la première image, sur un
+marché où la data est payée au volume. Toute la 3D est du CSS composé (`transform`
+et `opacity` seulement).
+
+**Console** (`src/styles/console.css`) : châssis partagé par l'administration
+**et** l'espace personnel — barre latérale, tiroir mobile, cartes de chiffres,
+panneaux, tableaux, pagination. Les deux espaces avaient chacun leur copie du
+même agencement, stylée en ligne.
+
+- Graphiques : `src/components/console/Graphe.tsx`, **SVG dessiné à la main**.
+  Pas de Chart.js (~70 Ko gzip pour trois courbes).
+- Pagination : `src/components/console/Pagination.tsx`, sur la forme paginée de
+  Laravel (`{ data, current_page, last_page, total }`).
+- ⚠️ **Cormorant Garamond dessine des chiffres elzéviriens par défaut** : sans
+  `font-variant-numeric: lining-nums`, « 17 » se lit « I7 » et « 10 » se lit
+  « IO ». Obligatoire sur toute valeur chiffrée en fonte display.
+- ⚠️ **`position` dans une feuille du projet doit aller en `@layer components`**,
+  sinon elle écrase les utilitaires Tailwind (`.absolute` notamment).
+
+Reste à faire : `GererVilla`, `NouvelleVilla`, `MesVillas` et `Favoris` gardent
+des styles en ligne. `Login` et `Register` dupliquent `CoquilleAuth` au lieu de
+l'utiliser — toute correction dans la coquille partagée les manque.
 
 ---
 
@@ -91,19 +117,32 @@ doublon `Navbar` / `PageHeader`.
 npx tsc -b          # doit passer
 npx eslint src      # doit être à zéro — c'est l'état actuel, ne pas le dégrader
 npm run build
-cd ../backend && php artisan test    # 95 tests
+cd ../backend && php artisan test    # 208 tests
 ```
 
 ---
 
 ## État et suite
 
-`../docs/01-AUDIT-WEB.md` contient l'audit complet et le plan en trois jalons.
-Le Jalon 1 est fait. **Restent bloquants pour le lancement :**
+`../docs/08-AUDIT-COMPLET-ET-REFONTE.md` est l'état de référence (18 août 2026) :
+audit sécurité, corrections appliquées et vérifiées, PWA, refonte visuelle.
+`../docs/01-AUDIT-WEB.md` garde le plan en trois jalons d'origine.
 
-1. **Paiement Wave / Orange Money** — table et modèle `Paiement` présents, aucun contrôleur,
-   aucune route, aucune interface.
-2. **Compléter les mentions `[À COMPLÉTER]`** de `src/pages/legal/contenu.ts` et faire relire
-   les textes par un juriste.
+**Fait :** paiement Wave / Orange Money (encaissement réel validé) · PWA
+installable avec notifications poussées · 30 vulnérabilités Composer corrigées.
+
+**Restent bloquants pour le lancement :**
+
+1. **Textes juridiques faux.** Les CGU affirment toujours que la plateforme
+   n'encaisse aucun paiement — c'est faux depuis le 18 août 2026, et la
+   commission de 10–20 % n'y figure nulle part. Quatre passages dans
+   `src/pages/legal/contenu.ts` (lignes 7, 90, 203, 231). Le drapeau
+   `TEXTES_PROVISOIRES` est à `false` : les textes se présentent comme
+   définitifs alors qu'ils décrivent une plateforme qui n'existe plus.
+2. **Clés VAPID à générer et à poser sur Railway**, et image Docker à
+   redéployer (l'extension `gmp` vient d'y être ajoutée) — sans quoi les
+   notifications restent dormantes.
 3. **Pré-rendu des fiches villa** — SPA sans SSR : Google ne voit pratiquement rien.
-4. Carte interactive sur la recherche, statistiques propriétaire, messagerie.
+4. Limitation de débit sur les routes d'écriture (`POST /reservations`,
+   `/avis`, `/upload`).
+5. Messagerie entre client et propriétaire.
