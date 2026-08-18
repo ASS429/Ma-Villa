@@ -1,0 +1,469 @@
+/* ════════════════════════════════════════════════════════════════
+   PROFONDEUR ET MOUVEMENT — refonte du 18 août 2026
+
+   Objectif posé par l'utilisateur : que la plateforme se lise comme une
+   application installée, pas comme un site. Ce fichier ajoute la couche
+   de profondeur qui manquait, sans rien retirer aux tokens existants.
+
+   ── Pourquoi pas de WebGL ────────────────────────────────────────
+   Une scène Three.js coûte 300 à 600 Ko de moteur avant la première
+   image, tient le processeur graphique éveillé et vide la batterie. Sur
+   ce marché la data est payée au volume et les appareils sont souvent
+   d'entrée de gamme : ce serait une dégradation vendue comme une
+   modernisation.
+
+   Toute la 3D d'ici est donc du CSS composé — `transform` et `opacity`
+   uniquement, les deux seules propriétés que le navigateur anime sans
+   repasser par la mise en page. Coût réseau : zéro octet de script.
+
+   ── Trois règles tenues partout ──────────────────────────────────
+   1. Aucun effet ne porte d'information. Retirer toutes les animations
+      doit laisser un produit complet — c'est le test d'entrée.
+   2. Trois couches composées simultanées au maximum par écran.
+   3. Le tunnel de paiement reste nu. Chaque milliseconde ajoutée entre
+      un montant et sa validation est un abandon.
+   ════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Perspective commune : une même valeur partout donne l'impression
+     d'un seul espace. Des perspectives différentes d'une carte à
+     l'autre font « bricolage ». 1200 px = observateur éloigné, donc
+     déformation discrète. */
+  --perspective: 1200px;
+  --incline-max: 6deg; /* au-delà, la carte se tord au lieu de s'incliner */
+
+  /* Élévations : une ombre de profondeur double d'un halo coloré très
+     dilué, qui fait « lumière » plutôt que « boîte grise ». */
+  --elev-1: 0 1px 2px rgba(26, 22, 20, 0.04), 0 2px 8px rgba(26, 22, 20, 0.04);
+  --elev-2: 0 2px 4px rgba(26, 22, 20, 0.05), 0 8px 24px rgba(26, 22, 20, 0.07);
+  --elev-3: 0 4px 8px rgba(26, 22, 20, 0.06), 0 16px 48px rgba(26, 22, 20, 0.10);
+  --elev-flottant: 0 8px 16px rgba(26, 22, 20, 0.08), 0 32px 80px rgba(26, 22, 20, 0.14);
+}
+
+:root[data-theme='dark'] {
+  /* En sombre, l'ombre ne se voit plus : c'est le liseré clair du haut
+     qui porte le relief, comme une lumière rasante. */
+  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 240, 220, 0.04);
+  --elev-2: 0 4px 16px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 240, 220, 0.05);
+  --elev-3: 0 12px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 240, 220, 0.06);
+  --elev-flottant: 0 24px 64px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 240, 220, 0.08);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   1. SCÈNE — le conteneur qui donne sa profondeur aux enfants
+   ════════════════════════════════════════════════════════════════ */
+
+.scene {
+  perspective: var(--perspective);
+  perspective-origin: center 40%;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   2. CARTE INCLINABLE
+
+   La carte suit le curseur en profondeur. Les deux angles sont posés
+   par le composant en variables ; le CSS ne fait que les appliquer,
+   ce qui garde l'animation sur le compositeur.
+
+   Sur mobile l'effet ne s'applique pas : il n'y a pas de curseur à
+   suivre, et un `translateZ` permanent coûte une couche de rendu pour
+   rien.
+   ════════════════════════════════════════════════════════════════ */
+
+.inclinable {
+  transform-style: preserve-3d;
+  transition: transform 420ms var(--ease-out), box-shadow 420ms var(--ease-out);
+  will-change: transform;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .inclinable:hover {
+    transform: perspective(var(--perspective))
+      rotateX(var(--incline-x, 0deg))
+      rotateY(var(--incline-y, 0deg))
+      translate3d(0, -6px, 0);
+    box-shadow: var(--elev-flottant);
+  }
+
+  /* Pendant le mouvement du curseur, la transition doit disparaître :
+     sinon la carte poursuit le pointeur avec un retard élastique et
+     l'effet paraît mou. */
+  .inclinable.est-suivie {
+    transition: box-shadow 420ms var(--ease-out);
+  }
+
+  /* Le contenu décollé du plan de la carte : c'est ce décalage, et non
+     l'inclinaison seule, qui fait lire le relief. */
+  .inclinable-avant {
+    transform: translateZ(28px);
+    transition: transform 420ms var(--ease-out);
+  }
+  .inclinable:hover .inclinable-avant { transform: translateZ(42px); }
+}
+
+/* Reflet qui balaie la surface, comme une lumière sur du verre. Posé en
+   `::after` pour ne pas ajouter d'élément au DOM. */
+.inclinable-reflet {
+  position: relative;
+  overflow: hidden;
+}
+.inclinable-reflet::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at var(--lumiere-x, 50%) var(--lumiere-y, 50%),
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0) 55%
+  );
+  opacity: 0;
+  transition: opacity 420ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .inclinable-reflet:hover::after { opacity: 1; }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   3. ENTRÉE EN SCÈNE
+
+   Les éléments arrivent depuis le fond plutôt qu'en glissant : c'est ce
+   qui distingue une application d'un site qui déroule.
+   ════════════════════════════════════════════════════════════════ */
+
+@keyframes surgir {
+  from { opacity: 0; transform: translate3d(0, 18px, 0) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+.surgir { animation: surgir 460ms var(--ease-out) both; }
+
+/* Cascade : chaque enfant entre légèrement après le précédent. Le pas
+   est court — 45 ms — parce qu'au-delà la grille paraît se charger
+   lentement au lieu de s'installer. */
+.cascade > * { animation: surgir 460ms var(--ease-out) both; }
+.cascade > *:nth-child(1) { animation-delay: 0ms; }
+.cascade > *:nth-child(2) { animation-delay: 45ms; }
+.cascade > *:nth-child(3) { animation-delay: 90ms; }
+.cascade > *:nth-child(4) { animation-delay: 135ms; }
+.cascade > *:nth-child(5) { animation-delay: 180ms; }
+.cascade > *:nth-child(6) { animation-delay: 225ms; }
+.cascade > *:nth-child(7) { animation-delay: 270ms; }
+.cascade > *:nth-child(8) { animation-delay: 315ms; }
+/* Plafonné : au neuvième élément, l'attente cumulée dépasserait la demi-
+   seconde et se lirait comme une lenteur. */
+.cascade > *:nth-child(n + 9) { animation-delay: 360ms; }
+
+/* ════════════════════════════════════════════════════════════════
+   4. TRANSITION D'ÉCRAN
+
+   L'API View Transitions fait le travail nativement là où elle existe,
+   et n'a aucun coût là où elle manque : l'écran change sans fondu, ce
+   que personne ne remarque.
+   ════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) {
+    animation: sortie-ecran 180ms var(--ease-in) both;
+  }
+  ::view-transition-new(root) {
+    animation: entree-ecran 260ms var(--ease-out) both;
+  }
+}
+
+@keyframes sortie-ecran {
+  to { opacity: 0; transform: scale(0.99); }
+}
+@keyframes entree-ecran {
+  from { opacity: 0; transform: scale(1.008); }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   5. VERRE ET RELIEF DE SURFACE
+   ════════════════════════════════════════════════════════════════ */
+
+/* Barre d'application translucide, comme une barre de navigation iOS ou
+   Android : le contenu défile visiblement dessous. */
+.surface-verre {
+  background: color-mix(in srgb, var(--bg-surface) 82%, transparent);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Repli complet si le floutage n'est pas géré : sans lui, la barre
+   devient un rectangle semi-transparent et le texte passe par-dessus le
+   contenu. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .surface-verre { background: var(--bg-surface); }
+}
+
+/* Carte à relief : liseré clair en haut, ombre portée en bas. Deux
+   pixels qui font toute la différence entre « posé sur » et « dessiné
+   dans ». */
+.relief {
+  box-shadow: var(--elev-2);
+  border: 1px solid var(--border);
+  transition: box-shadow var(--dur) var(--ease-out), transform var(--dur) var(--ease-out);
+}
+.relief-haut { box-shadow: var(--elev-3); }
+
+/* ════════════════════════════════════════════════════════════════
+   6. RÉPONSE AU DOIGT
+
+   Ce qui fait « application » n'est pas la 3D : c'est qu'un appui
+   produise une réponse immédiate. 100 ms, courbe linéaire — au-delà, le
+   geste et l'effet cessent d'être perçus comme un seul événement.
+   ════════════════════════════════════════════════════════════════ */
+
+.pressable {
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--dur-press) var(--ease-press);
+}
+.pressable:active { transform: scale(0.97); }
+
+/* ════════════════════════════════════════════════════════════════
+   7. CHARGEMENT
+
+   Une barre de progression fine en haut d'écran, comme les applications
+   natives. Elle ne prétend pas connaître l'avancement — elle dit
+   seulement « ça travaille ».
+   ════════════════════════════════════════════════════════════════ */
+
+.progression {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 100;
+  background: transparent;
+  overflow: hidden;
+}
+.progression::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  transform: translateX(-100%);
+  animation: progression-glisse 1.1s var(--ease-out) infinite;
+}
+@keyframes progression-glisse {
+  to { transform: translateX(100%); }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   8. INVITATION À INSTALLER
+   ════════════════════════════════════════════════════════════════ */
+
+.invite-install {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--nav-h) + var(--safe-b) + 12px);
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: min(440px, calc(100vw - 24px));
+  padding: 12px 14px;
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--elev-flottant);
+  animation: surgir 460ms var(--ease-out) both;
+}
+
+@media (min-width: 768px) {
+  /* Sans barre basse sur grand écran, la bannière se pose au coin plutôt
+     qu'au centre : au centre, elle masque le contenu qu'on lisait. */
+  .invite-install { left: auto; right: 24px; bottom: 24px; transform: none; }
+}
+
+.invite-install-icone { flex: none; border-radius: 10px; }
+.invite-install-texte { flex: 1; min-width: 0; }
+.invite-install-titre { margin: 0; font: var(--t-body-sm); font-weight: 600; color: var(--text-1); }
+.invite-install-detail { margin: 2px 0 0; font: var(--t-caption); color: var(--text-2); }
+.invite-install-action { flex: none; }
+
+.invite-install-fermer {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+}
+.invite-install-fermer:hover { background: var(--bg-elevated); color: var(--text-1); }
+.invite-install-fermer:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ════════════════════════════════════════════════════════════════
+   9. RÉGLAGE DES NOTIFICATIONS
+   ════════════════════════════════════════════════════════════════ */
+
+.reglage-notif {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+}
+.reglage-notif-icone {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-md);
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+.reglage-notif-texte { flex: 1; min-width: 0; }
+.reglage-notif-titre { margin: 0 0 2px; font: var(--t-body-sm); font-weight: 600; color: var(--text-1); }
+.reglage-notif-detail { margin: 0; font: var(--t-caption); color: var(--text-2); line-height: 1.5; }
+
+/* ════════════════════════════════════════════════════════════════
+   10. CIBLES TACTILES
+
+   Règle du projet : rien en dessous de 44 px sous le doigt. Elle était
+   tenue sur les boutons et les champs, pas sur les liens de texte ni
+   sur les petits boutons à icône — mesurés entre 18 et 38 px sur
+   l'écran de connexion et dans le pied de page.
+
+   L'agrandissement passe par un pseudo-élément et non par du
+   `padding` : la zone tapable grandit sans que rien ne bouge dans la
+   mise en page, donc sans retoucher aucun écran.
+   ════════════════════════════════════════════════════════════════ */
+
+/* Lien d'évitement — hors écran jusqu'à ce qu'il reçoive le focus.
+   Il n'est pas masqué par `display: none` : un élément ainsi retiré
+   n'est plus atteignable au clavier, ce qui annulerait sa raison
+   d'être. */
+.lien-evitement {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 200;
+  padding: 12px 18px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--r-md);
+  background: var(--accent);
+  color: var(--on-accent);
+  font: var(--t-body-sm);
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--elev-3);
+  /* Remonté hors de l'écran, sans quitter l'ordre de tabulation. */
+  transform: translateY(-200%);
+  transition: transform var(--dur-nav) var(--ease-out);
+}
+.lien-evitement:focus {
+  transform: translateY(0);
+  outline: 2px solid var(--on-accent);
+  outline-offset: -4px;
+}
+
+/* Boutons à icône — sans condition de pointeur.
+   Ils sont isolés sur leur coin d'écran : agrandir leur zone ne peut
+   rien recouvrir, et viser une cible de 44 px reste plus confortable
+   à la souris aussi.
+
+   ⚠️ Le `position` est posé dans la couche `components` et non en dehors
+   de toute couche. Une règle hors couche l'emporte sur les utilitaires
+   Tailwind : `position: relative` écrasait alors le `absolute` de la
+   bascule de thème, qui quittait son coin et décalait tout l'écran de
+   connexion. Dans `components`, l'utilitaire garde la main — et un
+   élément déjà positionné sert de référence au pseudo-élément, ce qui
+   est exactement ce qu'on veut. */
+@layer components {
+  .bouton-icone {
+    position: relative;
+  }
+}
+
+.bouton-icone::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+}
+
+/* Liens de texte — au doigt seulement.
+   Une zone de 44 px autour d'un lien posé au milieu d'une phrase
+   déborderait sur les lignes voisines et capterait des clics destinés
+   à autre chose. Au curseur, la cible visible suffit ; au doigt, le
+   risque de rater dépasse celui du recouvrement. */
+@layer components {
+  @media (pointer: coarse) {
+    footer nav a,
+    .coquille-auth a,
+    .lien-bloc {
+      position: relative;
+    }
+  }
+}
+
+@media (pointer: coarse) {
+  footer nav a::after,
+  .coquille-auth a::after,
+  .lien-bloc::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -4px;
+    right: -4px;
+    height: 44px;
+    transform: translateY(-50%);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   11. MOUVEMENT RÉDUIT
+
+   Un seul bloc, en fin de fichier, qui neutralise tout ce qui précède.
+   Le produit doit rester entier — c'est la condition posée en tête.
+   ════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  .surgir,
+  .cascade > *,
+  .invite-install {
+    animation: none !important;
+  }
+
+  .inclinable,
+  .inclinable:hover,
+  .inclinable-avant,
+  .inclinable:hover .inclinable-avant {
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .inclinable-reflet::after { display: none; }
+  .pressable:active { transform: none; }
+  .progression::after { animation-duration: 3s; }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+}
+
+/* Le réglage interne du produit, qui n'attend pas celui du système. */
+[data-motion='none'] .inclinable,
+[data-motion='none'] .inclinable-avant {
+  transform: none !important;
+}
+[data-motion='none'] .inclinable-reflet::after { display: none; }

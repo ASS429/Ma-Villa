@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import Badge from './ui/Badge'
+import Inclinable from './ui/Inclinable'
 import { UNITE_TARIF, type VillaResume } from '../types'
 import { fcfa, noteLisible } from '../lib/format'
 
@@ -46,7 +47,10 @@ export default function VillaCard({ villa, isFavori, onToggleFavori, prioritaire
 
   return (
     <Link to={`/villas/${villa.id}`} className="carte-villa" aria-label={`${villa.nom}, ${villa.ville}`}>
-      <article className="carte overflow-hidden h-full flex flex-col">
+      {/* L'inclinaison ne s'applique qu'au curseur : au doigt, elle n'aurait
+          aucune direction à suivre et coûterait une couche de rendu par carte.
+          Le filtre est en CSS, pas ici. */}
+      <Inclinable as="article" className="carte overflow-hidden h-full flex flex-col" reflet>
         <div className="carte-villa-photo">
           {photo ? (
             <img
@@ -129,7 +133,7 @@ export default function VillaCard({ villa, isFavori, onToggleFavori, prioritaire
             )}
           </div>
         </div>
-      </article>
+      </Inclinable>
     </Link>
   )
 }

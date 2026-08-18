@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Couche de profondeur et de mouvement — refonte du 18 août 2026.
+   Placée ici, après Tailwind, pour que ses règles l'emportent à
+   spécificité égale sans avoir à forcer. */
+@import "./styles/profondeur.css";
+
 @theme {
   --font-sans:    'DM Sans', system-ui, sans-serif;
   --font-display: 'Cormorant Garamond', Georgia, serif;
@@ -715,12 +720,16 @@ h1.display, .text-display {
   line-height: 1.08;
 }
 
-/* Stat values — Cormorant light */
+/* Valeurs chiffrées en Cormorant.
+   `lining-nums` n'est pas cosmétique : cette fonte dessine par défaut des
+   chiffres elzéviriens, dont le « 1 » est un bâton sans empattement. Un
+   « 17 » se lisait « I7 » et un « 10 » se lisait « IO ». */
 .stat-value {
   font-family: 'Cormorant Garamond', Georgia, serif;
   font-weight: 300;
   letter-spacing: -0.04em;
   line-height: 1;
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
 /* ─── Liquid glass ───────────────────────────────────────────── */
