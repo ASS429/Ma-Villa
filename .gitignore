@@ -2,3 +2,13 @@
 # récupérable dans l'historique git (Ma-Villa/public/video_backgroud.mp4,
 # avant sa suppression), inutile d'en versionner un doublon de 5 Mo.
 /media/
+
+# Projets voisins posés dans ce dossier — ils ne font pas partie de Ma Villa.
+# `campus-crush-live/.env` contient douze secrets (clés PayDunya de production,
+# mot de passe de base, APP_KEY) : ce dépôt est public, les versionner les
+# publierait.
+/Campus Crush/
+/campus-crush-live/
+
+# Sortie de build du front, régénérée à chaque publication.
+/Ma-Villa/dist/

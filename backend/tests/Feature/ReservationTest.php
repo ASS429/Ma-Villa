@@ -140,6 +140,43 @@ class ReservationTest extends TestCase
         $this->postJson('/api/reservations', [])->assertStatus(401);
     }
 
+    /**
+     * Le tarif appliqué doit appartenir au logement réservé.
+     *
+     * Sans cette contrainte, le client choisit son prix : il envoie
+     * l'identifiant du tarif le moins cher de la plateforme et réserve la
+     * villa la plus chère à ce tarif-là. Le paiement porte sur ce montant,
+     * réussit, et confirme la réservation.
+     */
+    public function test_reservation_rejects_a_tarif_from_another_logement(): void
+    {
+        ['logement' => $logement] = $this->makeSetup();
+        $client = User::factory()->client()->create();
+
+        // Un logement bon marché ailleurs sur la plateforme.
+        $autreProprio = User::factory()->proprietaire()->create();
+        $autreVilla = Villa::factory()->validee()->create(['user_id' => $autreProprio->id]);
+        $autreLogement = Logement::create([
+            'villa_id' => $autreVilla->id, 'nom' => 'Studio', 'type' => 'chambre',
+            'capacite' => 2, 'disponible' => true,
+        ]);
+        $tarifBradé = Tarif::create([
+            'logement_id' => $autreLogement->id, 'type_tarif' => 'nuitee',
+            'prix' => 1000, 'avec_clim' => false, 'avec_buffet' => false,
+        ]);
+
+        $this->actingAs($client, 'sanctum')
+             ->postJson('/api/reservations', [
+                 'logement_id'  => $logement->id,
+                 'tarif_id'     => $tarifBradé->id,
+                 'date_debut'   => now()->addDays(5)->toDateString(),
+                 'date_fin'     => now()->addDays(8)->toDateString(),
+                 'nb_personnes' => 2,
+             ])->assertStatus(422);
+
+        $this->assertDatabaseCount('reservations', 0);
+    }
+
     // ── Listing ──────────────────────────────────────────────────
 
     public function test_client_sees_only_own_reservations(): void
