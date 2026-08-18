@@ -5,6 +5,10 @@
    spécificité égale sans avoir à forcer. */
 @import "./styles/profondeur.css";
 
+/* Console d'administration et tableau de bord : ces écrans étaient stylés
+   en ligne, propriété par propriété. */
+@import "./styles/console.css";
+
 @theme {
   --font-sans:    'DM Sans', system-ui, sans-serif;
   --font-display: 'Cormorant Garamond', Georgia, serif;

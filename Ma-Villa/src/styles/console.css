@@ -1,0 +1,822 @@
+/* ════════════════════════════════════════════════════════════════
+   CONSOLE — tableau de bord et administration
+
+   Ces écrans étaient stylés en ligne, propriété par propriété : 200
+   occurrences de `style={{…}}` réparties sur quatorze fichiers. Le thème
+   sombre y tenait par accident, et changer un rayon demandait quatorze
+   modifications.
+
+   Tout passe désormais par les tokens. Aucune couleur n'est écrite en
+   dur ici — c'est la règle du projet, et c'est ce qui fait que le thème
+   sombre suit sans qu'on y pense.
+
+   Inspiré de la console Campus Crush pour trois idées qui lui manquaient :
+   le compteur d'attente sur la navigation, le tiroir plein écran au doigt,
+   et le fil d'activité. Le reste est propre à Ma Villa.
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Ossature ─────────────────────────────────────────────────── */
+
+.console {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text-1);
+}
+
+.console-corps {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.console-principal {
+  flex: 1;
+  padding: var(--space-6) var(--space-5) var(--space-8);
+}
+
+@media (min-width: 1024px) {
+  .console-principal { padding: var(--space-7) var(--space-8) var(--space-9); }
+}
+
+/* La barre basse recouvre le pied des écrans sur mobile. */
+@media (max-width: 767px) {
+  .console-principal { padding-bottom: calc(var(--nav-h) + var(--safe-b) + var(--space-6)); }
+}
+
+/* ── Barre latérale ───────────────────────────────────────────── */
+
+.console-flanc {
+  display: none;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 248px;
+  flex-shrink: 0;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
+}
+
+@media (min-width: 1024px) {
+  .console-flanc { display: flex; }
+}
+
+.console-marque {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--border);
+  text-decoration: none;
+}
+
+.console-marque-nom {
+  font: var(--t-h3);
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--text-1);
+  flex: 1;
+  min-width: 0;
+}
+
+.console-marque-role {
+  font: var(--t-eyebrow);
+  letter-spacing: var(--t-eyebrow-ls);
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-bg);
+  padding: 3px 7px;
+  border-radius: var(--r-sm);
+  flex: none;
+}
+
+.console-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-3) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.console-lien {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  /* 44 px : c'est une cible de navigation, elle suit la règle du projet
+     même sur un écran d'administration ouvert au curseur. */
+  min-height: 44px;
+  padding: 10px var(--space-3);
+  border-radius: var(--r-md);
+  font: var(--t-body-sm);
+  font-weight: 500;
+  color: var(--text-2);
+  text-decoration: none;
+  transition: background var(--dur-fast) var(--ease),
+              color var(--dur-fast) var(--ease);
+}
+
+.console-lien:hover { background: var(--bg-elevated); color: var(--text-1); }
+.console-lien:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* L'état actif est plein et non dégradé : sur une console consultée toute
+   la journée, un aplat fatigue moins qu'un dégradé saturé. */
+.console-lien.est-actif {
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.console-lien-libelle { flex: 1; min-width: 0; }
+
+/* Compteur d'attente — la meilleure idée reprise de la console Campus
+   Crush. Il dit ce qui réclame une action *avant* d'ouvrir l'écran :
+   sans lui, on ouvre « Villas » pour découvrir qu'il n'y a rien à faire,
+   ou pire, on ne l'ouvre pas alors qu'il y a douze annonces en attente. */
+.console-compteur {
+  flex: none;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-full);
+  font: var(--t-caption);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: color-mix(in srgb, var(--warning) 16%, transparent);
+  color: var(--warning);
+}
+
+.console-separateur {
+  height: 1px;
+  background: var(--border);
+  margin: var(--space-3) var(--space-2);
+}
+
+/* ── Pied de la barre : identité et sortie ────────────────────── */
+
+.console-pied {
+  padding: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.console-identite {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  min-width: 0;
+}
+
+.console-jeton {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-full);
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--accent), var(--gold));
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.console-identite-texte { min-width: 0; flex: 1; }
+.console-identite-nom {
+  margin: 0;
+  font: var(--t-body-sm);
+  font-weight: 600;
+  color: var(--text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.console-identite-role { margin: 0; font: var(--t-caption); color: var(--text-3); }
+
+.console-actions { display: flex; align-items: center; gap: var(--space-2); }
+
+/* ── En-tête mobile ───────────────────────────────────────────── */
+
+.console-entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: color-mix(in srgb, var(--bg-surface) 86%, transparent);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-bottom: 1px solid var(--border);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .console-entete { background: var(--bg-surface); }
+}
+
+@media (min-width: 1024px) { .console-entete { display: none; } }
+
+.console-entete-titre {
+  flex: 1;
+  min-width: 0;
+  font: var(--t-h3);
+  color: var(--text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Tiroir mobile ────────────────────────────────────────────── */
+
+.console-voile {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-sheet);
+  background: var(--scrim);
+  animation: voile-entre var(--dur-nav) var(--ease-out);
+}
+@keyframes voile-entre { from { opacity: 0 } to { opacity: 1 } }
+
+.console-tiroir {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  /* À gauche, du même côté que la barre latérale sur grand écran : le
+     tiroir est la même chose, révélée. Le faire venir de droite obligerait
+     à réapprendre où vit la navigation en changeant de taille d'écran. */
+  left: 0;
+  z-index: calc(var(--z-sheet) + 1);
+  width: min(280px, 84vw);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  box-shadow: var(--elev-flottant);
+  animation: tiroir-entre var(--dur-screen) var(--ease-out);
+}
+
+@keyframes tiroir-entre {
+  from { transform: translateX(-100%); }
+  to   { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .console-tiroir, .console-voile { animation: none; }
+}
+
+/* ── Titres d'écran ───────────────────────────────────────────── */
+
+.console-titre {
+  margin: 0 0 4px;
+  font: var(--t-h2);
+  font-family: var(--font-display);
+  letter-spacing: var(--t-h2-ls);
+  color: var(--text-1);
+}
+
+.console-sous-titre {
+  margin: 0 0 var(--space-6);
+  font: var(--t-body-sm);
+  color: var(--text-3);
+}
+
+.console-section {
+  margin: 0 0 var(--space-4);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.console-section h2 { margin: 0; font: var(--t-h3); color: var(--text-1); }
+.console-section a { font: var(--t-body-sm); color: var(--text-2); text-decoration: none; }
+.console-section a:hover { color: var(--text-1); }
+
+/* ── Cartes de chiffres ───────────────────────────────────────── */
+
+.chiffres {
+  display: grid;
+  /* Deux colonnes dès 375 px : un chiffre par ligne obligerait à faire
+     défiler pour comparer, et comparer est tout l'intérêt d'un tableau
+     de bord. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+@media (min-width: 768px)  { .chiffres { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1280px) { .chiffres { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+.chiffre {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--elev-1);
+  transition: box-shadow var(--dur) var(--ease-out), transform var(--dur) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .chiffre:hover { box-shadow: var(--elev-2); transform: translateY(-2px); }
+}
+
+.chiffre-haut { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+
+.chiffre-icone {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.chiffre-valeur {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--text-1);
+  /* Deux réglages, et les deux comptent :
+     — `lining-nums` : Cormorant Garamond dessine par défaut des chiffres
+       elzéviriens, dont le « 1 » est un bâton sans empattement. Sur cet
+       écran, « 17 » se lisait « I7 » et « 10 » se lisait « IO ». Sur un
+       tableau de chiffres, c'est disqualifiant.
+     — `tabular-nums` : dans une grille, les valeurs doivent s'aligner
+       verticalement pour être comparables d'un coup d'œil. */
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.chiffre-libelle {
+  margin: 0;
+  font: var(--t-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--t-eyebrow-ls);
+  color: var(--text-3);
+}
+
+.chiffre-detail { margin: 0; font: var(--t-caption); color: var(--text-2); }
+
+/* Variation : le signe et la couleur disent le sens, le chiffre l'ampleur. */
+.chiffre-variation {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font: var(--t-caption);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.chiffre-variation.est-hausse { color: var(--success); }
+.chiffre-variation.est-baisse { color: var(--danger); }
+
+/* Une carte qui appelle une action se distingue — mais seulement quand
+   elle en appelle réellement une. Zéro en attente reste neutre. */
+.chiffre.demande-action {
+  border-color: color-mix(in srgb, var(--warning) 38%, transparent);
+  background: color-mix(in srgb, var(--warning) 5%, var(--bg-surface));
+}
+.chiffre.demande-action .chiffre-icone {
+  background: color-mix(in srgb, var(--warning) 16%, transparent);
+  color: var(--warning);
+}
+.chiffre.demande-action .chiffre-valeur { color: var(--warning); }
+
+/* ── Panneaux ─────────────────────────────────────────────────── */
+
+.console-grille {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 1024px) {
+  .console-grille-2 { grid-template-columns: 1fr 1fr; align-items: start; }
+  .console-grille-large { grid-template-columns: 3fr 2fr; align-items: start; }
+}
+
+.panneau {
+  padding: var(--space-5);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--elev-1);
+}
+
+.panneau-titre {
+  margin: 0 0 var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font: var(--t-h3);
+  color: var(--text-1);
+}
+.panneau-titre svg { color: var(--text-3); }
+
+/* ── Graphiques ───────────────────────────────────────────────── */
+
+/* Dessinés en SVG à la main, sans bibliothèque. Chart.js coûte ~70 Ko
+   gzip pour trois courbes ; sur ce marché la data est payée au volume,
+   et une console d'administration n'est pas l'écran où l'on accepte de
+   payer ce prix. Même raisonnement que le refus du WebGL et que le code
+   QR dessiné localement. */
+
+.graphe { width: 100%; height: auto; display: block; overflow: visible; }
+.graphe-aire { fill: var(--accent); opacity: 0.12; }
+.graphe-trait { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.graphe-grille { stroke: var(--border); stroke-width: 1; }
+.graphe-legende { font: var(--t-caption); fill: var(--text-3); }
+.graphe-point { fill: var(--accent); }
+
+.graphe-vide {
+  display: grid;
+  place-items: center;
+  min-height: 160px;
+  border-radius: var(--r-md);
+  border: 1px dashed var(--border-strong);
+  color: var(--text-3);
+  font: var(--t-body-sm);
+  text-align: center;
+  padding: var(--space-4);
+}
+
+/* Barres horizontales — pour une répartition, plus lisibles qu'un
+   camembert : on compare des longueurs alignées, pas des angles. */
+.barres { display: flex; flex-direction: column; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.barre-ligne { display: flex; flex-direction: column; gap: 5px; }
+.barre-entete { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+.barre-nom { font: var(--t-body-sm); color: var(--text-1); }
+.barre-valeur { font: var(--t-caption); color: var(--text-3); font-variant-numeric: tabular-nums; }
+.barre-piste { height: 7px; border-radius: var(--r-full); background: var(--bg-elevated); overflow: hidden; }
+.barre-remplissage {
+  height: 100%;
+  border-radius: var(--r-full);
+  background: linear-gradient(90deg, var(--accent), var(--accent-soft));
+  transition: width var(--dur-slow) var(--ease-out);
+}
+
+/* ── Fil d'activité ───────────────────────────────────────────── */
+
+.activite { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+
+.activite-ligne {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border);
+}
+.activite-ligne:last-child { border-bottom: 0; padding-bottom: 0; }
+
+.activite-icone {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  background: var(--bg-elevated);
+  color: var(--text-2);
+}
+.activite-icone.est-villa       { background: var(--accent-bg); color: var(--accent); }
+.activite-icone.est-compte      { background: color-mix(in srgb, var(--gold) 14%, transparent); color: var(--gold); }
+.activite-icone.est-reservation { background: color-mix(in srgb, var(--success) 12%, transparent); color: var(--success); }
+
+.activite-texte { flex: 1; min-width: 0; }
+.activite-titre {
+  margin: 0;
+  font: var(--t-body-sm);
+  font-weight: 500;
+  color: var(--text-1);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.activite-detail {
+  margin: 0;
+  font: var(--t-caption);
+  color: var(--text-3);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.activite-quand { flex: none; font: var(--t-caption); color: var(--text-3); font-variant-numeric: tabular-nums; }
+
+/* ── Tableaux ─────────────────────────────────────────────────── */
+
+/* Le défilement est porté par un conteneur, jamais par la page : un
+   tableau large faisait déborder l'écran entier et la page partait de
+   côté au doigt. */
+.tableau-cadre {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+}
+.tableau-cadre::-webkit-scrollbar { height: 4px; }
+.tableau-cadre::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: var(--r-full); }
+
+.tableau { width: 100%; border-collapse: collapse; font: var(--t-body-sm); }
+.tableau th, .tableau td { padding: var(--space-3) var(--space-4); text-align: left; white-space: nowrap; }
+.tableau thead th {
+  font: var(--t-label);
+  color: var(--text-2);
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+}
+.tableau tbody tr { border-bottom: 1px solid var(--border); }
+.tableau tbody tr:last-child { border-bottom: 0; }
+.tableau tbody tr:hover { background: var(--bg-elevated); }
+.tableau td { color: var(--text-1); }
+.tableau .col-souple { white-space: normal; min-width: 200px; }
+
+/* ── Filtres et pagination ────────────────────────────────────── */
+
+.console-filtres {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.console-onglets {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border-radius: var(--r-full);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  /* Quatre onglets ne tiennent pas en 375 px : ils défilent latéralement
+     plutôt que de se replier sur deux lignes, où « En attente » se cassait
+     en « En / attente » et la barre doublait de hauteur. */
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.console-onglets::-webkit-scrollbar { display: none; }
+.console-onglet {
+  flex: none;
+  white-space: nowrap;
+  min-height: 36px;
+  padding: 7px 14px;
+  border: 0;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--text-2);
+  font: var(--t-body-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.console-onglet:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.console-onglet.est-actif {
+  background: var(--bg-surface);
+  color: var(--text-1);
+  box-shadow: var(--shadow-sm);
+}
+
+.console-recherche { position: relative; flex: 1; min-width: 180px; max-width: 320px; }
+.console-recherche svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-3);
+  pointer-events: none;
+}
+.console-recherche input { padding-left: 38px; }
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  flex-wrap: wrap;
+}
+.pagination-etat { font: var(--t-body-sm); color: var(--text-3); font-variant-numeric: tabular-nums; }
+.pagination-boutons { display: flex; gap: var(--space-2); }
+
+/* ── États ────────────────────────────────────────────────────── */
+
+.console-vide {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-5);
+  color: var(--text-3);
+}
+.console-vide-icone {
+  display: grid;
+  place-items: center;
+  width: 52px; height: 52px;
+  border-radius: var(--r-lg);
+  background: var(--bg-elevated);
+  color: var(--text-3);
+}
+.console-vide p { margin: 0; font: var(--t-body-sm); max-width: 40ch; }
+.console-vide strong { color: var(--text-1); font-weight: 600; }
+
+/* Erreur de chargement. Distincte de `.tunnel-erreur`, qui appartient au
+   parcours de paiement : réutiliser sa classe ici lierait deux écrans qui
+   n'ont aucune raison d'évoluer ensemble. */
+.console-erreur {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger) 24%, transparent);
+  color: var(--danger);
+  font: var(--t-body-sm);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   ESPACE PERSONNEL — briques propres au tableau de bord
+   ════════════════════════════════════════════════════════════════ */
+
+/* Bandeau d'action, en tête d'écran. Ce qui attend une réponse passe
+   avant les chiffres : un propriétaire ouvre son espace pour savoir
+   ce qu'il a à faire, pas pour consulter des totaux. */
+.alerte-action {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-5);
+  border-color: color-mix(in srgb, var(--warning) 34%, transparent);
+  background: color-mix(in srgb, var(--warning) 5%, var(--bg-surface));
+}
+
+.alerte-icone {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--warning) 16%, transparent);
+  color: var(--warning);
+}
+
+.alerte-texte { flex: 1; min-width: 180px; }
+.alerte-titre { margin: 0; font: var(--t-body-sm); font-weight: 600; color: var(--text-1); }
+.alerte-detail { margin: 2px 0 0; font: var(--t-caption); color: var(--text-2); }
+
+/* Raccourci : une carte entièrement cliquable. La flèche avance au
+   survol — le seul mouvement de cet écran, et il annonce une navigation. */
+.raccourci {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  text-decoration: none;
+  transition: border-color var(--dur) var(--ease-out),
+              box-shadow var(--dur) var(--ease-out),
+              transform var(--dur) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .raccourci:hover {
+    border-color: var(--accent);
+    box-shadow: var(--elev-2);
+    transform: translateY(-2px);
+  }
+  .raccourci:hover .raccourci-fleche { transform: translateX(3px); }
+}
+
+.raccourci:active { transform: scale(0.99); }
+.raccourci:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.raccourci-texte { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.raccourci-titre { font: var(--t-body-sm); font-weight: 600; color: var(--text-1); }
+.raccourci-detail { font: var(--t-caption); color: var(--text-3); }
+
+.raccourci-fleche {
+  flex: none;
+  color: var(--text-3);
+  transition: transform var(--dur) var(--ease-out);
+}
+
+/* Prochain séjour : les dates alignées à droite, en chiffres tabulaires,
+   parce que c'est la seule chose qu'on vient vérifier. */
+.prochain {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+.prochain-nom { margin: 0; font: var(--t-body); font-weight: 600; color: var(--text-1); }
+.prochain-detail { margin: 2px 0 0; font: var(--t-caption); color: var(--text-3); }
+
+.prochain-dates {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 8px 14px;
+  border-radius: var(--r-full);
+  background: var(--accent-bg);
+  color: var(--accent);
+  font: var(--t-body-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.prochain-dates svg { flex: none; }
+
+/* ── Carte de réservation ─────────────────────────────────────── */
+
+/* Un filet coloré à gauche : le statut se lit en balayant la colonne,
+   sans avoir à trouver le badge sur chaque carte. */
+.reservation { border-left: 3px solid var(--border-strong); }
+.reservation.est-en_attente { border-left-color: var(--warning); }
+.reservation.est-confirmee  { border-left-color: var(--success); }
+.reservation.est-annulee    { border-left-color: var(--danger); }
+
+.reservation-haut {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.reservation-villa {
+  margin: 0;
+  font: var(--t-body);
+  font-weight: 600;
+  color: var(--text-1);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.reservation-logement { margin: 2px 0 0; font: var(--t-body-sm); color: var(--text-2); }
+
+.reservation-faits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+  font: var(--t-caption);
+  color: var(--text-3);
+}
+.reservation-faits li { display: inline-flex; align-items: center; gap: 5px; }
+
+.reservation-bas {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.reservation-client {
+  margin: 0;
+  font: var(--t-caption);
+  color: var(--text-3);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.reservation-montant {
+  margin: 0;
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font: var(--t-body-sm);
+  font-weight: 600;
+  color: var(--text-1);
+  font-variant-numeric: tabular-nums;
+}
+.reservation-paye { font: var(--t-caption); font-weight: 500; color: var(--success); }
+
+.reservation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+/* Au doigt, les deux décisions occupent chacune la moitié de la largeur :
+   viser un bouton étroit sur une décision qu'on ne reprend pas est le
+   genre de détail qui produit un refus par erreur. */
+@media (max-width: 519px) {
+  .reservation-actions .btn { flex: 1 1 calc(50% - var(--space-2)); }
+}

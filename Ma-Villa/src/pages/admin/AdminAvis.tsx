@@ -1,103 +1,151 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Trash2, MessageSquare, ExternalLink } from 'lucide-react'
 import api from '../../services/api'
+import { useToast } from '../../context/ToastContext'
+import { useRequete } from '../../lib/useRequete'
+import { messageErreur } from '../../lib/erreurs'
+import { depuis } from '../../lib/format'
 import ConfirmModal from '../../components/ConfirmModal'
+import Button from '../../components/ui/Button'
+import Pagination, { type Page } from '../../components/console/Pagination'
 
 interface Avis {
   id: number
   note: number
   commentaire: string | null
-  client: { name: string }
-  villa: { nom: string }
+  client: { name: string } | null
+  villa: { id: number; nom: string } | null
   created_at: string
 }
 
-export default function AdminAvis() {
-  const [avis, setAvis] = useState<Avis[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [confirmId, setConfirmId] = useState<number | null>(null)
-
-  const fetchAvis = () => {
-    api.get('/admin/avis')
-      .then((res) => setAvis(res.data))
-      .finally(() => setIsLoading(false))
-  }
-
-  useEffect(() => { fetchAvis() }, [])
-
-  const supprimer = async (id: number) => {
-    await api.delete(`/admin/avis/${id}`)
-    setConfirmId(null)
-    fetchAvis()
-  }
-
-  const fmt = (d: string) => new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
-
-  if (isLoading) return (
-    <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-3)' }}>
-      <div className="w-4 h-4 rounded-full animate-spin" style={{ border: '2px solid var(--border)', borderTopColor: 'var(--text-1)' }} />
-      Chargement...
-    </div>
+function Etoiles({ note }: { note: number }) {
+  return (
+    <span aria-label={`${note} sur 5`} style={{ whiteSpace: 'nowrap' }}>
+      {[1, 2, 3, 4, 5].map((n) => (
+        <span key={n} className={n <= note ? 'etoile' : 'etoile-vide'} aria-hidden="true">★</span>
+      ))}
+    </span>
   )
+}
+
+export default function AdminAvis() {
+  const toast = useToast()
+  const [page, setPage] = useState(1)
+  const [aSupprimer, setASupprimer] = useState<Avis | null>(null)
+
+  const { donnees, chargement, erreur, reessayer } = useRequete<Page<Avis>>(
+    async (signal) => (await api.get(`/admin/avis?page=${page}`, { signal })).data,
+    `avis-${page}`,
+    { messageErreurParDefaut: 'Impossible de charger les avis.' }
+  )
+
+  const avis = donnees?.data ?? []
+
+  const supprimer = async (a: Avis) => {
+    try {
+      await api.delete(`/admin/avis/${a.id}`)
+      toast.succes('Avis supprimé.')
+      reessayer()
+    } catch (err) {
+      toast.erreur(messageErreur(err, "L'avis n'a pas pu être supprimé."))
+    } finally {
+      setASupprimer(null)
+    }
+  }
 
   return (
     <div>
-      {confirmId !== null && (
+      {aSupprimer && (
         <ConfirmModal
           message="Supprimer cet avis ?"
-          detail="L'avis sera définitivement supprimé de la plateforme."
+          detail={
+            "L'avis disparaîtra de la fiche de la villa et la note moyenne sera recalculée. "
+            + 'Seul un client ayant réellement séjourné a pu le déposer : ne le retirer que pour un abus.'
+          }
           confirmLabel="Supprimer"
           danger
-          onConfirm={() => supprimer(confirmId)}
-          onCancel={() => setConfirmId(null)}
+          onConfirm={() => supprimer(aSupprimer)}
+          onCancel={() => setASupprimer(null)}
         />
       )}
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-light" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", letterSpacing: '-0.03em' }}>Modération des avis</h1>
-        <span className="text-sm" style={{ color: 'var(--text-3)' }}>{avis.length} au total</span>
-      </div>
 
-      {avis.length === 0 ? (
-        <div
-          className="rounded-2xl p-12 text-center"
-          style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
-        >
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3" style={{ background: 'var(--bg-surface)' }}>
-            <svg className="w-6 h-6" style={{ color: 'var(--text-3)' }} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg>
-          </div>
-          <p className="text-sm" style={{ color: 'var(--text-2)' }}>Aucun avis pour l'instant.</p>
+      <h1 className="console-titre">Avis</h1>
+      <p className="console-sous-titre">
+        {donnees ? `${donnees.total} avis déposé${donnees.total > 1 ? 's' : ''}` : 'Modération des avis'}
+        {' — '}seuls les clients ayant séjourné peuvent en écrire un.
+      </p>
+
+      {erreur && !chargement && (
+        <div className="console-erreur" role="alert">
+          {erreur}
+          <Button variante="secondaire" taille="sm" onClick={reessayer} >Réessayer</Button>
         </div>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {avis.map((a) => (
-            <div
-              key={a.id}
-              className="rounded-2xl px-6 py-4"
-              style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                    <p className="text-sm font-medium">{a.client.name}</p>
-                    <span className="text-amber-400 text-sm">{'★'.repeat(a.note)}{'☆'.repeat(5 - a.note)}</span>
-                    <span className="text-xs" style={{ color: 'var(--text-3)' }}>sur {a.villa.nom}</span>
-                  </div>
-                  {a.commentaire && (
-                    <p className="text-sm leading-relaxed" style={{ color: 'var(--text-2)' }}>{a.commentaire}</p>
-                  )}
-                  <p className="text-xs mt-2" style={{ color: 'var(--text-3)' }}>{fmt(a.created_at)}</p>
-                </div>
-                <button
-                  onClick={() => setConfirmId(a.id)}
-                  className="shrink-0 text-sm transition-colors hover:text-red-400"
-                  style={{ color: 'var(--text-3)' }}
-                >
-                  Supprimer
-                </button>
-              </div>
+      )}
+
+      {chargement ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+          {[1, 2, 3].map((n) => (
+            <div key={n} className="panneau">
+              <div className="skeleton" style={{ height: 14, width: '30%', borderRadius: 6, marginBottom: 10 }} />
+              <div className="skeleton" style={{ height: 12, width: '70%', borderRadius: 6 }} />
             </div>
           ))}
         </div>
+      ) : avis.length === 0 ? (
+        <div className="console-vide">
+          <span className="console-vide-icone"><MessageSquare size={22} /></span>
+          <p>Aucun avis déposé pour l'instant.</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+          {avis.map((a) => (
+            <article key={a.id} className="panneau">
+              <div style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: 220 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexWrap: 'wrap', marginBottom: 4 }}>
+                    <Etoiles note={a.note} />
+                    <span style={{ font: 'var(--t-body-sm)', fontWeight: 600, color: 'var(--text-1)' }}>
+                      {a.client?.name ?? 'Compte supprimé'}
+                    </span>
+                    <span style={{ font: 'var(--t-caption)', color: 'var(--text-3)' }}>{depuis(a.created_at)}</span>
+                  </div>
+
+                  {a.villa && (
+                    <Link
+                      to={`/villas/${a.villa.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 5,
+                        font: 'var(--t-caption)', color: 'var(--accent)', textDecoration: 'none',
+                      }}
+                    >
+                      {a.villa.nom} <ExternalLink size={12} />
+                    </Link>
+                  )}
+
+                  {a.commentaire && (
+                    <p style={{ margin: 'var(--space-3) 0 0', font: 'var(--t-body-sm)', color: 'var(--text-2)', lineHeight: 1.6 }}>
+                      {a.commentaire}
+                    </p>
+                  )}
+                </div>
+
+                <Button
+                  variante="discret"
+                  taille="sm"
+                  onClick={() => setASupprimer(a)}
+                  iconeAvant={<Trash2 size={15} />}
+                  aria-label="Supprimer cet avis"
+                />
+              </div>
+            </article>
+          ))}
+        </div>
       )}
+
+      <Pagination page={donnees} onChange={setPage} unite="avis" />
     </div>
   )
 }

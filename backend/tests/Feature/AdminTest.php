@@ -50,11 +50,17 @@ class AdminTest extends TestCase
         $response = $this->actingAs($admin, 'sanctum')->getJson('/api/admin/stats');
 
         $response->assertOk()
-                 ->assertJsonStructure(['utilisateurs', 'villas_total', 'villas_attente', 'reservations', 'revenus']);
+                 ->assertJsonStructure([
+                     'utilisateurs' => ['total', 'nouveaux', 'variation', 'proprietaires', 'clients'],
+                     'villas'       => ['total', 'en_attente', 'validees', 'rejetees', 'vedettes'],
+                     'reservations' => ['total', 'en_attente', 'confirmees', 'annulees'],
+                     'finances'     => ['volume_confirme', 'encaisse', 'commission'],
+                     'avis'         => ['total', 'note_moyenne'],
+                 ]);
 
-        $this->assertEquals(5, $response->json('utilisateurs')); // admin + proprietaire + 3 clients
-        $this->assertEquals(3, $response->json('villas_total'));
-        $this->assertEquals(1, $response->json('villas_attente'));
+        $this->assertEquals(5, $response->json('utilisateurs.total')); // admin + proprietaire + 3 clients
+        $this->assertEquals(3, $response->json('villas.total'));
+        $this->assertEquals(1, $response->json('villas.en_attente'));
     }
 
     public function test_stats_revenus_counts_only_confirmed_reservations(): void
@@ -86,7 +92,9 @@ class AdminTest extends TestCase
 
         $response = $this->actingAs($admin, 'sanctum')->getJson('/api/admin/stats');
 
-        $this->assertEquals(200000, $response->json('revenus'));
+        // « Volume confirmé » et « encaissé » sont deux notions distinctes :
+        // la première compte ce qui est réservé, la seconde ce qui est payé.
+        $this->assertEquals(200000, $response->json('finances.volume_confirme'));
     }
 
     // ── Villa management ─────────────────────────────────────────
@@ -100,7 +108,7 @@ class AdminTest extends TestCase
         $response = $this->actingAs($admin, 'sanctum')->getJson('/api/admin/villas?statut=en_attente');
 
         $response->assertOk();
-        $this->assertCount(3, $response->json());
+        $this->assertCount(3, $response->json('data'));
     }
 
     public function test_admin_villa_list_defaults_to_en_attente(): void
@@ -112,7 +120,7 @@ class AdminTest extends TestCase
         $response = $this->actingAs($admin, 'sanctum')->getJson('/api/admin/villas');
 
         $response->assertOk();
-        $this->assertCount(2, $response->json());
+        $this->assertCount(2, $response->json('data'));
     }
 
     public function test_admin_can_validate_villa(): void
@@ -173,7 +181,7 @@ class AdminTest extends TestCase
         $response = $this->actingAs($admin, 'sanctum')->getJson('/api/admin/utilisateurs');
 
         $response->assertOk();
-        $this->assertCount(5, $response->json()); // 4 clients + admin
+        $this->assertCount(5, $response->json('data')); // 4 clients + admin
     }
 
     public function test_admin_can_delete_user(): void
@@ -202,7 +210,7 @@ class AdminTest extends TestCase
         $response = $this->actingAs($admin, 'sanctum')->getJson('/api/admin/avis');
 
         $response->assertOk();
-        $this->assertCount(2, $response->json());
+        $this->assertCount(2, $response->json('data'));
     }
 
     public function test_admin_can_delete_avis(): void

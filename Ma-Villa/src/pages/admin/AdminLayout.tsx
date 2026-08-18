@@ -1,218 +1,230 @@
-import { useState } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useState } from 'react'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import {
+  LayoutGrid, Building2, Users, MessageSquare, CreditCard,
+  Menu, X, Sun, Moon, LogOut, ArrowLeft,
+} from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
+import api from '../../services/api'
+import Button from '../../components/ui/Button'
 
-type NavItem = { to: string; label: string; Icon: () => React.ReactElement; end?: boolean }
+interface Entree {
+  to: string
+  label: string
+  Icone: typeof LayoutGrid
+  end?: boolean
+  /** Clé du compteur d'attente, s'il y en a un. */
+  attente?: 'villas' | 'avis'
+}
 
-const adminLinks: NavItem[] = [
-  { to: '/admin',              label: 'Tableau de bord', Icon: IconGrid,     end: true },
-  { to: '/admin/villas',       label: 'Villas',          Icon: IconBuilding        },
-  { to: '/admin/utilisateurs', label: 'Utilisateurs',    Icon: IconUsers           },
-  { to: '/admin/avis',         label: 'Avis',            Icon: IconMessage         },
-  { to: '/admin/paiement',     label: 'Encaissement',    Icon: IconCarte           },
+const ENTREES: Entree[] = [
+  { to: '/admin',              label: 'Tableau de bord', Icone: LayoutGrid,     end: true },
+  { to: '/admin/villas',       label: 'Villas',          Icone: Building2,      attente: 'villas' },
+  { to: '/admin/utilisateurs', label: 'Utilisateurs',    Icone: Users },
+  { to: '/admin/avis',         label: 'Avis',            Icone: MessageSquare },
+  { to: '/admin/paiement',     label: 'Encaissement',    Icone: CreditCard },
 ]
 
-function initials(name: string) {
-  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+function initiales(nom: string) {
+  return nom.split(' ').map((m) => m[0]).join('').toUpperCase().slice(0, 2)
 }
 
-function IconGrid() {
-  return <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+/**
+ * Compteurs affichés sur la navigation.
+ *
+ * Ils disent ce qui réclame une action **avant** d'ouvrir l'écran. Sans eux,
+ * on ouvre « Villas » pour découvrir qu'il n'y a rien à faire — ou, plus
+ * coûteux, on ne l'ouvre pas alors que douze annonces attendent depuis trois
+ * jours et que leurs propriétaires, eux, attendent aussi.
+ */
+function useAttentes() {
+  const [attentes, setAttentes] = useState<{ villas: number }>({ villas: 0 })
+  const emplacement = useLocation()
+
+  const relire = useCallback(() => {
+    api.get('/admin/stats')
+      .then((r) => setAttentes({ villas: r.data?.villas?.en_attente ?? 0 }))
+      .catch(() => { /* le compteur disparaît, la navigation reste utilisable */ })
+  }, [])
+
+  // Relu à chaque changement d'écran : après avoir validé trois villas, le
+  // compteur doit descendre. Le laisser figé donnerait un travail qui ne
+  // finit jamais.
+  useEffect(relire, [relire, emplacement.pathname])
+
+  return attentes
 }
-function IconBuilding() {
-  return <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-}
-function IconUsers() {
-  return <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-}
-function IconMessage() {
-  return <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-}
-function IconCarte() {
-  return <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
-}
-function IconSun() {
-  return <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path strokeLinecap="round" d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-}
-function IconMoon() {
-  return <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-}
-function IconMenu() {
-  return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16"/></svg>
-}
-function IconX() {
-  return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+
+function Navigation({ attentes, onNaviguer }: { attentes: { villas: number }; onNaviguer?: () => void }) {
+  return (
+    <nav className="console-nav" aria-label="Administration">
+      {ENTREES.map(({ to, label, Icone, end, attente }) => {
+        const compte = attente === 'villas' ? attentes.villas : 0
+
+        return (
+          <NavLink
+            key={to}
+            to={to}
+            end={end}
+            onClick={onNaviguer}
+            className={({ isActive }) => `console-lien${isActive ? ' est-actif' : ''}`}
+          >
+            <Icone size={17} aria-hidden="true" />
+            <span className="console-lien-libelle">{label}</span>
+            {compte > 0 && (
+              <span className="console-compteur" aria-label={`${compte} en attente`}>
+                {compte > 99 ? '99+' : compte}
+              </span>
+            )}
+          </NavLink>
+        )
+      })}
+
+      <div className="console-separateur" />
+
+      <Link to="/" className="console-lien" onClick={onNaviguer}>
+        <ArrowLeft size={17} aria-hidden="true" />
+        <span className="console-lien-libelle">Retour au site</span>
+      </Link>
+    </nav>
+  )
 }
 
 export default function AdminLayout() {
   const { user, logout } = useAuth()
   const { isDark, toggleTheme } = useTheme()
   const navigate = useNavigate()
-  const [open, setOpen] = useState(false)
-  const handleLogout = () => { logout(); navigate('/login') }
+  const emplacement = useLocation()
+  const [tiroir, setTiroir] = useState(false)
+  const attentes = useAttentes()
+
+  // Le tiroir se referme au changement d'écran : le laisser ouvert masquerait
+  // la page qu'on vient de demander.
+  //
+  // Ajusté pendant le rendu plutôt que dans un effet — le motif que React
+  // recommande pour aligner un état sur une valeur qui change. Dans un effet,
+  // le tiroir resterait visible le temps d'un rendu de plus, et l'écran
+  // apparaîtrait derrière lui avant de se découvrir. Les clics sur un lien
+  // sont déjà couverts par `onNaviguer` ; ceci rattrape le retour arrière du
+  // navigateur, tiroir ouvert.
+  const [cheminAffiche, setCheminAffiche] = useState(emplacement.pathname)
+  if (cheminAffiche !== emplacement.pathname) {
+    setCheminAffiche(emplacement.pathname)
+    setTiroir(false)
+  }
+
+  // Échap ferme le tiroir, comme toute surface modale.
+  useEffect(() => {
+    if (!tiroir) return
+    const surTouche = (e: KeyboardEvent) => { if (e.key === 'Escape') setTiroir(false) }
+    document.addEventListener('keydown', surTouche)
+    return () => document.removeEventListener('keydown', surTouche)
+  }, [tiroir])
+
+  const deconnecter = () => { logout(); navigate('/login') }
+
+  const titreEcran = ENTREES.find(
+    (e) => (e.end ? emplacement.pathname === e.to : emplacement.pathname.startsWith(e.to))
+  )?.label ?? 'Administration'
+
+  const identite = (
+    <div className="console-identite">
+      <div className="console-jeton" aria-hidden="true">{initiales(user?.name || '')}</div>
+      <div className="console-identite-texte">
+        <p className="console-identite-nom">{user?.name}</p>
+        <p className="console-identite-role">Administrateur</p>
+      </div>
+    </div>
+  )
 
   return (
-    <div className="min-h-screen flex" style={{ background: 'var(--bg)', color: 'var(--text-1)' }}>
+    <div className="console">
+      {/* ── Barre latérale, à partir du grand écran ── */}
+      <aside className="console-flanc">
+        <Link to="/" className="console-marque">
+          <span className="console-marque-nom">Ma Villa</span>
+          <span className="console-marque-role">Admin</span>
+        </Link>
 
-      {/* ── Desktop Sidebar ── */}
-      <aside
-        className="hidden lg:flex flex-col sticky top-0 h-screen overflow-hidden shrink-0"
-        style={{ width: 240, background: 'var(--bg-surface)', borderRight: '1px solid var(--border)' }}
-      >
-        {/* Logo */}
-        <div className="px-5 py-6 flex items-center gap-3" style={{ borderBottom: '1px solid var(--border)' }}>
-          <NavLink
-            to="/"
-            style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '1.25rem', fontWeight: 400, color: 'var(--text-1)', letterSpacing: '-0.02em', textDecoration: 'none', flex: 1 }}
-          >
-            Ma Villa
-          </NavLink>
-          <span className="text-xs font-bold uppercase" style={{ color: 'var(--accent)', letterSpacing: '0.1em', fontSize: '0.6rem' }}>
-            Admin
-          </span>
-        </div>
+        <Navigation attentes={attentes} />
 
-        {/* Nav links */}
-        <nav className="flex-1 py-3 overflow-y-auto scrollbar-none" style={{ paddingRight: '0.5rem' }}>
-          {adminLinks.map(({ to, label, Icon, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}
-            >
-              <Icon />
-              {label}
-            </NavLink>
-          ))}
-        </nav>
-
-        {/* User footer */}
-        <div className="px-4 py-5" style={{ borderTop: '1px solid var(--border)' }}>
-          <div className="flex items-center gap-3 mb-4">
-            <div style={{
-              width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-              background: 'linear-gradient(135deg, var(--accent), var(--accent-gold))',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '0.65rem', fontWeight: 700, color: '#fff',
-            }}>
-              {initials(user?.name || '')}
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-1)' }}>{user?.name}</p>
-              <p className="text-xs" style={{ color: 'var(--text-3)' }}>Administrateur</p>
-            </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <button
+        <div className="console-pied">
+          {identite}
+          <div className="console-actions">
+            <Button
+              variante="discret"
+              taille="sm"
               onClick={toggleTheme}
-              className="p-2 rounded-xl transition-colors hover:opacity-70"
-              style={{ color: 'var(--text-3)' }}
-              title={isDark ? 'Thème clair' : 'Thème sombre'}
-            >
-              {isDark ? <IconSun /> : <IconMoon />}
-            </button>
-            <button
-              onClick={handleLogout}
-              className="text-xs transition-colors hover:opacity-70"
-              style={{ color: 'var(--text-3)' }}
+              iconeAvant={isDark ? <Sun size={15} /> : <Moon size={15} />}
+              aria-label={isDark ? 'Passer au thème clair' : 'Passer au thème sombre'}
+            />
+            <Button
+              variante="discret"
+              taille="sm"
+              onClick={deconnecter}
+              iconeAvant={<LogOut size={15} />}
             >
               Déconnexion
-            </button>
+            </Button>
           </div>
         </div>
       </aside>
 
-      {/* ── Content (mobile header + main) ── */}
-      <div className="flex flex-col flex-1 min-w-0">
-
-        {/* Mobile header */}
-        <header
-          className="lg:hidden px-5 py-4 flex items-center justify-between sticky top-0 z-30 backdrop-blur-md"
-          style={{ background: 'var(--header-bg)', borderBottom: '1px solid var(--border)' }}
-        >
-          <div className="flex items-center gap-2">
-            <NavLink
-              to="/"
-              style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '1.2rem', fontWeight: 400, color: 'var(--text-1)', textDecoration: 'none' }}
-            >
-              Ma Villa
-            </NavLink>
-            <span className="text-xs font-bold uppercase" style={{ color: 'var(--accent)', letterSpacing: '0.1em', fontSize: '0.55rem' }}>Admin</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button onClick={toggleTheme} className="p-2 rounded-xl" style={{ color: 'var(--text-2)' }}>
-              {isDark ? <IconSun /> : <IconMoon />}
-            </button>
-            <button
-              className="p-1.5 rounded-xl transition-colors"
-              onClick={() => setOpen(v => !v)}
-              aria-label="Menu"
-              style={{ color: 'var(--text-1)' }}
-            >
-              {open ? <IconX /> : <IconMenu />}
-            </button>
-          </div>
+      <div className="console-corps">
+        {/* ── En-tête mobile ── */}
+        <header className="console-entete">
+          <Button
+            variante="discret"
+            taille="sm"
+            onClick={() => setTiroir(true)}
+            iconeAvant={<Menu size={19} />}
+            aria-label="Ouvrir le menu"
+            aria-expanded={tiroir}
+          />
+          {/* Le titre de l'écran plutôt que le nom du produit : sur un outil
+              de travail, savoir où l'on est vaut mieux que se voir rappeler
+              la marque à chaque écran. */}
+          <span className="console-entete-titre">{titreEcran}</span>
+          <Button
+            variante="discret"
+            taille="sm"
+            onClick={toggleTheme}
+            iconeAvant={isDark ? <Sun size={17} /> : <Moon size={17} />}
+            aria-label={isDark ? 'Passer au thème clair' : 'Passer au thème sombre'}
+          />
         </header>
 
-        {/* Mobile drawer */}
-        {open && (
-          <div className="fixed inset-0 z-50 lg:hidden" onClick={() => setOpen(false)}>
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-            <div
-              className="absolute top-0 right-0 h-full w-64 flex flex-col"
-              style={{ background: 'var(--bg-surface)', borderLeft: '1px solid var(--border)' }}
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: '1px solid var(--border)' }}>
-                <span className="text-base font-semibold" style={{ color: 'var(--text-1)' }}>Admin</span>
-                <button onClick={() => setOpen(false)} style={{ color: 'var(--text-2)' }}><IconX /></button>
+        {/* ── Tiroir mobile ── */}
+        {tiroir && (
+          <>
+            <div className="console-voile" onClick={() => setTiroir(false)} aria-hidden="true" />
+            <div className="console-tiroir" role="dialog" aria-label="Navigation" aria-modal="true">
+              <div className="console-marque">
+                <span className="console-marque-nom">Ma Villa</span>
+                <span className="console-marque-role">Admin</span>
+                <Button
+                  variante="discret"
+                  taille="sm"
+                  onClick={() => setTiroir(false)}
+                  iconeAvant={<X size={18} />}
+                  aria-label="Fermer le menu"
+                />
               </div>
-              <nav className="flex-1 flex flex-col px-4 py-4 gap-1">
-                {adminLinks.map(({ to, label, Icon, end }) => (
-                  <NavLink
-                    key={to} to={to} end={end}
-                    onClick={() => setOpen(false)}
-                    className={({ isActive }) =>
-                      `px-4 py-3 rounded-xl text-sm font-medium transition-colors flex items-center gap-3 ${isActive ? 'th-elevated th-text-1' : 'th-text-2'}`
-                    }
-                    style={{ textDecoration: 'none' }}
-                  >
-                    <Icon />
-                    {label}
-                  </NavLink>
-                ))}
-              </nav>
-              <div className="px-4 py-6" style={{ borderTop: '1px solid var(--border)' }}>
-                <div className="flex items-center gap-3 mb-4 px-2">
-                  <div style={{
-                    width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
-                    background: 'linear-gradient(135deg, var(--accent), var(--accent-gold))',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '0.6rem', fontWeight: 700, color: '#fff',
-                  }}>
-                    {initials(user?.name || '')}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium" style={{ color: 'var(--text-1)' }}>{user?.name}</p>
-                    <p className="text-xs" style={{ color: 'var(--text-3)' }}>Administrateur</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => { setOpen(false); handleLogout() }}
-                  className="w-full px-4 py-3 rounded-xl text-sm text-left transition-colors"
-                  style={{ border: '1px solid var(--border)', color: 'var(--text-2)' }}
-                >
+
+              <Navigation attentes={attentes} onNaviguer={() => setTiroir(false)} />
+
+              <div className="console-pied">
+                {identite}
+                <Button variante="secondaire" taille="sm" bloc onClick={deconnecter} iconeAvant={<LogOut size={15} />}>
                   Déconnexion
-                </button>
+                </Button>
               </div>
             </div>
-          </div>
+          </>
         )}
 
-        {/* Main content */}
-        <main className="flex-1 px-5 py-7 lg:px-10 lg:py-10">
+        <main className="console-principal">
           <Outlet />
         </main>
       </div>

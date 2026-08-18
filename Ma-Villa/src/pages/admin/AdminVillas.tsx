@@ -1,7 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Search, Star, ExternalLink, Building2, Check, X } from 'lucide-react'
 import api from '../../services/api'
 import { useRequete } from '../../lib/useRequete'
+import { useToast } from '../../context/ToastContext'
+import { messageErreur } from '../../lib/erreurs'
+import { depuis } from '../../lib/format'
+import Button from '../../components/ui/Button'
+import Badge from '../../components/ui/Badge'
+import Pagination, { type Page } from '../../components/console/Pagination'
 
 interface Villa {
   id: number
@@ -15,201 +22,220 @@ interface Villa {
   created_at: string
 }
 
-const TABS = [
-  { value: 'en_attente', label: 'En attente' },
-  { value: 'validee', label: 'Validées' },
-  { value: 'rejetee', label: 'Rejetées' },
+const ONGLETS = [
+  { valeur: 'en_attente', label: 'En attente' },
+  { valeur: 'validee', label: 'Validées' },
+  { valeur: 'rejetee', label: 'Rejetées' },
 ]
 
-function IconStar({ filled }: { filled: boolean }) {
-  return (
-    <svg
-      className={`w-4 h-4 transition-colors ${filled ? 'text-amber-400' : 'text-gray-600'}`}
-      fill={filled ? 'currentColor' : 'none'}
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-      />
-    </svg>
-  )
-}
-
 export default function AdminVillas() {
+  const toast = useToast()
   const [statut, setStatut] = useState('en_attente')
-  const [togglingId, setTogglingId] = useState<number | null>(null)
+  const [recherche, setRecherche] = useState('')
+  const [terme, setTerme] = useState('')
+  const [page, setPage] = useState(1)
+  const [enCours, setEnCours] = useState<number | null>(null)
 
-  const { donnees, chargement: isLoading, erreur, reessayer } = useRequete<Villa[]>(
-    async (signal) => (await api.get(`/admin/villas?statut=${statut}`, { signal })).data,
-    statut,
+  // La frappe ne déclenche pas une requête par caractère : sur un serveur
+  // mono-processus, chaque lettre coûterait un aller-retour.
+  useEffect(() => {
+    const t = setTimeout(() => { setTerme(recherche); setPage(1) }, 350)
+    return () => clearTimeout(t)
+  }, [recherche])
+
+  const requete = `statut=${statut}&page=${page}${terme ? `&recherche=${encodeURIComponent(terme)}` : ''}`
+
+  const { donnees, chargement, erreur, reessayer } = useRequete<Page<Villa>>(
+    async (signal) => (await api.get(`/admin/villas?${requete}`, { signal })).data,
+    requete,
     { messageErreurParDefaut: 'Impossible de charger les villas.' }
   )
-  const villas = donnees ?? []
 
-  const updateStatut = async (villa: Villa, newStatut: 'validee' | 'rejetee') => {
-    await api.patch(`/admin/villas/${villa.id}/statut`, { statut: newStatut })
-    reessayer()
-  }
+  const villas = donnees?.data ?? []
 
-  const toggleVedette = async (villa: Villa) => {
-    setTogglingId(villa.id)
+  const changerStatut = async (villa: Villa, nouveau: 'validee' | 'rejetee') => {
+    setEnCours(villa.id)
     try {
-      await api.patch(`/admin/villas/${villa.id}/vedette`)
+      await api.patch(`/admin/villas/${villa.id}/statut`, { statut: nouveau })
+      toast.succes(`« ${villa.nom} » ${nouveau === 'validee' ? 'validée et publiée' : 'rejetée'}.`)
       reessayer()
+    } catch (err) {
+      toast.erreur(messageErreur(err, "La décision n'a pas pu être enregistrée."))
     } finally {
-      setTogglingId(null)
+      setEnCours(null)
     }
   }
 
-  const vedetteCount = villas.filter((v) => v.vedette).length
+  const basculerVedette = async (villa: Villa) => {
+    setEnCours(villa.id)
+    try {
+      await api.patch(`/admin/villas/${villa.id}/vedette`)
+      reessayer()
+    } catch (err) {
+      toast.erreur(messageErreur(err, 'La mise en vedette a échoué.'))
+    } finally {
+      setEnCours(null)
+    }
+  }
+
+  const changerOnglet = (valeur: string) => { setStatut(valeur); setPage(1) }
 
   return (
     <div>
-      <h1 className="text-3xl font-light mb-6" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", letterSpacing: '-0.03em' }}>Gestion des villas</h1>
+      <h1 className="console-titre">Villas</h1>
+      <p className="console-sous-titre">
+        Chaque annonce passe par ici avant d'être visible du public.
+      </p>
 
-      {/* Tabs */}
-      <div className="flex flex-wrap gap-2 mb-8">
-        {TABS.map((t) => (
-          <button
-            key={t.value}
-            onClick={() => setStatut(t.value)}
-            className="px-4 py-1.5 rounded-xl text-sm transition-all"
-            style={
-              statut === t.value
-                ? { background: 'var(--accent)', color: 'var(--on-accent)' }
-                : { border: '1px solid var(--border)', color: 'var(--text-2)' }
-            }
-          >
-            {t.label}
-          </button>
-        ))}
+      <div className="console-filtres">
+        <div className="console-onglets" role="tablist">
+          {ONGLETS.map((o) => (
+            <button
+              key={o.valeur}
+              role="tab"
+              aria-selected={statut === o.valeur}
+              onClick={() => changerOnglet(o.valeur)}
+              className={`console-onglet${statut === o.valeur ? ' est-actif' : ''}`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="console-recherche">
+          <Search size={15} aria-hidden="true" />
+          <input
+            type="search"
+            className="champ-controle"
+            placeholder="Nom ou ville…"
+            value={recherche}
+            onChange={(e) => setRecherche(e.target.value)}
+            aria-label="Rechercher une villa"
+          />
+        </div>
       </div>
 
-      {statut === 'validee' && !isLoading && villas.length > 0 && (
-        <div className="flex items-center gap-2 mb-5 text-sm" style={{ color: 'var(--text-3)' }}>
-          <IconStar filled />
-          <span>{vedetteCount} villa{vedetteCount !== 1 ? 's' : ''} en vedette sur la page d'accueil</span>
-        </div>
-      )}
-
-      {erreur && !isLoading && (
-        <div
-          className="rounded-2xl p-6 mb-4 flex items-center justify-between gap-4 flex-wrap"
-          style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.22)' }}
-          role="alert"
-        >
-          <p className="text-sm" style={{ color: 'var(--danger)' }}>{erreur}</p>
-          <button
-            onClick={reessayer}
-            className="text-sm px-4 py-2 rounded-xl font-medium"
-            style={{ background: 'var(--accent)', color: '#fff' }}
-          >
+      {erreur && !chargement && (
+        <div className="console-erreur" role="alert">
+          {erreur}
+          <Button variante="secondaire" taille="sm" onClick={reessayer} >
             Réessayer
-          </button>
+          </Button>
         </div>
       )}
 
-      {isLoading ? (
-        <div className="flex flex-col gap-3">
+      {chargement ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
           {[1, 2, 3].map((n) => (
-            <div
-              key={n}
-              className="rounded-2xl px-6 py-5 animate-pulse"
-              style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
-            >
-              <div className="h-4 rounded w-1/3 mb-2" style={{ background: 'var(--border-2)' }} />
-              <div className="h-3 rounded w-1/4" style={{ background: 'var(--border)' }} />
+            <div key={n} className="panneau">
+              <div className="skeleton" style={{ height: 16, width: '35%', borderRadius: 6, marginBottom: 10 }} />
+              <div className="skeleton" style={{ height: 12, width: '55%', borderRadius: 6 }} />
             </div>
           ))}
         </div>
       ) : villas.length === 0 ? (
-        <div
-          className="rounded-2xl p-12 text-center"
-          style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
-        >
-          <p style={{ color: 'var(--text-2)' }}>Aucune villa dans cette catégorie.</p>
+        <div className="console-vide">
+          <span className="console-vide-icone"><Building2 size={22} /></span>
+          <p>
+            {terme
+              ? <>Aucune villa ne correspond à <strong>{terme}</strong>.</>
+              : statut === 'en_attente'
+                ? <>Aucune annonce en attente. <strong>Tout est traité.</strong></>
+                : 'Aucune villa dans cette catégorie.'}
+          </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-4">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
           {villas.map((villa) => (
-            <div
-              key={villa.id}
-              className="rounded-2xl px-5 py-4 md:px-6 md:py-5"
-              style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
-            >
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h2 className="font-medium truncate">{villa.nom}</h2>
-                    {villa.vedette && (
-                      <span className="shrink-0 text-xs bg-amber-400/10 border border-amber-400/20 text-amber-400 px-2 py-0.5 rounded-full">
-                        Vedette
-                      </span>
-                    )}
+            <article key={villa.id} className="panneau">
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-4)', alignItems: 'flex-start' }}>
+                <div style={{ flex: 1, minWidth: 220 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 4, flexWrap: 'wrap' }}>
+                    <h2 style={{ margin: 0, font: 'var(--t-h3)', color: 'var(--text-1)' }}>{villa.nom}</h2>
+                    {villa.vedette && <Badge ton="vedette">Vedette</Badge>}
                   </div>
-                  <p className="text-sm" style={{ color: 'var(--text-2)' }}>{villa.ville} · {villa.telephone}</p>
-                  <p className="text-sm mt-0.5" style={{ color: 'var(--text-3)' }}>
-                    {villa.proprietaire.name} · {villa.proprietaire.email}
+
+                  <p style={{ margin: 0, font: 'var(--t-body-sm)', color: 'var(--text-2)' }}>
+                    {villa.ville} · {villa.telephone}
                   </p>
+                  <p style={{ margin: '2px 0 0', font: 'var(--t-caption)', color: 'var(--text-3)' }}>
+                    {villa.proprietaire?.name} · {villa.proprietaire?.email} · déposée {depuis(villa.created_at)}
+                  </p>
+
+                  {villa.description && (
+                    <p className="line-clamp-2" style={{ margin: 'var(--space-2) 0 0', font: 'var(--t-body-sm)', color: 'var(--text-3)' }}>
+                      {villa.description}
+                    </p>
+                  )}
+
+                  {/* Ouvert dans un onglet : décider sans avoir vu l'annonce
+                      telle que le public la verra n'a pas de sens, et revenir
+                      en arrière ferait perdre la position dans la liste. */}
                   <Link
                     to={`/villas/${villa.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-block text-xs mt-2 transition-colors th-text-3 hover:th-text-1"
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 'var(--space-3)',
+                      font: 'var(--t-body-sm)', color: 'var(--accent)', textDecoration: 'none',
+                    }}
                   >
-                    Voir la villa ↗
+                    Voir l'annonce <ExternalLink size={13} />
                   </Link>
-                  {villa.description && (
-                    <p className="text-sm mt-2 line-clamp-2" style={{ color: 'var(--text-3)' }}>{villa.description}</p>
-                  )}
                 </div>
 
-                <div className="flex flex-row sm:flex-col items-center sm:items-end gap-2 shrink-0">
+                <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
                   {statut === 'en_attente' && (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => updateStatut(villa, 'validee')}
-                        className="px-4 py-1.5 rounded-xl text-sm font-medium transition-all hover:opacity-90"
-                        style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
+                    <>
+                      <Button
+                        variante="primaire" taille="sm"
+                        onClick={() => changerStatut(villa, 'validee')}
+                        disabled={enCours === villa.id}
+                        iconeAvant={<Check size={15} />}
                       >
                         Valider
-                      </button>
-                      <button
-                        onClick={() => updateStatut(villa, 'rejetee')}
-                        className="px-4 py-1.5 rounded-xl text-sm transition-all th-text-2 hover:th-text-1"
-                        style={{ border: '1px solid var(--border)' }}
+                      </Button>
+                      <Button
+                        variante="secondaire" taille="sm"
+                        onClick={() => changerStatut(villa, 'rejetee')}
+                        disabled={enCours === villa.id}
+                        iconeAvant={<X size={15} />}
                       >
                         Rejeter
-                      </button>
-                    </div>
+                      </Button>
+                    </>
                   )}
 
                   {statut === 'validee' && (
-                    <button
-                      onClick={() => toggleVedette(villa)}
-                      disabled={togglingId === villa.id}
-                      title={villa.vedette ? 'Retirer de la vedette' : 'Mettre en vedette'}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm border transition-all disabled:opacity-50 ${
-                        villa.vedette
-                          ? 'border-amber-400/30 bg-amber-400/10 text-amber-400 hover:bg-amber-400/20'
-                          : 'th-text-2 hover:th-text-1'
-                      }`}
-                      style={!villa.vedette ? { border: '1px solid var(--border)' } : {}}
+                    <Button
+                      variante={villa.vedette ? 'primaire' : 'secondaire'}
+                      taille="sm"
+                      onClick={() => basculerVedette(villa)}
+                      disabled={enCours === villa.id}
+                      iconeAvant={<Star size={15} fill={villa.vedette ? 'currentColor' : 'none'} />}
                     >
-                      <IconStar filled={villa.vedette} />
                       {villa.vedette ? 'En vedette' : 'Mettre en vedette'}
-                    </button>
+                    </Button>
+                  )}
+
+                  {statut === 'rejetee' && (
+                    <Button
+                      variante="secondaire" taille="sm"
+                      onClick={() => changerStatut(villa, 'validee')}
+                      disabled={enCours === villa.id}
+                      iconeAvant={<Check size={15} />}
+                    >
+                      Revenir sur le refus
+                    </Button>
                   )}
                 </div>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       )}
+
+      <Pagination page={donnees} onChange={setPage} unite="villa" />
     </div>
   )
 }
