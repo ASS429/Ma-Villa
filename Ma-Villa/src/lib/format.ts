@@ -59,3 +59,25 @@ export function libelleDuree(debut: string, fin: string): string {
 export function aujourdhui(): string {
   return new Date().toISOString().split('T')[0]
 }
+
+/**
+ * Temps écoulé, en abrégé : « à l'instant », « 3 h », « hier », « 12 mars ».
+ *
+ * Sur un fil d'activité, la question est « est-ce récent ? », pas « quelle
+ * date ? ». Une date complète oblige à la comparer mentalement à aujourd'hui ;
+ * au-delà d'une semaine, en revanche, l'écart cesse de parler et c'est la date
+ * qui redevient l'information utile.
+ */
+export function depuis(iso: string): string {
+  const secondes = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
+
+  if (secondes < 60) return "à l'instant"
+  if (secondes < 3600) return `${Math.floor(secondes / 60)} min`
+  if (secondes < 86_400) return `${Math.floor(secondes / 3600)} h`
+
+  const jours = Math.floor(secondes / 86_400)
+  if (jours === 1) return 'hier'
+  if (jours < 7) return `${jours} j`
+
+  return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+}
