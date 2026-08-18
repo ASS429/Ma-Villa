@@ -52,6 +52,7 @@ const AdminDashboard    = lazy(() => import('./pages/admin/AdminDashboard'))
 const AdminVillas       = lazy(() => import('./pages/admin/AdminVillas'))
 const AdminUtilisateurs = lazy(() => import('./pages/admin/AdminUtilisateurs'))
 const AdminAvis         = lazy(() => import('./pages/admin/AdminAvis'))
+const AdminPaiement     = lazy(() => import('./pages/admin/AdminPaiement'))
 
 /* ─── Route guards ───────────────────────────────────────────── */
 
@@ -413,6 +414,7 @@ export default function App() {
         <Route path="villas" element={<AdminVillas />} />
         <Route path="utilisateurs" element={<AdminUtilisateurs />} />
         <Route path="avis" element={<AdminAvis />} />
+        <Route path="paiement" element={<AdminPaiement />} />
       </Route>
 
         <Route path="*" element={<NotFound />} />

@@ -10,6 +10,7 @@ const adminLinks: NavItem[] = [
   { to: '/admin/villas',       label: 'Villas',          Icon: IconBuilding        },
   { to: '/admin/utilisateurs', label: 'Utilisateurs',    Icon: IconUsers           },
   { to: '/admin/avis',         label: 'Avis',            Icon: IconMessage         },
+  { to: '/admin/paiement',     label: 'Encaissement',    Icon: IconCarte           },
 ]
 
 function initials(name: string) {
@@ -27,6 +28,9 @@ function IconUsers() {
 }
 function IconMessage() {
   return <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+}
+function IconCarte() {
+  return <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
 }
 function IconSun() {
   return <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path strokeLinecap="round" d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
