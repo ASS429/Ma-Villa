@@ -247,7 +247,9 @@ class AuthController extends Controller
             'password_confirmation' => 'sometimes|string',
         ]);
 
-        if (isset($data['password'])) {
+        $motDePasseChange = isset($data['password']);
+
+        if ($motDePasseChange) {
             if (! Hash::check($data['current_password'], $user->password)) {
                 throw ValidationException::withMessages([
                     'current_password' => ['Mot de passe actuel incorrect.'],
@@ -257,10 +259,39 @@ class AuthController extends Controller
         }
 
         if (isset($data['name']))  $user->name  = $data['name'];
-        if (isset($data['email'])) $user->email = $data['email'];
         if (array_key_exists('phone', $data)) $user->phone = $data['phone'];
 
+        // Changer d'adresse reprend la vérification à zéro. Sans cela le compte
+        // reste marqué « vérifié » sur une adresse que personne n'a confirmée —
+        // y compris celle de quelqu'un d'autre — et la vérification ne garantit
+        // plus rien.
+        $adresseChangee = isset($data['email']) && $data['email'] !== $user->email;
+
+        if ($adresseChangee) {
+            $user->email = $data['email'];
+            $user->email_verified_at = null;
+        }
+
         $user->save();
+
+        if ($adresseChangee) {
+            $this->envoyerSansBloquer(
+                fn () => $user->sendEmailVerificationNotification(),
+                "Vérification de la nouvelle adresse non envoyée à {$user->email}"
+            );
+        }
+
+        // Changer son mot de passe est le geste de quelqu'un qui pense son
+        // compte compromis. Laisser vivre les jetons déjà émis le rendrait
+        // inutile : celui qui est entré y resterait. La session courante est
+        // épargnée, sans quoi l'utilisateur se déconnecte lui-même.
+        if ($motDePasseChange) {
+            $courant = $request->user()->currentAccessToken();
+
+            $user->tokens()
+                ->when($courant, fn ($q) => $q->where('id', '!=', $courant->id))
+                ->delete();
+        }
 
         return response()->json($user);
     }
