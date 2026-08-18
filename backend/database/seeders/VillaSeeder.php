@@ -6,54 +6,20 @@ use App\Models\Avis;
 use App\Models\Logement;
 use App\Models\Photo;
 use App\Models\Tarif;
-use App\Models\User;
 use App\Models\Villa;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class VillaSeeder extends Seeder
 {
-    /**
-     * Mot de passe historique de ces comptes. Il est écrit dans un dépôt
-     * public, donc connu de tout le monde : partout où il subsiste, le compte
-     * est ouvert.
-     */
-    private const MOT_DE_PASSE_HISTORIQUE = 'password';
-
     public function run(): void
     {
         // ── Utilisateurs ──────────────────────────────────────────
-        $this->creerOuSecuriser(
-            'admin@mavilla.sn',
-            ['name' => 'Admin Ma Villa', 'role' => 'admin'],
-            (string) env('ADMIN_PASSWORD', '')
-        );
-
-        $motDePasseDemo = (string) env('SEED_PASSWORD', '');
-
-        $props = collect([
-            ['name' => 'Amadou Diallo',   'email' => 'amadou.diallo@mavilla.sn'],
-            ['name' => 'Fatou Ndiaye',    'email' => 'fatou.ndiaye@mavilla.sn'],
-            ['name' => 'Ibrahima Fall',   'email' => 'ibrahima.fall@mavilla.sn'],
-        ])->map(fn ($d) => $this->creerOuSecuriser(
-            $d['email'],
-            ['name' => $d['name'], 'role' => 'proprietaire'],
-            $motDePasseDemo
-        ));
-
-        $clients = collect([
-            ['name' => 'Sophie Martin',     'email' => 'sophie.martin@gmail.com'],
-            ['name' => 'Mamadou Gueye',     'email' => 'mamadou.gueye@gmail.com'],
-            ['name' => 'Aïssatou Ba',       'email' => 'aissatou.ba@gmail.com'],
-            ['name' => 'Pierre Dupont',     'email' => 'pierre.dupont@gmail.com'],
-            ['name' => 'Mariama Diop',      'email' => 'mariama.diop@gmail.com'],
-            ['name' => 'Jean-Luc Bernard', 'email' => 'jeanluc.bernard@gmail.com'],
-        ])->map(fn ($d) => $this->creerOuSecuriser(
-            $d['email'],
-            ['name' => $d['name'], 'role' => 'client'],
-            $motDePasseDemo
-        ));
+        // Les comptes et leurs mots de passe sont l'affaire de ComptesSeeder,
+        // qui tourne à chaque démarrage : ici on ne fait que les récupérer.
+        $comptes = new ComptesSeeder();
+        $comptes->administrateur();
+        $props = $comptes->proprietaires()->values();
+        $clients = $comptes->clients()->values();
 
         // ── Données villas ────────────────────────────────────────
         $data = [
@@ -739,56 +705,5 @@ class VillaSeeder extends Seeder
                 ]);
             }
         }
-    }
-
-    /**
-     * Crée un compte de démonstration sans jamais laisser derrière lui un mot
-     * de passe que tout le monde peut lire.
-     *
-     * Ces comptes vivaient avec « password », écrit en clair dans un dépôt
-     * public, et le peuplement rejoue à chaque déploiement. `admin@mavilla.sn`
-     * donnait ainsi les pleins pouvoirs sur la production à quiconque lisait
-     * ce fichier : valider des villas, supprimer des comptes, lire toutes les
-     * réservations.
-     *
-     * Règle appliquée :
-     *  — un mot de passe fourni par l'environnement fait foi, toujours ;
-     *  — sinon, hors production, on garde « password », commode en local ;
-     *  — sinon, on tire un secret que personne ne connaîtra. Le compte devient
-     *    inaccessible, ce qui est le bon défaut : mieux vaut une porte fermée
-     *    dont on a perdu la clé qu'une porte ouverte.
-     *
-     * Un compte existant n'est réécrit que s'il porte encore le mot de passe
-     * historique — on ne casse jamais un secret déjà choisi par l'exploitant.
-     */
-    private function creerOuSecuriser(string $email, array $attributs, string $motDePasseVoulu): User
-    {
-        $utilisateur = User::firstOrNew(['email' => $email]);
-        $utilisateur->fill($attributs);
-
-        $vulnerable = $utilisateur->exists
-            && Hash::check(self::MOT_DE_PASSE_HISTORIQUE, (string) $utilisateur->password);
-
-        if ($motDePasseVoulu !== '') {
-            $utilisateur->password = Hash::make($motDePasseVoulu);
-        } elseif (! $utilisateur->exists || $vulnerable) {
-            $secret = app()->environment('production')
-                ? Str::random(48)
-                : self::MOT_DE_PASSE_HISTORIQUE;
-
-            $utilisateur->password = Hash::make($secret);
-
-            if (app()->environment('production')) {
-                $this->command?->warn(
-                    "  ! {$email} : mot de passe rendu inutilisable. "
-                    .'Renseignez ADMIN_PASSWORD (compte admin) ou SEED_PASSWORD '
-                    .'(comptes de démonstration) pour en fixer un.'
-                );
-            }
-        }
-
-        $utilisateur->save();
-
-        return $utilisateur;
     }
 }

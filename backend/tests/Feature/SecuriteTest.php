@@ -11,6 +11,7 @@ use App\Notifications\NouvelleReservation;
 use App\Notifications\ReinitialiserMotDePasse;
 use App\Notifications\ReservationMiseAJour;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
@@ -311,18 +312,37 @@ class SecuriteTest extends TestCase
         ])->assertStatus(409);
     }
 
+    public function test_une_base_deja_peuplee_voit_quand_meme_ses_comptes_fermes(): void
+    {
+        // Le vrai piege : DatabaseSeeder abandonne des qu'une villa existe. La
+        // securisation vivait derriere cette garde, donc elle n'a jamais tourne
+        // en production : le correctif etait ecrit, deploye, et sans effet.
+        // Ce test emprunte le chemin reel du demarrage, pas un raccourci.
+        Villa::factory()->create();
+
+        $ouvert = User::create([
+            'email'    => 'admin@mavilla.sn',
+            'name'     => 'Admin Ma Villa',
+            'role'     => 'admin',
+            'password' => Hash::make('password'),
+        ]);
+
+        app()['env'] = 'production';
+        (new \Database\Seeders\DatabaseSeeder())->run();
+
+        $this->assertFalse(
+            Hash::check('password', $ouvert->fresh()->password),
+            'Le compte admin accepte encore le mot de passe public sur une base deja peuplee.'
+        );
+    }
+
     public function test_le_peuplement_ne_laisse_aucun_compte_ouvert_en_production(): void
     {
-        // « password » est écrit dans un dépôt public et le peuplement rejoue à
-        // chaque déploiement : admin@mavilla.sn donnait les pleins pouvoirs sur
-        // la production à quiconque lisait ce fichier.
         app()['env'] = 'production';
 
-        // Instancié directement : passer par `db:seed` déclencherait la
-        // confirmation interactive que Laravel impose en production.
-        (new \Database\Seeders\VillaSeeder())->run();
+        (new \Database\Seeders\ComptesSeeder())->run();
 
-        $comptes = \App\Models\User::whereIn('email', [
+        $comptes = User::whereIn('email', [
             'admin@mavilla.sn',
             'amadou.diallo@mavilla.sn',
             'sophie.martin@gmail.com',
@@ -332,8 +352,8 @@ class SecuriteTest extends TestCase
 
         foreach ($comptes as $compte) {
             $this->assertFalse(
-                \Illuminate\Support\Facades\Hash::check('password', $compte->password),
-                "Le compte {$compte->email} accepte encore « password »."
+                Hash::check('password', $compte->password),
+                "Le compte {$compte->email} accepte encore le mot de passe public."
             );
         }
     }
@@ -343,21 +363,33 @@ class SecuriteTest extends TestCase
         // Sinon l'exploitant n'aurait aucun moyen de reprendre la main sur son
         // propre compte d'administration.
         app()['env'] = 'production';
-        config(['app.env' => 'production']);
         putenv('ADMIN_PASSWORD=un-secret-choisi-par-lexploitant');
 
         try {
-            // Instancié directement : passer par `db:seed` déclencherait la
-        // confirmation interactive que Laravel impose en production.
-        (new \Database\Seeders\VillaSeeder())->run();
+            (new \Database\Seeders\ComptesSeeder())->run();
 
-            $admin = \App\Models\User::where('email', 'admin@mavilla.sn')->firstOrFail();
+            $admin = User::where('email', 'admin@mavilla.sn')->firstOrFail();
             $this->assertTrue(
-                \Illuminate\Support\Facades\Hash::check('un-secret-choisi-par-lexploitant', $admin->password)
+                Hash::check('un-secret-choisi-par-lexploitant', $admin->password)
             );
         } finally {
             putenv('ADMIN_PASSWORD');
         }
+    }
+
+    public function test_un_secret_deja_choisi_par_l_exploitant_n_est_jamais_casse(): void
+    {
+        $admin = User::create([
+            'email'    => 'admin@mavilla.sn',
+            'name'     => 'Admin Ma Villa',
+            'role'     => 'admin',
+            'password' => Hash::make('secret-solide-de-lexploitant'),
+        ]);
+
+        app()['env'] = 'production';
+        (new \Database\Seeders\ComptesSeeder())->run();
+
+        $this->assertTrue(Hash::check('secret-solide-de-lexploitant', $admin->fresh()->password));
     }
 
     public function test_une_route_api_ouverte_dans_un_navigateur_repond_401_pas_500(): void
