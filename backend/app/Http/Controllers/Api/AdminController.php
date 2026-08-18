@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Avis;
+use App\Models\JournalAdmin;
 use App\Models\Paiement;
 use App\Models\Reservation;
 use App\Models\User;
@@ -259,14 +260,34 @@ class AdminController extends Controller
     public function validerVilla(Request $request, Villa $villa): JsonResponse
     {
         $request->validate(['statut' => 'required|in:validee,rejetee']);
+
+        $avant = $villa->statut;
         $villa->update(['statut' => $request->statut]);
+
+        JournalAdmin::consigner(
+            $request->user(),
+            $request->statut === 'validee' ? 'villa.validee' : 'villa.rejetee',
+            $villa,
+            $villa->nom,
+            ['statut_avant' => $avant, 'statut_apres' => $villa->statut],
+            $request->ip(),
+        );
 
         return response()->json($villa);
     }
 
-    public function toggleVedette(Villa $villa): JsonResponse
+    public function toggleVedette(Request $request, Villa $villa): JsonResponse
     {
         $villa->update(['vedette' => ! $villa->vedette]);
+
+        JournalAdmin::consigner(
+            $request->user(),
+            $villa->vedette ? 'villa.mise_en_vedette' : 'villa.retiree_vedette',
+            $villa,
+            $villa->nom,
+            [],
+            $request->ip(),
+        );
 
         return response()->json($villa);
     }
@@ -293,16 +314,52 @@ class AdminController extends Controller
             ], 422);
         }
 
+        // Consigné avant la suppression : après, le nom et l'adresse ont
+        // disparu, et la trace ne dirait plus qui a été fermé.
+        JournalAdmin::consigner(
+            $request->user(),
+            'compte.supprime',
+            $user,
+            $user->name,
+            ['email' => $user->email, 'role' => $user->role],
+            $request->ip(),
+        );
+
         $user->delete();
 
         return response()->json(['message' => 'Utilisateur supprimé.']);
     }
 
-    public function supprimerAvis(Avis $avi): JsonResponse
+    public function supprimerAvis(Request $request, Avis $avi): JsonResponse
     {
+        JournalAdmin::consigner(
+            $request->user(),
+            'avis.supprime',
+            $avi,
+            "Avis {$avi->note}/5",
+            ['note' => $avi->note, 'villa_id' => $avi->villa_id, 'auteur_id' => $avi->user_id],
+            $request->ip(),
+        );
+
         $avi->delete();
 
         return response()->json(['message' => 'Avis supprimé.']);
+    }
+
+    /** Lecture du journal, paginée et filtrable par action. */
+    public function journal(Request $request): JsonResponse
+    {
+        $request->validate([
+            'action' => 'sometimes|nullable|string|max:60',
+            'par_page' => 'sometimes|integer|min:5|max:100',
+        ]);
+
+        return response()->json(
+            JournalAdmin::query()
+                ->when($request->filled('action'), fn ($q) => $q->where('action', $request->input('action')))
+                ->latest()
+                ->paginate($request->integer('par_page', 30))
+        );
     }
 
     /* ── Outils ──────────────────────────────────────────────────── */

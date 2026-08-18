@@ -41,6 +41,11 @@ Route::get('/logements/{logement}/tarifs', [TarifController::class, 'index']);
 Route::get('/logements/{logement}/disponibilites', [DisponibiliteController::class, 'index']);
 
 // Protégées
+//
+// Les routes qui écrivent portent une limite de débit. L'authentification
+// seule ne suffit pas : un compte légitime peut créer des milliers de
+// réservations ou saturer le stockage objet, facturé au volume. Les plafonds
+// sont larges — ils arrêtent une boucle, pas un usage soutenu.
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me']);
@@ -51,7 +56,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/proprietaire/villas', [VillaController::class, 'mesVillas']);
 
     // Villas (propriétaire)
-    Route::post('/villas', [VillaController::class, 'store']);
+    Route::post('/villas', [VillaController::class, 'store'])->middleware('throttle:10,1');
     Route::put('/villas/{villa}', [VillaController::class, 'update']);
     Route::delete('/villas/{villa}', [VillaController::class, 'destroy']);
 
@@ -76,12 +81,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Réservations
     Route::get('/reservations', [ReservationController::class, 'index']);
-    Route::post('/reservations', [ReservationController::class, 'store']);
+    Route::post('/reservations', [ReservationController::class, 'store'])->middleware('throttle:10,1');
     Route::get('/reservations/{reservation}', [ReservationController::class, 'show']);
     Route::patch('/reservations/{reservation}/statut', [ReservationController::class, 'updateStatut']);
 
     // Upload fichier (retourne URL)
-    Route::post('/upload', [PhotoController::class, 'upload']);
+    Route::post('/upload', [PhotoController::class, 'upload'])->middleware('throttle:40,1');
 
     // Photos
     Route::post('/villas/{villa}/photos', [PhotoController::class, 'storeForVilla']);
@@ -89,7 +94,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/villas/{villa}/photos/{photo}', [PhotoController::class, 'destroy']);
 
     // Avis
-    Route::post('/avis', [AvisController::class, 'store']);
+    Route::post('/avis', [AvisController::class, 'store'])->middleware('throttle:5,1');
     Route::get('/villas/{villa}/avis/eligibilite', [AvisController::class, 'eligibilite']);
 
     // Admin
@@ -106,6 +111,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/utilisateurs/{user}', [AdminController::class, 'supprimerUtilisateur']);
         Route::get('/avis', [AdminController::class, 'avis']);
         Route::delete('/avis/{avi}', [AdminController::class, 'supprimerAvis']);
+
+        // Journal d'audit : qui a validé, rejeté, supprimé — et quand. En cas
+        // de litige avec un propriétaire, c'est la seule chose à produire.
+        Route::get('/journal', [AdminController::class, 'journal']);
 
         // Sonde PayDunya : dit ce que le prestataire répond, sans réservation
         // ni paiement. Le seul moyen de diagnostiquer une fois les clés de

@@ -12,16 +12,34 @@ use Illuminate\Support\Str;
 
 class PhotoController extends Controller
 {
+    /**
+     * L'URL d'une photo n'était validée que comme chaîne : un propriétaire
+     * pouvait enregistrer n'importe quoi — un pixel de suivi, une image
+     * hébergée ailleurs qui change de contenu après validation, ou un
+     * `javascript:` qui, sans s'exécuter dans un `src`, n'a rien à faire en
+     * base.
+     *
+     * Deux gardes : le schéma doit être http(s), et le nombre de photos par
+     * envoi est plafonné — sans quoi un seul appel pouvait insérer des
+     * milliers de lignes.
+     */
+    private const REGLES_PHOTOS = [
+        'photos'         => 'required|array|min:1|max:40',
+        'photos.*.url'   => 'required|string|max:2048|url:http,https',
+        'photos.*.alt'   => 'nullable|string|max:255',
+        'photos.*.ordre' => 'integer|min:0|max:999',
+    ];
+
+    private const MESSAGES_PHOTOS = [
+        'photos.max'       => '40 photos au maximum par envoi.',
+        'photos.*.url.url' => 'Chaque photo doit être une adresse http ou https.',
+    ];
+
     public function storeForVilla(Request $request, Villa $villa): JsonResponse
     {
         $this->authorize('update', $villa);
 
-        $request->validate([
-            'photos'          => 'required|array|min:1',
-            'photos.*.url'    => 'required|string',
-            'photos.*.alt'    => 'nullable|string',
-            'photos.*.ordre'  => 'integer',
-        ]);
+        $request->validate(self::REGLES_PHOTOS, self::MESSAGES_PHOTOS);
 
         $photos = collect($request->photos)->map(fn($p, $i) => [
             'url'   => $p['url'],
@@ -38,12 +56,7 @@ class PhotoController extends Controller
     {
         $this->authorize('update', $villa);
 
-        $request->validate([
-            'photos'          => 'required|array|min:1',
-            'photos.*.url'    => 'required|string',
-            'photos.*.alt'    => 'nullable|string',
-            'photos.*.ordre'  => 'integer',
-        ]);
+        $request->validate(self::REGLES_PHOTOS, self::MESSAGES_PHOTOS);
 
         $photos = collect($request->photos)->map(fn($p, $i) => [
             'url'   => $p['url'],
