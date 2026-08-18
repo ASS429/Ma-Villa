@@ -19,7 +19,7 @@ aboutissait à des réservations confirmées et payées au centième du tarif.
 
 | | Avant | Après |
 |---|---|---|
-| Tests backend | 176 | **208** (+32) |
+| Tests backend | 176 | **219** (+43) |
 | Vulnérabilités Composer | **30** (2 hautes) | **0** |
 | Vulnérabilités npm | 0 | 0 |
 | Laravel | 13.5.0 | 13.26.0 |
@@ -153,10 +153,10 @@ mise à jour.
 
 | # | Sujet | Détail |
 |---|---|---|
-| a | **URL de photo non validée** | `PhotoController::storeForVilla` accepte `photos.*.url` en `string` sans contrôle de schéma. Un propriétaire peut enregistrer une URL arbitraire (suivi par pixel, contenu tiers). À restreindre à `https://` et, idéalement, au domaine de stockage. |
+| a | ~~**URL de photo non validée**~~ | ✅ **Corrigé.** Schéma restreint à http(s), longueur bornée, et 40 photos au maximum par envoi — un seul appel pouvait insérer des milliers de lignes. |
 | b | ~~**Listes d'administration sans pagination**~~ | ✅ **Corrigé** — voir §5 bis. Les trois listes sont paginées, plafonnées à 100 par page, avec recherche. |
-| c | **Aucune limite de débit sur les écritures** | Seules les routes d'authentification sont limitées. `POST /reservations`, `POST /avis`, `POST /upload` ne le sont pas : un compte peut créer des milliers de réservations ou saturer le stockage. |
-| d | **Pas de journal d'audit** | Aucune trace de qui a validé une villa, supprimé un avis ou un compte. En cas de litige, rien à produire. |
+| c | ~~**Aucune limite de débit sur les écritures**~~ | ✅ **Corrigé.** `POST /reservations` et `/villas` à 10/min, `/upload` à 40/min, `/avis` à 5/min. Plafonds larges : ils arrêtent une boucle, pas un usage soutenu. |
+| d | ~~**Pas de journal d'audit**~~ | ✅ **Corrigé.** Table `journal_admin` + `GET /admin/journal`. L'auteur y est recopié, pas seulement relié : un compte supprimé ne doit pas effacer ce qu'il a fait. Une écriture de journal qui échoue n'interrompt jamais l'action métier. |
 
 ---
 
@@ -196,9 +196,9 @@ Conséquence concrète, mesurée : la bascule de thème et le lien du logo y ét
 dépourvus de nom accessible, alors que la version partagée en avait un. Corriger
 `CoquilleAuth` ne les atteignait pas.
 
-Les noms manquants ont été ajoutés aux deux copies. **La duplication elle-même
-reste à supprimer** : tant qu'elle existe, toute correction dans la coquille
-partagée manquera silencieusement ces deux écrans.
+✅ **Corrigé.** Les deux écrans passent par `CoquilleAuth`, perdent 120 lignes,
+gagnent une balise `Seo` — l'inscription n'en avait aucune — et leurs boutons
+passent par le primitif `Button` au lieu de trois dégradés recopiés.
 
 ### 2.3 🟡 Le développement local ne démarre pas seul
 
@@ -526,7 +526,7 @@ Par honnêteté sur le périmètre :
 
 | Non fait | Raison |
 |---|---|
-| **Refonte de tous les écrans un par un** | ~35 écrans. La couche de design les élève tous ; le parcours public, l'administration et l'espace personnel sont traités. **Restent en styles en ligne** : `GererVilla` (50 occurrences), `NouvelleVilla` (20), `MesVillas` (12), `Favoris` (9) — les écrans de création et de gestion d'annonce. |
+| ~~**Refonte de tous les écrans un par un**~~ | ✅ Fait. Aucune couleur Tailwind en dur ne subsiste dans `src/pages` ni dans les composants. Les `style={{ }}` restants ne portent que de la mise en page et référencent des tokens. |
 | **Test de la course à la double réservation** | exige deux connexions concurrentes ; SQLite en mémoire ne le permet pas. Demande une CI sur PostgreSQL. |
 | **Mesure des cibles tactiles en texte** | la règle est sous `@media (pointer: coarse)`, que Chromium headless ne déclenche pas. À vérifier sur téléphone. |
 | **Envoi réel d'une notification poussée** | demande des clés VAPID de production et un abonnement d'appareil réel. La génération de clés a été vérifiée localement (avec `gmp` activé), l'API et les 11 tests couvrent le reste. |
@@ -591,13 +591,14 @@ Par honnêteté sur le périmètre :
 
 ### 🟡 Ensuite
 
-7. Limiter le débit des routes d'écriture (§1.7 c).
-8. Valider le schéma des URL de photo (§1.7 a).
-9. Supprimer la duplication `Login` / `Register` ↔ `CoquilleAuth` (§2.2).
-10. Finir l'alignement sur les tokens : `GererVilla`, `NouvelleVilla`,
-    `MesVillas`, `Favoris` (§5 bis).
-11. Pré-rendu SEO des fiches villa.
-12. Journal d'audit des actions d'administration (§1.7 d).
+7. **Pré-rendu SEO des fiches villa** — le seul chantier technique encore
+   ouvert de la liste initiale. SPA sans SSR : Google ne voit pratiquement rien
+   des annonces, alors que c'est par là qu'arrive le trafic d'acquisition.
+8. Écran de consultation du journal d'audit dans la console (l'API existe,
+   `GET /admin/journal` ; l'interface reste à faire).
+9. Messagerie entre client et propriétaire.
+10. Test d'intégration sur PostgreSQL pour la course à la double réservation
+    (§1.5), que SQLite ne permet pas de reproduire.
 
 ---
 
@@ -607,7 +608,7 @@ Rien n'a été déclaré corrigé sans preuve. Pour chaque défaut : un test qui
 échoue d'abord, ou une mesure au navigateur avant et après.
 
 ```bash
-# Backend — 208 tests
+# Backend — 219 tests
 cd backend && php artisan test
 composer audit                      # doit rester à zéro
 

@@ -105,9 +105,12 @@ même agencement, stylée en ligne.
 - ⚠️ **`position` dans une feuille du projet doit aller en `@layer components`**,
   sinon elle écrase les utilitaires Tailwind (`.absolute` notamment).
 
-Reste à faire : `GererVilla`, `NouvelleVilla`, `MesVillas` et `Favoris` gardent
-des styles en ligne. `Login` et `Register` dupliquent `CoquilleAuth` au lieu de
-l'utiliser — toute correction dans la coquille partagée les manque.
+**Aucune couleur Tailwind en dur** ne subsiste dans `src/pages` ni dans les
+composants : tout passe par les tokens, et le thème sombre suit partout. Les
+`style={{ }}` restants ne portent que de la mise en page (`flex`, `gap`,
+`minWidth`) et référencent des variables — les ajouts doivent faire de même.
+
+`Login` et `Register` passent désormais par `CoquilleAuth`.
 
 ---
 
@@ -117,7 +120,7 @@ l'utiliser — toute correction dans la coquille partagée les manque.
 npx tsc -b          # doit passer
 npx eslint src      # doit être à zéro — c'est l'état actuel, ne pas le dégrader
 npm run build
-cd ../backend && php artisan test    # 208 tests
+cd ../backend && php artisan test    # 219 tests
 ```
 
 ---
@@ -143,6 +146,4 @@ installable avec notifications poussées · 30 vulnérabilités Composer corrig�
    redéployer (l'extension `gmp` vient d'y être ajoutée) — sans quoi les
    notifications restent dormantes.
 3. **Pré-rendu des fiches villa** — SPA sans SSR : Google ne voit pratiquement rien.
-4. Limitation de débit sur les routes d'écriture (`POST /reservations`,
-   `/avis`, `/upload`).
-5. Messagerie entre client et propriétaire.
+4. Messagerie entre client et propriétaire.
