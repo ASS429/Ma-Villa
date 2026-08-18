@@ -392,6 +392,24 @@ class SecuriteTest extends TestCase
         $this->assertTrue(Hash::check('secret-solide-de-lexploitant', $admin->fresh()->password));
     }
 
+    public function test_les_colonnes_filtrees_a_chaque_recherche_sont_indexees(): void
+    {
+        // Sur vingt villas l'absence d'index est invisible ; sur deux mille,
+        // c'est un parcours complet de la table à chaque requête, en plus des
+        // sous-requêtes corrélées que la recherche exécute déjà par ligne.
+        $colonnesIndexees = collect(\Illuminate\Support\Facades\Schema::getIndexes('villas'))
+            ->pluck('columns')
+            ->flatten()
+            ->unique();
+
+        foreach (['statut', 'vedette', 'ville'] as $colonne) {
+            $this->assertTrue(
+                $colonnesIndexees->contains($colonne),
+                "villas.{$colonne} est filtrée à chaque recherche et n'est pas indexée."
+            );
+        }
+    }
+
     public function test_une_route_api_ouverte_dans_un_navigateur_repond_401_pas_500(): void
     {
         // Ce back n'expose aucune route « login » : sans règle explicite,
