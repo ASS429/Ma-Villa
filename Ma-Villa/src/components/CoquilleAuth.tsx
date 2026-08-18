@@ -36,7 +36,7 @@ export default function CoquilleAuth({
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-4 py-12 relative"
+      className="coquille-auth min-h-screen flex items-center justify-center px-4 py-12 relative"
       style={{ background: 'var(--bg)', color: 'var(--text-1)' }}
     >
       {!isDark && (
@@ -51,7 +51,7 @@ export default function CoquilleAuth({
 
       <button
         onClick={toggleTheme}
-        className="absolute top-6 right-6 p-2.5 rounded-xl transition-all hover:scale-110"
+        className="bouton-icone absolute top-6 right-6 p-2.5 rounded-xl transition-all hover:scale-110"
         style={{ border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-2)' }}
         aria-label={isDark ? 'Passer au thème clair' : 'Passer au thème sombre'}
       >

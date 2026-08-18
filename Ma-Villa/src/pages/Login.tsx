@@ -85,15 +85,17 @@ export default function Login() {
 
       {/* Theme toggle */}
       <button
+        type="button"
         onClick={toggleTheme}
-        className="absolute top-6 right-6 p-2.5 rounded-xl transition-all hover:scale-110"
+        className="bouton-icone absolute top-6 right-6 p-2.5 rounded-xl transition-all hover:scale-110"
         style={{ border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-2)' }}
+        aria-label={isDark ? 'Passer au thème clair' : 'Passer au thème sombre'}
       >
         {isDark ? <IconSun /> : <IconMoon />}
       </button>
 
       <div className="w-full max-w-md relative z-10">
-        <Link to="/" className="flex justify-center mb-10">
+        <Link to="/" className="flex justify-center mb-10" aria-label="Retour à l'accueil Ma Villa">
           <img src="/logo.webp" alt="Ma Villa" width={80} height={80} className="h-20 w-20 rounded-2xl object-contain" />
         </Link>
 
@@ -135,9 +137,13 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="p-1 transition-colors"
+                  className="bouton-icone p-1 transition-colors"
                   style={{ color: 'var(--text-3)' }}
-                  tabIndex={-1}
+                  // Nommé et atteignable au clavier : sans nom, un lecteur
+                  // d'écran annonce « bouton » sans dire lequel ; exclu de la
+                  // tabulation, il devient inutilisable sans souris.
+                  aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                  aria-pressed={showPassword}
                 >
                   <IconEye show={showPassword} />
                 </button>

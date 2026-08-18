@@ -79,15 +79,17 @@ export default function Register() {
       )}
 
       <button
+        type="button"
         onClick={toggleTheme}
-        className="absolute top-6 right-6 p-2.5 rounded-xl transition-all hover:scale-110"
+        className="bouton-icone absolute top-6 right-6 p-2.5 rounded-xl transition-all hover:scale-110"
         style={{ border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-2)' }}
+        aria-label={isDark ? 'Passer au thème clair' : 'Passer au thème sombre'}
       >
         {isDark ? <IconSun /> : <IconMoon />}
       </button>
 
       <div className="w-full max-w-md relative z-10">
-        <Link to="/" className="flex justify-center mb-10">
+        <Link to="/" className="flex justify-center mb-10" aria-label="Retour à l'accueil Ma Villa">
           <img src="/logo.webp" alt="Ma Villa" width={80} height={80} className="h-20 w-20 rounded-2xl object-contain" />
         </Link>
 
@@ -154,7 +156,9 @@ export default function Register() {
               autoComplete="new-password"
               rightElement={
                 <button type="button" onClick={() => setShowPassword((v) => !v)}
-                  className="p-1 transition-colors" style={{ color: 'var(--text-3)' }} tabIndex={-1}>
+                  className="bouton-icone p-1 transition-colors" style={{ color: 'var(--text-3)' }}
+                  aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                  aria-pressed={showPassword}>
                   <IconEye show={showPassword} />
                 </button>
               }
@@ -170,7 +174,9 @@ export default function Register() {
               error={!passwordMatch && form.password_confirmation ? 'Les mots de passe ne correspondent pas.' : undefined}
               rightElement={
                 <button type="button" onClick={() => setShowConfirm((v) => !v)}
-                  className="p-1 transition-colors" style={{ color: 'var(--text-3)' }} tabIndex={-1}>
+                  className="bouton-icone p-1 transition-colors" style={{ color: 'var(--text-3)' }}
+                  aria-label={showConfirm ? 'Masquer la confirmation' : 'Afficher la confirmation'}
+                  aria-pressed={showConfirm}>
                   <IconEye show={showConfirm} />
                 </button>
               }

@@ -23,7 +23,13 @@ interface Commun {
   chargement?: boolean
   iconeAvant?: ReactNode
   iconeApres?: ReactNode
-  children: ReactNode
+  /**
+   * Facultatif : un bouton à icône seule est légitime là où la place manque
+   * — en-tête de console, barre d'outils. Il doit alors porter un
+   * `aria-label`, sans quoi un lecteur d'écran annonce « bouton » sans dire
+   * lequel.
+   */
+  children?: ReactNode
   className?: string
 }
 
@@ -52,7 +58,9 @@ function Contenu({ chargement, iconeAvant, iconeApres, children }: Pick<Commun, 
   return (
     <>
       {iconeAvant}
-      <span>{children}</span>
+      {/* Pas de <span> vide sur un bouton à icône seule : il ajouterait
+          l'espacement du `gap` et décentrerait l'icône. */}
+      {children != null && children !== false && <span>{children}</span>}
       {iconeApres}
     </>
   )

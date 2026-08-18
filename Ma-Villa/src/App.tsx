@@ -14,6 +14,7 @@ import ChoixCategorie from './components/recherche/ChoixCategorie'
 import Destinations from './components/Destinations'
 import Footer from './components/Footer'
 import NavigationBasse from './components/app/NavigationBasse'
+import InvitationInstallation from './components/app/InvitationInstallation'
 import NouvelleVersion from './components/NouvelleVersion'
 import { ButtonLink } from './components/ui/Button'
 import Seo from './components/Seo'
@@ -356,6 +357,15 @@ export default function App() {
   return (
     <>
       <NouvelleVersion />
+
+      {/* Lien d'évitement : au clavier, atteindre le contenu demandait de
+          traverser toute la navigation à chaque changement de page. Il n'est
+          visible qu'une fois au focus — c'est sa seule raison d'exister. */}
+      <a href="#contenu" className="lien-evitement">Aller au contenu</a>
+
+      {/* Point de repère principal : sans lui, un lecteur d'écran n'offre
+          aucun raccourci vers le contenu et il faut tout parcourir. */}
+      <main id="contenu">
       <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/villas" element={<Villas />} />
@@ -419,10 +429,15 @@ export default function App() {
 
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </main>
 
       {/* Châssis d'application : la destination est atteinte au pouce,
           sans remonter chercher un menu en haut d'écran. */}
       <NavigationBasse />
+
+      {/* Proposée seulement après quelques écrans, et jamais deux fois après
+          un refus : le navigateur ne redonne pas de seconde chance. */}
+      <InvitationInstallation />
     </>
   )
 }
