@@ -1,85 +1,89 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Heart, Compass } from 'lucide-react'
 import api from '../../services/api'
+import { useRequete } from '../../lib/useRequete'
+import { useToast } from '../../context/ToastContext'
+import { messageErreur } from '../../lib/erreurs'
 import VillaCard from '../../components/VillaCard'
-
-interface FavoriVilla {
-  id: number
-  nom: string
-  ville: string
-  description: string
-  telephone: string
-  photos: { url: string; alt: string }[]
-  avis: { note: number }[]
-}
+import Button, { ButtonLink } from '../../components/ui/Button'
+import type { VillaResume } from '../../types'
 
 interface Favori {
   id: number
   villa_id: number
-  villa: FavoriVilla
+  villa: VillaResume
 }
 
 export default function Favoris() {
-  const [favoris, setFavoris] = useState<Favori[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const toast = useToast()
 
-  useEffect(() => {
-    api.get('/favoris')
-      .then((res) => setFavoris(res.data))
-      .finally(() => setIsLoading(false))
-  }, [])
-
-  const retirer = async (villaId: number) => {
-    await api.delete(`/villas/${villaId}/favoris`)
-    setFavoris((prev) => prev.filter((f) => f.villa_id !== villaId))
-  }
-
-  if (isLoading) return (
-    <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-3)' }}>
-      <div className="w-4 h-4 rounded-full animate-spin" style={{ border: '2px solid var(--border)', borderTopColor: 'var(--text-1)' }} />
-      Chargement...
-    </div>
+  const { donnees, chargement, erreur, reessayer } = useRequete<Favori[]>(
+    async (signal) => (await api.get('/favoris', { signal })).data,
+    'favoris',
+    { messageErreurParDefaut: 'Impossible de charger vos favoris.' }
   )
+
+  const favoris = donnees ?? []
+
+  const retirer = async (villaId: number, nom: string) => {
+    try {
+      await api.delete(`/villas/${villaId}/favoris`)
+      toast.info(`« ${nom} » retirée de vos favoris.`)
+      reessayer()
+    } catch (err) {
+      // Le retrait était fait dans l'état local sans attendre le serveur : en
+      // cas d'échec, la villa disparaissait de l'écran mais restait en base,
+      // et revenait au rechargement suivant.
+      toast.erreur(messageErreur(err, "La villa n'a pas pu être retirée."))
+    }
+  }
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-normal">Mes favoris</h1>
-        {favoris.length > 0 && (
-          <span className="text-sm" style={{ color: 'var(--text-3)' }}>
-            {favoris.length} villa{favoris.length > 1 ? 's' : ''}
-          </span>
-        )}
-      </div>
+      <h1 className="console-titre">Mes favoris</h1>
+      <p className="console-sous-titre">
+        {favoris.length > 0
+          ? `${favoris.length} logement${favoris.length > 1 ? 's' : ''} enregistré${favoris.length > 1 ? 's' : ''}`
+          : 'Les logements que vous mettez de côté.'}
+      </p>
 
-      {favoris.length === 0 ? (
-        <div
-          className="rounded-2xl p-12 text-center"
-          style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
-        >
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--accent-bg)' }}>
-            <svg className="w-7 h-7" style={{ color: 'var(--accent)' }} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
-          </div>
-          <p className="font-medium mb-2" style={{ color: 'var(--text-1)' }}>Aucun favori pour l'instant</p>
-          <p className="text-sm mb-6" style={{ color: 'var(--text-2)' }}>
-            Explorez les villas et sauvegardez vos préférées ici.
+      {erreur && !chargement && (
+        <div className="console-erreur" role="alert">
+          {erreur}
+          <Button variante="secondaire" taille="sm" onClick={reessayer}>Réessayer</Button>
+        </div>
+      )}
+
+      {chargement ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map((n) => (
+            <div key={n} className="panneau">
+              <div className="skeleton" style={{ aspectRatio: '4 / 3', borderRadius: 12, marginBottom: 12 }} />
+              <div className="skeleton" style={{ height: 14, width: '60%', borderRadius: 6 }} />
+            </div>
+          ))}
+        </div>
+      ) : favoris.length === 0 ? (
+        <div className="console-vide">
+          <span className="console-vide-icone"><Heart size={22} /></span>
+          <p>
+            <strong>Aucun favori pour l'instant.</strong> Le cœur sur une annonce la range ici,
+            pour la retrouver sans refaire la recherche.
           </p>
-          <Link
-            to="/villas"
-            className="inline-block px-5 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-90"
-            style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
-          >
+          <ButtonLink to="/villas" variante="primaire" taille="sm" iconeAvant={<Compass size={15} />}>
             Explorer les villas
-          </Link>
+          </ButtonLink>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 cascade">
           {favoris.map((f) => (
             <VillaCard
               key={f.id}
               villa={f.villa}
-              isFavori={true}
-              onToggleFavori={(e) => { e.preventDefault(); retirer(f.villa_id) }}
+              isFavori
+              onToggleFavori={(e) => {
+                e.preventDefault()
+                retirer(f.villa_id, f.villa.nom)
+              }}
             />
           ))}
         </div>

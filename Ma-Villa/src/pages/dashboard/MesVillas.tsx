@@ -1,6 +1,10 @@
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Building2, Plus, ArrowRight, Clock } from 'lucide-react'
 import api from '../../services/api'
+import { useRequete } from '../../lib/useRequete'
+import { depuis } from '../../lib/format'
+import Button, { ButtonLink } from '../../components/ui/Button'
+import Badge from '../../components/ui/Badge'
 
 interface Villa {
   id: number
@@ -11,99 +15,99 @@ interface Villa {
   created_at: string
 }
 
-const statutConfig: Record<Villa['statut'], { label: string; color: string }> = {
-  en_attente: { label: 'En attente', color: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20' },
-  validee: { label: 'Validée', color: 'text-green-400 bg-green-400/10 border-green-400/20' },
-  rejetee: { label: 'Rejetée', color: 'text-red-400 bg-red-400/10 border-red-400/20' },
+/* Tons issus du composant Badge, donc des tokens : les couleurs Tailwind
+   écrites en dur ne suivaient pas le thème sombre. */
+const STATUT: Record<Villa['statut'], { label: string; ton: 'warning' | 'success' | 'danger' }> = {
+  en_attente: { label: 'En attente', ton: 'warning' },
+  validee: { label: 'Publiée', ton: 'success' },
+  rejetee: { label: 'Rejetée', ton: 'danger' },
 }
 
 export default function MesVillas() {
-  const [villas, setVillas] = useState<Villa[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    api.get('/proprietaire/villas')
-      .then((res) => setVillas(res.data))
-      .catch(() => {})
-      .finally(() => setIsLoading(false))
-  }, [])
-
-  if (isLoading) return (
-    <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-3)' }}>
-      <div className="w-4 h-4 rounded-full animate-spin" style={{ border: '2px solid var(--border)', borderTopColor: 'var(--text-1)' }} />
-      Chargement...
-    </div>
+  const { donnees, chargement, erreur, reessayer } = useRequete<Villa[]>(
+    async (signal) => (await api.get('/proprietaire/villas', { signal })).data,
+    'mes-villas',
+    { messageErreurParDefaut: 'Impossible de charger vos villas.' }
   )
+
+  const villas = donnees ?? []
+  const enAttente = villas.filter((v) => v.statut === 'en_attente').length
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-normal">Mes villas</h1>
-        <Link
-          to="/dashboard/villas/nouvelle"
-          className="px-5 py-2 rounded-xl text-sm font-medium transition-all hover:opacity-90"
-          style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
-        >
-          + Nouvelle villa
-        </Link>
+      <h1 className="console-titre">Mes villas</h1>
+      <p className="console-sous-titre">
+        {villas.length > 0
+          ? `${villas.length} annonce${villas.length > 1 ? 's' : ''}${enAttente > 0 ? ` · ${enAttente} en cours de validation` : ''}`
+          : 'Vos annonces et leur état de publication.'}
+      </p>
+
+      <div className="console-filtres">
+        <ButtonLink to="/dashboard/villas/nouvelle" variante="primaire" taille="sm" iconeAvant={<Plus size={15} />}>
+          Nouvelle villa
+        </ButtonLink>
       </div>
 
-      {villas.length === 0 ? (
-        <div
-          className="rounded-2xl p-12 text-center"
-          style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
-        >
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--accent-bg)' }}>
-            <svg className="w-7 h-7" style={{ color: 'var(--accent)' }} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>
-          </div>
-          <p className="font-medium mb-1">Aucune villa pour l'instant</p>
-          <p className="text-sm mb-6" style={{ color: 'var(--text-2)' }}>
-            Ajoutez votre première villa pour commencer à recevoir des réservations.
+      {erreur && !chargement && (
+        <div className="console-erreur" role="alert">
+          {erreur}
+          <Button variante="secondaire" taille="sm" onClick={reessayer}>Réessayer</Button>
+        </div>
+      )}
+
+      {chargement ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+          {[1, 2, 3].map((n) => (
+            <div key={n} className="panneau">
+              <div className="skeleton" style={{ height: 15, width: '35%', borderRadius: 6, marginBottom: 10 }} />
+              <div className="skeleton" style={{ height: 12, width: '25%', borderRadius: 6 }} />
+            </div>
+          ))}
+        </div>
+      ) : villas.length === 0 ? (
+        <div className="console-vide">
+          <span className="console-vide-icone"><Building2 size={22} /></span>
+          <p>
+            <strong>Aucune villa pour l'instant.</strong> Publiez votre première annonce pour
+            commencer à recevoir des réservations.
           </p>
-          <Link
-            to="/dashboard/villas/nouvelle"
-            className="inline-block px-6 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-90"
-            style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
-          >
-            Ajouter ma première villa
-          </Link>
+          <ButtonLink to="/dashboard/villas/nouvelle" variante="primaire" taille="sm" iconeAvant={<Plus size={15} />}>
+            Publier ma première villa
+          </ButtonLink>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
           {villas.map((villa) => {
-            const config = statutConfig[villa.statut]
+            const statut = STATUT[villa.statut]
+
             return (
-              <div
-                key={villa.id}
-                className="rounded-2xl px-6 py-5 flex items-center justify-between gap-4 transition-all hover:-translate-y-0.5"
-                style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
-              >
-                <div className="flex items-center gap-4 min-w-0">
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ background: 'var(--accent-bg)' }}
-                  >
-                    <svg className="w-5 h-5" style={{ color: 'var(--accent)' }} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-medium truncate">{villa.nom}</p>
-                    <p className="text-sm" style={{ color: 'var(--text-3)' }}>{villa.ville}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 shrink-0">
-                  <span className={`text-xs border px-2.5 py-1 rounded-full ${config.color}`}>
-                    {config.label}
-                  </span>
-                  <Link
-                    to={`/dashboard/villas/${villa.id}`}
-                    className="text-sm font-medium transition-opacity hover:opacity-70"
-                  >
-                    Gérer →
-                  </Link>
-                </div>
-              </div>
+              <Link key={villa.id} to={`/dashboard/villas/${villa.id}`} className="panneau raccourci">
+                <span className="chiffre-icone" aria-hidden="true"><Building2 size={16} /></span>
+
+                <span className="raccourci-texte">
+                  <span className="raccourci-titre">{villa.nom}</span>
+                  <span className="raccourci-detail">{villa.ville} · déposée {depuis(villa.created_at)}</span>
+                </span>
+
+                <Badge ton={statut.ton}>{statut.label}</Badge>
+                <ArrowRight size={16} className="raccourci-fleche" aria-hidden="true" />
+              </Link>
             )
           })}
+
+          {/* Une annonce en attente n'est visible de personne : le dire ici
+              évite au propriétaire de croire à une panne d'affichage. */}
+          {enAttente > 0 && (
+            <p
+              style={{
+                display: 'flex', alignItems: 'center', gap: 'var(--space-2)',
+                margin: 'var(--space-2) 0 0', font: 'var(--t-caption)', color: 'var(--text-3)',
+              }}
+            >
+              <Clock size={13} aria-hidden="true" />
+              Une annonce en attente reste invisible du public jusqu'à sa validation.
+            </p>
+          )}
         </div>
       )}
     </div>

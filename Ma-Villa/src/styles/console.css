@@ -820,3 +820,97 @@
 @media (max-width: 519px) {
   .reservation-actions .btn { flex: 1 1 calc(50% - var(--space-2)); }
 }
+
+/* ── Gestion d'annonce ────────────────────────────────────────── */
+
+/* Bouton de retrait posé sur une vignette. Le fond sombre est constant et non
+   tokenisé : il est posé sur une photo, dont on ne connaît ni la couleur ni la
+   luminosité — c'est le même raisonnement que pour `--glass-bg`. */
+.media-retirer {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-full);
+  background: rgba(20, 14, 10, 0.72);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.media-vignette:hover .media-retirer,
+.media-retirer:focus-visible { opacity: 1; }
+.media-retirer:hover { background: var(--danger); }
+.media-retirer:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+
+/* Au doigt il n'y a pas de survol : un bouton qui n'apparaît qu'au curseur
+   rend la suppression impossible sur téléphone. */
+@media (pointer: coarse) {
+  .media-retirer { opacity: 1; }
+}
+
+/* Action destructrice discrète — elle ne prend sa couleur qu'au survol, pour
+   ne pas attirer l'œil sur ce qu'on ne veut pas faire par mégarde. */
+.lien-danger {
+  color: var(--text-3);
+  transition: color var(--dur-fast) var(--ease);
+}
+.lien-danger:hover { color: var(--danger); }
+.lien-danger:focus-visible { outline: 2px solid var(--danger); outline-offset: 2px; }
+
+/* État d'un logement : proposé à la réservation, ou retiré. */
+.etat-logement {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: var(--r-full);
+  font: var(--t-caption);
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+.etat-logement.est-disponible {
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  border-color: color-mix(in srgb, var(--success) 24%, transparent);
+  color: var(--success);
+}
+.etat-logement.est-retire {
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  border-color: color-mix(in srgb, var(--danger) 22%, transparent);
+  color: var(--danger);
+}
+
+/* Confirmation d'enregistrement. Pendant du `.console-erreur`, pour que les
+   deux issues d'un formulaire se ressemblent — même forme, couleur opposée. */
+.console-succes {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--success) 9%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success) 24%, transparent);
+  color: var(--success);
+  font: var(--t-body-sm);
+}
+
+/* ── Lien de la barre de navigation ───────────────────────────── */
+
+/* Deux contextes, deux traitements. Sur la photo du hero, la couleur ne peut
+   pas venir des tokens : elle est posée sur une image dont on ignore la
+   luminosité, et seul un blanc franc tient sur toutes. Ailleurs, elle suit le
+   thème — et n'a donc aucune raison d'être écrite en dur. */
+.nav-lien {
+  color: var(--text-2);
+  transition: color var(--dur-fast) var(--ease);
+}
+.nav-lien:hover { color: var(--text-1); }
+
+.nav-lien.sur-photo { color: rgba(255, 255, 255, 0.9); }
+.nav-lien.sur-photo:hover { color: #fff; }

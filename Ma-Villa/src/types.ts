@@ -152,6 +152,16 @@ export const LIBELLES_LOGEMENT: Record<TypeLogement, string> = {
 }
 
 /** Unité affichée à côté du prix « à partir de ». */
+/**
+ * Le statut d'une villa s'affichait brut — « Saly · en_attente » sur l'écran
+ * de gestion. Une clé de base de données n'est pas un libellé.
+ */
+export const LIBELLES_STATUT_VILLA: Record<StatutVilla, string> = {
+  en_attente: 'En attente de validation',
+  validee: 'Publiée',
+  rejetee: 'Rejetée',
+}
+
 export const UNITE_TARIF: Record<TypeTarif, string> = {
   journee: 'la journée',
   nuitee: 'la nuit',

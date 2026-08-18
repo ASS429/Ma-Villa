@@ -71,12 +71,12 @@ export default function Profil() {
         <h2 className="text-sm font-medium mb-5 th-text-1">Informations personnelles</h2>
         <form onSubmit={saveInfo} className="flex flex-col gap-4">
           {infoError && (
-            <div className="bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl px-4 py-3 text-sm">
+            <div className="console-erreur" role="alert">
               {infoError}
             </div>
           )}
           {infoSuccess && (
-            <div className="bg-green-500/10 border border-green-500/20 text-green-600 rounded-xl px-4 py-3 text-sm">
+            <div className="console-succes" role="status">
               Profil mis à jour avec succès.
             </div>
           )}
@@ -129,12 +129,12 @@ export default function Profil() {
         <h2 className="text-sm font-medium mb-5 th-text-1">Changer le mot de passe</h2>
         <form onSubmit={savePassword} className="flex flex-col gap-4">
           {pwdError && (
-            <div className="bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl px-4 py-3 text-sm">
+            <div className="console-erreur" role="alert">
               {pwdError}
             </div>
           )}
           {pwdSuccess && (
-            <div className="bg-green-500/10 border border-green-500/20 text-green-600 rounded-xl px-4 py-3 text-sm">
+            <div className="console-succes" role="status">
               Mot de passe modifié avec succès.
             </div>
           )}

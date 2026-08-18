@@ -106,7 +106,7 @@ export default function NouvelleVilla() {
       </p>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl px-4 py-3 text-sm mb-6">
+        <div className="console-erreur" role="alert">
           {error}
         </div>
       )}
@@ -221,7 +221,8 @@ export default function NouvelleVilla() {
                   <button
                     type="button"
                     onClick={() => removeMedia(i)}
-                    className="absolute top-1 right-1 bg-black/70 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/90"
+                    className="media-retirer"
+                    aria-label="Retirer ce média"
                   >
                     ×
                   </button>

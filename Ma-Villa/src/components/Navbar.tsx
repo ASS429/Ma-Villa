@@ -54,11 +54,10 @@ export default function Navbar() {
   const dashLink = user?.role === 'admin' ? '/admin' : '/dashboard'
   const dashLabel = user?.role === 'admin' ? 'Admin' : 'Mon espace'
 
-  const navTextClass = transparent
-    ? 'text-white/90 hover:text-white'
-    : isDark
-      ? 'text-gray-400 hover:text-white'
-      : 'text-stone-500 hover:text-stone-900'
+  // Hors photo, la couleur suit les tokens : les deux branches Tailwind
+  // qu'il y avait ici redisaient `--text-2` en la figeant, et ne suivaient
+  // donc plus le thème si celui-ci évoluait.
+  const navTextClass = `nav-lien${transparent ? ' sur-photo' : ''}`
 
   return (
     <>

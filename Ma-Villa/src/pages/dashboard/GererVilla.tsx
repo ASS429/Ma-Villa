@@ -3,6 +3,8 @@ import { useParams, Link } from 'react-router-dom'
 import api from '../../services/api'
 import { televerserFichier as uploadFile } from '../../services/televerser'
 import { messageErreur } from '../../lib/erreurs'
+import { fcfa } from '../../lib/format'
+import { LIBELLES_STATUT_VILLA, type StatutVilla } from '../../types'
 import ConfirmModal from '../../components/ConfirmModal'
 
 interface Photo { id: number; url: string; alt: string }
@@ -10,7 +12,7 @@ interface Tarif { id: number; type_tarif: string; avec_clim: boolean; avec_buffe
 interface Logement { id: number; nom: string; type: string; capacite: number; disponible: boolean; tarifs: Tarif[] }
 interface Villa {
   id: number; nom: string; description: string; adresse: string; ville: string;
-  telephone: string; latitude: string | null; longitude: string | null; statut: string;
+  telephone: string; latitude: string | null; longitude: string | null; statut: StatutVilla;
   photos: Photo[]; logements: Logement[]
 }
 
@@ -269,7 +271,7 @@ export default function GererVilla() {
         <div>
           <h1 className="text-2xl font-normal">{villa.nom}</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-3)' }}>
-            {villa.ville} · {villa.statut}
+            {villa.ville} · {LIBELLES_STATUT_VILLA[villa.statut] ?? villa.statut}
           </p>
         </div>
         <Link
@@ -431,7 +433,8 @@ export default function GererVilla() {
                 )}
                 <button
                   onClick={() => deletePhoto(p.id)}
-                  className="absolute top-1 right-1 bg-black/70 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/90"
+                  className="media-retirer"
+                  aria-label="Supprimer cette photo"
                 >
                   ×
                 </button>
@@ -537,12 +540,8 @@ export default function GererVilla() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-0.5">
                       <h3 className="font-medium">{logement.nom}</h3>
-                      <span className={`text-xs px-2 py-0.5 rounded-full border ${
-                        logement.disponible
-                          ? 'bg-green-500/10 border-green-500/20 text-green-400'
-                          : 'bg-red-500/10 border-red-500/20 text-red-400'
-                      }`}>
-                        {logement.disponible ? 'Disponible' : 'Indisponible'}
+                      <span className={`etat-logement ${logement.disponible ? 'est-disponible' : 'est-retire'}`}>
+                        {logement.disponible ? 'Proposé' : 'Retiré'}
                       </span>
                     </div>
                     <p className="text-sm" style={{ color: 'var(--text-3)' }}>
@@ -552,14 +551,14 @@ export default function GererVilla() {
                   <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
                     <button
                       onClick={() => toggleDisponibilite(logement)}
-                      className={`text-xs px-3 py-1.5 rounded-xl border transition-all ${
-                        logement.disponible
-                          ? 'hover:border-red-500/40 hover:text-red-400'
-                          : 'border-green-500/30 text-green-400 hover:bg-green-500/10'
-                      }`}
-                      style={logement.disponible ? { border: '1px solid var(--border)', color: 'var(--text-2)' } : {}}
+                      className="btn btn-secondaire btn-sm"
+                      aria-pressed={logement.disponible}
                     >
-                      {logement.disponible ? 'Rendre indisponible' : 'Rendre disponible'}
+                      {/* « Proposé » / « Retiré » plutôt que « disponible » :
+                          un logement peut être retiré du catalogue tout en
+                          étant libre à ces dates — deux choses différentes que
+                          le même mot confondait. */}
+                      {logement.disponible ? 'Retirer du catalogue' : 'Remettre au catalogue'}
                     </button>
                     <button
                       onClick={() => setShowTarifForm(showTarifForm === logement.id ? null : logement.id)}
@@ -577,7 +576,7 @@ export default function GererVilla() {
                     </button>
                     <button
                       onClick={() => deleteLogement(logement.id)}
-                      className="text-xs px-2 py-1.5 transition-colors hover:text-red-400"
+                      className="lien-danger text-xs px-2 py-1.5"
                       style={{ color: 'var(--text-3)' }}
                     >
                       Supprimer
@@ -693,7 +692,7 @@ export default function GererVilla() {
                           {tarif.avec_buffet && ' · buffet'}
                         </span>
                         <div className="flex items-center gap-4">
-                          <span className="font-medium">{tarif.prix.toLocaleString('fr-FR')} FCFA</span>
+                          <span className="font-medium">{fcfa(tarif.prix)}</span>
                           <button
                             onClick={() => startEditTarif(logement.id, tarif)}
                             className="text-xs transition-colors hover:opacity-70"
@@ -703,7 +702,7 @@ export default function GererVilla() {
                           </button>
                           <button
                             onClick={() => deleteTarif(logement.id, tarif.id)}
-                            className="text-xs transition-colors hover:text-red-400"
+                            className="lien-danger text-xs"
                             style={{ color: 'var(--text-3)' }}
                           >
                             Supprimer
