@@ -26,6 +26,8 @@ interface Configuration {
   paiement: {
     actif: boolean
     moyens: MoyenPaiement[]
+    /** Plancher imposé par le prestataire, en FCFA. */
+    montant_minimum: number
   }
 }
 
@@ -42,6 +44,7 @@ const DEFAUT: Configuration = {
       { cle: 'wave', nom: 'Wave' },
       { cle: 'orange_money', nom: 'Orange Money' },
     ],
+    montant_minimum: 200,
   },
 }
 

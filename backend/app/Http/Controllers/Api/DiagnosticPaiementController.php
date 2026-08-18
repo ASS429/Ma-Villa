@@ -40,11 +40,13 @@ class DiagnosticPaiementController extends Controller
             ]);
         }
 
-        // Une facture de 100 F, jamais payée, jamais rattachée à une
-        // réservation : elle ne sert qu'à voir si PayDunya nous parle.
+        // Une facture au montant minimum, jamais payée, jamais rattachée à une
+        // réservation : elle ne sert qu'à voir si PayDunya nous parle. En
+        // dessous du plancher, il refuserait pour cette seule raison et
+        // masquerait ce qu'on cherche à savoir.
         try {
             $facture = $this->paydunya->creerFacture(
-                montant: 100,
+                montant: (int) config('paiement.montant_minimum'),
                 description: 'Sonde de configuration Ma Villa',
             );
         } catch (\Throwable $e) {

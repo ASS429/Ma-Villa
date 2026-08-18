@@ -468,6 +468,38 @@ class PaiementTest extends TestCase
             || $r['actions']['return_url'] === "https://mavilla.test/reservation/{$reservation->id}/paiement");
     }
 
+    public function test_un_montant_sous_le_plancher_est_refuse_avant_tout_appel(): void
+    {
+        // PayDunya refuse en dessous de 200 FCFA. Le laisser refuser renverrait
+        // une 502 : un échec qui accuse la plateforme, alors que le montant
+        // seul est en cause et que le client n'y peut rien.
+        config(['paiement.montant_minimum' => 200]);
+        Http::fake();
+
+        $reservation = $this->reservation(150);
+        $this->actingAs($reservation->client, 'sanctum')
+            ->postJson("/api/reservations/{$reservation->id}/paiement", [
+                'methode' => 'wave', 'telephone' => '770000000',
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'Le paiement en ligne accepte 200 FCFA au minimum. '
+                .'Réglez directement avec le propriétaire, qui vous contactera.');
+
+        Http::assertNothingSent();
+        $this->assertNull($reservation->fresh()->paiement);
+    }
+
+    public function test_le_plancher_est_annonce_a_l_interface(): void
+    {
+        // Sans lui, l'interface proposerait « Régler » sur une réservation dont
+        // le paiement ne peut qu'échouer.
+        config(['paiement.montant_minimum' => 200]);
+
+        $this->getJson('/api/configuration')
+            ->assertOk()
+            ->assertJsonPath('paiement.montant_minimum', 200);
+    }
+
     public function test_un_tiers_ne_peut_pas_payer_la_reservation_d_un_autre(): void
     {
         $reservation = $this->reservation();

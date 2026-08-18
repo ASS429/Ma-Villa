@@ -27,6 +27,9 @@ class ConfigurationController extends Controller
             'paiement' => [
                 'actif'  => (bool) config('paiement.actif'),
                 'moyens' => config('paiement.moyens'),
+                // Le prestataire refuse en dessous : l'interface doit le savoir
+                // pour ne pas proposer un règlement voué à l'échec.
+                'montant_minimum' => (int) config('paiement.montant_minimum'),
             ],
         ]);
     }

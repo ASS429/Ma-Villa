@@ -25,6 +25,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Montant minimum encaissable
+    |--------------------------------------------------------------------------
+    |
+    | PayDunya refuse toute facture en dessous de 200 FCFA — « Invalid Total
+    | Amount. Minimum checkout amount is 200 FCFA. » Sans garde ici, une petite
+    | réservation partait quand même et revenait en 502 : un échec qui accuse la
+    | plateforme alors que le montant seul est en cause.
+    |
+    */
+    'montant_minimum' => (int) env('PAIEMENT_MONTANT_MINIMUM', 200),
+
+    /*
+    |--------------------------------------------------------------------------
     | Repli sur la page de paiement PayDunya
     |--------------------------------------------------------------------------
     |

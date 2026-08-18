@@ -55,8 +55,12 @@ function nightsLabel(debut: string, fin: string) {
  * atteignable que dans les secondes suivant la demande, sur la fiche de la
  * villa — passé cet écran, plus aucun chemin n'y menait.
  */
-function resteARegler(r: Reservation) {
-  return r.statut !== 'annulee' && r.paiement?.statut !== 'reussi'
+function resteARegler(r: Reservation, minimum: number) {
+  return r.statut !== 'annulee'
+    && r.paiement?.statut !== 'reussi'
+    // Sous le plancher du prestataire, proposer « Régler » enverrait droit dans
+    // un refus : mieux vaut ne rien proposer que promettre l'impossible.
+    && r.montant_total >= minimum
 }
 
 export default function Reservations() {
@@ -196,7 +200,7 @@ export default function Reservations() {
                   </div>
                 )}
 
-                {user?.role === 'client' && (paiement.actif ? resteARegler(r) : r.statut === 'en_attente') && (
+                {user?.role === 'client' && (paiement.actif ? resteARegler(r, paiement.montant_minimum) : r.statut === 'en_attente') && (
                   <div
                     className="flex flex-wrap items-center justify-end gap-3 mt-4 pt-4"
                     style={{ borderTop: '1px solid var(--border)' }}
@@ -211,7 +215,7 @@ export default function Reservations() {
                       </button>
                     )}
 
-                    {paiement.actif && resteARegler(r) && (
+                    {paiement.actif && resteARegler(r, paiement.montant_minimum) && (
                       <Link
                         to={`/reservation/${r.id}/paiement`}
                         className="btn btn-primaire btn-sm"

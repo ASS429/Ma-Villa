@@ -52,6 +52,18 @@ class PaiementController extends Controller
         }
 
         $repartition = Commission::pour($reservation->montant_total);
+
+        // Le prestataire refuse en dessous d'un plancher. Le laisser refuser
+        // renverrait une 502 : un échec qui accuse la plateforme, alors que le
+        // montant seul est en cause et que le client n'y peut rien.
+        $minimum = (int) config('paiement.montant_minimum');
+        if ($repartition->montantClient < $minimum) {
+            return response()->json([
+                'message' => "Le paiement en ligne accepte {$minimum} FCFA au minimum. "
+                    .'Réglez directement avec le propriétaire, qui vous contactera.',
+            ], 422);
+        }
+
         $reservation->loadMissing('logement.villa');
 
         try {
