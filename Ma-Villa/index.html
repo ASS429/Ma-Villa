@@ -2,14 +2,32 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- `viewport-fit=cover` étend la page sous l'encoche et la barre de
+         gestes ; `env(safe-area-inset-*)` remet ensuite les marges là où il
+         faut. Sans lui, une application installée sur iPhone garde deux
+         bandeaux blancs et ne ressemble plus à une application. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
     <title>Ma Villa — Location de villas au Sénégal</title>
     <meta
       name="description"
       content="Louez une villa, un appartement ou une piscine à la journée au Sénégal — Saly, Mbour, Dakar. Tarifs affichés, disponibilités en temps réel, réservation directe auprès des propriétaires."
     />
-    <meta name="theme-color" content="#F7F4EF" />
+    <!-- La couleur de la barre système suit le thème : une barre claire
+         au-dessus d'une application sombre trahit immédiatement le site web. -->
+    <meta name="theme-color" content="#F7F4EF" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0C0A08" media="(prefers-color-scheme: dark)" />
+
+    <!-- Application installable -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="application-name" content="Ma Villa" />
+
+    <!-- iOS n'implémente pas le manifeste : sans ces trois balises, l'icône
+         posée sur l'écran d'accueil ouvre Safari avec sa barre d'adresse. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Ma Villa" />
+    <meta name="mobile-web-app-capable" content="yes" />
 
     <!-- Aperçu de partage : c'est ce qui s'affiche quand un lien est envoyé
          sur WhatsApp, le principal canal de diffusion sur ce marché. -->

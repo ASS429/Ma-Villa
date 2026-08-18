@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hors ligne — Ma Villa</title>
+    <meta name="theme-color" content="#A34D1F" />
+    <style>
+      /* Page servie sans réseau : tout est en ligne, aucune police ni image
+         distante. Elle doit s'afficher là où, par définition, rien ne se
+         télécharge. */
+      :root {
+        --bg: #f7f4ef;
+        --surface: #fff;
+        --text-1: #1a1614;
+        --text-2: #5c5650;
+        --accent: #a34d1f;
+        --border: rgba(0, 0, 0, 0.08);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0c0a08;
+          --surface: #161210;
+          --text-1: #f5f0eb;
+          --text-2: #a69e97;
+          --accent: #e8845a;
+          --border: rgba(255, 240, 220, 0.1);
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: var(--bg);
+        color: var(--text-1);
+        font: 400 16px/1.6 system-ui, -apple-system, 'Segoe UI', sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .carte {
+        width: 100%;
+        max-width: 420px;
+        padding: 40px 28px;
+        text-align: center;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      }
+      .rond {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 24px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: color-mix(in srgb, var(--accent) 12%, transparent);
+        color: var(--accent);
+      }
+      h1 { margin: 0 0 12px; font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+      p { margin: 0 0 8px; color: var(--text-2); font-size: 15px; }
+      .liste {
+        margin: 24px 0 0;
+        padding: 16px 0 0;
+        border-top: 1px solid var(--border);
+        text-align: left;
+        font-size: 14px;
+        color: var(--text-2);
+      }
+      .liste p { margin: 0 0 6px; }
+      button {
+        margin-top: 24px;
+        width: 100%;
+        min-height: 48px;
+        border: 0;
+        border-radius: 12px;
+        background: var(--accent);
+        color: #fff;
+        font: 500 16px/1 inherit;
+        cursor: pointer;
+      }
+      button:active { transform: scale(0.985); }
+    </style>
+  </head>
+  <body>
+    <main class="carte">
+      <div class="rond" aria-hidden="true">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+          <path d="M1 1l22 22" />
+          <path d="M16.72 11.06A10.94 10.94 0 0119 12.55" />
+          <path d="M5 12.55a10.94 10.94 0 015.17-2.39" />
+          <path d="M10.71 5.05A16 16 0 0122.58 9" />
+          <path d="M1.42 9a15.91 15.91 0 014.7-2.88" />
+          <path d="M8.53 16.11a6 6 0 016.95 0" />
+          <path d="M12 20h.01" />
+        </svg>
+      </div>
+
+      <h1>Vous êtes hors ligne</h1>
+      <p>Ma Villa n'arrive pas à joindre le réseau. Vos données restent en sécurité.</p>
+
+      <div class="liste">
+        <p><strong>Ce qui reste possible :</strong></p>
+        <p>· Consulter les logements déjà ouverts</p>
+        <p>· Revenir à l'accueil</p>
+        <p><strong>Ce qui attend le réseau :</strong></p>
+        <p>· Réserver et payer</p>
+        <p>· Publier ou modifier une annonce</p>
+      </div>
+
+      <button type="button" onclick="location.reload()">Réessayer</button>
+    </main>
+
+    <script>
+      // Le retour du réseau recharge de lui-même : sans cela, l'utilisateur
+      // reste devant cette page alors que la connexion est revenue.
+      addEventListener('online', function () { location.reload() })
+    </script>
+  </body>
+</html>

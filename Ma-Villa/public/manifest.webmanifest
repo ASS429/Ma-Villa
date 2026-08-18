@@ -1,0 +1,44 @@
+{
+  "name": "Ma Villa — Location de villas au Sénégal",
+  "short_name": "Ma Villa",
+  "description": "Louez une villa, un appartement ou une piscine à la journée au Sénégal. Tarifs affichés, disponibilités en temps réel, paiement Wave et Orange Money.",
+  "lang": "fr-SN",
+  "dir": "ltr",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#F7F4EF",
+  "theme_color": "#A34D1F",
+  "categories": ["travel", "lifestyle", "business"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Rechercher un logement",
+      "short_name": "Rechercher",
+      "description": "Parcourir les villas et logements disponibles",
+      "url": "/villas?source=raccourci",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mes réservations",
+      "short_name": "Réservations",
+      "description": "Suivre et régler mes réservations",
+      "url": "/dashboard/reservations?source=raccourci",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mes favoris",
+      "short_name": "Favoris",
+      "description": "Retrouver les logements enregistrés",
+      "url": "/dashboard/favoris?source=raccourci",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
