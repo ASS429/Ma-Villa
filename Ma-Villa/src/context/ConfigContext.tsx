@@ -29,6 +29,12 @@ interface Configuration {
     /** Plancher imposé par le prestataire, en FCFA. */
     montant_minimum: number
   }
+  notifications: {
+    /** Faux tant que les clés VAPID ne sont pas posées sur le serveur. */
+    actives: boolean
+    /** Clé publique VAPID, destinée à `pushManager.subscribe`. */
+    cle_publique: string | null
+  }
 }
 
 /**
@@ -46,6 +52,9 @@ const DEFAUT: Configuration = {
     ],
     montant_minimum: 200,
   },
+  // Repli identique au paiement : tant que le serveur n'a pas répondu, on
+  // n'affiche pas de bouton d'activation qui n'aboutirait pas.
+  notifications: { actives: false, cle_publique: null },
 }
 
 const ConfigContext = createContext<Configuration>(DEFAUT)

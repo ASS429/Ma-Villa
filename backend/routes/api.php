@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\DiagnosticPaiementController;
 use App\Http\Controllers\Api\DisponibiliteController;
 use App\Http\Controllers\Api\FavoriController;
 use App\Http\Controllers\Api\LogementController;
+use App\Http\Controllers\Api\NotificationPushController;
 use App\Http\Controllers\Api\PaiementController;
 use App\Http\Controllers\Api\PhotoController;
 use App\Http\Controllers\Api\ReservationController;
@@ -94,6 +95,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Admin
     Route::middleware('admin')->prefix('admin')->group(function () {
         Route::get('/stats', [AdminController::class, 'stats']);
+        // Séries de trente jours et fil d'activité : ce que les chiffres
+        // de tête ne disent pas — la tendance et ce qui vient d'arriver.
+        Route::get('/statistiques', [AdminController::class, 'statistiques']);
+        Route::get('/activite', [AdminController::class, 'activite']);
         Route::get('/villas', [AdminController::class, 'villas']);
         Route::patch('/villas/{villa}/statut', [AdminController::class, 'validerVilla']);
         Route::patch('/villas/{villa}/vedette', [AdminController::class, 'toggleVedette']);
@@ -107,6 +112,11 @@ Route::middleware('auth:sanctum')->group(function () {
         // production en place, la cause d'un refus n'étant plus montrée au payeur.
         Route::get('/diagnostic/paiement', DiagnosticPaiementController::class);
     });
+
+    // Notifications poussées — l'abonnement appartient à un appareil, pas
+    // seulement à un compte : le même utilisateur en a un par navigateur.
+    Route::post('/notifications/abonnement', [NotificationPushController::class, 'store']);
+    Route::delete('/notifications/abonnement', [NotificationPushController::class, 'destroy']);
 
     // Favoris
     Route::get('/favoris', [FavoriController::class, 'index']);

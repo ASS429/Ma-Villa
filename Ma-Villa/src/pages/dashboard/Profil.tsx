@@ -2,6 +2,7 @@ import { useState } from 'react'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import { messageErreur } from '../../lib/erreurs'
+import ReglageNotifications from '../../components/app/ReglageNotifications'
 
 export default function Profil() {
   const { user, updateUser } = useAuth()
@@ -53,6 +54,14 @@ export default function Profil() {
   return (
     <div className="max-w-lg">
       <h1 className="text-2xl font-normal mb-8">Mon profil</h1>
+
+      {/* Notifications : placées en tête parce que c'est le seul réglage qui
+          change ce que l'utilisateur reçoit hors de l'application. Le composant
+          ne rend rien si le serveur n'a pas de clés ou si le navigateur ne sait
+          pas les gérer. */}
+      <div className="mb-6">
+        <ReglageNotifications />
+      </div>
 
       {/* Info */}
       <div

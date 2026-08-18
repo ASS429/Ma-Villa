@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Categorie;
+use App\Services\Push;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -12,7 +13,7 @@ use Illuminate\Http\JsonResponse;
  */
 class ConfigurationController extends Controller
 {
-    public function __invoke(): JsonResponse
+    public function __invoke(Push $push): JsonResponse
     {
         return response()->json([
             // Version déployée, en clair. Sans elle, « mon correctif est-il en
@@ -30,6 +31,14 @@ class ConfigurationController extends Controller
                 // Le prestataire refuse en dessous : l'interface doit le savoir
                 // pour ne pas proposer un règlement voué à l'échec.
                 'montant_minimum' => (int) config('paiement.montant_minimum'),
+            ],
+            // La clé publique VAPID est faite pour être publiée : c'est elle
+            // que le navigateur passe à `pushManager.subscribe`. Absente, le
+            // front n'affiche simplement pas la proposition d'activer les
+            // notifications — plutôt qu'un bouton qui échouerait.
+            'notifications' => [
+                'actives' => $push->disponible(),
+                'cle_publique' => $push->disponible() ? $push->clePublique() : null,
             ],
         ]);
     }

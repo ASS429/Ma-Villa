@@ -7,6 +7,7 @@ use App\Models\Paiement;
 use App\Models\Reservation;
 use App\Services\Commission;
 use App\Services\PayDunya;
+use App\Services\Push;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,8 +16,10 @@ use Illuminate\Support\Str;
 
 class PaiementController extends Controller
 {
-    public function __construct(private readonly PayDunya $paydunya)
-    {
+    public function __construct(
+        private readonly PayDunya $paydunya,
+        private readonly Push $push,
+    ) {
     }
 
     /**
@@ -352,6 +355,22 @@ class PaiementController extends Controller
                 $paiement->reservation->update(['statut' => 'confirmee']);
             }
         });
+
+        // Le propriétaire doit apprendre qu'une nuit est vendue sans avoir à
+        // ouvrir son tableau de bord : c'est lui qui doit préparer la venue.
+        // Après la transaction, pour qu'un service de poussée lent ne tienne
+        // pas ouverte une transaction de base de données.
+        if ($statut === 'reussi') {
+            $paiement->loadMissing('reservation.logement.villa.proprietaire');
+
+            $this->push->versUtilisateur($paiement->reservation->logement->villa->proprietaire, [
+                'titre' => 'Réservation payée',
+                'corps' => $paiement->reservation->logement->villa->nom
+                    .' — '.number_format((float) $paiement->montant, 0, ',', ' ').' FCFA encaissés',
+                'url' => '/dashboard/reservations',
+                'groupe' => "reservation-{$paiement->reservation_id}",
+            ]);
+        }
 
         return $verifie['statut'];
     }
