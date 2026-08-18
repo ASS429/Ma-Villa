@@ -311,6 +311,55 @@ class SecuriteTest extends TestCase
         ])->assertStatus(409);
     }
 
+    public function test_le_peuplement_ne_laisse_aucun_compte_ouvert_en_production(): void
+    {
+        // « password » est écrit dans un dépôt public et le peuplement rejoue à
+        // chaque déploiement : admin@mavilla.sn donnait les pleins pouvoirs sur
+        // la production à quiconque lisait ce fichier.
+        app()['env'] = 'production';
+
+        // Instancié directement : passer par `db:seed` déclencherait la
+        // confirmation interactive que Laravel impose en production.
+        (new \Database\Seeders\VillaSeeder())->run();
+
+        $comptes = \App\Models\User::whereIn('email', [
+            'admin@mavilla.sn',
+            'amadou.diallo@mavilla.sn',
+            'sophie.martin@gmail.com',
+        ])->get();
+
+        $this->assertCount(3, $comptes);
+
+        foreach ($comptes as $compte) {
+            $this->assertFalse(
+                \Illuminate\Support\Facades\Hash::check('password', $compte->password),
+                "Le compte {$compte->email} accepte encore « password »."
+            );
+        }
+    }
+
+    public function test_un_mot_de_passe_fourni_par_l_environnement_fait_foi(): void
+    {
+        // Sinon l'exploitant n'aurait aucun moyen de reprendre la main sur son
+        // propre compte d'administration.
+        app()['env'] = 'production';
+        config(['app.env' => 'production']);
+        putenv('ADMIN_PASSWORD=un-secret-choisi-par-lexploitant');
+
+        try {
+            // Instancié directement : passer par `db:seed` déclencherait la
+        // confirmation interactive que Laravel impose en production.
+        (new \Database\Seeders\VillaSeeder())->run();
+
+            $admin = \App\Models\User::where('email', 'admin@mavilla.sn')->firstOrFail();
+            $this->assertTrue(
+                \Illuminate\Support\Facades\Hash::check('un-secret-choisi-par-lexploitant', $admin->password)
+            );
+        } finally {
+            putenv('ADMIN_PASSWORD');
+        }
+    }
+
     public function test_une_route_api_ouverte_dans_un_navigateur_repond_401_pas_500(): void
     {
         // Ce back n'expose aucune route « login » : sans règle explicite,
