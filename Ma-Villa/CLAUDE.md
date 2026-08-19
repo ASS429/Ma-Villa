@@ -171,10 +171,13 @@ d'API ouverte dans un onglet répond toujours 401, le jeton vivant dans
 **Chantiers restants, par valeur :**
 
 2. Boutique d'œuvres d'art — décidée le 12 août 2026, rien n'existe encore.
-3. Reversement au propriétaire : aujourd'hui manuel, hors application.
+3. Décaissement automatique vers Wave / Orange Money — **suspendu à une
+   activation PayDunya à demander**. Le suivi des reversements existe déjà (voir
+   plus bas) ; seul le virement reste un geste humain.
 
 **Fait le 19 août 2026 :** journal d'audit lisible (`/admin/journal`) ·
-messagerie client ↔ propriétaire · coordonnées retirées des écrans publics.
+messagerie client ↔ propriétaire · coordonnées retirées des écrans publics ·
+suivi des reversements.
 
 ---
 
@@ -203,3 +206,44 @@ table de fil séparée, l'autorisation réutilise `ReservationPolicy::view`.
 `context/MessagesContext.tsx` (une requête pour la navigation *et* les cartes).
 Notification poussée à chaque message, groupée par fil ; **pas d'email** — un
 message est un échange, pas un jalon.
+
+---
+
+## Reversements
+
+La plateforme encaisse **tout** sur son compte PayDunya, puis reverse. La part
+du propriétaire était calculée et enregistrée depuis le premier encaissement
+(`Commission::pour()` → `paiements.montant_proprietaire`) mais n'apparaissait
+sur aucun écran : ni lui ni l'administrateur ne pouvaient dire ce qui restait
+à verser.
+
+`reversements` **enregistre** un versement, elle ne le déclenche pas. Un
+paiement porte `reversement_id` : nul tant que la part n'est pas versée — c'est
+ce seul champ qui distingue « dû » de « réglé », sans table de liaison.
+
+Trois états, et le deuxième est celui à ne pas perdre :
+
+| État | Règle | Portée |
+|---|---|---|
+| **À venir** | encaissé, séjour pas terminé | `Paiement::aVenir()` |
+| **Dû** | encaissé, séjour **terminé**, non reversé | `Paiement::exigible()` |
+| **Versé** | rattaché à un reversement | `reversement_id` non nul |
+
+⚠️ **On ne verse pas avant la fin du séjour.** Verser d'avance, c'est devoir
+réclamer un remboursement à un propriétaire qui a déjà dépensé l'argent. C'est
+aussi la lecture retenue par les textes juridiques.
+
+Deux autres règles tenues par les tests (`tests/Feature/ReversementTest.php`,
+19 tests) :
+
+- **Le montant n'est jamais lu dans la requête.** Il est sommé côté serveur à
+  partir de ce qui est exigible. Un champ de somme envoyé par le navigateur,
+  c'est une écriture comptable dictée par le navigateur. `reversement_id` est
+  volontairement hors de `$fillable`.
+- **Les paiements sont verrouillés (`lockForUpdate`) avant d'être sommés** :
+  deux administrateurs qui enregistrent en même temps solderaient sinon les
+  mêmes paiements, et la plateforme paierait deux fois.
+
+Écrans : `pages/dashboard/Revenus.tsx` (propriétaire) et
+`pages/admin/AdminReversements.tsx` (file d'attente + enregistrement).
+Chaque versement part au journal d'audit et déclenche une notification poussée.

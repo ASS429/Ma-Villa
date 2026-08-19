@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   Home, Building2, CalendarDays, Heart, User,
-  Menu, X, Sun, Moon, LogOut, ArrowLeft, Plus,
+  Menu, X, Sun, Moon, LogOut, ArrowLeft, Plus, Wallet,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
@@ -20,6 +20,7 @@ const PROPRIETAIRE: Entree[] = [
   { to: '/dashboard',              label: 'Accueil',      Icone: Home, end: true },
   { to: '/dashboard/villas',       label: 'Mes villas',   Icone: Building2 },
   { to: '/dashboard/reservations', label: 'Réservations', Icone: CalendarDays },
+  { to: '/dashboard/revenus',      label: 'Revenus',      Icone: Wallet },
   { to: '/dashboard/profil',       label: 'Profil',       Icone: User },
 ]
 

@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\NotificationPushController;
 use App\Http\Controllers\Api\PaiementController;
 use App\Http\Controllers\Api\PhotoController;
 use App\Http\Controllers\Api\ReservationController;
+use App\Http\Controllers\Api\ReversementController;
 use App\Http\Controllers\Api\TarifController;
 use App\Http\Controllers\Api\VillaController;
 use Illuminate\Support\Facades\Route;
@@ -94,6 +95,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/reservations/{reservation}/messages', [MessageController::class, 'store'])
         ->middleware('throttle:30,1');
 
+    // Revenus du propriétaire : ce qui lui est dû, ce qui lui a été versé.
+    // La part était calculée et stockée depuis le premier encaissement, mais
+    // n'apparaissait sur aucun écran.
+    Route::get('/proprietaire/revenus', [ReversementController::class, 'revenus']);
+
     // Upload fichier (retourne URL)
     Route::post('/upload', [PhotoController::class, 'upload'])->middleware('throttle:40,1');
 
@@ -124,6 +130,13 @@ Route::middleware('auth:sanctum')->group(function () {
         // Journal d'audit : qui a validé, rejeté, supprimé — et quand. En cas
         // de litige avec un propriétaire, c'est la seule chose à produire.
         Route::get('/journal', [AdminController::class, 'journal']);
+
+        // Reversements. L'enregistrement seulement : le virement lui-même
+        // reste un geste humain, le décaissement automatique demandant une
+        // activation PayDunya qui n'est pas acquise.
+        Route::get('/reversements', [ReversementController::class, 'index']);
+        Route::post('/reversements', [ReversementController::class, 'store'])
+            ->middleware('throttle:20,1');
 
         // Sonde PayDunya : dit ce que le prestataire répond, sans réservation
         // ni paiement. Le seul moyen de diagnostiquer une fois les clés de

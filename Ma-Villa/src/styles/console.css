@@ -1059,3 +1059,148 @@
   font: var(--t-body-sm);
   color: var(--danger);
 }
+
+/* ════════════════════════════════════════════════════════════════
+   REVERSEMENTS — l'argent dû au propriétaire
+   ════════════════════════════════════════════════════════════════ */
+
+/* Encart d'explication. Il porte une information de fonctionnement, pas une
+   alerte : le ton reste neutre, sinon il finit par être ignoré comme le sont
+   les bandeaux colorés. */
+.console-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  margin-bottom: var(--space-6);
+  border-radius: var(--r-md);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+}
+.console-note svg { flex: none; margin-top: 2px; color: var(--text-3); }
+.console-note p { margin: 0; font: var(--t-body-sm); }
+.console-note strong { color: var(--text-1); font-weight: 600; }
+
+/* ── Cellules de tableau ──────────────────────────────────────── */
+
+.tableau-fort   { color: var(--text-1); font-weight: 600; }
+.tableau-second { color: var(--text-3); }
+/* Toute colonne chiffrée : alignée à droite pour que les ordres de grandeur
+   se comparent d'un coup d'œil, et `lining-nums` parce que Cormorant dessine
+   sinon des chiffres elzéviriens illisibles en tableau. */
+.tableau-nombre {
+  text-align: right;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.tableau-retrait { color: var(--text-3); }
+.tableau th.tableau-nombre { text-align: right; }
+
+/* ── Liste des versements ─────────────────────────────────────── */
+
+.liste-versements { list-style: none; margin: 0; padding: 0; }
+.liste-versements li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border);
+}
+.liste-versements li:last-child { border-bottom: 0; padding-bottom: 0; }
+.versement-montant {
+  margin: 0;
+  font: var(--t-body);
+  font-weight: 600;
+  color: var(--text-1);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.versement-detail {
+  margin: 2px 0 0;
+  font: var(--t-caption);
+  color: var(--text-3);
+  font-variant-numeric: lining-nums;
+}
+
+/* ── Modale d'enregistrement ──────────────────────────────────── */
+
+/* `position` dans la couche `components` : hors couche, elle l'emporterait
+   sur les utilitaires Tailwind — le piège déjà documenté dans
+   `profondeur.css` pour `.bouton-icone`. */
+@layer components {
+  .modale {
+    position: fixed;
+    /* Ancrée en bas sur mobile, centrée au-delà : une feuille qui monte du bas
+       est ce qu'attend le pouce, et c'est le geste des applications natives. */
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+}
+
+.modale {
+  z-index: calc(var(--z-sheet) + 1);
+  max-height: 88dvh;
+  overflow-y: auto;
+  padding: var(--space-5);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--elev-3);
+  animation: modale-monte var(--dur-nav) var(--ease-out);
+}
+
+@keyframes modale-monte {
+  from { transform: translateY(16px); opacity: 0 }
+  to   { transform: none; opacity: 1 }
+}
+
+@media (min-width: 640px) {
+  @layer components {
+    .modale {
+      top: 50%;
+      left: 50%;
+      right: auto;
+      bottom: auto;
+    }
+  }
+  .modale {
+    width: min(480px, calc(100vw - 2 * var(--space-5)));
+    transform: translate(-50%, -50%);
+    border-radius: var(--r-lg);
+    animation: none;
+  }
+}
+
+.modale-entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+/* Le montant est la seule chose à lire avant de valider : il est traité comme
+   un titre, pas comme une ligne de formulaire. */
+.modale-montant {
+  margin: 0;
+  font: var(--t-h2);
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--text-1);
+}
+
+.modale-formulaire {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: var(--space-5) 0;
+}
+
+.modale-actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.modale-actions .btn { flex: 1 1 auto; }
+@media (min-width: 480px) { .modale-actions .btn { flex: 0 0 auto; } }

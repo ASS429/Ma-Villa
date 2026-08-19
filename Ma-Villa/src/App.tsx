@@ -43,6 +43,7 @@ const Reservations    = lazy(() => import('./pages/dashboard/Reservations'))
 const Favoris         = lazy(() => import('./pages/dashboard/Favoris'))
 const Profil          = lazy(() => import('./pages/dashboard/Profil'))
 const Conversation    = lazy(() => import('./pages/dashboard/Conversation'))
+const Revenus         = lazy(() => import('./pages/dashboard/Revenus'))
 
 // Le tunnel de paiement ne concerne qu'un client qui réserve : hors du
 // paquet initial, comme les espaces privés.
@@ -57,6 +58,7 @@ const AdminAvis         = lazy(() => import('./pages/admin/AdminAvis'))
 const AdminPaiement     = lazy(() => import('./pages/admin/AdminPaiement'))
 const AdminNotifications = lazy(() => import('./pages/admin/AdminNotifications'))
 const AdminJournal      = lazy(() => import('./pages/admin/AdminJournal'))
+const AdminReversements = lazy(() => import('./pages/admin/AdminReversements'))
 
 /* ─── Route guards ───────────────────────────────────────────── */
 
@@ -410,6 +412,7 @@ export default function App() {
         <Route path="villas/:id" element={<ProprietaireRoute><GererVilla /></ProprietaireRoute>} />
         <Route path="reservations" element={<Reservations />} />
         <Route path="reservations/:id/messages" element={<Conversation />} />
+        <Route path="revenus" element={<ProprietaireRoute><Revenus /></ProprietaireRoute>} />
         <Route path="favoris" element={<Favoris />} />
         <Route path="profil" element={<Profil />} />
       </Route>
@@ -431,6 +434,7 @@ export default function App() {
         <Route path="paiement" element={<AdminPaiement />} />
         <Route path="notifications" element={<AdminNotifications />} />
         <Route path="journal" element={<AdminJournal />} />
+        <Route path="reversements" element={<AdminReversements />} />
       </Route>
 
         <Route path="*" element={<NotFound />} />
