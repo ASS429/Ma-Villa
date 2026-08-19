@@ -110,7 +110,9 @@ export default function Navbar() {
             {/* Theme toggle */}
             <button
               onClick={toggleTheme}
-              title={isDark ? 'Thème clair' : 'Thème sombre'}
+              // `title` seul ne suffit pas : il ne s'affiche pas au doigt, et
+              // certains lecteurs d'écran le rétrogradent derrière tout le reste.
+              aria-label={isDark ? 'Passer au thème clair' : 'Passer au thème sombre'}
               className="commande-entete transition-all hover:scale-110"
               style={{ color: transparent ? 'rgba(255,255,255,0.8)' : 'var(--text-2)' }}
             >
@@ -161,6 +163,7 @@ export default function Navbar() {
           <div className="md:hidden flex items-center gap-2">
             <button
               onClick={toggleTheme}
+              aria-label={isDark ? 'Passer au thème clair' : 'Passer au thème sombre'}
               className="commande-entete transition-colors"
               style={{ color: transparent ? 'rgba(255,255,255,0.8)' : 'var(--text-2)' }}
             >
