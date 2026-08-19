@@ -45,8 +45,12 @@ export default function VillaCard({ villa, isFavori, onToggleFavori, prioritaire
     villa.a_climatisation ? 'Climatisation' : null,
   ].filter(Boolean) as string[]
 
+  // Barre oblique finale : c'est la seule forme que l'hébergeur sert
+  // pré-rendue. Sans elle, un lien partagé sur WhatsApp s'affiche avec le
+  // titre générique du site, au lieu du nom et du prix de la villa.
+  // Voir `scripts/prerendu.mjs`.
   return (
-    <Link to={`/villas/${villa.id}`} className="carte-villa" aria-label={`${villa.nom}, ${villa.ville}`}>
+    <Link to={`/villas/${villa.id}/`} className="carte-villa" aria-label={`${villa.nom}, ${villa.ville}`}>
       {/* L'inclinaison ne s'applique qu'au curseur : au doigt, elle n'aurait
           aucune direction à suivre et coûterait une couche de rendu par carte.
           Le filtre est en CSS, pas ici. */}

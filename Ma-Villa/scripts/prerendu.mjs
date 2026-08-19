@@ -133,7 +133,7 @@ function pageVilla(villa) {
         price: String(Math.round(Number(villa.prix_min))),
         priceCurrency: 'XOF',
         availability: 'https://schema.org/InStock',
-        url: `${SITE}/villas/${villa.id}`,
+        url: `${SITE}/villas/${villa.id}/`,
       },
     } : {}),
     ...(nbAvis > 0 && note > 0 ? {
@@ -186,8 +186,25 @@ const PAGES_FIXES = [
 
 /* ── Injection dans le gabarit ────────────────────────────────── */
 
+/**
+ * L'URL canonique porte une **barre oblique finale**, et ce n'est pas un choix
+ * esthétique.
+ *
+ * Render applique sa règle de réécriture avant de résoudre l'index d'un
+ * dossier : `/villas/10` part vers `index.html` et sert le gabarit générique,
+ * alors que `/villas/10/` sert bien la page pré-rendue. Mesuré sur la
+ * production, cache contourné.
+ *
+ * On aurait pu ajouter des règles explicites dans `render.yaml`, mais une
+ * réécriture `/villas/:id` vers un fichier absent renverrait 404 : toute villa
+ * publiée après le dernier build deviendrait introuvable. La barre oblique n'a
+ * pas ce défaut — une villa non pré-rendue retombe simplement sur
+ * l'application, vérifié aussi.
+ */
+const canonique = (chemin) => (chemin ? `${SITE}/${chemin}/` : `${SITE}/`)
+
 function injecter(gabarit, { chemin, titre, description, image, donnees }) {
-  const url = `${SITE}/${chemin}`.replace(/\/$/, '') || SITE
+  const url = canonique(chemin)
   const imageAbsolue = image
     ? (image.startsWith('http') ? image : SITE + image)
     : `${SITE}/og-image.jpg`
@@ -215,10 +232,14 @@ function injecter(gabarit, { chemin, titre, description, image, donnees }) {
 
   // Canonique : sans elle, une même fiche atteinte avec des paramètres de
   // suivi (`?source=whatsapp`) compte comme autant de pages distinctes.
-  const canonique = `<link rel="canonical" href="${url}" />`
+  // Nommée `baliseCanonique` et non `canonique` : la seconde est la fonction
+  // déclarée plus haut, et une locale du même nom la masquerait sur toute la
+  // portée de `injecter` — `canonique(chemin)`, appelé dès la première ligne,
+  // tomberait alors dans la zone morte temporelle. Le build a échoué là-dessus.
+  const baliseCanonique = `<link rel="canonical" href="${url}" />`
   html = /rel="canonical"/.test(html)
-    ? html.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/, canonique)
-    : html.replace('</head>', `    ${canonique}\n  </head>`)
+    ? html.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/, baliseCanonique)
+    : html.replace('</head>', `    ${baliseCanonique}\n  </head>`)
 
   if (donnees) {
     // `</` échappé : une description contenant « </script> » interromprait le
@@ -234,7 +255,7 @@ function injecter(gabarit, { chemin, titre, description, image, donnees }) {
 
 function planDeSite(pages) {
   const entrees = pages.map(({ chemin, priorite = '0.7', frequence = 'weekly' }) => {
-    const url = `${SITE}/${chemin}`.replace(/\/$/, '') || SITE
+    const url = canonique(chemin)
     return `  <url>\n    <loc>${url}</loc>\n    <changefreq>${frequence}</changefreq>\n`
       + `    <priority>${priorite}</priority>\n  </url>`
   })

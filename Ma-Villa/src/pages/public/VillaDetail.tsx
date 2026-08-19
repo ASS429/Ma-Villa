@@ -387,7 +387,7 @@ export default function VillaDetail() {
         titre={`${villa.nom} — ${villa.ville}`}
         description={descriptionSeo}
         image={photoPartage}
-        chemin={`/villas/${villa.id}`}
+        chemin={`/villas/${villa.id}/`}
         donneesStructurees={{
           '@context': 'https://schema.org',
           '@type': 'LodgingBusiness',

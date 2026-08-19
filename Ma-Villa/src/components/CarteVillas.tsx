@@ -92,7 +92,7 @@ export default function CarteVillas({
         `<strong>${v.nom}</strong><br>${v.ville}`,
         { closeButton: false }
       )
-      marqueur.on('click', () => navigate(`/villas/${v.id}`))
+      marqueur.on('click', () => navigate(`/villas/${v.id}/`))
       marqueur.addTo(g)
     }
 

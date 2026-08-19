@@ -174,7 +174,7 @@ export default function AdminVillas() {
                       telle que le public la verra n'a pas de sens, et revenir
                       en arrière ferait perdre la position dans la liste. */}
                   <Link
-                    to={`/villas/${villa.id}`}
+                    to={`/villas/${villa.id}/`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
