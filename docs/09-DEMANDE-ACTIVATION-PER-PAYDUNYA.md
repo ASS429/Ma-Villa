@@ -5,13 +5,20 @@
 > évite un aller-retour d'identification). Confirmez l'adresse du support dans
 > votre espace avant d'envoyer par courriel.
 >
-> **À compléter avant envoi** : les champs entre crochets.
+> **À compléter avant envoi** : les deux estimations de volume, dans le tableau
+> (une fourchette approximative suffit — le support veut situer l'ordre de
+> grandeur, pas un engagement).
+>
+> **Facultatif** : l'identifiant marchand `BSN…`, dans la dernière ligne du
+> tableau. Il se trouve dans votre tableau de bord PayDunya, du côté des clés
+> d'API de l'application. Si vous ne le trouvez pas, **supprimez la ligne** :
+> un ticket ouvert depuis votre espace identifie déjà le compte.
 
 ---
 
 ## Objet
 
-`Demande d'activation de l'API PER / Déboursement — compte marchand [RAISON SOCIALE] (application « Ma Villa »)`
+`Demande d'activation de l'API PER / Déboursement — application « Ma Villa »`
 
 ---
 
@@ -19,9 +26,8 @@
 
 Bonjour,
 
-Je vous écris au sujet du compte marchand **[RAISON SOCIALE / NOM DU COMPTE]**,
-application **« Ma Villa »** (identifiant marchand : **[NUMÉRO DE COMPTE, format
-BSNxxxxxxxxxx]**).
+Je vous écris au sujet de notre compte marchand, application
+**« Ma Villa »**, ouvert au nom de **Arfang Souleymane Sané**.
 
 Nous exploitons Ma Villa, une place de marché de location de villas et de
 logements de vacances au Sénégal. L'encaissement passe déjà par PayDunya : nous
@@ -54,8 +60,9 @@ côté compte.
 | **`withdraw_mode`** | `wave-senegal`, `orange-money-senegal`, et si possible `free-money-senegal` |
 | **Bénéficiaires** | les propriétaires de logements inscrits sur notre plateforme, vers leur portefeuille mobile |
 | **URL de rappel** | `https://ma-villa-production.up.railway.app/api/reversements/rappel` |
-| **Volume attendu** | [ex. : 20 à 50 déboursements par mois au démarrage] |
-| **Montant moyen** | [ex. : entre 30 000 et 300 000 FCFA par versement] |
+| **Volume attendu** | [À REMPLIR — ex. : 20 à 50 déboursements par mois au démarrage] |
+| **Montant moyen** | [À REMPLIR — ex. : entre 30 000 et 300 000 FCFA par versement] |
+| **Identifiant marchand** | [FACULTATIF — `BSN…`, ou supprimer cette ligne] |
 
 L'URL de rappel est publique, accessible depuis l'extérieur, et vérifie la
 signature SHA-512 de notre clé maîtresse conformément à votre documentation.
@@ -80,10 +87,10 @@ utile.
 
 Bien cordialement,
 
-**[Votre nom]**
-[Votre fonction] — Ma Villa
-[Téléphone] · [Adresse électronique]
-[Site : https://mavilla-web.onrender.com]
+**Arfang Souleymane Sané**
+Développeur — Ma Villa
++221 78 157 10 09 · sanarfang429@gmail.com
+https://mavilla-web.onrender.com
 
 ---
 
