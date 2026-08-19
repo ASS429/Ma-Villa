@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import Marque from './Marque'
 
 function IconMenu() {
   return (
@@ -61,7 +62,7 @@ export default function Navbar() {
 
   return (
     <>
-      <div className="px-6 md:px-12 lg:px-16 pt-6 relative z-40">
+      <div className="px-6 md:px-12 lg:px-16 barre-haute relative z-40">
         <nav
           className="rounded-2xl px-5 py-3 flex items-center justify-between transition-all duration-300"
           style={{
@@ -78,20 +79,7 @@ export default function Navbar() {
             boxShadow: transparent ? 'none' : 'var(--shadow-sm)',
           }}
         >
-          <Link to="/" onClick={close} className="flex items-center gap-2.5">
-            <img src="/logo.webp" alt="Ma Villa" width={36} height={36} className="h-9 w-9 rounded-xl object-contain" />
-            <span
-              style={{
-                fontFamily: "'Cormorant Garamond', Georgia, serif",
-                fontSize: '1.25rem',
-                fontWeight: 400,
-                letterSpacing: '-0.02em',
-                color: transparent ? '#fff' : 'var(--text-1)',
-              }}
-            >
-              Ma Villa
-            </span>
-          </Link>
+          <Marque taille="md" sombre={transparent} onClick={close} />
 
           {/* Desktop links */}
           <div className="hidden md:flex items-center gap-7">
@@ -191,7 +179,7 @@ export default function Navbar() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: '1px solid var(--border)' }}>
-              <span style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '1.25rem', fontWeight: 400, letterSpacing: '-0.02em', color: 'var(--text-1)' }}>Ma Villa</span>
+              <Marque taille="sm" onClick={close} />
               <button onClick={close} className="th-text-2 hover:th-text-1 transition-colors">
                 <IconX />
               </button>

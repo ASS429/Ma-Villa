@@ -122,6 +122,10 @@
   /* Châssis d'application. */
   --nav-h:  64px;
   --safe-b: env(safe-area-inset-bottom, 0px);
+  /* `viewport-fit=cover` étend la page sous la barre d'état : installée sur
+     iPhone, l'application y glissait ses en-têtes, sous l'heure et la
+     batterie. Seul le bas était traité — le haut ne l'était pas du tout. */
+  --safe-t: env(safe-area-inset-top, 0px);
   --sheet-r: 20px;                 /* seul rayon hors échelle */
   --scrim:  rgba(20, 14, 10, .55); /* voile sous toute feuille */
   --z-nav: 40;
@@ -208,6 +212,100 @@ body {
 
    Hauteur minimale 44 px partout : cible tactile confortable.
    ════════════════════════════════════════════════════════════════ */
+
+/* ════════════════════════════════════════════════════════════════
+   ZONE SÛRE HAUTE
+
+   Tout ce qui se colle en haut de l'écran passe sous la barre d'état
+   d'un iPhone une fois l'application installée : `viewport-fit=cover`
+   étend délibérément la page sous l'encoche, et c'est à nous de
+   réserver la place. Rien ne le faisait — seul le bas était traité.
+
+   Aucun effet hors application installée : `env()` vaut alors 0.
+   ════════════════════════════════════════════════════════════════ */
+
+/* Barre publique flottante (accueil, fiches). */
+.barre-haute { padding-top: calc(var(--space-6) + var(--safe-t)); }
+
+/* En-tête collant des pages secondaires. */
+.entete-collant {
+  padding-top: calc(var(--space-4) + var(--safe-t));
+  top: 0;
+}
+
+/* Feuille plein écran : sa propre en-tête doit descendre d'autant. */
+@media (max-width: 639px) {
+  .feuille-recherche { padding-top: var(--safe-t); }
+}
+
+/* Tunnel de paiement. */
+.tunnel-marque { padding-top: calc(var(--space-3) + var(--safe-t)); }
+
+/* ════════════════════════════════════════════════════════════════
+   MARQUE — logo et nom, ensemble, partout, cliquables vers l'accueil.
+
+   Le logo seul ne se lit pas à cette taille ; le nom seul ne se
+   reconnaît pas d'un coup d'œil. C'est la paire qui identifie.
+   ════════════════════════════════════════════════════════════════ */
+
+.marque {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  text-decoration: none;
+}
+
+.marque-icone {
+  flex: none;
+  border-radius: var(--r-md);
+  object-fit: contain;
+}
+
+.marque-nom {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--text-1);
+  white-space: nowrap;
+}
+
+.marque-role {
+  flex: none;
+  font: var(--t-eyebrow);
+  letter-spacing: var(--t-eyebrow-ls);
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-bg);
+  padding: 3px 7px;
+  border-radius: var(--r-sm);
+}
+
+.marque-sm .marque-icone { width: 30px; height: 30px; }
+.marque-sm .marque-nom   { font-size: 1.15rem; }
+
+.marque-md .marque-icone { width: 36px; height: 36px; }
+.marque-md .marque-nom   { font-size: 1.25rem; }
+
+.marque-lg .marque-icone { width: 72px; height: 72px; }
+.marque-lg .marque-nom   { font-size: 1.75rem; }
+
+/* Posée sur une photo : le nom passe en blanc, l'ombre le décolle. */
+.marque-sur-image .marque-nom {
+  color: #fff;
+  text-shadow: 0 1px 12px rgb(0 0 0 / 0.35);
+}
+
+/* Logo au-dessus du nom : écrans d'authentification. */
+.marque-colonne {
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Dans la console, le bandeau porte déjà son cadre : le nom occupe
+   l'espace libre pour que la mention de rôle reste collée à droite. */
+.console-marque .marque-nom { flex: 1; min-width: 0; }
 
 .btn {
   display: inline-flex;
@@ -1811,6 +1909,14 @@ html.video-mode[data-theme="dark"] {
   flex-direction: column;
 }
 
+/* Bandeau de marque du tunnel. Voir le logo du marchand au moment de payer
+   rassure — c'est la preuve qu'on n'a pas glissé ailleurs. */
+.tunnel-marque {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-3) var(--space-4) 0;
+}
+
 .tunnel-entete {
   display: grid;
   grid-template-columns: 44px 1fr 44px;
@@ -1896,13 +2002,39 @@ html.video-mode[data-theme="dark"] {
   font: var(--t-body-sm);
 }
 
+/* Pile des messages passagers.
+
+   Ils étaient posés à 16 px du bas, c'est-à-dire **derrière** la barre de
+   navigation basse sur téléphone : un message d'erreur pouvait être
+   entièrement masqué par elle. Ils montent maintenant au-dessus. */
+.pile-toasts {
+  position: fixed;
+  z-index: 100;
+  left: var(--space-4);
+  right: var(--space-4);
+  bottom: calc(var(--space-4) + var(--safe-b));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  /* La barre basse n'existe qu'ici : c'est ici qu'il faut l'éviter. */
+  .pile-toasts { bottom: calc(var(--nav-h) + var(--safe-b) + var(--space-3)); }
+}
+
+@media (min-width: 640px) {
+  .pile-toasts { left: auto; width: 384px; }
+}
+
 /* Bandeau « nouvelle version ». Posé sous la barre de navigation plutôt qu'en
    travers de l'écran : il informe, il n'interrompt pas. */
 .bandeau-version {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  top: calc(var(--space-4) + env(safe-area-inset-top, 0px));
+  top: calc(var(--space-4) + var(--safe-t));
   z-index: 60;
   display: flex;
   align-items: center;
@@ -1929,8 +2061,25 @@ html.video-mode[data-theme="dark"] {
 
 .bandeau-version button:hover { background: var(--accent-hover); }
 
-@media (max-width: 480px) {
-  .bandeau-version { font-size: 13px; padding-left: var(--space-3); }
+/* Sur un écran étroit, la pilule était un piège : le texte passait à
+   trois lignes dans une forme conçue pour une seule, et le bouton
+   débordait. On abandonne la pilule pour un bloc qui empile — la forme
+   suit le contenu, jamais l'inverse. */
+@media (max-width: 599px) {
+  .bandeau-version {
+    left: var(--space-3);
+    right: var(--space-3);
+    transform: none;
+    max-width: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border-radius: var(--r-lg);
+    text-align: left;
+  }
+
+  .bandeau-version button { width: 100%; }
 }
 
 /* Code QR — sur ordinateur, le seul pont vers le téléphone qui paie.

@@ -70,6 +70,7 @@ export default function Revenus() {
 
   return (
     <div>
+      <h1 className="console-titre">Revenus</h1>
       <p className="console-sous-titre">
         Ce que vos séjours vous rapportent, et où en est le versement. La
         commission est <strong>prélevée sur ce que paie le client</strong> —

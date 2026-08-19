@@ -125,6 +125,7 @@ export default function AdminReversements() {
 
   return (
     <div>
+      <h1 className="console-titre">Reversements</h1>
       <p className="console-sous-titre">
         La plateforme encaisse tout, puis reverse. Cet écran ne déplace pas
         d'argent : <strong>faites le virement, puis enregistrez-le ici</strong> —

@@ -9,6 +9,7 @@ import Button from '../../components/ui/Button'
 import CodeQR from '../../components/paiement/CodeQR'
 import Seo from '../../components/Seo'
 import type { Reservation } from '../../types'
+import Marque from '../../components/Marque'
 
 const LOGOS: Record<string, string> = {
   wave: '/wave.webp',
@@ -265,6 +266,10 @@ export default function Paiement() {
   return (
     <div className="tunnel">
       <Seo titre="Paiement" description="Réglez votre réservation." indexable={false} />
+
+      <div className="tunnel-marque">
+        <Marque taille="sm" />
+      </div>
 
       <header className="tunnel-entete">
         <Link to="/dashboard/reservations" className="tunnel-retour" aria-label="Retour">‹</Link>

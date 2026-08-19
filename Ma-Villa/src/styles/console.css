@@ -209,7 +209,8 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
+  /* Installée sur iPhone, la barre passait sous l'heure et la batterie. */
+  padding: calc(var(--space-3) + var(--safe-t)) var(--space-4) var(--space-3);
   position: sticky;
   top: 0;
   z-index: 30;
@@ -258,6 +259,7 @@
   width: min(280px, 84vw);
   display: flex;
   flex-direction: column;
+  padding-top: var(--safe-t);
   background: var(--bg-surface);
   border-right: 1px solid var(--border);
   box-shadow: var(--elev-flottant);

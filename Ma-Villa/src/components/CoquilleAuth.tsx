@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
+import Marque from './Marque'
 
 function IconSun() {
   return (
@@ -59,9 +59,7 @@ export default function CoquilleAuth({
       </button>
 
       <div className="w-full max-w-md relative z-10">
-        <Link to="/" className="flex justify-center mb-10" aria-label="Retour à l'accueil Ma Villa">
-          <img src="/logo.webp" alt="Ma Villa" width={80} height={80} className="h-20 w-20 rounded-2xl object-contain" />
-        </Link>
+        <Marque taille="lg" colonne className="justify-center mb-10" />
 
         <div
           className="rounded-2xl p-8"

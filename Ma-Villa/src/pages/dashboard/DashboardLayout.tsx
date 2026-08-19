@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
 import { MessagesProvider, useMessages } from '../../context/MessagesContext'
 import Button, { ButtonLink } from '../../components/ui/Button'
+import Marque from '../../components/Marque'
 
 interface Entree {
   to: string
@@ -110,10 +111,6 @@ function Espace() {
 
   const deconnecter = () => { logout(); navigate('/login') }
 
-  const titreEcran = entrees.find(
-    (e) => (e.end ? emplacement.pathname === e.to : emplacement.pathname.startsWith(e.to))
-  )?.label ?? 'Mon espace'
-
   const identite = (
     <div className="console-identite">
       <div className="console-jeton" aria-hidden="true">{initiales(user?.name || '')}</div>
@@ -127,9 +124,7 @@ function Espace() {
   return (
     <div className="console">
       <aside className="console-flanc">
-        <Link to="/" className="console-marque">
-          <span className="console-marque-nom">Ma Villa</span>
-        </Link>
+        <Marque taille="sm" className="console-marque" />
 
         {/* L'action de création est dans la barre, pas noyée dans un écran :
             publier une annonce est ce qu'un propriétaire vient faire. */}
@@ -170,7 +165,7 @@ function Espace() {
             aria-label="Ouvrir le menu"
             aria-expanded={tiroir}
           />
-          <span className="console-entete-titre">{titreEcran}</span>
+          <Marque taille="sm" />
           <Button
             variante="discret"
             taille="sm"
@@ -185,7 +180,7 @@ function Espace() {
             <div className="console-voile" onClick={() => setTiroir(false)} aria-hidden="true" />
             <div className="console-tiroir" role="dialog" aria-label="Navigation" aria-modal="true">
               <div className="console-marque">
-                <span className="console-marque-nom">Ma Villa</span>
+                <Marque taille="sm" onClick={() => setTiroir(false)} />
                 <Button
                   variante="discret"
                   taille="sm"

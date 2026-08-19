@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import Marque from './Marque'
 
 export default function Footer() {
   const { user } = useAuth()
@@ -10,18 +11,7 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-10">
           <div>
-            <Link
-              to="/"
-              style={{
-                fontFamily: "'Cormorant Garamond', Georgia, serif",
-                fontSize: '1.35rem',
-                color: 'var(--text-1)',
-                textDecoration: 'none',
-                letterSpacing: '-0.02em',
-              }}
-            >
-              Ma Villa
-            </Link>
+            <Marque taille="md" />
             <p className="text-sm th-text-2 mt-2 max-w-xs leading-relaxed">
               Location de villas et logements de vacances au Sénégal.
             </p>

@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
 import api from '../../services/api'
 import Button from '../../components/ui/Button'
+import Marque from '../../components/Marque'
 
 interface Entree {
   to: string
@@ -128,10 +129,6 @@ export default function AdminLayout() {
 
   const deconnecter = () => { logout(); navigate('/login') }
 
-  const titreEcran = ENTREES.find(
-    (e) => (e.end ? emplacement.pathname === e.to : emplacement.pathname.startsWith(e.to))
-  )?.label ?? 'Administration'
-
   const identite = (
     <div className="console-identite">
       <div className="console-jeton" aria-hidden="true">{initiales(user?.name || '')}</div>
@@ -146,10 +143,7 @@ export default function AdminLayout() {
     <div className="console">
       {/* ── Barre latérale, à partir du grand écran ── */}
       <aside className="console-flanc">
-        <Link to="/" className="console-marque">
-          <span className="console-marque-nom">Ma Villa</span>
-          <span className="console-marque-role">Admin</span>
-        </Link>
+        <Marque taille="sm" role="Admin" className="console-marque" />
 
         <Navigation attentes={attentes} />
 
@@ -186,10 +180,7 @@ export default function AdminLayout() {
             aria-label="Ouvrir le menu"
             aria-expanded={tiroir}
           />
-          {/* Le titre de l'écran plutôt que le nom du produit : sur un outil
-              de travail, savoir où l'on est vaut mieux que se voir rappeler
-              la marque à chaque écran. */}
-          <span className="console-entete-titre">{titreEcran}</span>
+          <Marque taille="sm" />
           <Button
             variante="discret"
             taille="sm"
@@ -205,8 +196,7 @@ export default function AdminLayout() {
             <div className="console-voile" onClick={() => setTiroir(false)} aria-hidden="true" />
             <div className="console-tiroir" role="dialog" aria-label="Navigation" aria-modal="true">
               <div className="console-marque">
-                <span className="console-marque-nom">Ma Villa</span>
-                <span className="console-marque-role">Admin</span>
+                <Marque taille="sm" role="Admin" onClick={() => setTiroir(false)} />
                 <Button
                   variante="discret"
                   taille="sm"

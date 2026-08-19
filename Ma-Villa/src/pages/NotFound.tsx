@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import Marque from '../components/Marque'
 
 export default function NotFound() {
   return (
@@ -6,6 +7,8 @@ export default function NotFound() {
       className="min-h-screen flex flex-col items-center justify-center px-6 text-center"
       style={{ background: 'var(--bg)', color: 'var(--text-1)' }}
     >
+      <Marque taille="md" className="mb-10" />
+
       <p className="text-8xl font-semibold mb-6 select-none" style={{ color: 'var(--border-2)' }}>
         404
       </p>

@@ -281,6 +281,27 @@
   .invite-install { left: auto; right: 24px; bottom: 24px; transform: none; }
 }
 
+/* Sur un téléphone, cinq éléments sur une seule ligne ne tiennent pas :
+   l'icône, deux lignes de texte, un bouton et une croix se disputaient
+   360 px, et la colonne de texte tombait sous les 130 px. On empile —
+   le texte garde toute la largeur, l'action prend la sienne dessous. */
+@media (max-width: 479px) {
+  .invite-install {
+    left: var(--space-3);
+    right: var(--space-3);
+    width: auto;
+    transform: none;
+    flex-wrap: wrap;
+    row-gap: var(--space-3);
+  }
+
+  .invite-install-action {
+    order: 3;
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+}
+
 .invite-install-icone { flex: none; border-radius: 10px; }
 .invite-install-texte { flex: 1; min-width: 0; }
 .invite-install-titre { margin: 0; font: var(--t-body-sm); font-weight: 600; color: var(--text-1); }

@@ -4,6 +4,7 @@ import { useRequete } from '../../lib/useRequete'
 import { fcfa, dateCourte } from '../../lib/format'
 import Seo from '../../components/Seo'
 import type { Reservation } from '../../types'
+import Marque from '../../components/Marque'
 
 /**
  * « C'est réservé » — planche 12, écran de succès.
@@ -23,6 +24,10 @@ export default function Confirmee() {
   return (
     <div className="tunnel">
       <Seo titre="Réservation confirmée" description="Votre réservation est confirmée." indexable={false} />
+
+      <div className="tunnel-marque">
+        <Marque taille="sm" />
+      </div>
 
       <section className="tunnel-corps tunnel-succes">
         <div className="succes-marque" aria-hidden="true">

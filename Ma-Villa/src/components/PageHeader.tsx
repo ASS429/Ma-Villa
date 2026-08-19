@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import Marque from './Marque'
 
 function IconMenu() {
   return (
@@ -43,19 +44,13 @@ export default function PageHeader() {
   return (
     <>
       <header
-        className="px-6 py-4 flex items-center justify-between sticky top-0 z-30 backdrop-blur-md transition-colors"
+        className="px-6 pb-4 entete-collant flex items-center justify-between sticky z-30 backdrop-blur-md transition-colors"
         style={{
           background: 'var(--header-bg)',
           borderBottom: '1px solid var(--border)',
         }}
       >
-        <Link
-          to="/"
-          className="text-xl font-semibold tracking-tight th-text-1 inline-flex items-center"
-          style={{ minHeight: 44 }}
-        >
-          Ma Villa
-        </Link>
+        <Marque taille="md" />
 
         <nav className="hidden md:flex items-center gap-6">
           <NavLink to="/villas" className={({ isActive }) =>
@@ -125,7 +120,7 @@ export default function PageHeader() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: '1px solid var(--border)' }}>
-              <Link to="/" className="text-lg font-semibold th-text-1" onClick={() => setOpen(false)}>Ma Villa</Link>
+              <Marque taille="sm" onClick={() => setOpen(false)} />
               <button onClick={() => setOpen(false)} className="th-text-2 hover:th-text-1 transition-colors">
                 <IconX />
               </button>

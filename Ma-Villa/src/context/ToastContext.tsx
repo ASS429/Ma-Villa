@@ -41,7 +41,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     <ToastContext.Provider value={api}>
       {children}
       <div
-        className="fixed z-[100] bottom-4 right-4 left-4 sm:left-auto sm:w-96 flex flex-col gap-2 pointer-events-none"
+        className="pile-toasts"
         // Les erreurs sont annoncées aux lecteurs d'écran sans voler le focus.
         role="status"
         aria-live="polite"
