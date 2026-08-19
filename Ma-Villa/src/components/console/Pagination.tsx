@@ -1,16 +1,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Button from '../ui/Button'
-
-/** Forme d'une réponse paginée Laravel — celle que renvoient les listes admin. */
-export interface Page<T> {
-  data: T[]
-  current_page: number
-  last_page: number
-  per_page: number
-  total: number
-  from: number | null
-  to: number | null
-}
+import type { Page } from '../../lib/page'
 
 interface Props {
   page: Page<unknown> | null

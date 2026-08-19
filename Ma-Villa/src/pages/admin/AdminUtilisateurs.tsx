@@ -9,7 +9,8 @@ import { dateCourte } from '../../lib/format'
 import ConfirmModal from '../../components/ConfirmModal'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
-import Pagination, { type Page } from '../../components/console/Pagination'
+import Pagination from '../../components/console/Pagination'
+import { versPage, type Page } from '../../lib/page'
 
 interface Utilisateur {
   id: number
@@ -57,13 +58,14 @@ export default function AdminUtilisateurs() {
 
   const requete = `page=${page}${role ? `&role=${role}` : ''}${terme ? `&recherche=${encodeURIComponent(terme)}` : ''}`
 
-  const { donnees, chargement, erreur, reessayer } = useRequete<Page<Utilisateur>>(
+  const { donnees, chargement, erreur, reessayer } = useRequete<Page<Utilisateur> | Utilisateur[]>(
     async (signal) => (await api.get(`/admin/utilisateurs?${requete}`, { signal })).data,
     requete,
     { messageErreurParDefaut: 'Impossible de charger les comptes.' }
   )
 
-  const comptes = donnees?.data ?? []
+  const page_ = versPage(donnees)
+  const comptes = page_?.data ?? []
 
   const supprimer = async (u: Utilisateur) => {
     try {
@@ -98,7 +100,7 @@ export default function AdminUtilisateurs() {
 
       <h1 className="console-titre">Utilisateurs</h1>
       <p className="console-sous-titre">
-        {donnees ? `${donnees.total} compte${donnees.total > 1 ? 's' : ''} sur la plateforme` : 'Comptes de la plateforme'}
+        {page_ ? `${page_.total} compte${page_.total > 1 ? 's' : ''} sur la plateforme` : 'Comptes de la plateforme'}
       </p>
 
       <div className="console-filtres">
@@ -217,7 +219,7 @@ export default function AdminUtilisateurs() {
         </div>
       )}
 
-      <Pagination page={donnees} onChange={setPage} unite="compte" />
+      <Pagination page={page_} onChange={setPage} unite="compte" />
     </div>
   )
 }

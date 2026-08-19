@@ -8,7 +8,8 @@ import { messageErreur } from '../../lib/erreurs'
 import { depuis } from '../../lib/format'
 import ConfirmModal from '../../components/ConfirmModal'
 import Button from '../../components/ui/Button'
-import Pagination, { type Page } from '../../components/console/Pagination'
+import Pagination from '../../components/console/Pagination'
+import { versPage, type Page } from '../../lib/page'
 
 interface Avis {
   id: number
@@ -34,13 +35,14 @@ export default function AdminAvis() {
   const [page, setPage] = useState(1)
   const [aSupprimer, setASupprimer] = useState<Avis | null>(null)
 
-  const { donnees, chargement, erreur, reessayer } = useRequete<Page<Avis>>(
+  const { donnees, chargement, erreur, reessayer } = useRequete<Page<Avis> | Avis[]>(
     async (signal) => (await api.get(`/admin/avis?page=${page}`, { signal })).data,
     `avis-${page}`,
     { messageErreurParDefaut: 'Impossible de charger les avis.' }
   )
 
-  const avis = donnees?.data ?? []
+  const page_ = versPage(donnees)
+  const avis = page_?.data ?? []
 
   const supprimer = async (a: Avis) => {
     try {
@@ -72,7 +74,7 @@ export default function AdminAvis() {
 
       <h1 className="console-titre">Avis</h1>
       <p className="console-sous-titre">
-        {donnees ? `${donnees.total} avis déposé${donnees.total > 1 ? 's' : ''}` : 'Modération des avis'}
+        {page_ ? `${page_.total} avis déposé${page_.total > 1 ? 's' : ''}` : 'Modération des avis'}
         {' — '}seuls les clients ayant séjourné peuvent en écrire un.
       </p>
 
@@ -145,7 +147,7 @@ export default function AdminAvis() {
         </div>
       )}
 
-      <Pagination page={donnees} onChange={setPage} unite="avis" />
+      <Pagination page={page_} onChange={setPage} unite="avis" />
     </div>
   )
 }

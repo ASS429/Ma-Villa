@@ -8,7 +8,8 @@ import { messageErreur } from '../../lib/erreurs'
 import { depuis } from '../../lib/format'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
-import Pagination, { type Page } from '../../components/console/Pagination'
+import Pagination from '../../components/console/Pagination'
+import { versPage, type Page } from '../../lib/page'
 
 interface Villa {
   id: number
@@ -45,13 +46,14 @@ export default function AdminVillas() {
 
   const requete = `statut=${statut}&page=${page}${terme ? `&recherche=${encodeURIComponent(terme)}` : ''}`
 
-  const { donnees, chargement, erreur, reessayer } = useRequete<Page<Villa>>(
+  const { donnees, chargement, erreur, reessayer } = useRequete<Page<Villa> | Villa[]>(
     async (signal) => (await api.get(`/admin/villas?${requete}`, { signal })).data,
     requete,
     { messageErreurParDefaut: 'Impossible de charger les villas.' }
   )
 
-  const villas = donnees?.data ?? []
+  const page_ = versPage(donnees)
+  const villas = page_?.data ?? []
 
   const changerStatut = async (villa: Villa, nouveau: 'validee' | 'rejetee') => {
     setEnCours(villa.id)
@@ -235,7 +237,7 @@ export default function AdminVillas() {
         </div>
       )}
 
-      <Pagination page={donnees} onChange={setPage} unite="villa" />
+      <Pagination page={page_} onChange={setPage} unite="villa" />
     </div>
   )
 }
