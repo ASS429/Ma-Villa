@@ -114,6 +114,21 @@ composants : tout passe par les tokens, et le thème sombre suit partout. Les
 
 ---
 
+## SEO — pré-rendu au build
+
+`scripts/prerendu.mjs` s'exécute après `vite build` : une page HTML par route,
+avec titre, description, Open Graph, canonique et JSON-LD. Six pages fixes et
+une par villa publiée. Le plan de site et `robots.txt` sont générés là aussi —
+ne pas les recréer dans `public/`.
+
+⚠️ **Barre oblique finale obligatoire** sur les URL de fiche. Render applique
+sa réécriture avant de résoudre l'index d'un dossier : `/villas/10` sert le
+gabarit générique, `/villas/10/` sert la page pré-rendue. Liens de
+l'application, canonique, `og:url` et plan de site emploient tous cette forme.
+
+`VITE_SITE_URL` bascule tout le pré-rendu le jour du nom de domaine ; sans
+elle, c'est l'URL Render. Détail et pièges dans `../docs/`.
+
 ## Avant de déclarer une tâche terminée
 
 ```bash
@@ -155,8 +170,6 @@ d'API ouverte dans un onglet répond toujours 401, le jeton vivant dans
 
 **Chantiers restants, par valeur :**
 
-2. **Pré-rendu des fiches villa** — SPA sans SSR : Google ne voit pratiquement
-   rien des annonces, alors que c'est par là qu'arrive l'acquisition.
-3. Écran de lecture du journal d'audit (l'API existe : `GET /admin/journal`).
-4. Messagerie entre client et propriétaire.
-5. Boutique d'œuvres d'art — décidée le 12 août 2026, rien n'existe encore.
+2. Écran de lecture du journal d'audit (l'API existe : `GET /admin/journal`).
+3. Messagerie entre client et propriétaire.
+4. Boutique d'œuvres d'art — décidée le 12 août 2026, rien n'existe encore.
