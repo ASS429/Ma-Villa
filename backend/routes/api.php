@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AvisController;
 use App\Http\Controllers\Api\ConfigurationController;
+use App\Http\Controllers\Api\DiagnosticNotificationsController;
 use App\Http\Controllers\Api\DiagnosticPaiementController;
 use App\Http\Controllers\Api\DisponibiliteController;
 use App\Http\Controllers\Api\FavoriController;
@@ -120,6 +121,11 @@ Route::middleware('auth:sanctum')->group(function () {
         // ni paiement. Le seul moyen de diagnostiquer une fois les clés de
         // production en place, la cause d'un refus n'étant plus montrée au payeur.
         Route::get('/diagnostic/paiement', DiagnosticPaiementController::class);
+
+        // Sonde des notifications. `/api/configuration` dit seulement que les
+        // clés existent ; celle-ci signe réellement un jeton, seule preuve que
+        // l'extension gmp est là et que la crypto aboutit.
+        Route::get('/diagnostic/notifications', DiagnosticNotificationsController::class);
     });
 
     // Notifications poussées — l'abonnement appartient à un appareil, pas
