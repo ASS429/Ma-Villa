@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutGrid, Building2, Users, MessageSquare, CreditCard,
-  Menu, X, Sun, Moon, LogOut, ArrowLeft, BellRing,
+  Menu, X, Sun, Moon, LogOut, ArrowLeft, BellRing, ScrollText,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
@@ -25,6 +25,7 @@ const ENTREES: Entree[] = [
   { to: '/admin/avis',         label: 'Avis',            Icone: MessageSquare },
   { to: '/admin/paiement',     label: 'Encaissement',    Icone: CreditCard },
   { to: '/admin/notifications', label: 'Notifications',  Icone: BellRing },
+  { to: '/admin/journal',      label: 'Journal',        Icone: ScrollText },
 ]
 
 function initiales(nom: string) {
