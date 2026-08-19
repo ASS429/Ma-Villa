@@ -19,12 +19,16 @@ interface Ligne {
   etat: 'du' | 'a_venir' | 'verse' | 'annule'
 }
 
+type StatutVersement = 'manuel' | 'en_cours' | 'reussi' | 'echoue'
+
 interface Versement {
   id: number
   montant: number
   methode: string
+  statut: StatutVersement
   reference: string | null
-  verse_le: string
+  verse_le: string | null
+  created_at: string
 }
 
 interface Revenus {
@@ -35,6 +39,16 @@ interface Revenus {
   lignes: Ligne[]
   reversements: Versement[]
   methodes: Record<string, string>
+  statuts: Record<StatutVersement, string>
+}
+
+/* Un versement en cours n'est pas reçu : le montrer comme acquis ferait
+   chercher au propriétaire un argent qui n'est pas encore sur son téléphone. */
+const TON_VERSEMENT: Record<StatutVersement, 'success' | 'warning' | 'danger'> = {
+  manuel: 'success',
+  reussi: 'success',
+  en_cours: 'warning',
+  echoue: 'danger',
 }
 
 const ETAT: Record<Ligne['etat'], { label: string; ton: 'warning' | 'success' | 'danger' | 'neutre' }> = {
@@ -163,14 +177,16 @@ export default function Revenus() {
             <ul className="liste-versements">
               {versements.map((v) => (
                 <li key={v.id}>
-                  <div>
+                  <div style={{ minWidth: 0 }}>
                     <p className="versement-montant">{fcfa(v.montant)}</p>
                     <p className="versement-detail">
-                      {dateCourte(v.verse_le)} · {donnees?.methodes?.[v.methode] ?? v.methode}
+                      {dateCourte(v.verse_le ?? v.created_at)} · {donnees?.methodes?.[v.methode] ?? v.methode}
                       {v.reference ? ` · ${v.reference}` : ''}
                     </p>
                   </div>
-                  <CheckCheck size={16} aria-hidden="true" style={{ color: 'var(--success)', flex: 'none' }} />
+                  <Badge ton={TON_VERSEMENT[v.statut]}>
+                    {donnees?.statuts?.[v.statut] ?? v.statut}
+                  </Badge>
                 </li>
               ))}
             </ul>

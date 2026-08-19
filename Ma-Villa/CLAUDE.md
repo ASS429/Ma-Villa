@@ -171,9 +171,9 @@ d'API ouverte dans un onglet répond toujours 401, le jeton vivant dans
 **Chantiers restants, par valeur :**
 
 2. Boutique d'œuvres d'art — décidée le 12 août 2026, rien n'existe encore.
-3. Décaissement automatique vers Wave / Orange Money — **suspendu à une
-   activation PayDunya à demander**. Le suivi des reversements existe déjà (voir
-   plus bas) ; seul le virement reste un geste humain.
+3. **Faire ouvrir l'option PER chez PayDunya.** Tout le code du déboursement
+   est écrit et testé ; il ne manque que l'autorisation du prestataire, et
+   `REVERSEMENT_AUTOMATIQUE=true`.
 
 **Fait le 19 août 2026 :** journal d'audit lisible (`/admin/journal`) ·
 messagerie client ↔ propriétaire · coordonnées retirées des écrans publics ·
@@ -247,3 +247,58 @@ Deux autres règles tenues par les tests (`tests/Feature/ReversementTest.php`,
 Écrans : `pages/dashboard/Revenus.tsx` (propriétaire) et
 `pages/admin/AdminReversements.tsx` (file d'attente + enregistrement).
 Chaque versement part au journal d'audit et déclenche une notification poussée.
+
+### Déboursement automatique (PayDunya PER)
+
+Deux façons de verser coexistent, et c'est volontaire :
+
+- **manuel** — un virement fait hors de l'application, simplement constaté.
+  Réussi par construction ;
+- **automatique** — `App\Services\Deboursement` envoie l'argent sur le Wave ou
+  l'Orange Money du propriétaire.
+
+⚠️ **L'option « Paiement Et Redistribution » (PER) est désactivée sur le compte
+marchand au 20 août 2026.** Le code est complet et testé ; `REVERSEMENT_AUTOMATIQUE`
+reste donc à `false`. Le jour de l'activation, la variable suffit — rien à
+redéployer. La sonde `/admin/deboursement` dit ce que PayDunya répond
+réellement : un code `401` signifie que l'option n'est toujours pas ouverte.
+
+L'API vit en **v2** (`/api/v2/disburse/…`) quand l'encaissement est en v1, et se
+déroule en trois temps :
+
+| Appel | Effet |
+|---|---|
+| `get-invoice` | réserve un jeton. Statut « created » — **rien ne bouge** |
+| `submit-invoice` | exécute. **L'argent part ici** |
+| `check-status` | l'état réel, à toute heure |
+
+C'est parce que `get-invoice` est inoffensif que la sonde peut exister sans
+risque : elle initie et s'arrête là.
+
+Les règles qui coûtent de l'argent si on les enfreint :
+
+1. **La réponse de `submit-invoice` n'est pas une preuve.** Hors code `00`,
+   PayDunya demande de relire `check-status` avec le même jeton. Un « échec »
+   supposé sur un virement réellement parti se solderait par un second virement.
+   Même principe que l'IPN d'encaissement, qui n'a jamais fait foi.
+2. **Un échec rend les paiements à la file** (`reversement_id` → `null`), sinon
+   le propriétaire attend un argent que plus rien ne réclame.
+3. **Un doute ne rend rien.** `created` et `inconnu` restent « en cours » : les
+   libérer autoriserait un second envoi. C'est le suivi qui tranche.
+4. **`disburse_id` est notre garde-fou** (`MV-REV-{id}`) : PayDunya refuse de le
+   rejouer, ce qui interdit le doublon.
+5. **Aucune reprise automatique sur les appels HTTP.** Rejouer une requête qui
+   envoie de l'argent est précisément ce qu'il ne faut pas faire.
+6. Le numéro part **sans indicatif ni espaces** (`771234567`), le montant en
+   **entier** — une décimale fait refuser la requête.
+
+Le rappel `POST /api/reversements/rappel` est public (PayDunya refuse
+l'initiation si l'URL ne répond pas), signé par le SHA-512 de la clé maîtresse,
+et son corps n'est jamais cru : le statut est relu chez PayDunya.
+
+`mavilla:suivre-reversements` tranche les versements restés en cours, toutes les
+cinq minutes via `schedule:work` lancé par `start.sh`. Sans lui, un rappel perdu
+laisserait un montant invisible des deux consoles à la fois.
+
+Verrouillé par `tests/Feature/DeboursementTest.php` (18 tests, réponses
+PayDunya simulées).

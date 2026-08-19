@@ -107,4 +107,54 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Reversement au propriétaire
+    |--------------------------------------------------------------------------
+    |
+    | La plateforme encaisse tout, puis reverse. Le versement peut se faire de
+    | deux façons, et les deux coexistent volontairement :
+    |
+    |   — à la main : un virement fait hors de l'application, simplement
+    |     enregistré ici. C'est le seul chemin tant que PayDunya n'a pas ouvert
+    |     l'option « Paiement Et Redistribution » (PER / déboursement) sur le
+    |     compte marchand, ce qui est le cas au 19 août 2026 ;
+    |
+    |   — automatique : l'API de déboursement envoie l'argent sur le Wave ou
+    |     l'Orange Money du propriétaire.
+    |
+    | `automatique` reste donc à false par défaut. Le jour de l'activation, une
+    | variable d'environnement suffit : rien à redéployer, et la sonde
+    | `/admin/diagnostic/reversement` dit si PayDunya accepte l'initiation.
+    |
+    */
+    'reversement' => [
+
+        'automatique' => (bool) env('REVERSEMENT_AUTOMATIQUE', false),
+
+        /*
+        | Correspondance entre nos moyens et les `withdraw_mode` de PayDunya.
+        |
+        | `virement` et `especes` n'y figurent pas : ils n'existent que hors
+        | ligne, et c'est justement pourquoi ils restent proposés à la main.
+        */
+        'modes' => [
+            'wave'         => 'wave-senegal',
+            'orange_money' => 'orange-money-senegal',
+            'free_money'   => 'free-money-senegal',
+        ],
+
+        /*
+        | Un déboursement se refuse sous le plancher du prestataire, comme un
+        | encaissement. Le tenir ici évite de partir pour rien.
+        */
+        'montant_minimum' => (int) env('REVERSEMENT_MONTANT_MINIMUM', 200),
+
+        /*
+        | Indicatif à retirer du numéro : PayDunya attend `771111111`, sans
+        | indicatif ni espaces, alors que les comptes portent « +221 77 … ».
+        */
+        'indicatif' => env('REVERSEMENT_INDICATIF', '221'),
+    ],
+
 ];

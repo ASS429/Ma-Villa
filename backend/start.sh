@@ -29,6 +29,20 @@ while true; do
     sleep 5
 done &
 
+# L'ordonnanceur. Une seule tache pour l'instant : trancher le sort des
+# reversements restes en cours quand le rappel de PayDunya n'arrive jamais.
+# Sans lui, un versement resterait en suspens indefiniment et son montant
+# disparaitrait des deux consoles -- c'est ainsi que de l'argent se perd de vue.
+#
+# `schedule:work` plutot qu'une entree cron : l'hebergeur ne fournit pas de
+# cron, et cette boucle vit avec le conteneur.
+echo "==> Demarrage de l'ordonnanceur..."
+while true; do
+    php artisan schedule:work --quiet || true
+    echo "[schedule] ordonnanceur arrete, redemarrage dans 5s"
+    sleep 5
+done &
+
 echo "==> Diagnostic d'infrastructure..."
 php artisan mavilla:diagnostic || true
 

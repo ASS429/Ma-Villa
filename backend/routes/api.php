@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AvisController;
 use App\Http\Controllers\Api\ConfigurationController;
 use App\Http\Controllers\Api\DiagnosticNotificationsController;
+use App\Http\Controllers\Api\DiagnosticReversementController;
 use App\Http\Controllers\Api\DiagnosticPaiementController;
 use App\Http\Controllers\Api\DisponibiliteController;
 use App\Http\Controllers\Api\FavoriController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\Api\NotificationPushController;
 use App\Http\Controllers\Api\PaiementController;
 use App\Http\Controllers\Api\PhotoController;
 use App\Http\Controllers\Api\ReservationController;
+use App\Http\Controllers\Api\RappelDeboursementController;
 use App\Http\Controllers\Api\ReversementController;
 use App\Http\Controllers\Api\TarifController;
 use App\Http\Controllers\Api\VillaController;
@@ -34,6 +36,12 @@ Route::get('/configuration', ConfigurationController::class);
 // Notification de paiement PayDunya. Publique par nature — le prestataire
 // n'a pas de session — mais authentifiée par le hash de la clé maîtresse.
 Route::post('/paiements/ipn', [PaiementController::class, 'ipn'])->name('paiements.ipn');
+
+// Rappel de deboursement, le symetrique cote sortant. PayDunya refuse
+// l'initiation si cette URL ne repond pas : elle doit rester publique,
+// et sa seule garde est la signature de la cle maitresse.
+Route::post('/reversements/rappel', RappelDeboursementController::class)
+    ->name('reversements.rappel');
 Route::get('/villas', [VillaController::class, 'index']);
 Route::get('/destinations', [VillaController::class, 'destinations']);
 Route::get('/villas/{villa}', [VillaController::class, 'show']);
@@ -147,6 +155,11 @@ Route::middleware('auth:sanctum')->group(function () {
         // clés existent ; celle-ci signe réellement un jeton, seule preuve que
         // l'extension gmp est là et que la crypto aboutit.
         Route::get('/diagnostic/notifications', DiagnosticNotificationsController::class);
+
+        // Sonde du deboursement. Elle ne fait qu'initier : la documentation
+        // PayDunya est formelle, un jeton cree reste « created » tant qu'il
+        // n'est pas soumis. Aucun franc ne peut donc partir en la lancant.
+        Route::get('/diagnostic/reversement', DiagnosticReversementController::class);
     });
 
     // Notifications poussées — l'abonnement appartient à un appareil, pas

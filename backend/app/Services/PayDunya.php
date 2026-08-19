@@ -324,16 +324,46 @@ class PayDunya
         return hash_equals(hash('sha512', $this->cle('cle_maitre')), $hash);
     }
 
-    private function requete(): PendingRequest
+    /**
+     * La base d'API, moins le numéro de version.
+     *
+     * Publique pour le déboursement, qui vit en v2 quand l'encaissement est en
+     * v1 : la base reste déduite des clés — donc du bac à sable ou non — et
+     * seul le numéro de version change chez l'appelant.
+     */
+    public function baseApi(): string
+    {
+        return $this->base();
+    }
+
+    /**
+     * Les en-têtes d'authentification, pour un appel mené ailleurs.
+     *
+     * `garantirCoherenceDesCles()` est appelée ici aussi : qui obtient les
+     * en-têtes s'apprête à parler à PayDunya, et doit buter sur la même
+     * incohérence que `requete()`.
+     *
+     * @return array<string, string>
+     */
+    public function entetesPubliques(): array
+    {
+        $this->garantirCoherenceDesCles();
+
+        return $this->entetes();
+    }
+
+    /**
+     * Le danger n'est pas un refus — l'API accepte les clés de test et joue la
+     * transaction pour de faux. C'est qu'on se croie en train d'encaisser : des
+     * réservations se confirment, aucun franc n'arrive. Côté déboursement, le
+     * symétrique est pire encore : une dette soldée sans qu'un franc soit parti.
+     */
+    public function garantirCoherenceDesCles(): void
     {
         if (! $this->estConfigure()) {
             throw new RuntimeException('Les clés PayDunya ne sont pas configurées.');
         }
 
-        // Le danger n'est pas un refus — l'API accepte les clés de test et joue
-        // la transaction pour de faux. C'est qu'on se croie en train
-        // d'encaisser : des réservations se confirment, aucun franc n'arrive.
-        // Laisser passer en silence serait la pire des options.
         if (($this->config['mode'] ?? 'test') === 'live' && $this->clesDeTest()) {
             throw new RuntimeException(
                 'PAYDUNYA_MODE vaut « live » mais les clés fournies sont des clés de test '
@@ -342,6 +372,11 @@ class PayDunya
                 .'ou renseignez vos clés de production pour encaisser.'
             );
         }
+    }
+
+    private function requete(): PendingRequest
+    {
+        $this->garantirCoherenceDesCles();
 
         return Http::withHeaders($this->entetes())
             ->timeout(30)

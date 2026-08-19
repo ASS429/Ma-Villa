@@ -1204,3 +1204,56 @@
 }
 .modale-actions .btn { flex: 1 1 auto; }
 @media (min-width: 480px) { .modale-actions .btn { flex: 0 0 auto; } }
+
+/* ── Choix du mode de versement ───────────────────────────────── */
+
+/* Deux options exclusives dont l'une envoie réellement de l'argent : elles
+   méritent mieux qu'une liste déroulante, où l'on choisit sans lire. */
+.choix-mode {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.choix-mode legend { margin-bottom: var(--space-2); }
+
+.choix {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.choix:hover { border-color: var(--border-strong); }
+.choix.est-actif {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+.choix input { margin-top: 3px; accent-color: var(--accent); flex: none; }
+.choix-titre {
+  display: block;
+  font: var(--t-body-sm);
+  font-weight: 600;
+  color: var(--text-1);
+}
+.choix-aide {
+  display: block;
+  margin-top: 2px;
+  font: var(--t-caption);
+  color: var(--text-3);
+}
+
+/* Le motif d'un échec, sous la ligne du versement. Sans lui, il faudrait
+   ouvrir les journaux du serveur pour savoir pourquoi l'argent n'est pas
+   parti — exactement ce que cette console existe pour éviter. */
+.versement-echec {
+  margin: 4px 0 0;
+  font: var(--t-caption);
+  color: var(--danger);
+}

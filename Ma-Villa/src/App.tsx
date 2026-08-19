@@ -59,6 +59,7 @@ const AdminPaiement     = lazy(() => import('./pages/admin/AdminPaiement'))
 const AdminNotifications = lazy(() => import('./pages/admin/AdminNotifications'))
 const AdminJournal      = lazy(() => import('./pages/admin/AdminJournal'))
 const AdminReversements = lazy(() => import('./pages/admin/AdminReversements'))
+const AdminDeboursement = lazy(() => import('./pages/admin/AdminDeboursement'))
 
 /* ─── Route guards ───────────────────────────────────────────── */
 
@@ -435,6 +436,7 @@ export default function App() {
         <Route path="notifications" element={<AdminNotifications />} />
         <Route path="journal" element={<AdminJournal />} />
         <Route path="reversements" element={<AdminReversements />} />
+        <Route path="deboursement" element={<AdminDeboursement />} />
       </Route>
 
         <Route path="*" element={<NotFound />} />
