@@ -12,3 +12,8 @@
 
 # Sortie de build du front, régénérée à chaque publication.
 /Ma-Villa/dist/
+
+# Clés VAPID générées localement, à poser sur Railway puis à supprimer.
+# Le fichier contient une clé privée : il ne doit jamais être versionné.
+.vapid-a-poser.txt
+backend/.vapid-a-poser.txt
