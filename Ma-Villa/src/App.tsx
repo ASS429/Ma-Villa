@@ -54,6 +54,7 @@ const AdminVillas       = lazy(() => import('./pages/admin/AdminVillas'))
 const AdminUtilisateurs = lazy(() => import('./pages/admin/AdminUtilisateurs'))
 const AdminAvis         = lazy(() => import('./pages/admin/AdminAvis'))
 const AdminPaiement     = lazy(() => import('./pages/admin/AdminPaiement'))
+const AdminNotifications = lazy(() => import('./pages/admin/AdminNotifications'))
 
 /* ─── Route guards ───────────────────────────────────────────── */
 
@@ -425,6 +426,7 @@ export default function App() {
         <Route path="utilisateurs" element={<AdminUtilisateurs />} />
         <Route path="avis" element={<AdminAvis />} />
         <Route path="paiement" element={<AdminPaiement />} />
+        <Route path="notifications" element={<AdminNotifications />} />
       </Route>
 
         <Route path="*" element={<NotFound />} />
