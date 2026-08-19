@@ -19,7 +19,7 @@ aboutissait à des réservations confirmées et payées au centième du tarif.
 
 | | Avant | Après |
 |---|---|---|
-| Tests backend | 176 | **219** (+43) |
+| Tests backend | 176 | **229** (+53) |
 | Vulnérabilités Composer | **30** (2 hautes) | **0** |
 | Vulnérabilités npm | 0 | 0 |
 | Laravel | 13.5.0 | 13.26.0 |
@@ -535,72 +535,66 @@ Par honnêteté sur le périmètre :
 
 ---
 
-## 8. À faire de votre côté — par ordre d'urgence
+## 8. État du déploiement et reste à faire
 
-### 🔴 Immédiat
+**Mis à jour le 19 août 2026.** Tout ce qui suit a été vérifié sur la
+production, pas déduit.
 
-1. **Vérifier l'exploitation passée de la faille de tarif** (§1.1). En base de
-   production :
+### ✅ En ligne et vérifié
+
+Front et API sont sur le **même commit**, et `GET /api/configuration` le
+confirme sans qu'on ait à deviner.
+
+| | |
+|---|---|
+| Faille de tarif | colmatée |
+| Vulnérabilités Composer / npm | 0 / 0 |
+| PWA | installable, service worker actif, hors ligne vérifié |
+| Notifications poussées | clés VAPID posées, **signature vérifiée** |
+| Console d'administration | refondue, paginée, journal d'audit |
+| Accessibilité | 0 contrôle sans nom sur 7 pages publiques |
+| Limitation de débit | posée sur les quatre routes d'écriture |
+
+### 🔴 Le seul point réellement exposé
+
+**Les textes juridiques.** Les CGU et la politique d'annulation affirment
+toujours, en ligne, que « aucun paiement n'est encaissé par la plateforme ».
+C'est faux depuis l'encaissement réel, et la commission de 10–20 % n'y figure
+nulle part. Quatre passages dans `Ma-Villa/src/pages/legal/contenu.ts`
+(lignes 7, 90, 203, 231).
+
+En cours de réécriture par le juriste associé au 19 août 2026.
+
+### 🟠 À faire une fois, quand vous voudrez
+
+1. **Vérifier l'exploitation passée de la faille de tarif** — la seule chose
+   qui puisse avoir laissé des traces en base :
 
    ```sql
-   SELECT r.id, r.montant_total, r.statut, r.created_at,
-          l.villa_id, t.logement_id AS tarif_appartient_a
-   FROM reservations r
-   JOIN tarifs t    ON t.id = r.tarif_id
-   JOIN logements l ON l.id = r.logement_id
+   SELECT r.id, r.montant_total, r.statut, r.created_at
+   FROM reservations r JOIN tarifs t ON t.id = r.tarif_id
    WHERE t.logement_id <> r.logement_id;
    ```
 
    Toute ligne renvoyée est une réservation au mauvais prix.
 
-2. **Faire relire les textes juridiques.** Les CGU et la politique d'annulation
-   affirment encore, en toutes lettres :
+2. **Supprimer `backend/.vapid-a-poser.txt`** s'il existe encore : il contient
+   la clé privée. Il est gitignoré, donc jamais publié, mais il n'a plus de
+   raison d'être une fois les variables posées sur Railway.
 
-   > « aucun paiement n'est encaissé par la plateforme : le règlement s'effectue
-   > directement entre le client et le propriétaire […] Ma Villa n'intervient ni
-   > dans la transaction, ni dans sa sécurisation. »
+### 🟡 Chantiers restants, par ordre de valeur
 
-   C'est **faux depuis l'encaissement réel du 18 août 2026**, et la commission
-   de 10–20 % n'y figure nulle part. Quatre passages concernés dans
-   `Ma-Villa/src/pages/legal/contenu.ts` (lignes 7, 90, 203, 231). Le drapeau
-   `TEXTES_PROVISOIRES` est pourtant à `false` et aucune mention
-   `[À COMPLÉTER]` ne subsiste : **les textes se présentent comme définitifs
-   alors qu'ils décrivent une plateforme qui n'existe plus.**
-
-3. **Redéployer Railway à la main.** Render se redéploie seul, Railway non — et
-   `GET /api/configuration` renvoie `version` pour le vérifier sans deviner.
-
-### 🟠 Avant d'activer les notifications
-
-4. **Générer les clés VAPID**, une seule fois :
-
-   ```bash
-   php artisan push:cles
-   ```
-
-   Les régénérer plus tard invaliderait tous les abonnements en place, et
-   chaque utilisateur devrait réautoriser à la main.
-
-5. **Poser les trois variables sur Railway** : `VAPID_SUJET`,
-   `VAPID_CLE_PUBLIQUE`, `VAPID_CLE_PRIVEE`. Tant qu'elles sont absentes, la
-   fonction reste dormante et aucun bouton n'apparaît — rien ne casse.
-
-6. **Redéployer l'image Docker.** L'extension PHP `gmp` a été ajoutée au
-   `Dockerfile` : sans elle, `push:cles` et tout envoi échouent sur
-   « Unable to create the key », sans que rien ne désigne l'extension manquante.
-
-### 🟡 Ensuite
-
-7. **Pré-rendu SEO des fiches villa** — le seul chantier technique encore
-   ouvert de la liste initiale. SPA sans SSR : Google ne voit pratiquement rien
-   des annonces, alors que c'est par là qu'arrive le trafic d'acquisition.
-8. Écran de consultation du journal d'audit dans la console (l'API existe,
-   `GET /admin/journal` ; l'interface reste à faire).
-9. Messagerie entre client et propriétaire.
-10. Test d'intégration sur PostgreSQL pour la course à la double réservation
-    (§1.5), que SQLite ne permet pas de reproduire.
-
----
+3. **Pré-rendu SEO des fiches villa** — le plus rentable. L'application est une
+   SPA sans rendu serveur : Google ne voit pratiquement rien des annonces,
+   alors que c'est par là qu'arrive le trafic d'acquisition. Chantier à part
+   entière (pré-rendu au build, ou rendu serveur).
+4. **Écran de lecture du journal d'audit** — l'API existe (`GET /admin/journal`,
+   paginée et filtrable), l'interface reste à faire.
+5. **Messagerie entre client et propriétaire.**
+6. **Test d'intégration sur PostgreSQL** pour la course à la double réservation
+   (§1.5) : le correctif est structurel, mais SQLite ne permet pas de
+   reproduire deux connexions simultanées.
+7. **Boutique d'œuvres d'art** — décidée le 12 août 2026, rien n'existe encore.
 
 ## 9. Méthode de vérification
 
@@ -608,7 +602,7 @@ Rien n'a été déclaré corrigé sans preuve. Pour chaque défaut : un test qui
 échoue d'abord, ou une mesure au navigateur avant et après.
 
 ```bash
-# Backend — 219 tests
+# Backend — 229 tests
 cd backend && php artisan test
 composer audit                      # doit rester à zéro
 

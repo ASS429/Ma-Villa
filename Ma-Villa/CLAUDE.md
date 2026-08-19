@@ -120,7 +120,7 @@ composants : tout passe par les tokens, et le thème sombre suit partout. Les
 npx tsc -b          # doit passer
 npx eslint src      # doit être à zéro — c'est l'état actuel, ne pas le dégrader
 npm run build
-cd ../backend && php artisan test    # 219 tests
+cd ../backend && php artisan test    # 229 tests
 ```
 
 ---
@@ -134,16 +134,29 @@ audit sécurité, corrections appliquées et vérifiées, PWA, refonte visuelle.
 **Fait :** paiement Wave / Orange Money (encaissement réel validé) · PWA
 installable avec notifications poussées · 30 vulnérabilités Composer corrigées.
 
-**Restent bloquants pour le lancement :**
+**En production depuis le 19 août 2026**, front et API sur le même commit :
+faille de tarif colmatée, 30 CVE Composer corrigées, PWA installable,
+notifications poussées actives (clés VAPID posées et **signature vérifiée**),
+console refondue et paginée, journal d'audit, limitation de débit.
+
+Deux sondes dans la console, à utiliser **depuis l'interface** — une adresse
+d'API ouverte dans un onglet répond toujours 401, le jeton vivant dans
+`localStorage` : `/admin/paiement` (PayDunya) et `/admin/notifications` (VAPID).
+
+**Reste bloquant pour le lancement :**
 
 1. **Textes juridiques faux.** Les CGU affirment toujours que la plateforme
-   n'encaisse aucun paiement — c'est faux depuis le 18 août 2026, et la
-   commission de 10–20 % n'y figure nulle part. Quatre passages dans
+   n'encaisse aucun paiement — faux depuis le 18 août 2026, et la commission de
+   10–20 % n'y figure nulle part. Quatre passages dans
    `src/pages/legal/contenu.ts` (lignes 7, 90, 203, 231). Le drapeau
    `TEXTES_PROVISOIRES` est à `false` : les textes se présentent comme
    définitifs alors qu'ils décrivent une plateforme qui n'existe plus.
-2. **Clés VAPID à générer et à poser sur Railway**, et image Docker à
-   redéployer (l'extension `gmp` vient d'y être ajoutée) — sans quoi les
-   notifications restent dormantes.
-3. **Pré-rendu des fiches villa** — SPA sans SSR : Google ne voit pratiquement rien.
+   **En cours de réécriture par le juriste.**
+
+**Chantiers restants, par valeur :**
+
+2. **Pré-rendu des fiches villa** — SPA sans SSR : Google ne voit pratiquement
+   rien des annonces, alors que c'est par là qu'arrive l'acquisition.
+3. Écran de lecture du journal d'audit (l'API existe : `GET /admin/journal`).
 4. Messagerie entre client et propriétaire.
+5. Boutique d'œuvres d'art — décidée le 12 août 2026, rien n'existe encore.
