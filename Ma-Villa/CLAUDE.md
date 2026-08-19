@@ -170,6 +170,36 @@ d'API ouverte dans un onglet répond toujours 401, le jeton vivant dans
 
 **Chantiers restants, par valeur :**
 
-2. Écran de lecture du journal d'audit (l'API existe : `GET /admin/journal`).
-3. Messagerie entre client et propriétaire.
-4. Boutique d'œuvres d'art — décidée le 12 août 2026, rien n'existe encore.
+2. Boutique d'œuvres d'art — décidée le 12 août 2026, rien n'existe encore.
+3. Reversement au propriétaire : aujourd'hui manuel, hors application.
+
+**Fait le 19 août 2026 :** journal d'audit lisible (`/admin/journal`) ·
+messagerie client ↔ propriétaire · coordonnées retirées des écrans publics.
+
+---
+
+## Coordonnées et messagerie
+
+Le numéro du propriétaire **ne sort plus** avant qu'un séjour soit engagé.
+Publié sur la fiche, il permettait de conclure hors plateforme : la commission
+s'évaporait et le client perdait avis vérifié, preuve de paiement et recours.
+
+Trois verrous, et il faut les trois :
+
+| Où | Règle |
+|---|---|
+| `GET /villas` | `scopeWithoutTelephone()` — la colonne ne part pas |
+| `GET /villas/{id}` | `makeHidden('telephone')` sauf propriétaire ou admin ; `proprietaire:id,name,avatar` seulement |
+| `GET /reservations[/{id}]` | `revelerLesCoordonnees()` — numéro révélé si la réservation est **confirmée** ou payée |
+
+⚠️ **Le troisième est le moins évident et le plus important.** Ouvrir une
+demande de réservation ne coûte rien et ne se paie pas : sans lui, il suffisait
+d'en créer une, de lire `logement.villa.telephone`, puis d'annuler. Verrouillé
+par `tests/Feature/CoordonneesTest.php` (11 tests).
+
+La messagerie prend le relais : **la réservation est la conversation** — pas de
+table de fil séparée, l'autorisation réutilise `ReservationPolicy::view`.
+Écran `pages/dashboard/Conversation.tsx`, compteur de non-lus partagé par
+`context/MessagesContext.tsx` (une requête pour la navigation *et* les cartes).
+Notification poussée à chaque message, groupée par fil ; **pas d'email** — un
+message est un échange, pas un jalon.

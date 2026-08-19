@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { CalendarDays, Users, Check, X, CreditCard, Inbox } from 'lucide-react'
+import { CalendarDays, Users, Check, X, CreditCard, Inbox, MessageSquare } from 'lucide-react'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import { useConfig } from '../../context/ConfigContext'
+import { useMessages } from '../../context/MessagesContext'
 import { useToast } from '../../context/ToastContext'
 import { useRequete } from '../../lib/useRequete'
 import { messageErreur } from '../../lib/erreurs'
@@ -69,6 +70,7 @@ function resteARegler(r: Reservation, minimum: number) {
 export default function Reservations() {
   const { user } = useAuth()
   const { paiement } = useConfig()
+  const { parReservation } = useMessages()
   const toast = useToast()
   const [filtre, setFiltre] = useState('toutes')
   const [enCours, setEnCours] = useState<number | null>(null)
@@ -205,47 +207,60 @@ export default function Reservations() {
                   </p>
                 </div>
 
-                {(estProprietaire && r.statut === 'en_attente') || payable || annulable ? (
-                  <div className="reservation-actions">
-                    {estProprietaire && r.statut === 'en_attente' && (
-                      <>
-                        <Button
-                          variante="primaire" taille="sm"
-                          onClick={() => changerStatut(r, 'confirmee')}
-                          disabled={enCours === r.id}
-                          iconeAvant={<Check size={15} />}
-                        >
-                          Confirmer
-                        </Button>
-                        <Button
-                          variante="secondaire" taille="sm"
-                          onClick={() => changerStatut(r, 'annulee')}
-                          disabled={enCours === r.id}
-                          iconeAvant={<X size={15} />}
-                        >
-                          Refuser
-                        </Button>
-                      </>
+                <div className="reservation-actions">
+                  {/* Depuis que le numero du proprietaire a quitte la fiche
+                      publique, c'est par ici que tout se demande. Le lien est
+                      donc present sur chaque carte, y compris annulee : un
+                      remboursement se discute apres coup. */}
+                  <Link
+                    to={`/dashboard/reservations/${r.id}/messages`}
+                    className="btn btn-secondaire btn-sm"
+                  >
+                    <MessageSquare size={15} aria-hidden="true" />
+                    <span>Messages</span>
+                    {(parReservation[r.id] ?? 0) > 0 && (
+                      <span className="console-pastille">{parReservation[r.id]}</span>
                     )}
+                  </Link>
 
-                    {annulable && (
+                  {estProprietaire && r.statut === 'en_attente' && (
+                    <>
+                      <Button
+                        variante="primaire" taille="sm"
+                        onClick={() => changerStatut(r, 'confirmee')}
+                        disabled={enCours === r.id}
+                        iconeAvant={<Check size={15} />}
+                      >
+                        Confirmer
+                      </Button>
                       <Button
                         variante="secondaire" taille="sm"
                         onClick={() => changerStatut(r, 'annulee')}
                         disabled={enCours === r.id}
+                        iconeAvant={<X size={15} />}
                       >
-                        Annuler la demande
+                        Refuser
                       </Button>
-                    )}
+                    </>
+                  )}
 
-                    {payable && (
-                      <Link to={`/reservation/${r.id}/paiement`} className="btn btn-primaire btn-sm">
-                        <CreditCard size={15} aria-hidden="true" />
-                        <span>{r.paiement?.statut === 'en_attente' ? 'Reprendre le paiement' : 'Régler'}</span>
-                      </Link>
-                    )}
-                  </div>
-                ) : null}
+                  {annulable && (
+                    <Button
+                      variante="secondaire" taille="sm"
+                      onClick={() => changerStatut(r, 'annulee')}
+                      disabled={enCours === r.id}
+                    >
+                      Annuler la demande
+                    </Button>
+                  )}
+
+                  {payable && (
+                    <Link to={`/reservation/${r.id}/paiement`} className="btn btn-primaire btn-sm">
+                      <CreditCard size={15} aria-hidden="true" />
+                      <span>{r.paiement?.statut === 'en_attente' ? 'Reprendre le paiement' : 'Régler'}</span>
+                    </Link>
+                  )}
+                </div>
               </article>
             )
           })}

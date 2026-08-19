@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\DiagnosticPaiementController;
 use App\Http\Controllers\Api\DisponibiliteController;
 use App\Http\Controllers\Api\FavoriController;
 use App\Http\Controllers\Api\LogementController;
+use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\NotificationPushController;
 use App\Http\Controllers\Api\PaiementController;
 use App\Http\Controllers\Api\PhotoController;
@@ -85,6 +86,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/reservations', [ReservationController::class, 'store'])->middleware('throttle:10,1');
     Route::get('/reservations/{reservation}', [ReservationController::class, 'show']);
     Route::patch('/reservations/{reservation}/statut', [ReservationController::class, 'updateStatut']);
+
+    // Messagerie — la réservation tient lieu de conversation, et sa politique
+    // d'accès sert d'autorisation : client, propriétaire du logement, admin.
+    Route::get('/messages/non-lus', [MessageController::class, 'nonLus']);
+    Route::get('/reservations/{reservation}/messages', [MessageController::class, 'index']);
+    Route::post('/reservations/{reservation}/messages', [MessageController::class, 'store'])
+        ->middleware('throttle:30,1');
 
     // Upload fichier (retourne URL)
     Route::post('/upload', [PhotoController::class, 'upload'])->middleware('throttle:40,1');

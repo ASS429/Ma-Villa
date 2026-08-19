@@ -914,3 +914,148 @@
 
 .nav-lien.sur-photo { color: rgba(255, 255, 255, 0.9); }
 .nav-lien.sur-photo:hover { color: #fff; }
+
+/* ════════════════════════════════════════════════════════════════
+   MESSAGERIE — le fil d'une réservation
+   ════════════════════════════════════════════════════════════════ */
+
+/* Pastille de non-lus. Elle chiffre, donc `lining-nums` : sans lui,
+   Cormorant dessine « 1 » et « 0 » en elzéviriens et la pastille devient
+   illisible à cette taille. */
+.console-pastille {
+  display: inline-grid;
+  place-items: center;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  margin-left: auto;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font: var(--t-caption);
+  font-variant-numeric: lining-nums tabular-nums;
+  font-weight: 600;
+  line-height: 1;
+}
+.reservation-actions .console-pastille { margin-left: var(--space-1); }
+
+/* La conversation occupe toute la hauteur utile : le champ de saisie reste
+   visible sans faire défiler, comme dans n'importe quelle messagerie. La
+   soustraction couvre l'en-tête mobile de la console. */
+.conversation {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - 132px);
+  min-height: 360px;
+}
+
+.conversation-entete {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+.conversation-titre {
+  margin: 0;
+  font: var(--t-body);
+  font-weight: 600;
+  color: var(--text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.conversation-detail {
+  margin: 2px 0 0;
+  font: var(--t-body-sm);
+  color: var(--text-3);
+  font-variant-numeric: lining-nums;
+}
+
+.conversation-fil {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4) 2px;
+}
+
+.conversation-jour {
+  margin: var(--space-3) 0 var(--space-2);
+  text-align: center;
+  font: var(--t-caption);
+  color: var(--text-3);
+  font-variant-numeric: lining-nums;
+}
+
+.bulle {
+  max-width: min(78%, 520px);
+  width: fit-content;
+  padding: 9px 13px;
+  border-radius: var(--r-lg);
+  border-bottom-left-radius: var(--r-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+/* Les siens à droite, en accent : c'est le seul repère qui dit qui parle sans
+   répéter un nom à chaque ligne. */
+.bulle.est-moi {
+  margin-left: auto;
+  background: var(--accent);
+  border-color: transparent;
+  border-bottom-left-radius: var(--r-lg);
+  border-bottom-right-radius: var(--r-sm);
+}
+.bulle-auteur {
+  margin: 0 0 3px;
+  font: var(--t-caption);
+  font-weight: 600;
+  color: var(--text-3);
+}
+.bulle-corps {
+  margin: 0;
+  font: var(--t-body-sm);
+  color: var(--text-1);
+  /* Un message est saisi tel quel : les retours à la ligne de l'auteur sont
+     du contenu, et `break-word` empêche une URL collée de déborder. */
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+.bulle-heure {
+  display: block;
+  margin-top: 3px;
+  font: var(--t-caption);
+  color: var(--text-3);
+  font-variant-numeric: lining-nums tabular-nums;
+  text-align: right;
+}
+.bulle.est-moi .bulle-corps,
+.bulle.est-moi .bulle-heure { color: var(--on-accent); }
+.bulle.est-moi .bulle-heure { opacity: 0.75; }
+
+.conversation-saisie {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+.conversation-champ {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+.conversation-champ textarea {
+  flex: 1;
+  resize: none;
+  min-height: 44px;
+  max-height: 132px;
+  /* Le champ grandit avec le texte sans script : `field-sizing` évite de
+     mesurer la hauteur à chaque frappe. Là où il manque, `rows=1` et
+     `max-height` laissent un champ défilable — dégradation acceptable. */
+  field-sizing: content;
+}
+.conversation-erreur {
+  margin: 0 0 var(--space-2);
+  font: var(--t-body-sm);
+  color: var(--danger);
+}

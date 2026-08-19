@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Reservation extends Model
@@ -53,6 +54,12 @@ class Reservation extends Model
     public function tarif(): BelongsTo
     {
         return $this->belongsTo(Tarif::class);
+    }
+
+    /** La réservation tient lieu de conversation entre le client et le propriétaire. */
+    public function messages(): HasMany
+    {
+        return $this->hasMany(Message::class)->orderBy('created_at');
     }
 
     public function paiement(): HasOne

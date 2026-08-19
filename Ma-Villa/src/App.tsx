@@ -42,6 +42,7 @@ const GererVilla      = lazy(() => import('./pages/dashboard/GererVilla'))
 const Reservations    = lazy(() => import('./pages/dashboard/Reservations'))
 const Favoris         = lazy(() => import('./pages/dashboard/Favoris'))
 const Profil          = lazy(() => import('./pages/dashboard/Profil'))
+const Conversation    = lazy(() => import('./pages/dashboard/Conversation'))
 
 // Le tunnel de paiement ne concerne qu'un client qui réserve : hors du
 // paquet initial, comme les espaces privés.
@@ -408,6 +409,7 @@ export default function App() {
         <Route path="villas/nouvelle" element={<ProprietaireRoute><NouvelleVilla /></ProprietaireRoute>} />
         <Route path="villas/:id" element={<ProprietaireRoute><GererVilla /></ProprietaireRoute>} />
         <Route path="reservations" element={<Reservations />} />
+        <Route path="reservations/:id/messages" element={<Conversation />} />
         <Route path="favoris" element={<Favoris />} />
         <Route path="profil" element={<Profil />} />
       </Route>

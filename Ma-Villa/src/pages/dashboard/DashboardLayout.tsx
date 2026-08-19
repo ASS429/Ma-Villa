@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
+import { MessagesProvider, useMessages } from '../../context/MessagesContext'
 import Button, { ButtonLink } from '../../components/ui/Button'
 
 interface Entree {
@@ -34,20 +35,33 @@ function initiales(nom: string) {
 }
 
 function Navigation({ entrees, onNaviguer }: { entrees: Entree[]; onNaviguer?: () => void }) {
+  const { total } = useMessages()
+
   return (
     <nav className="console-nav" aria-label="Mon espace">
-      {entrees.map(({ to, label, Icone, end }) => (
-        <NavLink
-          key={to}
-          to={to}
-          end={end}
-          onClick={onNaviguer}
-          className={({ isActive }) => `console-lien${isActive ? ' est-actif' : ''}`}
-        >
-          <Icone size={17} aria-hidden="true" />
-          <span className="console-lien-libelle">{label}</span>
-        </NavLink>
-      ))}
+      {entrees.map(({ to, label, Icone, end }) => {
+        // Les messages vivent dans les reservations : la pastille se pose donc
+        // sur cette entree, la ou l'on ira les lire.
+        const nonLus = to === '/dashboard/reservations' ? total : 0
+
+        return (
+          <NavLink
+            key={to}
+            to={to}
+            end={end}
+            onClick={onNaviguer}
+            className={({ isActive }) => `console-lien${isActive ? ' est-actif' : ''}`}
+          >
+            <Icone size={17} aria-hidden="true" />
+            <span className="console-lien-libelle">{label}</span>
+            {nonLus > 0 && (
+              <span className="console-pastille" aria-label={`${nonLus} message${nonLus > 1 ? 's' : ''} non lu${nonLus > 1 ? 's' : ''}`}>
+                {nonLus > 9 ? '9+' : nonLus}
+              </span>
+            )}
+          </NavLink>
+        )
+      })}
 
       <div className="console-separateur" />
 
@@ -67,7 +81,7 @@ function Navigation({ entrees, onNaviguer }: { entrees: Entree[]; onNaviguer?: (
  * avaient chacun leur copie du même agencement, stylée en ligne : corriger
  * l'un laissait l'autre en arrière.
  */
-export default function DashboardLayout() {
+function Espace() {
   const { user, logout } = useAuth()
   const { isDark, toggleTheme } = useTheme()
   const navigate = useNavigate()
@@ -212,5 +226,18 @@ export default function DashboardLayout() {
         </main>
       </div>
     </div>
+  )
+}
+
+/**
+ * Le compteur de messages est monté ici, au-dessus de l'écran : la pastille de
+ * navigation et celles des cartes de réservation lisent le même chiffre, donc
+ * une seule requête sert les deux.
+ */
+export default function DashboardLayout() {
+  return (
+    <MessagesProvider>
+      <Espace />
+    </MessagesProvider>
   )
 }
