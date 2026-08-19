@@ -395,7 +395,6 @@ export default function VillaDetail() {
           description: villa.description,
           address: { '@type': 'PostalAddress', streetAddress: villa.adresse, addressLocality: villa.ville, addressCountry: 'SN' },
           image: villa.photos.filter((p) => !estVideo(p.url)).map((p) => p.url),
-          telephone: villa.telephone,
           ...(villa.latitude && villa.longitude
             ? { geo: { '@type': 'GeoCoordinates', latitude: villa.latitude, longitude: villa.longitude } }
             : {}),
@@ -496,13 +495,19 @@ export default function VillaDetail() {
               )}
             </div>
 
+            {/* Le numéro du propriétaire n'est plus affiché ici. Publié, il
+                permettait de convenir d'un séjour hors plateforme : la
+                commission s'évaporait, et la réservation n'étant plus tracée,
+                le client perdait avis vérifié, preuve de paiement et recours.
+                Les questions passent désormais par la messagerie, et les
+                coordonnées sont échangées une fois la réservation confirmée. */}
             <div className="rounded-xl px-4 py-3 mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 th-card">
               <span className="text-sm th-text-2">
                 Propriétaire : <span className="th-text-1 font-medium">{villa.proprietaire.name}</span>
               </span>
-              <a href={`tel:${villa.telephone}`} className="flex items-center gap-1.5 text-sm font-medium th-text-1 hover:opacity-70 transition-opacity">
-                📞 {villa.telephone}
-              </a>
+              <span className="text-sm th-text-3">
+                Écrivez-lui depuis vos réservations, une fois votre demande envoyée.
+              </span>
             </div>
 
             <p className="th-text-2 leading-relaxed mb-10 whitespace-pre-line">{villa.description}</p>

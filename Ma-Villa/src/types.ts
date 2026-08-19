@@ -61,7 +61,12 @@ interface VillaBase {
   nom: string
   ville: string
   description: string
-  telephone: string
+  /**
+   * Absent des réponses publiques : le numéro n'est servi qu'au propriétaire
+   * de la villa et à l'administrateur. Le typer facultatif évite de croire
+   * qu'on l'a toujours — et de l'afficher sur un écran qui ne l'aura jamais.
+   */
+  telephone?: string
   photos: Photo[]
   vedette?: boolean
   statut?: StatutVilla

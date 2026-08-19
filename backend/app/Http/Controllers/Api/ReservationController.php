@@ -7,6 +7,7 @@ use App\Http\Requests\ReservationRequest;
 use App\Models\Logement;
 use App\Models\Reservation;
 use App\Models\Tarif;
+use App\Models\User;
 use App\Notifications\NouvelleReservation;
 use App\Notifications\ReservationMiseAJour;
 use App\Services\Push;
@@ -33,10 +34,16 @@ class ReservationController extends Controller
         // répartition de commission n'ont rien à faire dans une liste.
         $paiement = 'paiement:id,reservation_id,statut,reference,montant,paye_le';
 
+        // Le client n'est chargé que par colonnes : son téléphone n'apparaît
+        // qu'une fois la réservation confirmée, via `revelerLesCoordonnees()`.
+        $client = 'client:id,name,email';
+
         $reservations = $user->role === 'proprietaire'
             ? Reservation::whereHas('logement.villa', fn($q) => $q->where('user_id', $user->id))
-                ->with(['logement.villa', 'tarif', 'client', $paiement])->get()
+                ->with(['logement.villa', 'tarif', $client, $paiement])->get()
             : $user->reservations()->with(['logement.villa', 'tarif', $paiement])->get();
+
+        $reservations->each(fn (Reservation $r) => $this->revelerLesCoordonnees($r, $user));
 
         return response()->json($reservations);
     }
@@ -125,13 +132,56 @@ class ReservationController extends Controller
         return response()->json($reservation, 201);
     }
 
-    public function show(Reservation $reservation): JsonResponse
+    public function show(Request $request, Reservation $reservation): JsonResponse
     {
         // Sans cette vérification, n'importe quel compte connecté lisait la
         // réservation de n'importe qui en incrémentant l'identifiant.
         $this->authorize('view', $reservation);
 
-        return response()->json($reservation->load(['logement.villa', 'tarif', 'paiement', 'client']));
+        $reservation->load(['logement.villa', 'tarif', 'paiement', 'client:id,name,email,phone']);
+        $this->revelerLesCoordonnees($reservation, $request->user());
+
+        return response()->json($reservation);
+    }
+
+    /**
+     * Les coordonnees n'apparaissent qu'une fois le sejour engage.
+     *
+     * Retirer le numero de la fiche publique ne suffisait pas : ouvrir une
+     * demande de reservation ne coute rien et ne se paie pas. Il aurait suffi
+     * d'en creer une, de lire `logement.villa.telephone` dans la reponse, puis
+     * d'annuler -- et tout le benefice de la mesure disparaissait.
+     *
+     * Le seuil est donc l'engagement reel : reservation **confirmee** par le
+     * proprietaire, ou paiement abouti. Avant cela, la messagerie suffit a tout
+     * ce qui doit etre demande ; apres, les deux parties doivent pouvoir se
+     * joindre -- un retard d'avion ne se regle pas par ecrit.
+     *
+     * Le proprietaire et l'admin ne sont jamais concernes : le numero de la
+     * villa est le leur, ou celui qu'ils moderent.
+     */
+    private function revelerLesCoordonnees(Reservation $reservation, ?User $user): void
+    {
+        $villa = $reservation->logement?->villa;
+        if (! $villa) {
+            return;
+        }
+
+        $sienneOuModeree = $user !== null
+            && ($user->id === $villa->user_id || $user->role === 'admin');
+
+        $engagee = $reservation->statut === 'confirmee'
+            || $reservation->paiement?->statut === 'reussi';
+
+        if (! $sienneOuModeree && ! $engagee) {
+            $villa->makeHidden('telephone');
+        }
+
+        // Symetrique cote proprietaire : il n'a pas a disposer du numero d'un
+        // client dont il n'a pas encore accepte la demande.
+        if (! $engagee) {
+            $reservation->client?->makeHidden('phone');
+        }
     }
 
     public function updateStatut(Request $request, Reservation $reservation): JsonResponse

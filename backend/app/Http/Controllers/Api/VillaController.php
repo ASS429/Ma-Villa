@@ -37,6 +37,10 @@ class VillaController extends Controller
         $query = Villa::query()
             ->where('statut', 'validee')
             ->with('photos')
+            // La liste ne porte pas le numéro de la villa : publié, il permet
+            // d'appeler et de convenir d'un séjour hors plateforme. Il n'a de
+            // toute façon aucun usage sur une carte de résultat.
+            ->withoutTelephone()
             // Agrégats affichés sur la carte de villa : sans eux le prix
             // n'apparaît nulle part dans la liste.
             ->withMin('tarifs as prix_min', 'prix')
@@ -244,10 +248,29 @@ class VillaController extends Controller
             throw new NotFoundHttpException();
         }
 
-        $villa->load(['logements.tarifs', 'photos', 'avis.client', 'proprietaire'])
+        $villa->load([
+                  'logements.tarifs', 'photos', 'avis.client',
+                  // Le propriétaire est réduit à ce qu'un visiteur a besoin de
+                  // savoir : qui loue. Sans cette restriction, la relation
+                  // partait entière — email et téléphone personnel compris,
+                  // sur une route publique et sans authentification.
+                  'proprietaire:id,name,avatar',
+              ])
               ->loadMin('tarifs as prix_min', 'prix')
               ->loadAvg('avis as note_moyenne', 'note')
               ->loadCount('avis');
+
+        // Le numéro de la villa ne s'affiche qu'à ceux qu'il concerne. Publié,
+        // il permet d'appeler et de convenir d'un séjour hors plateforme : la
+        // commission s'évapore, et la réservation n'est plus tracée — donc ni
+        // avis vérifié, ni recours en cas de litige.
+        //
+        // Le client le reçoit une fois sa réservation confirmée, par email et
+        // sur sa fiche de réservation ; d'ici là, la messagerie sert à poser
+        // ses questions.
+        if (! $this->peutPrevisualiser($request, $villa)) {
+            $villa->makeHidden('telephone');
+        }
 
         return response()->json($villa);
     }
