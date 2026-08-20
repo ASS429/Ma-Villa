@@ -174,14 +174,17 @@ const PAGES_FIXES = [
     description: 'Parcourez les villas, appartements, chambres et piscines à la journée '
       + 'disponibles au Sénégal. Filtrez par ville, dates, budget et équipements.',
   },
+  // Les quatre pages légales portent une note d'attente depuis le 20 août 2026 :
+  // la rédaction est confiée au juriste. Les descriptions le disent, sans quoi un
+  // moteur indexerait ces pages comme des textes en vigueur.
   { chemin: 'conditions-generales', titre: "Conditions générales d'utilisation — Ma Villa",
-    description: "Conditions générales d'utilisation de la plateforme Ma Villa." },
+    description: "Conditions générales de Ma Villa — en cours de rédaction par notre conseil juridique. Cette page décrit en attendant le fonctionnement réel du service." },
   { chemin: 'confidentialite', titre: 'Politique de confidentialité — Ma Villa',
-    description: 'Comment Ma Villa collecte, utilise et protège vos données personnelles.' },
+    description: "Politique de confidentialité de Ma Villa — en cours de rédaction. Cette page indique quelles données nous conservons et ce que nous n'en faisons pas." },
   { chemin: 'annulation', titre: "Conditions d'annulation — Ma Villa",
-    description: "Règles d'annulation et de remboursement des réservations sur Ma Villa." },
+    description: "Conditions d'annulation de Ma Villa — en cours de rédaction. Cette page indique comment une demande de remboursement est traitée en attendant." },
   { chemin: 'mentions-legales', titre: 'Mentions légales — Ma Villa',
-    description: 'Éditeur, hébergement et mentions légales de la plateforme Ma Villa.' },
+    description: 'Éditeur, hébergement et prestataire de paiement de Ma Villa. Mentions en cours de complétion par notre conseil juridique.' },
 ]
 
 /* ── Injection dans le gabarit ────────────────────────────────── */
