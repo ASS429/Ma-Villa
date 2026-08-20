@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutGrid, Building2, Users, MessageSquare, CreditCard,
-  Menu, X, Sun, Moon, LogOut, ArrowLeft, BellRing, ScrollText, Banknote, Send,
+  Menu, X, Sun, Moon, LogOut, ArrowLeft, BellRing, ScrollText, Banknote, Send, Palette, ShoppingBag,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
@@ -24,6 +24,8 @@ const ENTREES: Entree[] = [
   { to: '/admin/villas',       label: 'Villas',          Icone: Building2,      attente: 'villas' },
   { to: '/admin/utilisateurs', label: 'Utilisateurs',    Icone: Users },
   { to: '/admin/avis',         label: 'Avis',            Icone: MessageSquare },
+  { to: '/admin/oeuvres',      label: 'Œuvres',          Icone: Palette },
+  { to: '/admin/commandes',    label: 'Commandes',       Icone: ShoppingBag },
   { to: '/admin/paiement',     label: 'Encaissement',    Icone: CreditCard },
   { to: '/admin/reversements', label: 'Reversements',   Icone: Banknote },
   { to: '/admin/notifications', label: 'Notifications',  Icone: BellRing },

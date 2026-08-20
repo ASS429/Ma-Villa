@@ -1259,3 +1259,439 @@
   font: var(--t-caption);
   color: var(--danger);
 }
+
+/* ════════════════════════════════════════════════════════════════
+   BOUTIQUE — vitrine, fiche, commande
+   ════════════════════════════════════════════════════════════════ */
+
+.boutique,
+.oeuvre,
+.tunnel {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: calc(var(--space-8) + 64px) var(--space-5) var(--space-8);
+}
+/* Le tunnel est plus étroit : un formulaire de commande se lit en colonne,
+   et l'élargir n'ajoute que de la distance entre l'œil et le total. */
+.tunnel { max-width: 640px; }
+
+.boutique-entete { margin-bottom: var(--space-6); }
+.boutique-surtitre {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+  font: var(--t-caption);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.boutique-titre {
+  margin: 0 0 var(--space-3);
+  font: var(--t-h1);
+  color: var(--text-1);
+}
+.boutique-chapeau {
+  margin: 0;
+  max-width: 56ch;
+  font: var(--t-body);
+  color: var(--text-2);
+}
+
+.boutique-filtres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  margin-bottom: var(--space-5);
+}
+.boutique-recherche {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1 1 320px;
+}
+.boutique-recherche svg { color: var(--text-3); flex: none; }
+.boutique-affinages { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.boutique-affinages select { min-width: 160px; }
+
+.boutique-compte {
+  margin: 0 0 var(--space-4);
+  font: var(--t-body-sm);
+  color: var(--text-3);
+  font-variant-numeric: lining-nums;
+}
+
+/* Deux colonnes dès 375 px, comme les cartes de chiffres : c'est la
+   comparaison qui fait défiler une galerie. */
+.boutique-grille {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+@media (min-width: 768px)  { .boutique-grille { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1180px) { .boutique-grille { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+.boutique-lien { text-decoration: none; color: inherit; display: block; }
+
+/* ── Carte d'œuvre ────────────────────────────────────────────── */
+
+.carte-oeuvre {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--elev-1);
+  height: 100%;
+}
+.carte-oeuvre-image {
+  aspect-ratio: 3 / 4;
+  background: var(--bg-elevated);
+  overflow: hidden;
+}
+.carte-oeuvre-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+@media (hover: hover) {
+  .carte-oeuvre:hover .carte-oeuvre-image img { transform: scale(1.03); }
+}
+/* Une œuvre vendue reste montrée, mais en retrait : elle raconte qu'ici on
+   achète, sans se disputer l'attention avec ce qui est encore disponible. */
+.carte-oeuvre.est-vendue .carte-oeuvre-image img,
+.oeuvre-image.est-vendue img { filter: grayscale(0.55); opacity: 0.75; }
+
+.carte-oeuvre-vide {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--text-3);
+  background: var(--bg-elevated);
+}
+
+.carte-oeuvre-texte { padding: var(--space-3) var(--space-4) var(--space-4); }
+.carte-oeuvre-titre {
+  margin: 0;
+  font: var(--t-body);
+  font-weight: 600;
+  color: var(--text-1);
+}
+.carte-oeuvre-artiste { margin: 2px 0 var(--space-2); font: var(--t-body-sm); color: var(--text-3); }
+.carte-oeuvre-prix {
+  margin: 0;
+  font: var(--t-body);
+  font-weight: 600;
+  color: var(--accent);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.carte-oeuvre-cartel { margin: 4px 0 0; font: var(--t-caption); color: var(--text-3); }
+
+/* ── Fiche d'une œuvre ────────────────────────────────────────── */
+
+.oeuvre-retour {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+  font: var(--t-body-sm);
+  color: var(--text-2);
+  text-decoration: none;
+}
+.oeuvre-retour:hover { color: var(--text-1); }
+
+.oeuvre-corps {
+  display: grid;
+  gap: var(--space-6);
+}
+@media (min-width: 900px) {
+  .oeuvre-corps { grid-template-columns: 1.15fr 1fr; align-items: start; }
+}
+
+.oeuvre-image {
+  aspect-ratio: 4 / 5;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+.oeuvre-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.oeuvre-vignettes {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.oeuvre-vignette {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  border: 2px solid transparent;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+.oeuvre-vignette.est-active { border-color: var(--accent); }
+.oeuvre-vignette img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.oeuvre-titre { margin: var(--space-2) 0 4px; font: var(--t-h2); color: var(--text-1); }
+.oeuvre-artiste { margin: 0 0 var(--space-4); font: var(--t-body); color: var(--text-3); }
+
+.oeuvre-cartel { margin: 0 0 var(--space-4); display: flex; flex-direction: column; gap: 6px; }
+.oeuvre-cartel > div { display: flex; gap: var(--space-3); font: var(--t-body-sm); }
+.oeuvre-cartel dt { color: var(--text-3); min-width: 92px; }
+.oeuvre-cartel dd { margin: 0; color: var(--text-1); }
+
+.oeuvre-description {
+  margin: 0 0 var(--space-5);
+  font: var(--t-body);
+  color: var(--text-2);
+  white-space: pre-wrap;
+}
+
+.oeuvre-achat {
+  padding: var(--space-4);
+  border-radius: var(--r-md);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  margin-bottom: var(--space-4);
+}
+.oeuvre-prix {
+  margin: 0 0 2px;
+  font: var(--t-h2);
+  color: var(--text-1);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.oeuvre-prix-note { margin: 0 0 var(--space-3); font: var(--t-caption); color: var(--text-3); }
+.oeuvre-indisponible { margin: 0; font: var(--t-body-sm); color: var(--text-2); }
+
+.oeuvre-garanties { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.oeuvre-garanties li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font: var(--t-body-sm);
+  color: var(--text-2);
+}
+.oeuvre-garanties svg { color: var(--accent); flex: none; }
+
+/* ── Tunnel de commande ───────────────────────────────────────── */
+
+.tunnel-corps { display: flex; flex-direction: column; gap: var(--space-4); }
+.tunnel-champs { display: flex; flex-direction: column; gap: var(--space-4); margin-top: var(--space-4); }
+
+.commande-resume { display: flex; align-items: center; gap: var(--space-3); }
+.commande-vignette {
+  width: 56px;
+  height: 56px;
+  flex: none;
+  border-radius: var(--r-sm);
+  object-fit: cover;
+  background: var(--bg-elevated);
+  display: grid;
+  place-items: center;
+  color: var(--text-3);
+}
+.commande-montant {
+  margin: 0;
+  font: var(--t-body);
+  font-weight: 600;
+  color: var(--text-1);
+  font-variant-numeric: lining-nums tabular-nums;
+  white-space: nowrap;
+}
+
+/* Le total colle au bouton : c'est la dernière chose lue avant de valider,
+   et des frais découverts après coup sont la première cause d'abandon. */
+.tunnel-total {
+  padding: var(--space-5);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--elev-2);
+}
+.tunnel-total dl { margin: 0 0 var(--space-4); display: flex; flex-direction: column; gap: 8px; }
+.tunnel-total dl > div { display: flex; justify-content: space-between; gap: var(--space-3); font: var(--t-body-sm); }
+.tunnel-total dt { color: var(--text-2); }
+.tunnel-total dd { margin: 0; color: var(--text-1); font-variant-numeric: lining-nums tabular-nums; }
+.tunnel-total-ligne {
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.tunnel-total-ligne dt, .tunnel-total-ligne dd { color: var(--text-1); font-weight: 600; }
+.tunnel-note { margin: var(--space-2) 0 0; font: var(--t-caption); color: var(--text-3); text-align: center; }
+
+/* ── Suivi d'une commande ─────────────────────────────────────── */
+
+.commande-entete { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
+.commande-reference {
+  margin: var(--space-2) 0 var(--space-4);
+  font: var(--t-caption);
+  color: var(--text-3);
+  font-variant-numeric: lining-nums;
+}
+
+.commande-etapes { list-style: none; margin: 0; padding: 0; display: flex; gap: var(--space-2); }
+.commande-etapes li {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font: var(--t-caption);
+  color: var(--text-3);
+  text-align: center;
+}
+.commande-etape-puce {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-3);
+}
+.commande-etapes li.est-atteinte { color: var(--text-1); }
+.commande-etapes li.est-atteinte .commande-etape-puce {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--on-accent);
+}
+.commande-annulee {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font: var(--t-body-sm);
+  color: var(--danger);
+}
+
+.commande-detail { margin: 0 0 var(--space-4); display: flex; flex-direction: column; gap: 8px; }
+.commande-detail > div { display: flex; justify-content: space-between; gap: var(--space-3); font: var(--t-body-sm); }
+.commande-detail dt { color: var(--text-2); }
+.commande-detail dd { margin: 0; color: var(--text-1); font-variant-numeric: lining-nums tabular-nums; }
+.commande-detail-total { padding-top: 8px; border-top: 1px solid var(--border); }
+.commande-detail-total dt, .commande-detail-total dd { color: var(--text-1); font-weight: 600; }
+
+.commande-adresse {
+  margin: 0 0 var(--space-2);
+  font: var(--t-body-sm);
+  color: var(--text-1);
+  line-height: 1.6;
+}
+
+.commande-ligne {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color var(--dur) var(--ease);
+}
+.commande-ligne:hover { border-color: var(--border-strong); }
+.commande-ligne-droite { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex: none; }
+
+/* ── Console : œuvres et commandes ────────────────────────────── */
+
+.admin-oeuvres { display: flex; flex-direction: column; gap: var(--space-2); }
+.admin-oeuvre {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease);
+}
+.admin-oeuvre:hover { border-color: var(--accent); }
+.admin-oeuvre img,
+.admin-oeuvre .carte-oeuvre-vide {
+  width: 48px;
+  height: 48px;
+  flex: none;
+  border-radius: var(--r-sm);
+  object-fit: cover;
+}
+.admin-oeuvre-texte { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+
+.commande-admin-haut { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); }
+.commande-admin-faits { margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.commande-admin-faits > div { display: flex; gap: var(--space-3); font: var(--t-body-sm); }
+.commande-admin-faits dt { color: var(--text-3); min-width: 92px; flex: none; }
+.commande-admin-faits dd { margin: 0; color: var(--text-1); }
+.commande-impaye { color: var(--warning); font-weight: 600; }
+
+/* ── Téléverseur de photos ────────────────────────────────────── */
+
+.televerseur { display: flex; flex-direction: column; gap: var(--space-3); }
+.televerseur-liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: var(--space-2);
+}
+.televerseur-liste li { aspect-ratio: 1; }
+.televerseur-liste img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--r-sm);
+  display: block;
+}
+.televerseur-marque {
+  left: 4px;
+  bottom: 4px;
+  padding: 2px 6px;
+  border-radius: var(--r-sm);
+  background: var(--scrim);
+  color: #fff;
+  font: var(--t-caption);
+}
+.televerseur-supprimer {
+  top: 4px;
+  right: 4px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 0;
+  background: var(--scrim);
+  color: #fff;
+  cursor: pointer;
+}
+
+.modale-large { max-width: min(680px, calc(100vw - 2 * var(--space-5))); }
+@media (min-width: 640px) { .modale-large { width: min(680px, calc(100vw - 2 * var(--space-5))); } }
+.modale-photos { padding-top: var(--space-4); border-top: 1px solid var(--border); }
+
+/* `position` dans la couche `components` : hors couche, elle l'emporterait sur
+   les utilitaires Tailwind — le piège déjà documenté pour `.bouton-icone`. */
+@layer components {
+  .carte-oeuvre-image,
+  .televerseur-liste li { position: relative; }
+
+  .carte-oeuvre-marque { position: absolute; top: 10px; left: 10px; }
+  .televerseur-marque,
+  .televerseur-supprimer { position: absolute; }
+}

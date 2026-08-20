@@ -165,6 +165,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/oeuvres', [OeuvreController::class, 'store']);
         Route::patch('/oeuvres/{oeuvre}', [OeuvreController::class, 'update']);
         Route::delete('/oeuvres/{oeuvre}', [OeuvreController::class, 'destroy']);
+        Route::post('/oeuvres/{oeuvre}/photos', [PhotoController::class, 'storeForOeuvre']);
+        Route::delete('/oeuvres/{oeuvre}/photos/{photo}', [PhotoController::class, 'destroyForOeuvre']);
         Route::get('/commandes', [CommandeController::class, 'indexAdmin']);
         Route::patch('/commandes/{commande}/statut', [CommandeController::class, 'avancer']);
 

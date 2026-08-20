@@ -21,7 +21,26 @@ export interface Categorie {
   filtres: string[] | null
 }
 
+/** Une zone de livraison de la boutique, telle que le serveur la declare. */
+export interface ZoneLivraison {
+  nom: string
+  frais: number
+  delai: string
+}
+
 interface Configuration {
+  /**
+   * Faux tant que le serveur n'a pas répondu.
+   *
+   * Sans cette distinction, « pas encore su » se confond avec « fermé » : les
+   * écrans de la boutique redirigeaient vers l'accueil au premier rendu, avant
+   * même que la réponse arrive, et l'URL affichait la page d'accueil.
+   *
+   * Passe à vrai aussi quand toutes les reprises ont échoué : on ne sait
+   * toujours pas, mais faire tourner un chargement à l'infini est pire que
+   * d'appliquer le repli.
+   */
+  chargee: boolean
   categories: Categorie[]
   paiement: {
     actif: boolean
@@ -35,6 +54,14 @@ interface Configuration {
     /** Clé publique VAPID, destinée à `pushManager.subscribe`. */
     cle_publique: string | null
   }
+  boutique: {
+    /** Faux tant que BOUTIQUE_ACTIVE n'est pas levée : la boutique n'existe alors nulle part. */
+    actif: boolean
+    /** Les frais viennent du serveur : le client doit connaître son total avant de payer. */
+    zones: Record<string, ZoneLivraison>
+    /** Le paiement à la livraison est-il proposé ? */
+    livraison: boolean
+  }
 }
 
 /**
@@ -43,6 +70,7 @@ interface Configuration {
  * règlement qui n'aboutirait pas.
  */
 const DEFAUT: Configuration = {
+  chargee: false,
   categories: [],
   paiement: {
     actif: false,
@@ -55,6 +83,9 @@ const DEFAUT: Configuration = {
   // Repli identique au paiement : tant que le serveur n'a pas répondu, on
   // n'affiche pas de bouton d'activation qui n'aboutirait pas.
   notifications: { actives: false, cle_publique: null },
+  // Boutique fermée par défaut : elle ne doit apparaître nulle part tant que
+  // le serveur ne l'a pas confirmée ouverte.
+  boutique: { actif: false, zones: {}, livraison: false },
 }
 
 const ConfigContext = createContext<Configuration>(DEFAUT)
@@ -77,11 +108,18 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     // ouvert. Le symptôme ne ressemble en rien à sa cause, qui est réseau.
     const demander = (essai = 0) => {
       api.get('/configuration', { signal: controleur.signal })
-        .then((res) => setConfig({ ...DEFAUT, ...res.data }))
+        .then((res) => setConfig({ ...DEFAUT, ...res.data, chargee: true }))
         .catch((err) => {
           if (controleur.signal.aborted || err?.code === 'ERR_CANCELED') return
           const attente = REPRISES[essai]
-          if (attente === undefined) return // le repli s'applique, l'interface reste cohérente
+          if (attente === undefined) {
+            // Le repli s'applique, l'interface reste cohérente. On marque
+            // néanmoins la configuration comme « connue » : un écran qui
+            // attend indéfiniment est pire qu'un écran qui applique le repli.
+            setConfig((c) => ({ ...c, chargee: true }))
+
+            return
+          }
           minuteur = setTimeout(() => demander(essai + 1), attente)
         })
     }

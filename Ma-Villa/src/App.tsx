@@ -5,6 +5,7 @@ import { useToast } from './context/ToastContext'
 import api from './services/api'
 import { messageErreur } from './lib/erreurs'
 import type { VillaResume } from './types'
+import ChargementPage from './components/ChargementPage'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
 import FondHero from './components/FondHero'
@@ -43,6 +44,13 @@ const Reservations    = lazy(() => import('./pages/dashboard/Reservations'))
 const Favoris         = lazy(() => import('./pages/dashboard/Favoris'))
 const Profil          = lazy(() => import('./pages/dashboard/Profil'))
 const Conversation    = lazy(() => import('./pages/dashboard/Conversation'))
+// Boutique : chargee a la demande. Tant que BOUTIQUE_ACTIVE est fermee,
+// personne n'atteint ces ecrans et leur code ne part jamais sur le reseau.
+const Boutique        = lazy(() => import('./pages/boutique/Boutique'))
+const OeuvreDetail    = lazy(() => import('./pages/boutique/OeuvreDetail'))
+const Commander       = lazy(() => import('./pages/boutique/Commander'))
+const MesCommandes    = lazy(() => import('./pages/boutique/MesCommandes'))
+const CommandeDetail  = lazy(() => import('./pages/boutique/CommandeDetail'))
 const Revenus         = lazy(() => import('./pages/dashboard/Revenus'))
 
 // Le tunnel de paiement ne concerne qu'un client qui réserve : hors du
@@ -60,6 +68,8 @@ const AdminNotifications = lazy(() => import('./pages/admin/AdminNotifications')
 const AdminJournal      = lazy(() => import('./pages/admin/AdminJournal'))
 const AdminReversements = lazy(() => import('./pages/admin/AdminReversements'))
 const AdminDeboursement = lazy(() => import('./pages/admin/AdminDeboursement'))
+const AdminOeuvres      = lazy(() => import('./pages/admin/AdminOeuvres'))
+const AdminCommandes    = lazy(() => import('./pages/admin/AdminCommandes'))
 
 /* ─── Route guards ───────────────────────────────────────────── */
 
@@ -80,19 +90,6 @@ function ProprietaireRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-function ChargementPage() {
-  return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg)' }}>
-      <div className="flex flex-col items-center gap-3">
-        <div
-          className="w-8 h-8 rounded-full animate-spin"
-          style={{ border: '2px solid var(--border)', borderTopColor: 'var(--accent)' }}
-        />
-        <p className="text-sm th-text-2">Chargement…</p>
-      </div>
-    </div>
-  )
-}
 
 /* ─── Villas en vedette ──────────────────────────────────────── */
 
@@ -397,6 +394,14 @@ export default function App() {
       <Route path="/annulation" element={<PageLegale document="annulation" />} />
       <Route path="/mentions-legales" element={<PageLegale document="mentions" />} />
 
+      {/* Boutique. Les ecrans se gardent eux-memes : ferme, on redirige
+          vers l'accueil plutot que d'afficher une page vide. */}
+      <Route path="/boutique" element={<Suspense fallback={<ChargementPage />}><Boutique /></Suspense>} />
+      <Route path="/boutique/commandes" element={<PrivateRoute><Suspense fallback={<ChargementPage />}><MesCommandes /></Suspense></PrivateRoute>} />
+      <Route path="/boutique/commandes/:id" element={<PrivateRoute><Suspense fallback={<ChargementPage />}><CommandeDetail /></Suspense></PrivateRoute>} />
+      <Route path="/boutique/:id" element={<Suspense fallback={<ChargementPage />}><OeuvreDetail /></Suspense>} />
+      <Route path="/boutique/:id/commander" element={<PrivateRoute><Suspense fallback={<ChargementPage />}><Commander /></Suspense></PrivateRoute>} />
+
       <Route
         path="/dashboard"
         element={
@@ -437,6 +442,8 @@ export default function App() {
         <Route path="journal" element={<AdminJournal />} />
         <Route path="reversements" element={<AdminReversements />} />
         <Route path="deboursement" element={<AdminDeboursement />} />
+        <Route path="oeuvres" element={<AdminOeuvres />} />
+        <Route path="commandes" element={<AdminCommandes />} />
       </Route>
 
         <Route path="*" element={<NotFound />} />

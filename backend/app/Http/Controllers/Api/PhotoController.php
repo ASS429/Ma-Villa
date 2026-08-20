@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Logement;
+use App\Models\Oeuvre;
 use App\Models\Villa;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -67,6 +68,34 @@ class PhotoController extends Controller
         $created = $logement->photos()->createMany($photos->toArray());
 
         return response()->json($created, 201);
+    }
+
+    /**
+     * Photos d'une œuvre de la boutique.
+     *
+     * Pas de `authorize` : la route vit derrière le filtre `admin`, et Ma Villa
+     * est le seul vendeur — il n'y a pas de propriétaire d'œuvre à distinguer.
+     * Mêmes règles de validation que pour une villa : le schéma doit être
+     * http(s), et le nombre par envoi est plafonné.
+     */
+    public function storeForOeuvre(Request $request, Oeuvre $oeuvre): JsonResponse
+    {
+        $request->validate(self::REGLES_PHOTOS, self::MESSAGES_PHOTOS);
+
+        $photos = collect($request->photos)->map(fn ($p, $i) => [
+            'url'   => $p['url'],
+            'alt'   => $p['alt'] ?? null,
+            'ordre' => $p['ordre'] ?? $i,
+        ]);
+
+        return response()->json($oeuvre->photos()->createMany($photos->toArray()), 201);
+    }
+
+    public function destroyForOeuvre(Oeuvre $oeuvre, int $photo): JsonResponse
+    {
+        $oeuvre->photos()->findOrFail($photo)->delete();
+
+        return response()->json(['message' => 'Photo supprimée.']);
     }
 
     public function upload(Request $request): JsonResponse

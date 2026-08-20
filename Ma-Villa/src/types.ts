@@ -173,3 +173,73 @@ export const UNITE_TARIF: Record<TypeTarif, string> = {
   demi_journee: 'la demi-journée',
   pass: 'le pass',
 }
+
+/* ════════════════════════════════════════════════════════════════
+   BOUTIQUE D'ŒUVRES
+   ════════════════════════════════════════════════════════════════ */
+
+/** `vendue` reste visible : une galerie qui efface ses ventes perd sa preuve de vendre. */
+export type StatutOeuvre = 'brouillon' | 'publiee' | 'vendue'
+
+export interface Oeuvre {
+  id: number
+  titre: string
+  artiste: string
+  description: string | null
+  technique: string | null
+  dimensions: string | null
+  annee: number | null
+  prix: number
+  statut: StatutOeuvre
+  vedette: boolean
+  photos: Photo[]
+  /** Présent seulement sur l'écran d'administration. */
+  commandes_actives?: number
+  created_at?: string
+}
+
+export type StatutCommande = 'en_attente' | 'confirmee' | 'expediee' | 'livree' | 'annulee'
+export type ModePaiementCommande = 'en_ligne' | 'livraison'
+
+export interface Commande {
+  id: number
+  oeuvre_id: number
+  /** Recopiés à la commande : un changement de prix ne réécrit pas une vente passée. */
+  oeuvre_titre: string
+  oeuvre_artiste: string
+  montant_oeuvre: number
+  zone_livraison: string
+  frais_livraison: number
+  montant_total: number
+  destinataire: string
+  telephone: string
+  adresse: string
+  ville: string
+  note: string | null
+  mode_paiement: ModePaiementCommande
+  statut_paiement: 'en_attente' | 'reussi' | 'echoue'
+  statut: StatutCommande
+  reference: string | null
+  url_paiement: string | null
+  url_application: string | null
+  paye_le: string | null
+  expediee_le: string | null
+  livree_le: string | null
+  created_at: string
+  oeuvre?: Oeuvre
+  client?: { id: number; name: string; email: string }
+}
+
+export const LIBELLES_STATUT_COMMANDE: Record<StatutCommande, string> = {
+  en_attente: 'En attente',
+  confirmee: 'Confirmée',
+  expediee: 'Expédiée',
+  livree: 'Livrée',
+  annulee: 'Annulée',
+}
+
+export const LIBELLES_STATUT_OEUVRE: Record<StatutOeuvre, string> = {
+  brouillon: 'Brouillon',
+  publiee: 'En vente',
+  vendue: 'Vendue',
+}

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import { useConfig } from '../context/ConfigContext'
 import Marque from './Marque'
 
 function IconMenu() {
@@ -36,6 +37,7 @@ function IconMoon() {
 
 export default function Navbar() {
   const { user, logout } = useAuth()
+  const { boutique } = useConfig()
   const { isDark, toggleTheme } = useTheme()
   const location = useLocation()
   const [open, setOpen] = useState(false)
@@ -86,6 +88,11 @@ export default function Navbar() {
             <NavLink to="/villas" className={`text-sm transition-colors ${navTextClass}`}>
               Villas
             </NavLink>
+            {boutique.actif && (
+              <NavLink to="/boutique" className={`text-sm transition-colors ${navTextClass}`}>
+                Boutique
+              </NavLink>
+            )}
             {user && (
               <NavLink to={dashLink} className={`text-sm transition-colors ${navTextClass}`}>
                 {dashLabel}
@@ -187,6 +194,10 @@ export default function Navbar() {
 
             <nav className="flex-1 flex flex-col px-4 py-4 gap-1">
               <MobileLink to="/villas" onClick={close}>Villas</MobileLink>
+              {boutique.actif && <MobileLink to="/boutique" onClick={close}>Boutique</MobileLink>}
+              {boutique.actif && user && (
+                <MobileLink to="/boutique/commandes" onClick={close}>Mes commandes</MobileLink>
+              )}
               {user && <MobileLink to={dashLink} onClick={close}>{dashLabel}</MobileLink>}
             </nav>
 
