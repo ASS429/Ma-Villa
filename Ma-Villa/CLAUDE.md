@@ -160,20 +160,29 @@ d'API ouverte dans un onglet répond toujours 401, le jeton vivant dans
 
 **Reste bloquant pour le lancement :**
 
-1. **Textes juridiques faux.** Les CGU affirment toujours que la plateforme
-   n'encaisse aucun paiement — faux depuis le 18 août 2026, et la commission de
-   10–20 % n'y figure nulle part. Quatre passages dans
-   `src/pages/legal/contenu.ts` (lignes 7, 90, 203, 231). Le drapeau
-   `TEXTES_PROVISOIRES` est à `false` : les textes se présentent comme
-   définitifs alors qu'ils décrivent une plateforme qui n'existe plus.
-   **En cours de réécriture par le juriste.**
+1. **Textes juridiques — rédaction en cours chez le juriste.** Les quatre pages
+   portaient des affirmations devenues fausses le 18 août (« la plateforme
+   n'encaisse aucun paiement »), présentées comme définitives.
+
+   **Corrigé le 20 août** : `src/pages/legal/contenu.ts` ne contient plus de
+   clauses mais une note d'attente — une description factuelle de ce que le
+   logiciel fait, vérifiable dans le code, et l'annonce que la rédaction est
+   confiée à un juriste. `TEXTES_PROVISOIRES` est repassé à `true`.
+
+   ⚠️ **Ne pas le remettre à `false` avant d'avoir intégré les textes
+   *validés*.** Le projet de CGU v2 dans `docs/juridique/v2-encaissement/` est
+   une proposition **soumise** au juriste, pas un texte validé par lui : le
+   publier serait refaire la même erreur. Les descriptions du pré-rendu vivent
+   dans `scripts/prerendu.mjs`, pas dans le module — les tenir à jour aussi.
 
 **Chantiers restants, par valeur :**
 
-2. Boutique d'œuvres d'art — décidée le 12 août 2026, rien n'existe encore.
-3. **Faire ouvrir l'option PER chez PayDunya.** Tout le code du déboursement
-   est écrit et testé ; il ne manque que l'autorisation du prestataire, et
-   `REVERSEMENT_AUTOMATIQUE=true`.
+2. **Faire ouvrir l'option PER chez PayDunya** (demande envoyée le 20 août
+   2026). Tout le code du déboursement est écrit et testé ; il ne manque que
+   l'autorisation du prestataire, et `REVERSEMENT_AUTOMATIQUE=true`.
+3. **Ouvrir la boutique** — elle est construite et déployée, mais invisible
+   tant que `BOUTIQUE_ACTIVE` n'est pas levée. Il faut d'abord y mettre des
+   œuvres, depuis `/admin/oeuvres`.
 
 **Fait le 19 août 2026 :** journal d'audit lisible (`/admin/journal`) ·
 messagerie client ↔ propriétaire · coordonnées retirées des écrans publics ·
@@ -302,3 +311,62 @@ laisserait un montant invisible des deux consoles à la fois.
 
 Verrouillé par `tests/Feature/DeboursementTest.php` (18 tests, réponses
 PayDunya simulées).
+
+---
+
+## Boutique d'œuvres d'art
+
+Second métier, décidé le 12 août 2026 et construit le 20. Trois arbitrages de
+l'utilisateur décident de toute l'architecture :
+
+| Décision | Conséquence |
+|---|---|
+| **Ma Villa est le seul vendeur** | pas de rôle « artiste », pas de modération, pas de commission ni de reversement. L'artiste est une **colonne de l'œuvre**, pas un compte |
+| **Une œuvre par commande** | pas de panier : une pièce est unique, un panier n'aurait géré que des conflits de stock inexistants |
+| **Frais de livraison par zone** | le client connaît son total **avant** de payer |
+
+⚠️ **`BOUTIQUE_ACTIVE` est à `false`.** Les routes publiques répondent **404**,
+pas 503 : un 503 dirait « ça existe, revenez plus tard » et inviterait les
+moteurs à garder l'adresse. Les écrans redirigent vers l'accueil.
+
+### La commande porte son propre paiement
+
+Elle ne réutilise **pas** la table `paiements`, qui charrie `commission`,
+`montant_proprietaire` et `reversement_id` — sans objet quand la plateforme est
+le vendeur. Les y greffer aurait rendu nullable ce qui doit rester obligatoire
+pour une réservation. Le client `PayDunya` est en revanche réutilisé tel quel :
+il est générique.
+
+### Les deux règles qui coûtent de l'argent
+
+1. **Aucun montant ne vient de la requête.** Le prix est lu sur l'œuvre, les
+   frais dans `config/boutique.php`, et les deux sont **figés à la commande** —
+   relever un prix ne réécrit pas une vente passée. Même leçon que la faille du
+   tarif. Vérifié en conditions réelles : une requête portant `montant_total: 1`
+   produit bien une commande à 155 000.
+2. **Une œuvre ne se vend qu'une fois.** `lockForUpdate` avant de vendre, et
+   l'œuvre quitte la vitrine **dès la commande**, sans attendre le règlement —
+   attendre laisserait une fenêtre pour un second acheteur. Une annulation la
+   remet en vente, sinon une commande abandonnée l'immobiliserait pour toujours.
+
+Une œuvre **vendue reste visible**, en fin de liste et en retrait : une galerie
+qui efface ce qu'elle a vendu perd la preuve qu'elle vend.
+
+`tests/Feature/BoutiqueTest.php` — 26 tests.
+
+### Ce que la vérification au navigateur a trouvé
+
+Deux défauts que ni `tsc` ni les tests ne pouvaient voir, et qui auraient rendu
+la boutique inaccessible :
+
+- **Les écrans redirigeaient vers l'accueil au premier rendu**, lisant
+  « fermée » alors que la configuration n'était pas encore arrivée. D'où le
+  drapeau `chargee` dans `ConfigContext` : *ne pas encore savoir* n'est pas
+  *fermé*. Il passe à vrai même quand toutes les reprises échouent — un
+  chargement infini est pire qu'un repli.
+- **Les boutons pointaient vers `/connexion`**, qui n'existe pas : la route est
+  `/login`, et elle gère déjà `?retour=`.
+
+**Leçon à retenir : pour tout écran gardé par une configuration distante,
+vérifier au navigateur.** Le typage ne voit pas un garde qui se déclenche une
+milliseconde trop tôt.
