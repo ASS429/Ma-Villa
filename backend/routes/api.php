@@ -14,6 +14,8 @@ use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\NotificationPushController;
 use App\Http\Controllers\Api\PaiementController;
 use App\Http\Controllers\Api\PhotoController;
+use App\Http\Controllers\Api\CommandeController;
+use App\Http\Controllers\Api\OeuvreController;
 use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\RappelDeboursementController;
 use App\Http\Controllers\Api\ReversementController;
@@ -42,6 +44,13 @@ Route::post('/paiements/ipn', [PaiementController::class, 'ipn'])->name('paiemen
 // et sa seule garde est la signature de la cle maitresse.
 Route::post('/reversements/rappel', RappelDeboursementController::class)
     ->name('reversements.rappel');
+// Boutique d'oeuvres d'art. Ma Villa est le seul vendeur : pas de role
+// artiste, pas de moderation. Les routes repondent 404 tant que
+// BOUTIQUE_ACTIVE n'est pas levee -- un metier s'ouvre par decision.
+Route::get('/oeuvres', [OeuvreController::class, 'index']);
+Route::get('/oeuvres/artistes', [OeuvreController::class, 'artistes']);
+Route::get('/oeuvres/{oeuvre}', [OeuvreController::class, 'show']);
+
 Route::get('/villas', [VillaController::class, 'index']);
 Route::get('/destinations', [VillaController::class, 'destinations']);
 Route::get('/villas/{villa}', [VillaController::class, 'show']);
@@ -108,6 +117,15 @@ Route::middleware('auth:sanctum')->group(function () {
     // n'apparaissait sur aucun écran.
     Route::get('/proprietaire/revenus', [ReversementController::class, 'revenus']);
 
+    // Commandes d'oeuvres. Une oeuvre par commande : une piece est unique.
+    Route::get('/commandes', [CommandeController::class, 'index']);
+    Route::post('/commandes', [CommandeController::class, 'store'])->middleware('throttle:10,1');
+    Route::get('/commandes/{commande}', [CommandeController::class, 'show']);
+    Route::patch('/commandes/{commande}/annuler', [CommandeController::class, 'annuler']);
+    Route::post('/commandes/{commande}/paiement', [CommandeController::class, 'payer'])
+        ->middleware('throttle:10,1');
+    Route::get('/commandes/{commande}/paiement/statut', [CommandeController::class, 'statut']);
+
     // Upload fichier (retourne URL)
     Route::post('/upload', [PhotoController::class, 'upload'])->middleware('throttle:40,1');
 
@@ -142,6 +160,14 @@ Route::middleware('auth:sanctum')->group(function () {
         // Reversements. L'enregistrement seulement : le virement lui-même
         // reste un geste humain, le décaissement automatique demandant une
         // activation PayDunya qui n'est pas acquise.
+        // Boutique : gestion du stock et suivi des commandes.
+        Route::get('/oeuvres', [OeuvreController::class, 'indexAdmin']);
+        Route::post('/oeuvres', [OeuvreController::class, 'store']);
+        Route::patch('/oeuvres/{oeuvre}', [OeuvreController::class, 'update']);
+        Route::delete('/oeuvres/{oeuvre}', [OeuvreController::class, 'destroy']);
+        Route::get('/commandes', [CommandeController::class, 'indexAdmin']);
+        Route::patch('/commandes/{commande}/statut', [CommandeController::class, 'avancer']);
+
         Route::get('/reversements', [ReversementController::class, 'index']);
         Route::post('/reversements', [ReversementController::class, 'store'])
             ->middleware('throttle:20,1');

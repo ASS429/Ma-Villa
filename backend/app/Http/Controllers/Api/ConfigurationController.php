@@ -32,6 +32,14 @@ class ConfigurationController extends Controller
                 // pour ne pas proposer un règlement voué à l'échec.
                 'montant_minimum' => (int) config('paiement.montant_minimum'),
             ],
+            // Boutique d'œuvres. Les zones de livraison viennent d'ici : le
+            // client doit connaître son total **avant** de payer, et relever
+            // un tarif ne doit pas demander de redéployer l'interface.
+            'boutique' => [
+                'actif'     => (bool) config('boutique.actif'),
+                'zones'     => config('boutique.livraison.zones'),
+                'livraison' => (bool) config('boutique.paiement_a_la_livraison'),
+            ],
             // La clé publique VAPID est faite pour être publiée : c'est elle
             // que le navigateur passe à `pushManager.subscribe`. Absente, le
             // front n'affiche simplement pas la proposition d'activer les

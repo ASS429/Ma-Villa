@@ -1,0 +1,435 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Commande;
+use App\Models\Oeuvre;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+/**
+ * La boutique d'œuvres d'art.
+ *
+ * Deux règles portent tout le reste, et ce sont les deux seules qui coûtent
+ * de l'argent si on les manque : **aucun montant ne vient de la requête**, et
+ * **une œuvre ne se vend qu'une fois**.
+ */
+class BoutiqueTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private User $client;
+    private User $admin;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->client = User::factory()->client()->create();
+        $this->admin = User::factory()->admin()->create();
+
+        config([
+            'boutique.actif' => true,
+            'boutique.paiement_a_la_livraison' => true,
+            'boutique.livraison.zones' => [
+                'dakar'   => ['nom' => 'Dakar', 'frais' => 2000, 'delai' => '24 h'],
+                'regions' => ['nom' => 'Régions', 'frais' => 5000, 'delai' => '3 jours'],
+                'retrait' => ['nom' => 'Retrait', 'frais' => 0, 'delai' => 'RDV'],
+            ],
+        ]);
+    }
+
+    private function oeuvre(array $attributs = []): Oeuvre
+    {
+        return Oeuvre::create(array_merge([
+            'titre'   => 'Teranga',
+            'artiste' => 'Awa Diop',
+            'prix'    => 150000,
+            'statut'  => 'publiee',
+        ], $attributs));
+    }
+
+    /** @return array<string, mixed> */
+    private function commandeValide(Oeuvre $oeuvre, array $sup = []): array
+    {
+        return array_merge([
+            'oeuvre_id'      => $oeuvre->id,
+            'zone_livraison' => 'dakar',
+            'mode_paiement'  => 'livraison',
+            'destinataire'   => 'Fatou Ndiaye',
+            'telephone'      => '+221 77 000 00 00',
+            'adresse'        => 'Sacré-Cœur 3, villa 12',
+            'ville'          => 'Dakar',
+        ], $sup);
+    }
+
+    /* ── La boutique fermée n'existe pas ─────────────────────────── */
+
+    /**
+     * 404 et non 503 : un 503 dirait « ça existe, revenez plus tard » et
+     * inviterait les moteurs à garder l'adresse.
+     */
+    public function test_la_boutique_fermee_repond_404(): void
+    {
+        config(['boutique.actif' => false]);
+        $oeuvre = $this->oeuvre();
+
+        $this->getJson('/api/oeuvres')->assertStatus(404);
+        $this->getJson("/api/oeuvres/{$oeuvre->id}")->assertStatus(404);
+
+        $this->actingAs($this->client, 'sanctum')
+             ->postJson('/api/commandes', $this->commandeValide($oeuvre))
+             ->assertStatus(404);
+
+        $this->assertSame(0, Commande::count());
+    }
+
+    /* ── La vitrine ──────────────────────────────────────────────── */
+
+    public function test_la_vitrine_cache_les_brouillons_mais_garde_les_vendues(): void
+    {
+        $this->oeuvre(['titre' => 'Publiée']);
+        $this->oeuvre(['titre' => 'Vendue', 'statut' => 'vendue']);
+        $this->oeuvre(['titre' => 'Brouillon', 'statut' => 'brouillon']);
+
+        // Sur le JSON décodé : la réponse échappe les accents en é, et une
+        // comparaison de chaînes brutes chercherait « Publiée » en vain.
+        $titres = collect($this->getJson('/api/oeuvres')->assertOk()->json('data'))
+            ->pluck('titre')->all();
+
+        $this->assertContains('Publiée', $titres);
+        $this->assertContains('Vendue', $titres, 'Une galerie qui efface ce qu\'elle a vendu perd la preuve qu\'elle vend.');
+        $this->assertNotContains('Brouillon', $titres);
+    }
+
+    public function test_la_vitrine_montre_le_disponible_avant_le_vendu(): void
+    {
+        $this->oeuvre(['titre' => 'Déjà partie', 'statut' => 'vendue']);
+        $this->oeuvre(['titre' => 'Encore là']);
+
+        $liste = $this->getJson('/api/oeuvres')->json('data');
+
+        $this->assertSame('Encore là', $liste[0]['titre']);
+    }
+
+    public function test_un_brouillon_est_introuvable_pour_le_public(): void
+    {
+        $oeuvre = $this->oeuvre(['statut' => 'brouillon']);
+
+        $this->getJson("/api/oeuvres/{$oeuvre->id}")->assertStatus(404);
+        $this->actingAs($this->admin, 'sanctum')->getJson("/api/oeuvres/{$oeuvre->id}")->assertOk();
+    }
+
+    /* ── L'argent ────────────────────────────────────────────────── */
+
+    /**
+     * Le prix vient de l'œuvre et les frais de la configuration. C'est la
+     * leçon de la faille du tarif, où le client choisissait ce qu'il payait.
+     */
+    public function test_les_montants_envoyes_dans_la_requete_sont_ignores(): void
+    {
+        $oeuvre = $this->oeuvre(['prix' => 150000]);
+
+        $reponse = $this->actingAs($this->client, 'sanctum')->postJson('/api/commandes', $this->commandeValide($oeuvre, [
+            'montant_oeuvre'  => 1,
+            'frais_livraison' => 0,
+            'montant_total'   => 1,
+            'prix'            => 1,
+        ]));
+
+        $reponse->assertStatus(201);
+
+        $commande = Commande::first();
+        $this->assertSame(150000, $commande->montant_oeuvre);
+        $this->assertSame(2000, $commande->frais_livraison);
+        $this->assertSame(152000, $commande->montant_total);
+    }
+
+    public function test_les_frais_suivent_la_zone(): void
+    {
+        foreach ([['dakar', 2000], ['regions', 5000], ['retrait', 0]] as [$zone, $frais]) {
+            $oeuvre = $this->oeuvre();
+
+            $this->actingAs($this->client, 'sanctum')
+                 ->postJson('/api/commandes', $this->commandeValide($oeuvre, ['zone_livraison' => $zone]))
+                 ->assertStatus(201);
+
+            $commande = Commande::latest('id')->first();
+            $this->assertSame($frais, $commande->frais_livraison, "Zone {$zone}");
+            $this->assertSame(150000 + $frais, $commande->montant_total);
+        }
+    }
+
+    public function test_une_zone_non_desservie_est_refusee(): void
+    {
+        $oeuvre = $this->oeuvre();
+
+        $this->actingAs($this->client, 'sanctum')
+             ->postJson('/api/commandes', $this->commandeValide($oeuvre, ['zone_livraison' => 'paris']))
+             ->assertStatus(422);
+
+        $this->assertSame(0, Commande::count());
+    }
+
+    /**
+     * Le prix est recopié à la commande : le relever ensuite ne doit pas
+     * réécrire une vente passée.
+     */
+    public function test_le_prix_est_fige_a_la_commande(): void
+    {
+        $oeuvre = $this->oeuvre(['prix' => 100000]);
+
+        $this->actingAs($this->client, 'sanctum')
+             ->postJson('/api/commandes', $this->commandeValide($oeuvre));
+
+        $oeuvre->update(['prix' => 900000]);
+
+        $this->assertSame(100000, Commande::first()->montant_oeuvre);
+        $this->assertSame('Teranga', Commande::first()->oeuvre_titre);
+    }
+
+    /* ── Une œuvre ne se vend qu'une fois ────────────────────────── */
+
+    public function test_commander_retire_l_oeuvre_de_la_vente(): void
+    {
+        $oeuvre = $this->oeuvre();
+
+        $this->actingAs($this->client, 'sanctum')
+             ->postJson('/api/commandes', $this->commandeValide($oeuvre))
+             ->assertStatus(201);
+
+        $this->assertSame('vendue', $oeuvre->refresh()->statut);
+    }
+
+    /**
+     * Le cas qui compte : un second acheteur sur la même pièce. Vendre deux
+     * fois la même toile est le seul incident qu'une galerie ne rattrape pas.
+     */
+    public function test_une_oeuvre_deja_vendue_ne_peut_plus_etre_commandee(): void
+    {
+        $oeuvre = $this->oeuvre();
+        $autre = User::factory()->client()->create();
+
+        $this->actingAs($this->client, 'sanctum')
+             ->postJson('/api/commandes', $this->commandeValide($oeuvre))
+             ->assertStatus(201);
+
+        $this->actingAs($autre, 'sanctum')
+             ->postJson('/api/commandes', $this->commandeValide($oeuvre))
+             ->assertStatus(409);
+
+        $this->assertSame(1, Commande::count());
+    }
+
+    /** Une œuvre en brouillon n'est pas non plus commandable. */
+    public function test_un_brouillon_ne_peut_pas_etre_commande(): void
+    {
+        $oeuvre = $this->oeuvre(['statut' => 'brouillon']);
+
+        $this->actingAs($this->client, 'sanctum')
+             ->postJson('/api/commandes', $this->commandeValide($oeuvre))
+             ->assertStatus(409);
+    }
+
+    /* ── L'annulation libère ─────────────────────────────────────── */
+
+    public function test_annuler_remet_l_oeuvre_en_vente(): void
+    {
+        $oeuvre = $this->oeuvre();
+
+        $this->actingAs($this->client, 'sanctum')
+             ->postJson('/api/commandes', $this->commandeValide($oeuvre));
+        $commande = Commande::first();
+
+        $this->actingAs($this->client, 'sanctum')
+             ->patchJson("/api/commandes/{$commande->id}/annuler")
+             ->assertOk();
+
+        $this->assertSame('annulee', $commande->refresh()->statut);
+        $this->assertSame('publiee', $oeuvre->refresh()->statut, 'Une pièce immobilisée par une commande abandonnée est invendable.');
+    }
+
+    public function test_une_commande_expediee_ne_s_annule_plus(): void
+    {
+        $oeuvre = $this->oeuvre();
+        $this->actingAs($this->client, 'sanctum')->postJson('/api/commandes', $this->commandeValide($oeuvre));
+        $commande = Commande::first();
+        $commande->update(['statut' => 'expediee']);
+
+        $this->actingAs($this->client, 'sanctum')
+             ->patchJson("/api/commandes/{$commande->id}/annuler")
+             ->assertStatus(409);
+    }
+
+    /* ── Accès ───────────────────────────────────────────────────── */
+
+    public function test_un_tiers_ne_voit_pas_la_commande_d_un_autre(): void
+    {
+        $oeuvre = $this->oeuvre();
+        $this->actingAs($this->client, 'sanctum')->postJson('/api/commandes', $this->commandeValide($oeuvre));
+        $commande = Commande::first();
+
+        $intrus = User::factory()->client()->create();
+
+        $this->actingAs($intrus, 'sanctum')->getJson("/api/commandes/{$commande->id}")->assertStatus(403);
+        $this->actingAs($intrus, 'sanctum')->patchJson("/api/commandes/{$commande->id}/annuler")->assertStatus(403);
+    }
+
+    public function test_un_visiteur_ne_peut_pas_commander(): void
+    {
+        $oeuvre = $this->oeuvre();
+
+        $this->postJson('/api/commandes', $this->commandeValide($oeuvre))->assertStatus(401);
+        $this->assertSame(0, Commande::count());
+    }
+
+    public function test_seul_l_admin_gere_le_stock(): void
+    {
+        $oeuvre = $this->oeuvre();
+
+        $this->actingAs($this->client, 'sanctum')
+             ->postJson('/api/admin/oeuvres', ['titre' => 'X', 'artiste' => 'Y', 'prix' => 1000])
+             ->assertStatus(403);
+
+        $this->actingAs($this->client, 'sanctum')
+             ->patchJson("/api/admin/oeuvres/{$oeuvre->id}", ['prix' => 1])
+             ->assertStatus(403);
+    }
+
+    /**
+     * Le jeton de facture identifie la transaction chez le prestataire : qui le
+     * détient peut agir dessus.
+     */
+    public function test_le_jeton_du_prestataire_ne_sort_jamais(): void
+    {
+        $oeuvre = $this->oeuvre();
+        $this->actingAs($this->client, 'sanctum')->postJson('/api/commandes', $this->commandeValide($oeuvre));
+        $commande = Commande::first();
+        $commande->update(['token_paydunya' => 'JETON-SECRET', 'reponse_prestataire' => ['x' => 1]]);
+
+        $corps = $this->actingAs($this->client, 'sanctum')
+                      ->getJson("/api/commandes/{$commande->id}")->getContent();
+
+        $this->assertStringNotContainsString('JETON-SECRET', $corps);
+        $this->assertStringNotContainsString('reponse_prestataire', $corps);
+    }
+
+    /* ── Le cycle de la commande ─────────────────────────────────── */
+
+    public function test_payer_a_la_livraison_confirme_d_emblee(): void
+    {
+        $oeuvre = $this->oeuvre();
+
+        $this->actingAs($this->client, 'sanctum')
+             ->postJson('/api/commandes', $this->commandeValide($oeuvre, ['mode_paiement' => 'livraison']))
+             ->assertStatus(201)
+             ->assertJsonPath('statut', 'confirmee');
+    }
+
+    public function test_payer_en_ligne_reste_en_attente_jusqu_au_reglement(): void
+    {
+        $oeuvre = $this->oeuvre();
+
+        $this->actingAs($this->client, 'sanctum')
+             ->postJson('/api/commandes', $this->commandeValide($oeuvre, ['mode_paiement' => 'en_ligne']))
+             ->assertStatus(201)
+             ->assertJsonPath('statut', 'en_attente')
+             ->assertJsonPath('statut_paiement', 'en_attente');
+    }
+
+    /** Livrer une commande payable à la livraison la solde : c'est là que l'argent passe. */
+    public function test_livrer_solde_une_commande_payable_a_la_livraison(): void
+    {
+        $oeuvre = $this->oeuvre();
+        $this->actingAs($this->client, 'sanctum')->postJson('/api/commandes', $this->commandeValide($oeuvre));
+        $commande = Commande::first();
+
+        $this->actingAs($this->admin, 'sanctum')
+             ->patchJson("/api/admin/commandes/{$commande->id}/statut", ['statut' => 'livree'])
+             ->assertOk();
+
+        $commande->refresh();
+        $this->assertSame('livree', $commande->statut);
+        $this->assertSame('reussi', $commande->statut_paiement);
+        $this->assertNotNull($commande->paye_le);
+    }
+
+    public function test_le_changement_de_statut_est_consigne(): void
+    {
+        $oeuvre = $this->oeuvre();
+        $this->actingAs($this->client, 'sanctum')->postJson('/api/commandes', $this->commandeValide($oeuvre));
+        $commande = Commande::first();
+
+        $this->actingAs($this->admin, 'sanctum')
+             ->patchJson("/api/admin/commandes/{$commande->id}/statut", ['statut' => 'expediee']);
+
+        $this->assertDatabaseHas('journal_admin', [
+            'action' => 'commande.statut',
+            'cible_libelle' => 'Teranga',
+        ]);
+    }
+
+    /** L'admin qui annule libère aussi l'œuvre. */
+    public function test_l_admin_qui_annule_remet_l_oeuvre_en_vente(): void
+    {
+        $oeuvre = $this->oeuvre();
+        $this->actingAs($this->client, 'sanctum')->postJson('/api/commandes', $this->commandeValide($oeuvre));
+        $commande = Commande::first();
+
+        $this->actingAs($this->admin, 'sanctum')
+             ->patchJson("/api/admin/commandes/{$commande->id}/statut", ['statut' => 'annulee'])
+             ->assertOk();
+
+        $this->assertSame('publiee', $oeuvre->refresh()->statut);
+    }
+
+    /* ── Le stock ────────────────────────────────────────────────── */
+
+    public function test_une_oeuvre_commandee_ne_se_supprime_pas(): void
+    {
+        $oeuvre = $this->oeuvre();
+        $this->actingAs($this->client, 'sanctum')->postJson('/api/commandes', $this->commandeValide($oeuvre));
+
+        $this->actingAs($this->admin, 'sanctum')
+             ->deleteJson("/api/admin/oeuvres/{$oeuvre->id}")
+             ->assertStatus(422);
+
+        $this->assertDatabaseHas('oeuvres', ['id' => $oeuvre->id]);
+    }
+
+    public function test_une_oeuvre_jamais_commandee_se_supprime(): void
+    {
+        $oeuvre = $this->oeuvre();
+
+        $this->actingAs($this->admin, 'sanctum')
+             ->deleteJson("/api/admin/oeuvres/{$oeuvre->id}")
+             ->assertOk();
+
+        $this->assertDatabaseMissing('oeuvres', ['id' => $oeuvre->id]);
+    }
+
+    /** Remettre en vente une œuvre partie doit passer par l'annulation. */
+    public function test_une_oeuvre_vendue_ne_se_republie_pas_a_la_main(): void
+    {
+        $oeuvre = $this->oeuvre(['statut' => 'vendue']);
+
+        $this->actingAs($this->admin, 'sanctum')
+             ->patchJson("/api/admin/oeuvres/{$oeuvre->id}", ['statut' => 'publiee'])
+             ->assertStatus(422);
+
+        $this->assertSame('vendue', $oeuvre->refresh()->statut);
+    }
+
+    public function test_le_paiement_a_la_livraison_peut_etre_ferme(): void
+    {
+        config(['boutique.paiement_a_la_livraison' => false]);
+        $oeuvre = $this->oeuvre();
+
+        $this->actingAs($this->client, 'sanctum')
+             ->postJson('/api/commandes', $this->commandeValide($oeuvre, ['mode_paiement' => 'livraison']))
+             ->assertStatus(422);
+
+        $this->assertSame(0, Commande::count());
+    }
+}
