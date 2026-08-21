@@ -555,4 +555,50 @@ class BoutiqueTest extends TestCase
 
         $this->assertSame('Dispo', $titres[0]);
     }
+
+    /* ── Le prix d'entrée ────────────────────────────────────────── */
+
+    /**
+     * « À partir de » doit porter sur toute la sélection, pas sur la page
+     * affichée : calculé côté écran, il annonçait un plancher plus élevé que
+     * le vrai dès que le catalogue dépassait une page.
+     */
+    public function test_le_prix_d_entree_porte_sur_toute_la_selection(): void
+    {
+        foreach ([90000, 70000, 50000, 30000, 12000, 8000] as $i => $prix) {
+            $this->oeuvre(['titre' => "Article {$i}", 'categorie' => 'bijoux', 'prix' => $prix]);
+        }
+
+        $reponse = $this->getJson('/api/oeuvres?par_page=6&tri=prix_desc');
+
+        $this->assertCount(6, $reponse->json('data'));
+        $this->assertSame(8000, $reponse->json('prix_min'));
+    }
+
+    /** Un article épuisé ne fixe pas le prix d'entrée : on ne peut pas le vendre. */
+    public function test_un_article_epuise_ne_fixe_pas_le_prix_d_entree(): void
+    {
+        $this->oeuvre(['titre' => 'Bradé mais épuisé', 'prix' => 1000, 'stock' => 0, 'statut' => 'vendue']);
+        $this->oeuvre(['titre' => 'Disponible', 'prix' => 40000]);
+
+        $this->assertSame(40000, $this->getJson('/api/oeuvres')->json('prix_min'));
+    }
+
+    /** Le filtre déplace le prix d'entrée avec lui. */
+    public function test_le_prix_d_entree_suit_la_categorie(): void
+    {
+        $this->oeuvre(['titre' => 'Un bijou', 'categorie' => 'bijoux', 'prix' => 9000]);
+        $this->oeuvre(['titre' => 'Un tableau', 'categorie' => 'tableaux', 'prix' => 250000]);
+
+        $this->assertSame(9000, $this->getJson('/api/oeuvres')->json('prix_min'));
+        $this->assertSame(250000, $this->getJson('/api/oeuvres?categorie=tableaux')->json('prix_min'));
+    }
+
+    /** Rien d'achetable : pas de prix annoncé plutôt qu'un prix trompeur. */
+    public function test_sans_article_achetable_aucun_prix_n_est_annonce(): void
+    {
+        $this->oeuvre(['stock' => 0, 'statut' => 'vendue']);
+
+        $this->assertNull($this->getJson('/api/oeuvres')->json('prix_min'));
+    }
 }

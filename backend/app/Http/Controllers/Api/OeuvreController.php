@@ -69,7 +69,26 @@ class OeuvreController extends Controller
             default     => $oeuvres->orderByDesc('vedette')->latest(),
         };
 
-        return response()->json($oeuvres->paginate($request->integer('par_page', 12)));
+        /*
+         | « À partir de » doit porter sur **tout** ce que la sélection contient,
+         | et sur ce qui est **réellement achetable**.
+         |
+         | Calculé côté écran, il ne voyait que la page courante et annonçait un
+         | prix plancher plus élevé que le vrai. Il aurait aussi pu annoncer le
+         | prix d'un article épuisé — une promesse qu'on ne peut pas tenir.
+         */
+        $prixMin = (clone $oeuvres)
+            ->reorder()
+            ->where('statut', 'publiee')
+            ->where('stock', '>', 0)
+            ->min('prix');
+
+        // Fusionné sur le tableau du paginateur : `additional()` appartient aux
+        // ressources d'API, pas au paginateur lui-même.
+        return response()->json(
+            $oeuvres->paginate($request->integer('par_page', 12))->toArray()
+            + ['prix_min' => $prixMin !== null ? (int) $prixMin : null]
+        );
     }
 
     public function show(Oeuvre $oeuvre): JsonResponse

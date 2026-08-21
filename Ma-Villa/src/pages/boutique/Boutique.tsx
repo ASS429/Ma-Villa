@@ -199,7 +199,9 @@ export default function Boutique() {
           <>
             <p className="boutique-compte">
               {resultat?.total ?? oeuvres.length} article{(resultat?.total ?? oeuvres.length) > 1 ? 's' : ''}
-              {' '}· à partir de {fcfa(Math.min(...oeuvres.map((o) => o.prix)))}
+              {/* Le prix d'entrée vient du serveur : calculé ici, il ne voyait
+                  que la page affichée et annonçait un plancher trop haut. */}
+              {resultat?.prix_min ? ` · à partir de ${fcfa(resultat.prix_min)}` : ''}
             </p>
 
             <div className="boutique-grille">

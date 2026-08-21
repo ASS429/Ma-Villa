@@ -1,5 +1,8 @@
 /** Forme d'une réponse paginée Laravel — celle que renvoient les listes admin. */
 export interface Page<T> {
+  /** Champ ajouté par la vitrine de la boutique : le prix d'entrée
+   *  de la sélection entière, calculé par le serveur. */
+  prix_min?: number | null
   data: T[]
   current_page: number
   last_page: number
