@@ -1266,14 +1266,14 @@
 
 .boutique,
 .oeuvre,
-.tunnel {
+.achat {
   max-width: 1180px;
   margin: 0 auto;
   padding: calc(var(--space-8) + 64px) var(--space-5) var(--space-8);
 }
-/* Le tunnel est plus étroit : un formulaire de commande se lit en colonne,
+/* Le achat est plus étroit : un formulaire de commande se lit en colonne,
    et l'élargir n'ajoute que de la distance entre l'œil et le total. */
-.tunnel { max-width: 640px; }
+.achat { max-width: 640px; }
 
 .boutique-entete { margin-bottom: var(--space-6); }
 .boutique-surtitre {
@@ -1486,8 +1486,8 @@
 
 /* ── Tunnel de commande ───────────────────────────────────────── */
 
-.tunnel-corps { display: flex; flex-direction: column; gap: var(--space-4); }
-.tunnel-champs { display: flex; flex-direction: column; gap: var(--space-4); margin-top: var(--space-4); }
+.achat-corps { display: flex; flex-direction: column; gap: var(--space-4); }
+.achat-champs { display: flex; flex-direction: column; gap: var(--space-4); margin-top: var(--space-4); }
 
 .commande-resume { display: flex; align-items: center; gap: var(--space-3); }
 .commande-vignette {
@@ -1512,23 +1512,23 @@
 
 /* Le total colle au bouton : c'est la dernière chose lue avant de valider,
    et des frais découverts après coup sont la première cause d'abandon. */
-.tunnel-total {
+.achat-total {
   padding: var(--space-5);
   border-radius: var(--r-lg);
   background: var(--bg-surface);
   border: 1px solid var(--border);
   box-shadow: var(--elev-2);
 }
-.tunnel-total dl { margin: 0 0 var(--space-4); display: flex; flex-direction: column; gap: 8px; }
-.tunnel-total dl > div { display: flex; justify-content: space-between; gap: var(--space-3); font: var(--t-body-sm); }
-.tunnel-total dt { color: var(--text-2); }
-.tunnel-total dd { margin: 0; color: var(--text-1); font-variant-numeric: lining-nums tabular-nums; }
-.tunnel-total-ligne {
+.achat-total dl { margin: 0 0 var(--space-4); display: flex; flex-direction: column; gap: 8px; }
+.achat-total dl > div { display: flex; justify-content: space-between; gap: var(--space-3); font: var(--t-body-sm); }
+.achat-total dt { color: var(--text-2); }
+.achat-total dd { margin: 0; color: var(--text-1); font-variant-numeric: lining-nums tabular-nums; }
+.achat-total-ligne {
   padding-top: 8px;
   border-top: 1px solid var(--border);
 }
-.tunnel-total-ligne dt, .tunnel-total-ligne dd { color: var(--text-1); font-weight: 600; }
-.tunnel-note { margin: var(--space-2) 0 0; font: var(--t-caption); color: var(--text-3); text-align: center; }
+.achat-total-ligne dt, .achat-total-ligne dd { color: var(--text-1); font-weight: 600; }
+.achat-note { margin: var(--space-2) 0 0; font: var(--t-caption); color: var(--text-3); text-align: center; }
 
 /* ── Suivi d'une commande ─────────────────────────────────────── */
 

@@ -136,7 +136,7 @@ export default function CommandeDetail() {
       <Seo titre="Ma commande" description="Suivi de votre commande." />
       <Navbar />
 
-      <main className="tunnel">
+      <main className="achat">
         <Link to="/boutique/commandes" className="oeuvre-retour">
           <ArrowLeft size={16} aria-hidden="true" />
           Mes commandes
@@ -152,7 +152,7 @@ export default function CommandeDetail() {
         {chargement ? (
           <div className="skeleton" style={{ height: 300, borderRadius: 'var(--r-lg)' }} />
         ) : commande ? (
-          <div className="tunnel-corps">
+          <div className="achat-corps">
             <section className="panneau">
               <div className="commande-entete">
                 <div style={{ minWidth: 0 }}>
@@ -233,7 +233,7 @@ export default function CommandeDetail() {
                     </a>
                   </>
                 ) : (
-                  <form onSubmit={payer} className="tunnel-champs">
+                  <form onSubmit={payer} className="achat-champs">
                     <ChampSelection
                       label="Moyen de paiement"
                       value={methode}

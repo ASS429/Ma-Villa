@@ -18,7 +18,7 @@ import { Champ, ChampZoneTexte } from '../../components/ui/Champ'
 /**
  * Tunnel de commande.
  *
- * Nu, comme le tunnel de paiement des réservations, et pour la même raison :
+ * Nu, comme le achat de paiement des réservations, et pour la même raison :
  * chaque milliseconde entre un montant et sa validation est un abandon. Pas de
  * pied de page, pas d'animation, un seul chemin.
  *
@@ -96,7 +96,7 @@ export default function Commander() {
       <Seo titre="Commander une œuvre" description="Finalisez votre commande." />
       <Navbar />
 
-      <main className="tunnel">
+      <main className="achat">
         <Link to={`/boutique/${id}`} className="oeuvre-retour">
           <ArrowLeft size={16} aria-hidden="true" />
           Retour à l'œuvre
@@ -113,7 +113,7 @@ export default function Commander() {
         {chargement ? (
           <div className="skeleton" style={{ height: 320, borderRadius: 'var(--r-lg)' }} />
         ) : oeuvre && !indisponible ? (
-          <form className="tunnel-corps" onSubmit={commander}>
+          <form className="achat-corps" onSubmit={commander}>
             <section className="panneau">
               <h1 className="panneau-titre">Votre commande</h1>
 
@@ -151,7 +151,7 @@ export default function Commander() {
                 ))}
               </fieldset>
 
-              <div className="tunnel-champs">
+              <div className="achat-champs">
                 <Champ
                   label="Destinataire"
                   value={destinataire}
@@ -231,14 +231,14 @@ export default function Commander() {
 
             {/* Le total est visible au moment de valider, jamais après : des
                 frais découverts ensuite sont la première cause d'abandon. */}
-            <div className="tunnel-total">
+            <div className="achat-total">
               <dl>
                 <div><dt>Œuvre</dt><dd>{fcfa(oeuvre.prix)}</dd></div>
                 <div>
                   <dt>Livraison</dt>
                   <dd>{zone ? (frais === 0 ? 'Gratuite' : fcfa(frais)) : '—'}</dd>
                 </div>
-                <div className="tunnel-total-ligne">
+                <div className="achat-total-ligne">
                   <dt>Total</dt>
                   <dd>{zone ? fcfa(total) : '—'}</dd>
                 </div>
@@ -254,7 +254,7 @@ export default function Commander() {
                 {mode === 'en_ligne' ? 'Valider et payer' : 'Valider la commande'}
               </Button>
 
-              {!zone && <p className="tunnel-note">Choisissez une zone de livraison pour voir le total.</p>}
+              {!zone && <p className="achat-note">Choisissez une zone de livraison pour voir le total.</p>}
             </div>
           </form>
         ) : null}

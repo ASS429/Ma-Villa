@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { Home, Search, CalendarDays, User } from 'lucide-react'
+import { Home, Search, CalendarDays, User, Palette } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { useConfig } from '../../context/ConfigContext'
 
 /**
  * Navigation basse — planche 09, « châssis d'application ».
@@ -15,11 +16,20 @@ import { useAuth } from '../../context/AuthContext'
  */
 export default function NavigationBasse() {
   const { user } = useAuth()
+  const { boutique } = useConfig()
   const { pathname } = useLocation()
 
   // Le tunnel de paiement et les feuilles occupent l'écran : y superposer une
   // barre de navigation invite à abandonner au moment de payer.
-  const masquee = pathname.startsWith('/reservation/') || pathname.startsWith('/paiement')
+  //
+  // La commande d'un article suit la même règle : elle se termine par un
+  // paiement, et proposer trois autres destinations juste sous le bouton de
+  // validation est exactement ce qu'il ne faut pas faire.
+  const masquee = pathname.startsWith('/reservation/')
+    || pathname.startsWith('/paiement')
+    || pathname.endsWith('/commander')
+    || /^\/boutique\/commandes\/\d+/.test(pathname)
+
   if (masquee) return null
 
   const espace = user ? '/dashboard' : '/login'
@@ -27,12 +37,24 @@ export default function NavigationBasse() {
   const onglets = [
     { to: '/', libelle: 'Explorer', Icone: Home, exact: true },
     { to: '/villas', libelle: 'Recherche', Icone: Search },
+    // La boutique n'apparaît que si elle est ouverte : un onglet qui renvoie
+    // à l'accueil est pire que pas d'onglet du tout. C'est aussi la seule
+    // façon d'y accéder au pouce — sinon il faut remonter au menu du haut.
+    ...(boutique.actif
+      ? [{ to: '/boutique', libelle: 'Boutique', Icone: Palette, exact: false }]
+      : []),
     { to: user ? '/dashboard/reservations' : espace, libelle: 'Réservations', Icone: CalendarDays },
     { to: user ? '/dashboard/profil' : espace, libelle: 'Compte', Icone: User },
   ]
 
   return (
-    <nav className="nav-basse" aria-label="Navigation principale">
+    <nav
+      className="nav-basse"
+      aria-label="Navigation principale"
+      // Le nombre d'onglets varie avec l'ouverture de la boutique : la
+      // répartition doit suivre, sinon le cinquième déborde.
+      style={{ gridTemplateColumns: `repeat(${onglets.length}, 1fr)` }}
+    >
       {onglets.map(({ to, libelle, Icone, exact }) => (
         <NavLink
           key={libelle}
