@@ -322,7 +322,7 @@ l'utilisateur décident de toute l'architecture :
 | Décision | Conséquence |
 |---|---|
 | **Ma Villa est le seul vendeur** | pas de rôle « artiste », pas de modération, pas de commission ni de reversement. L'artiste est une **colonne de l'œuvre**, pas un compte |
-| **Une œuvre par commande** | pas de panier : une pièce est unique, un panier n'aurait géré que des conflits de stock inexistants |
+| **Une œuvre par commande** | pas de panier : on commande un article à la fois |
 | **Frais de livraison par zone** | le client connaît son total **avant** de payer |
 
 ⚠️ **`BOUTIQUE_ACTIVE` est à `false`.** Les routes publiques répondent **404**,
@@ -352,7 +352,33 @@ il est générique.
 Une œuvre **vendue reste visible**, en fin de liste et en retrait : une galerie
 qui efface ce qu'elle a vendu perd la preuve qu'elle vend.
 
-`tests/Feature/BoutiqueTest.php` — 26 tests.
+### Catégories et stock
+
+Le catalogue réel a corrigé une hypothèse du premier jet : ce ne sont pas des
+toiles uniques mais surtout des bracelets, sandales, chemises — **reproductibles**.
+
+- **`stock`**, par défaut à 1. Commander décrémente ; à zéro l'article passe
+  « vendu », reste visible, ne s'achète plus. Annuler rend l'exemplaire ;
+  réapprovisionner remet en vente **sans second geste**. Une pièce unique
+  (stock 1) garde exactement le comportement d'origine.
+- **Sept catégories**, dans `config/boutique.php` et **non en base** — à la
+  différence des catégories de logement, qui portent unité de prix, formules et
+  filtres. Celle-ci ne sert qu'à ranger : une table serait une jointure pour un
+  libellé. `GET /oeuvres/categories` ne rend que les catégories **non vides** —
+  un filtre qui ne rend rien use la confiance.
+
+### Catalogue de démonstration
+
+`php artisan db:seed --class=BoutiqueSeeder` — dix-neuf articles, idempotent
+(le titre sert de clé). **Prix et artisans fictifs**, à remplacer avant
+l'ouverture.
+
+Les photographies vivent dans `Ma-Villa/public/oeuvres/` et sont référencées en
+**chemin relatif** (`/oeuvres/x.jpg`) : une URL absolue serait à réécrire le jour
+du nom de domaine. Les originaux étaient des `.jfif` — des JPEG, mais le
+téléverseur valide sur l'extension et les refusait.
+
+`tests/Feature/BoutiqueTest.php` — 36 tests.
 
 ### Ce que la vérification au navigateur a trouvé
 
