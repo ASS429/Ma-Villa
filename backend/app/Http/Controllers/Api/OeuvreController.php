@@ -38,15 +38,19 @@ class OeuvreController extends Controller
         $this->exigerBoutiqueOuverte();
 
         $request->validate([
-            'artiste'  => 'sometimes|nullable|string|max:120',
-            'q'        => 'sometimes|nullable|string|max:120',
-            'tri'      => 'sometimes|in:recent,prix_asc,prix_desc',
-            'par_page' => 'sometimes|integer|min:6|max:48',
+            'categorie' => 'sometimes|nullable|in:'.implode(',', array_keys((array) config('boutique.categories'))),
+            'artiste'   => 'sometimes|nullable|string|max:120',
+            'q'         => 'sometimes|nullable|string|max:120',
+            'tri'       => 'sometimes|in:recent,prix_asc,prix_desc',
+            'par_page'  => 'sometimes|integer|min:6|max:48',
+        ], [
+            'categorie.in' => 'Cette catégorie n\'existe pas.',
         ]);
 
         $oeuvres = Oeuvre::query()
             ->visible()
             ->with('photos')
+            ->when($request->filled('categorie'), fn ($q) => $q->deCategorie($request->input('categorie')))
             ->when($request->filled('artiste'), fn ($q) => $q->where('artiste', $request->input('artiste')))
             ->when($request->filled('q'), function ($q) use ($request) {
                 $terme = '%'.$request->input('q').'%';
@@ -55,9 +59,9 @@ class OeuvreController extends Controller
                                        ->orWhere('technique', 'like', $terme));
             });
 
-        // Les œuvres encore disponibles d'abord : une vitrine qui ouvre sur ce
+        // Les articles encore disponibles d'abord : une vitrine qui ouvre sur ce
         // qui est déjà vendu se lit comme une boutique vide.
-        $oeuvres->orderByRaw("CASE WHEN statut = 'publiee' THEN 0 ELSE 1 END");
+        $oeuvres->orderByRaw("CASE WHEN statut = 'publiee' AND stock > 0 THEN 0 ELSE 1 END");
 
         match ($request->input('tri', 'recent')) {
             'prix_asc'  => $oeuvres->orderBy('prix'),
@@ -91,6 +95,35 @@ class OeuvreController extends Controller
         );
     }
 
+    /**
+     * Les catégories, avec ce qu'elles contiennent réellement.
+     *
+     * Une catégorie vide n'est pas proposée : un filtre qui ne rend rien use
+     * la confiance plus vite qu'il ne rend service. L'ordre reste celui de la
+     * configuration, qui est délibéré.
+     */
+    public function categories(): JsonResponse
+    {
+        $this->exigerBoutiqueOuverte();
+
+        $comptes = Oeuvre::visible()
+            ->selectRaw('categorie, COUNT(*) as total')
+            ->groupBy('categorie')
+            ->pluck('total', 'categorie');
+
+        $categories = collect((array) config('boutique.categories'))
+            ->map(fn (array $c, string $cle) => [
+                'cle'     => $cle,
+                'nom'     => $c['nom'],
+                'pluriel' => $c['pluriel'],
+                'total'   => (int) ($comptes[$cle] ?? 0),
+            ])
+            ->filter(fn (array $c) => $c['total'] > 0)
+            ->values();
+
+        return response()->json($categories);
+    }
+
     /* ══ Administration ═══════════════════════════════════════════ */
 
     /** Tout, brouillons compris — c'est l'écran de gestion du stock. */
@@ -122,16 +155,29 @@ class OeuvreController extends Controller
     {
         $donnees = $this->valider($request, partiel: true);
 
-        // Repasser une œuvre vendue en « publiée » la remettrait en vente
-        // alors qu'elle est partie. Le seul chemin légitime est l'annulation
-        // de la commande, qui s'en charge elle-même.
-        if ($oeuvre->statut === 'vendue' && ($donnees['statut'] ?? null) === 'publiee') {
+        // Remettre en vente un article épuisé sans lui redonner de stock le
+        // rendrait commandable alors qu'il n'en reste rien. Réapprovisionner
+        // suffit — et pour une pièce unique, il n'y a rien à réapprovisionner :
+        // le seul chemin légitime reste l'annulation de la commande.
+        $stockApres = $donnees['stock'] ?? $oeuvre->stock;
+
+        if ($oeuvre->statut === 'vendue'
+            && ($donnees['statut'] ?? null) === 'publiee'
+            && $stockApres < 1) {
             return response()->json([
-                'message' => 'Cette œuvre est vendue. Annulez la commande concernée pour la remettre en vente.',
+                'message' => 'Cet article est épuisé. Indiquez un stock pour le remettre en vente, '
+                           ."ou annulez la commande s'il s'agit d'une pièce unique.",
             ], 422);
         }
 
         $oeuvre->update($donnees);
+
+        // Réapprovisionner un article épuisé le remet en vente de lui-même :
+        // saisir un stock puis devoir changer le statut serait deux gestes
+        // pour une seule intention.
+        if ($oeuvre->statut === 'vendue' && $oeuvre->stock > 0 && ! isset($donnees['statut'])) {
+            $oeuvre->update(['statut' => 'publiee']);
+        }
 
         return response()->json($oeuvre->load('photos'));
     }
@@ -165,7 +211,9 @@ class OeuvreController extends Controller
         return $request->validate([
             'titre'       => "{$requis}|string|max:160",
             'artiste'     => "{$requis}|string|max:120",
+            'categorie'   => "{$requis}|in:".implode(',', array_keys((array) config('boutique.categories'))),
             'prix'        => "{$requis}|integer|min:1|max:100000000",
+            'stock'       => 'sometimes|integer|min:0|max:9999',
             'description' => 'sometimes|nullable|string|max:4000',
             'technique'   => 'sometimes|nullable|string|max:120',
             'dimensions'  => 'sometimes|nullable|string|max:80',

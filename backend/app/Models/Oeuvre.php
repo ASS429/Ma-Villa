@@ -16,14 +16,15 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 class Oeuvre extends Model
 {
     protected $fillable = [
-        'titre', 'artiste', 'description', 'technique', 'dimensions',
-        'annee', 'prix', 'statut', 'vedette',
+        'titre', 'artiste', 'categorie', 'description', 'technique', 'dimensions',
+        'annee', 'prix', 'stock', 'statut', 'vedette',
     ];
 
     protected function casts(): array
     {
         return [
             'prix'    => 'integer',
+            'stock'   => 'integer',
             'annee'   => 'integer',
             'vedette' => 'boolean',
         ];
@@ -57,8 +58,26 @@ class Oeuvre extends Model
         return $query->where('statut', 'publiee');
     }
 
+    public function scopeDeCategorie(Builder $query, string $categorie): Builder
+    {
+        return $query->where('categorie', $categorie);
+    }
+
+    /**
+     * Publiée **et** encore en stock.
+     *
+     * Le premier catalogue supposait des pièces uniques ; les articles réels
+     * sont pour la plupart reproductibles. Sans la quantité, commander un
+     * bracelet aurait fait disparaître les bracelets.
+     */
     public function estAchetable(): bool
     {
-        return $this->statut === 'publiee';
+        return $this->statut === 'publiee' && $this->stock > 0;
+    }
+
+    /** Le libellé de sa catégorie, ou la clé brute si elle a disparu. */
+    public function nomDeCategorie(): string
+    {
+        return config("boutique.categories.{$this->categorie}.nom", $this->categorie);
     }
 }

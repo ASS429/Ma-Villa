@@ -43,10 +43,12 @@ class BoutiqueTest extends TestCase
     private function oeuvre(array $attributs = []): Oeuvre
     {
         return Oeuvre::create(array_merge([
-            'titre'   => 'Teranga',
-            'artiste' => 'Awa Diop',
-            'prix'    => 150000,
-            'statut'  => 'publiee',
+            'titre'     => 'Teranga',
+            'artiste'   => 'Awa Diop',
+            'categorie' => 'tableaux',
+            'prix'      => 150000,
+            'stock'     => 1,
+            'statut'    => 'publiee',
         ], $attributs));
     }
 
@@ -409,18 +411,6 @@ class BoutiqueTest extends TestCase
         $this->assertDatabaseMissing('oeuvres', ['id' => $oeuvre->id]);
     }
 
-    /** Remettre en vente une œuvre partie doit passer par l'annulation. */
-    public function test_une_oeuvre_vendue_ne_se_republie_pas_a_la_main(): void
-    {
-        $oeuvre = $this->oeuvre(['statut' => 'vendue']);
-
-        $this->actingAs($this->admin, 'sanctum')
-             ->patchJson("/api/admin/oeuvres/{$oeuvre->id}", ['statut' => 'publiee'])
-             ->assertStatus(422);
-
-        $this->assertSame('vendue', $oeuvre->refresh()->statut);
-    }
-
     public function test_le_paiement_a_la_livraison_peut_etre_ferme(): void
     {
         config(['boutique.paiement_a_la_livraison' => false]);
@@ -431,5 +421,138 @@ class BoutiqueTest extends TestCase
              ->assertStatus(422);
 
         $this->assertSame(0, Commande::count());
+    }
+
+    /* ── Catégories ──────────────────────────────────────────────── */
+
+    public function test_la_vitrine_filtre_par_categorie(): void
+    {
+        $this->oeuvre(['titre' => 'Un tableau', 'categorie' => 'tableaux']);
+        $this->oeuvre(['titre' => 'Un bracelet', 'categorie' => 'bijoux']);
+
+        $titres = collect($this->getJson('/api/oeuvres?categorie=bijoux')->assertOk()->json('data'))
+            ->pluck('titre')->all();
+
+        $this->assertSame(['Un bracelet'], $titres);
+    }
+
+    public function test_une_categorie_inconnue_est_refusee(): void
+    {
+        $this->getJson('/api/oeuvres?categorie=voitures')->assertStatus(422);
+    }
+
+    /**
+     * Une catégorie vide n'est pas proposée : un filtre qui ne rend rien use la
+     * confiance plus vite qu'il ne rend service.
+     */
+    public function test_les_categories_vides_ne_sont_pas_proposees(): void
+    {
+        $this->oeuvre(['titre' => 'Un bracelet', 'categorie' => 'bijoux']);
+
+        $categories = $this->getJson('/api/oeuvres/categories')->assertOk()->json();
+
+        $this->assertCount(1, $categories);
+        $this->assertSame('bijoux', $categories[0]['cle']);
+        $this->assertSame(1, $categories[0]['total']);
+    }
+
+    public function test_creer_un_article_sans_categorie_est_refuse(): void
+    {
+        $this->actingAs($this->admin, 'sanctum')
+             ->postJson('/api/admin/oeuvres', ['titre' => 'X', 'artiste' => 'Y', 'prix' => 1000])
+             ->assertStatus(422);
+    }
+
+    /* ── Stock ───────────────────────────────────────────────────── */
+
+    /**
+     * Le point que le vrai catalogue a imposé : la plupart des articles sont
+     * reproductibles. Sans quantité, commander un bracelet aurait fait
+     * disparaître les bracelets.
+     */
+    public function test_commander_un_article_en_serie_ne_retire_qu_un_exemplaire(): void
+    {
+        $oeuvre = $this->oeuvre(['categorie' => 'bijoux', 'stock' => 3]);
+
+        $this->actingAs($this->client, 'sanctum')
+             ->postJson('/api/commandes', $this->commandeValide($oeuvre))
+             ->assertStatus(201);
+
+        $oeuvre->refresh();
+        $this->assertSame(2, $oeuvre->stock);
+        $this->assertSame('publiee', $oeuvre->statut, 'Il en reste : l\'article doit rester en vente.');
+    }
+
+    public function test_le_dernier_exemplaire_epuise_l_article(): void
+    {
+        $oeuvre = $this->oeuvre(['categorie' => 'bijoux', 'stock' => 1]);
+
+        $this->actingAs($this->client, 'sanctum')
+             ->postJson('/api/commandes', $this->commandeValide($oeuvre));
+
+        $oeuvre->refresh();
+        $this->assertSame(0, $oeuvre->stock);
+        $this->assertSame('vendue', $oeuvre->statut);
+    }
+
+    public function test_un_article_epuise_ne_peut_plus_etre_commande(): void
+    {
+        $oeuvre = $this->oeuvre(['categorie' => 'bijoux', 'stock' => 0]);
+
+        $this->actingAs($this->client, 'sanctum')
+             ->postJson('/api/commandes', $this->commandeValide($oeuvre))
+             ->assertStatus(409);
+    }
+
+    public function test_annuler_rend_l_exemplaire_au_stock(): void
+    {
+        $oeuvre = $this->oeuvre(['categorie' => 'bijoux', 'stock' => 2]);
+
+        $this->actingAs($this->client, 'sanctum')
+             ->postJson('/api/commandes', $this->commandeValide($oeuvre));
+        $commande = Commande::first();
+
+        $this->actingAs($this->client, 'sanctum')
+             ->patchJson("/api/commandes/{$commande->id}/annuler")
+             ->assertOk();
+
+        $this->assertSame(2, $oeuvre->refresh()->stock);
+    }
+
+    /** Réapprovisionner remet l'article en vente, sans second geste. */
+    public function test_reapprovisionner_remet_en_vente(): void
+    {
+        $oeuvre = $this->oeuvre(['categorie' => 'bijoux', 'stock' => 0, 'statut' => 'vendue']);
+
+        $this->actingAs($this->admin, 'sanctum')
+             ->patchJson("/api/admin/oeuvres/{$oeuvre->id}", ['stock' => 5])
+             ->assertOk();
+
+        $oeuvre->refresh();
+        $this->assertSame(5, $oeuvre->stock);
+        $this->assertSame('publiee', $oeuvre->statut);
+    }
+
+    /** Mais republier sans stock reste refusé : rien ne serait livrable. */
+    public function test_republier_sans_stock_est_refuse(): void
+    {
+        $oeuvre = $this->oeuvre(['categorie' => 'bijoux', 'stock' => 0, 'statut' => 'vendue']);
+
+        $this->actingAs($this->admin, 'sanctum')
+             ->patchJson("/api/admin/oeuvres/{$oeuvre->id}", ['statut' => 'publiee'])
+             ->assertStatus(422);
+
+        $this->assertSame('vendue', $oeuvre->refresh()->statut);
+    }
+
+    /** La vitrine montre l'épuisé, mais après le disponible. */
+    public function test_l_epuise_passe_apres_le_disponible(): void
+    {
+        $this->oeuvre(['titre' => 'Epuise', 'categorie' => 'bijoux', 'stock' => 0, 'statut' => 'vendue']);
+        $this->oeuvre(['titre' => 'Dispo', 'categorie' => 'bijoux', 'stock' => 4]);
+
+        $titres = collect($this->getJson('/api/oeuvres')->json('data'))->pluck('titre')->all();
+
+        $this->assertSame('Dispo', $titres[0]);
     }
 }

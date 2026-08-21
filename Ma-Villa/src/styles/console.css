@@ -1695,3 +1695,68 @@
   .televerseur-marque,
   .televerseur-supprimer { position: absolute; }
 }
+
+/* ── Catégories de la boutique ────────────────────────────────── */
+
+/* Une rangée qui défile horizontalement plutôt qu'une liste déroulante : sur
+   mobile, sept catégories tiennent en deux gestes de pouce, là où un menu
+   demande d'ouvrir, lire, choisir, refermer. */
+.boutique-categories {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+  /* Les pastilles ne se coupent pas au bord de l'écran : on rend la marge
+     du conteneur, puis on la reprend en rembourrage. */
+  margin-inline: calc(-1 * var(--space-5));
+  padding-inline: var(--space-5);
+}
+.boutique-categories::-webkit-scrollbar { height: 3px; }
+.boutique-categories::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: var(--r-full, 999px);
+}
+
+.categorie-pastille {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  /* 44 px de haut : sous ce seuil, la cible est trop petite au doigt. */
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-2);
+  font: var(--t-body-sm);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease),
+              background var(--dur) var(--ease),
+              color var(--dur) var(--ease);
+}
+.categorie-pastille:hover { border-color: var(--border-strong); color: var(--text-1); }
+.categorie-pastille.est-active {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--on-accent);
+}
+
+.categorie-compte {
+  font: var(--t-caption);
+  font-variant-numeric: lining-nums tabular-nums;
+  opacity: 0.7;
+}
+
+/* La marque de la dernière pièce se pose en bas, pour ne pas se disputer le
+   coin haut-gauche avec « coup de cœur ». */
+.carte-oeuvre-marque-bas { top: auto; bottom: 10px; }
+
+.admin-oeuvre-stock {
+  font: var(--t-caption);
+  font-weight: 400;
+  color: var(--text-3);
+}

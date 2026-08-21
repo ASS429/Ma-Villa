@@ -181,10 +181,21 @@ export const UNITE_TARIF: Record<TypeTarif, string> = {
 /** `vendue` reste visible : une galerie qui efface ses ventes perd sa preuve de vendre. */
 export type StatutOeuvre = 'brouillon' | 'publiee' | 'vendue'
 
+/** Une catégorie de la boutique, telle que le serveur la rend — avec son compte. */
+export interface CategorieBoutique {
+  cle: string
+  nom: string
+  pluriel: string
+  total: number
+}
+
 export interface Oeuvre {
   id: number
   titre: string
   artiste: string
+  categorie: string
+  /** Nombre d'exemplaires restants. 1 pour une pièce unique. */
+  stock: number
   description: string | null
   technique: string | null
   dimensions: string | null

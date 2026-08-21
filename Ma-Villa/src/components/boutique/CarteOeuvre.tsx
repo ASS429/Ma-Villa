@@ -38,7 +38,14 @@ export default function CarteOeuvre({ oeuvre, prioritaire }: { oeuvre: Oeuvre; p
 
         {vendue && (
           <span className="carte-oeuvre-marque">
-            <Badge ton="neutre">Vendue</Badge>
+            <Badge ton="neutre">{oeuvre.stock === 0 ? 'Épuisé' : 'Vendue'}</Badge>
+          </span>
+        )}
+        {/* Le dernier exemplaire se signale : c'est ce qui décide d'acheter
+            aujourd'hui plutôt que d'y repenser. */}
+        {!vendue && oeuvre.stock === 1 && (
+          <span className="carte-oeuvre-marque carte-oeuvre-marque-bas">
+            <Badge ton="warning">Dernière pièce</Badge>
           </span>
         )}
         {!vendue && oeuvre.vedette && (

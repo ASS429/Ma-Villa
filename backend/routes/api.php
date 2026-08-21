@@ -49,6 +49,7 @@ Route::post('/reversements/rappel', RappelDeboursementController::class)
 // BOUTIQUE_ACTIVE n'est pas levee -- un metier s'ouvre par decision.
 Route::get('/oeuvres', [OeuvreController::class, 'index']);
 Route::get('/oeuvres/artistes', [OeuvreController::class, 'artistes']);
+Route::get('/oeuvres/categories', [OeuvreController::class, 'categories']);
 Route::get('/oeuvres/{oeuvre}', [OeuvreController::class, 'show']);
 
 Route::get('/villas', [VillaController::class, 'index']);

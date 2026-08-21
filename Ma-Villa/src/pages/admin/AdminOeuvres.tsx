@@ -28,10 +28,23 @@ const FILTRES = [
 
 /** Le formulaire vide, à l'ouverture. */
 const VIERGE = {
-  titre: '', artiste: '', prix: '', description: '',
+  titre: '', artiste: '', categorie: '', prix: '', stock: '1', description: '',
   technique: '', dimensions: '', annee: '', statut: 'brouillon' as StatutOeuvre,
   vedette: false,
 }
+
+/* Les catégories viennent du serveur, mais l'écran d'administration doit aussi
+   proposer celles qui sont encore vides — c'est par lui qu'on les remplit.
+   L'endpoint public les masque ; cette liste est donc la référence. */
+const CATEGORIES: { cle: string; nom: string }[] = [
+  { cle: 'tableaux', nom: 'Tableaux et peintures' },
+  { cle: 'sculptures', nom: 'Sculptures et instruments' },
+  { cle: 'bijoux', nom: 'Bijoux et montres' },
+  { cle: 'vetements', nom: 'Vêtements' },
+  { cle: 'coiffes', nom: 'Coiffes et chapeaux' },
+  { cle: 'maroquinerie', nom: 'Sacs et chaussures' },
+  { cle: 'textiles', nom: 'Tissus et décoration' },
+]
 
 export default function AdminOeuvres() {
   const toast = useToast()
@@ -64,7 +77,9 @@ export default function AdminOeuvres() {
     setFormulaire({
       titre: oeuvre.titre,
       artiste: oeuvre.artiste,
+      categorie: oeuvre.categorie,
       prix: String(oeuvre.prix),
+      stock: String(oeuvre.stock),
       description: oeuvre.description ?? '',
       technique: oeuvre.technique ?? '',
       dimensions: oeuvre.dimensions ?? '',
@@ -87,7 +102,9 @@ export default function AdminOeuvres() {
       const charge = {
         titre: formulaire.titre.trim(),
         artiste: formulaire.artiste.trim(),
+        categorie: formulaire.categorie,
         prix: Number(formulaire.prix),
+        stock: Number(formulaire.stock || 1),
         description: formulaire.description.trim() || null,
         technique: formulaire.technique.trim() || null,
         dimensions: formulaire.dimensions.trim() || null,
@@ -187,7 +204,12 @@ export default function AdminOeuvres() {
                 <span className="admin-oeuvre-texte">
                   <span className="tableau-fort">{o.titre}</span>
                   <span className="tableau-second">{o.artiste}</span>
-                  <span className="commande-montant">{fcfa(o.prix)}</span>
+                  <span className="commande-montant">
+                    {fcfa(o.prix)}
+                    <span className="admin-oeuvre-stock">
+                      {o.stock > 0 ? ` · ${o.stock} en stock` : ' · épuisé'}
+                    </span>
+                  </span>
                 </span>
                 <Badge ton={TON[o.statut]}>{LIBELLES_STATUT_OEUVRE[o.statut]}</Badge>
               </button>
@@ -224,12 +246,32 @@ export default function AdminOeuvres() {
                 maxLength={120}
                 required
               />
+              <ChampSelection
+                label="Catégorie"
+                value={formulaire.categorie}
+                onChange={(e) => setFormulaire({ ...formulaire, categorie: e.target.value })}
+                required
+              >
+                <option value="">Choisir…</option>
+                {CATEGORIES.map((c) => <option key={c.cle} value={c.cle}>{c.nom}</option>)}
+              </ChampSelection>
+
               <Champ
                 label="Prix en FCFA"
                 type="number"
                 min={1}
                 value={formulaire.prix}
                 onChange={(e) => setFormulaire({ ...formulaire, prix: e.target.value })}
+                required
+              />
+
+              <Champ
+                label="Stock"
+                type="number"
+                min={0}
+                aide="1 pour une pièce unique. Commander en retire un exemplaire."
+                value={formulaire.stock}
+                onChange={(e) => setFormulaire({ ...formulaire, stock: e.target.value })}
                 required
               />
               <Champ

@@ -6,7 +6,7 @@ import { useConfig } from '../../context/ConfigContext'
 import { useRequete } from '../../lib/useRequete'
 import { fcfa } from '../../lib/format'
 import { versPage, type Page } from '../../lib/page'
-import type { Oeuvre } from '../../types'
+import type { CategorieBoutique, Oeuvre } from '../../types'
 import ChargementPage from '../../components/ChargementPage'
 import Seo from '../../components/Seo'
 import Navbar from '../../components/Navbar'
@@ -25,11 +25,13 @@ export default function Boutique() {
   const { boutique, chargee } = useConfig()
   const [recherche, setRecherche] = useState('')
   const [saisie, setSaisie] = useState('')
+  const [categorie, setCategorie] = useState('')
   const [artiste, setArtiste] = useState('')
   const [tri, setTri] = useState('recent')
   const [page, setPage] = useState(1)
 
   const parametres = new URLSearchParams()
+  if (categorie) parametres.set('categorie', categorie)
   if (recherche) parametres.set('q', recherche)
   if (artiste) parametres.set('artiste', artiste)
   if (tri !== 'recent') parametres.set('tri', tri)
@@ -40,6 +42,12 @@ export default function Boutique() {
     async (signal) => (await api.get(`/oeuvres?${query}`, { signal })).data,
     `oeuvres-${query}`,
     { messageErreurParDefaut: 'Impossible de charger la boutique.' }
+  )
+
+  const { donnees: categories } = useRequete<CategorieBoutique[]>(
+    async (signal) => (await api.get('/oeuvres/categories', { signal })).data,
+    'categories-boutique',
+    { messageErreurParDefaut: '' }
   )
 
   const { donnees: artistes } = useRequete<string[]>(
@@ -66,6 +74,7 @@ export default function Boutique() {
     setPage(1)
   }
 
+  const changerCategorie = (valeur: string) => { setCategorie(valeur); setPage(1) }
   const changerArtiste = (valeur: string) => { setArtiste(valeur); setPage(1) }
   const changerTri = (valeur: string) => { setTri(valeur); setPage(1) }
 
@@ -73,7 +82,7 @@ export default function Boutique() {
     <>
       <Seo
         titre="Boutique d'art"
-        description="Œuvres d'artistes sénégalais, livrées à Dakar et dans toutes les régions. Paiement Wave, Orange Money ou à la livraison."
+        description="Artisanat d'art sénégalais fait main — tableaux, sculptures, bijoux, tissus. Livraison à Dakar et dans toutes les régions, paiement Wave, Orange Money ou à la livraison."
       />
       <Navbar />
 
@@ -83,12 +92,40 @@ export default function Boutique() {
             <Palette size={15} aria-hidden="true" />
             Boutique
           </p>
-          <h1 className="boutique-titre">Œuvres d'artistes sénégalais</h1>
+          <h1 className="boutique-titre">Artisanat d'art sénégalais</h1>
           <p className="boutique-chapeau">
-            Chaque pièce est unique. Livraison à Dakar et dans toutes les régions,
-            règlement par Wave, Orange Money{boutique.livraison ? ' ou à la livraison' : ''}.
+            Tableaux, sculptures, bijoux, tissus — tout est fait main, et deux
+            pièces ne se ressemblent jamais tout à fait. Livraison à Dakar et dans
+            toutes les régions, règlement par Wave, Orange Money{boutique.livraison ? ' ou à la livraison' : ''}.
           </p>
         </header>
+
+        {(categories?.length ?? 0) > 1 && (
+          <nav className="boutique-categories" aria-label="Catégories">
+            <button
+              type="button"
+              className={`categorie-pastille${categorie === '' ? ' est-active' : ''}`}
+              aria-pressed={categorie === ''}
+              onClick={() => changerCategorie('')}
+            >
+              Tout
+            </button>
+            {categories?.map((c) => (
+              <button
+                key={c.cle}
+                type="button"
+                className={`categorie-pastille${categorie === c.cle ? ' est-active' : ''}`}
+                aria-pressed={categorie === c.cle}
+                onClick={() => changerCategorie(c.cle)}
+              >
+                {c.pluriel}
+                {/* Le compte évite d'ouvrir une catégorie pour découvrir
+                    qu'elle tient en deux articles. */}
+                <span className="categorie-compte">{c.total}</span>
+              </button>
+            ))}
+          </nav>
+        )}
 
         <div className="boutique-filtres">
           <form onSubmit={rechercher} className="boutique-recherche">
@@ -144,15 +181,15 @@ export default function Boutique() {
           <div className="console-vide">
             <span className="console-vide-icone"><Inbox size={22} /></span>
             <p>
-              {recherche || artiste
-                ? 'Aucune œuvre ne correspond à cette recherche.'
+              {recherche || artiste || categorie
+                ? 'Aucun article ne correspond à cette recherche.'
                 : 'La boutique se remplit. Revenez très bientôt.'}
             </p>
-            {(recherche || artiste) && (
+            {(recherche || artiste || categorie) && (
               <Button
                 variante="secondaire"
                 taille="sm"
-                onClick={() => { setRecherche(''); setSaisie(''); setArtiste(''); setPage(1) }}
+                onClick={() => { setRecherche(''); setSaisie(''); setArtiste(''); setCategorie(''); setPage(1) }}
               >
                 Tout voir
               </Button>
@@ -161,7 +198,7 @@ export default function Boutique() {
         ) : (
           <>
             <p className="boutique-compte">
-              {resultat?.total ?? oeuvres.length} œuvre{(resultat?.total ?? oeuvres.length) > 1 ? 's' : ''}
+              {resultat?.total ?? oeuvres.length} article{(resultat?.total ?? oeuvres.length) > 1 ? 's' : ''}
               {' '}· à partir de {fcfa(Math.min(...oeuvres.map((o) => o.prix)))}
             </p>
 
@@ -173,7 +210,7 @@ export default function Boutique() {
               ))}
             </div>
 
-            <Pagination page={resultat} onChange={setPage} unite="œuvres" />
+            <Pagination page={resultat} onChange={setPage} unite="articles" />
           </>
         )}
       </main>

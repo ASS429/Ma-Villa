@@ -121,6 +121,19 @@ export default function OeuvreDetail() {
                 {oeuvre.annee && (
                   <div><dt>Année</dt><dd>{oeuvre.annee}</dd></div>
                 )}
+                {/* La disponibilité se lit dans le cartel, pas dans un bandeau :
+                    pour un article fait main, la quantité fait partie de sa
+                    description au même titre que ses dimensions. */}
+                {!vendue && (
+                  <div>
+                    <dt>Disponibilité</dt>
+                    <dd>
+                      {oeuvre.stock === 1
+                        ? 'Pièce unique'
+                        : `${oeuvre.stock} exemplaires disponibles`}
+                    </dd>
+                  </div>
+                )}
               </dl>
 
               {oeuvre.description && <p className="oeuvre-description">{oeuvre.description}</p>}
@@ -135,8 +148,9 @@ export default function OeuvreDetail() {
 
                 {vendue ? (
                   <p className="oeuvre-indisponible">
-                    Cette pièce a trouvé preneur. Écrivez-nous si vous cherchez
-                    une œuvre du même artiste.
+                    {oeuvre.stock === 0 && oeuvre.categorie === 'tableaux'
+                      ? "Cette pièce a trouvé preneur. Écrivez-nous si vous cherchez une œuvre du même artiste."
+                      : "Cet article est épuisé pour le moment. Écrivez-nous : l'artisan en refait régulièrement."}
                   </p>
                 ) : user ? (
                   <ButtonLink to={`/boutique/${oeuvre.id}/commander`} variante="primaire" bloc>
@@ -162,7 +176,12 @@ export default function OeuvreDetail() {
                   premier achat en ligne : est-ce unique, comment ça arrive,
                   comment je paie. */}
               <ul className="oeuvre-garanties">
-                <li><ShieldCheck size={16} aria-hidden="true" /> Pièce unique, vendue une seule fois</li>
+                <li>
+                  <ShieldCheck size={16} aria-hidden="true" />
+                  {oeuvre.stock === 1
+                    ? 'Pièce unique, vendue une seule fois'
+                    : 'Fait main — deux exemplaires ne sont jamais identiques'}
+                </li>
                 <li><Truck size={16} aria-hidden="true" /> Livraison à Dakar et en régions</li>
                 <li>
                   <Wallet size={16} aria-hidden="true" />

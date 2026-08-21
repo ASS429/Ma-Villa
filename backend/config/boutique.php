@@ -22,6 +22,33 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Catégories
+    |--------------------------------------------------------------------------
+    |
+    | Une boutique de vingt articles se parcourt ; à cent, on cherche — et on ne
+    | cherche pas un bracelet comme on cherche un boubou.
+    |
+    | Ici et non en base, à la différence des catégories de logement : celles-ci
+    | portent des règles métier (unité de prix, formules autorisées, jeu de
+    | filtres), alors qu'une catégorie d'article ne sert qu'à ranger. Lui donner
+    | une table serait payer une jointure pour un libellé.
+    |
+    | L'ordre est celui de la vitrine, et il est délibéré : ce qui se regarde
+    | avant ce qui se porte.
+    |
+    */
+    'categories' => [
+        'tableaux'     => ['nom' => 'Tableau',    'pluriel' => 'Tableaux et peintures'],
+        'sculptures'   => ['nom' => 'Sculpture',  'pluriel' => 'Sculptures et instruments'],
+        'bijoux'       => ['nom' => 'Bijou',      'pluriel' => 'Bijoux et montres'],
+        'vetements'    => ['nom' => 'Vêtement',   'pluriel' => 'Vêtements'],
+        'coiffes'      => ['nom' => 'Coiffe',     'pluriel' => 'Coiffes et chapeaux'],
+        'maroquinerie' => ['nom' => 'Maroquinerie', 'pluriel' => 'Sacs et chaussures'],
+        'textiles'     => ['nom' => 'Textile',    'pluriel' => 'Tissus et décoration'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Zones de livraison
     |--------------------------------------------------------------------------
     |

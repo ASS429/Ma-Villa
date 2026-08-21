@@ -130,10 +130,17 @@ class CommandeController extends Controller
                 'reference'       => 'MV-ART-'.Str::upper(Str::random(8)),
             ]);
 
-            // L'œuvre quitte la vitrine dès la commande, avant même le
+            // L'exemplaire quitte le stock dès la commande, avant même le
             // paiement. Attendre le règlement laisserait une fenêtre pendant
-            // laquelle un second acheteur peut la commander aussi.
-            $oeuvre->update(['statut' => 'vendue']);
+            // laquelle un second acheteur peut prendre le même.
+            //
+            // À zéro, l'article passe « vendu » : il reste visible en vitrine,
+            // mais ne s'achète plus. Pour une pièce unique — stock à 1 — c'est
+            // exactement le comportement d'origine.
+            $oeuvre->decrement('stock');
+            if ($oeuvre->fresh()->stock <= 0) {
+                $oeuvre->update(['statut' => 'vendue']);
+            }
 
             return $commande;
         });
@@ -256,19 +263,19 @@ class CommandeController extends Controller
         DB::transaction(function () use ($commande) {
             $commande->update(['statut' => 'annulee']);
 
-            // Seulement si plus aucune commande ne la retient : deux
-            // commandes sur la même pièce ne devraient pas exister, mais
-            // remettre en vente une œuvre encore réservée serait pire que
-            // le bogue qui l'aurait permis.
-            $encoreRetenue = Commande::where('oeuvre_id', $commande->oeuvre_id)
-                ->whereKeyNot($commande->id)
-                ->immobilisante()
-                ->exists();
+            // L'exemplaire retourne au stock : une commande abandonnée ne doit
+            // pas immobiliser un article pour toujours.
+            $oeuvre = Oeuvre::whereKey($commande->oeuvre_id)->lockForUpdate()->first();
+            if (! $oeuvre) {
+                return;
+            }
 
-            if (! $encoreRetenue) {
-                Oeuvre::whereKey($commande->oeuvre_id)
-                      ->where('statut', 'vendue')
-                      ->update(['statut' => 'publiee']);
+            $oeuvre->increment('stock');
+
+            // Et il redevient achetable, sauf si l'administrateur l'avait
+            // volontairement retiré en brouillon entre-temps.
+            if ($oeuvre->fresh()->statut === 'vendue') {
+                $oeuvre->update(['statut' => 'publiee']);
             }
         });
     }
