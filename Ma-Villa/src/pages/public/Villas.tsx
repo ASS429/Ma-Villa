@@ -226,7 +226,7 @@ export default function Villas() {
             {nbFiltresActifs > 0 && (
               <span
                 className="text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center"
-                style={{ background: 'var(--accent)', color: '#fff' }}
+                style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
               >
                 {nbFiltresActifs}
               </span>
@@ -391,7 +391,7 @@ export default function Villas() {
                       aria-current={p === pagination.page ? 'page' : undefined}
                       style={
                         p === pagination.page
-                          ? { background: 'var(--accent)', color: '#fff' }
+                          ? { background: 'var(--accent)', color: 'var(--on-accent)' }
                           : { background: 'var(--bg-surface)', border: '1px solid var(--border)', color: 'var(--text-2)' }
                       }
                     >

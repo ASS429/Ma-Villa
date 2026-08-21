@@ -49,7 +49,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             <button
               onClick={() => window.location.reload()}
               className="px-5 py-2.5 rounded-xl text-sm font-medium transition-opacity hover:opacity-90"
-              style={{ background: 'var(--accent)', color: '#fff' }}
+              style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
             >
               Recharger
             </button>

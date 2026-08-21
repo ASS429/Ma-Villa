@@ -358,7 +358,7 @@ export default function VillaDetail() {
           <p className="th-text-1 font-medium">Cette villa n'est pas disponible</p>
           <p className="th-text-2 text-sm max-w-sm">{erreur || 'Elle a peut-être été retirée par son propriétaire.'}</p>
           <div className="flex gap-3 mt-2">
-            <button onClick={reessayer} className="px-5 py-2.5 rounded-xl text-sm font-medium transition-opacity hover:opacity-90" style={{ background: 'var(--accent)', color: '#fff' }}>
+            <button onClick={reessayer} className="px-5 py-2.5 rounded-xl text-sm font-medium transition-opacity hover:opacity-90" style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}>
               Réessayer
             </button>
             <Link to="/villas" className="px-5 py-2.5 rounded-xl text-sm font-medium th-text-1" style={{ border: '1px solid var(--border-2)', textDecoration: 'none' }}>
@@ -437,7 +437,7 @@ export default function VillaDetail() {
           <button
             onClick={() => document.getElementById('reserver')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
             className="px-6 py-3 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90"
-            style={{ background: 'var(--accent)', color: '#fff', minHeight: 44 }}
+            style={{ background: 'var(--accent)', color: 'var(--on-accent)', minHeight: 44 }}
           >
             Réserver
           </button>
@@ -599,7 +599,7 @@ export default function VillaDetail() {
                   <button
                     type="submit"
                     className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90"
-                    style={{ background: 'var(--accent)', color: '#fff' }}
+                    style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
                   >
                     Publier
                   </button>
@@ -762,7 +762,7 @@ export default function VillaDetail() {
                     type="submit"
                     disabled={envoiResa || conflitDates}
                     className="py-3 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
-                    style={{ background: 'var(--accent)', color: '#fff', minHeight: 44 }}
+                    style={{ background: 'var(--accent)', color: 'var(--on-accent)', minHeight: 44 }}
                   >
                     {envoiResa ? 'Envoi…' : user ? 'Demander à réserver' : 'Se connecter pour réserver'}
                   </button>

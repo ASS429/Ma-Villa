@@ -1532,7 +1532,7 @@
 
 /* ── Suivi d'une commande ─────────────────────────────────────── */
 
-.commande-entete { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
+.achat-entete { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
 .commande-reference {
   margin: var(--space-2) 0 var(--space-4);
   font: var(--t-caption);

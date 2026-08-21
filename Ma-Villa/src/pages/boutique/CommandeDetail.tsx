@@ -154,7 +154,7 @@ export default function CommandeDetail() {
         ) : commande ? (
           <div className="achat-corps">
             <section className="panneau">
-              <div className="commande-entete">
+              <div className="achat-entete">
                 <div style={{ minWidth: 0 }}>
                   <h1 className="panneau-titre" style={{ margin: 0 }}>{commande.oeuvre_titre}</h1>
                   <p className="tableau-second">{commande.oeuvre_artiste}</p>
