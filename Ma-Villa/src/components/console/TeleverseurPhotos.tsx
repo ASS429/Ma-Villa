@@ -3,6 +3,7 @@ import { Trash2, Upload } from 'lucide-react'
 import api from '../../services/api'
 import { televerserFichier } from '../../services/televerser'
 import { messageErreur } from '../../lib/erreurs'
+import { useConfig } from '../../context/ConfigContext'
 import type { Photo } from '../../types'
 import Button from '../ui/Button'
 
@@ -29,11 +30,27 @@ interface Props {
  */
 export default function TeleverseurPhotos({ photos, cheminAjout, cheminSuppression, onChange }: Props) {
   const champ = useRef<HTMLInputElement>(null)
+  const { annonces } = useConfig()
   const [envoi, setEnvoi] = useState(false)
   const [erreur, setErreur] = useState('')
 
+  const plafond = annonces.photos_max
+  const reste = Math.max(0, plafond - photos.length)
+
   const ajouter = async (fichiers: FileList | null) => {
     if (!fichiers || fichiers.length === 0) return
+
+    // Le plafond est dit avant l'envoi, jamais découvert dans un refus : la
+    // data dépensée pour une photo refusée ne se rend pas.
+    if (fichiers.length > reste) {
+      setErreur(
+        reste === 0
+          ? `Cette annonce a déjà ses ${plafond} photos. Supprimez-en une pour en ajouter une autre.`
+          : `Il ne reste de la place que pour ${reste} photo${reste > 1 ? 's' : ''}.`
+      )
+      if (champ.current) champ.current.value = ''
+      return
+    }
 
     setEnvoi(true)
     setErreur('')
@@ -79,16 +96,23 @@ export default function TeleverseurPhotos({ photos, cheminAjout, cheminSuppressi
         onChange={(e) => ajouter(e.target.files)}
       />
 
-      <Button
-        variante="secondaire"
-        taille="sm"
-        onClick={() => champ.current?.click()}
-        disabled={envoi}
-        chargement={envoi}
-        iconeAvant={<Upload size={15} />}
-      >
-        Ajouter des photos
-      </Button>
+      <div className="televerseur-entete">
+        <Button
+          variante="secondaire"
+          taille="sm"
+          onClick={() => champ.current?.click()}
+          disabled={envoi || reste === 0}
+          chargement={envoi}
+          iconeAvant={<Upload size={15} />}
+        >
+          Ajouter des photos
+        </Button>
+        {/* Le compte se lit avant de choisir ses fichiers, pas après. */}
+        <span className="televerseur-compte">
+          {photos.length} sur {plafond}
+          {reste > 0 ? ` · il en reste ${reste}` : ' · complet'}
+        </span>
+      </div>
 
       {photos.length > 0 && (
         <ul className="televerseur-liste">

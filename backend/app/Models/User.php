@@ -19,6 +19,12 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $fillable = ['name', 'email', 'password', 'role', 'phone', 'avatar'];
 
+    /**
+     * `preferences_notification` reste hors de `$fillable` : elle ne se pose
+     * que par le service qui l'assainit, jamais par une requête de profil.
+     * Sinon un compte pourrait couper une notification verrouillée en passant
+     * par la mise à jour de son nom.
+     */
     protected $hidden = ['password', 'remember_token'];
 
     protected function casts(): array
@@ -26,6 +32,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'preferences_notification' => 'array',
         ];
     }
 

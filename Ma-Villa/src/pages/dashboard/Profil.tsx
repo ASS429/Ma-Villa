@@ -3,6 +3,7 @@ import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import { messageErreur } from '../../lib/erreurs'
 import ReglageNotifications from '../../components/app/ReglageNotifications'
+import GrilleNotifications from '../../components/app/GrilleNotifications'
 
 export default function Profil() {
   const { user, updateUser } = useAuth()
@@ -61,6 +62,11 @@ export default function Profil() {
           pas les gérer. */}
       <div className="mb-6">
         <ReglageNotifications />
+
+        {/* L'un dit *où* l'on est prévenu — ce navigateur — l'autre *de
+            quoi*. Les confondre donnerait un interrupteur unique qui ne
+            dit ni l'un ni l'autre. */}
+        <GrilleNotifications />
       </div>
 
       {/* Info */}

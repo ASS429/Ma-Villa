@@ -42,6 +42,10 @@ class PhotoController extends Controller
 
         $request->validate(self::REGLES_PHOTOS, self::MESSAGES_PHOTOS);
 
+        if ($refus = $this->plafondAtteint($villa->photos()->count(), count($request->photos))) {
+            return $refus;
+        }
+
         $photos = collect($request->photos)->map(fn($p, $i) => [
             'url'   => $p['url'],
             'alt'   => $p['alt'] ?? null,
@@ -58,6 +62,10 @@ class PhotoController extends Controller
         $this->authorize('update', $villa);
 
         $request->validate(self::REGLES_PHOTOS, self::MESSAGES_PHOTOS);
+
+        if ($refus = $this->plafondAtteint($logement->photos()->count(), count($request->photos))) {
+            return $refus;
+        }
 
         $photos = collect($request->photos)->map(fn($p, $i) => [
             'url'   => $p['url'],
@@ -82,6 +90,10 @@ class PhotoController extends Controller
     {
         $request->validate(self::REGLES_PHOTOS, self::MESSAGES_PHOTOS);
 
+        if ($refus = $this->plafondAtteint($oeuvre->photos()->count(), count($request->photos))) {
+            return $refus;
+        }
+
         $photos = collect($request->photos)->map(fn ($p, $i) => [
             'url'   => $p['url'],
             'alt'   => $p['alt'] ?? null,
@@ -96,6 +108,30 @@ class PhotoController extends Controller
         $oeuvre->photos()->findOrFail($photo)->delete();
 
         return response()->json(['message' => 'Photo supprimée.']);
+    }
+
+    /**
+     * Refuse un envoi qui ferait dépasser le plafond, en disant de combien.
+     *
+     * Le message compte autant que le refus : « il en reste 2 » se répare en
+     * choisissant deux photos, « trop de photos » se répare en devinant.
+     */
+    private function plafondAtteint(int $detenues, int $envoyees): ?JsonResponse
+    {
+        $plafond = (int) config('annonces.photos_max');
+
+        if ($detenues + $envoyees <= $plafond) {
+            return null;
+        }
+
+        $reste = max(0, $plafond - $detenues);
+
+        return response()->json([
+            'message' => $reste === 0
+                ? "Cette annonce a déjà ses {$plafond} photos. Supprimez-en une pour en ajouter une autre."
+                : "Il ne reste de la place que pour {$reste} photo".($reste > 1 ? 's' : '')
+                  .". Le maximum est de {$plafond} par annonce.",
+        ], 422);
     }
 
     public function upload(Request $request): JsonResponse

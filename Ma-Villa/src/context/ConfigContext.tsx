@@ -54,6 +54,10 @@ interface Configuration {
     /** Clé publique VAPID, destinée à `pushManager.subscribe`. */
     cle_publique: string | null
   }
+  annonces: {
+    /** Nombre de photos qu'une annonce peut détenir, au total. */
+    photos_max: number
+  }
   boutique: {
     /** Faux tant que BOUTIQUE_ACTIVE n'est pas levée : la boutique n'existe alors nulle part. */
     actif: boolean
@@ -83,6 +87,9 @@ const DEFAUT: Configuration = {
   // Repli identique au paiement : tant que le serveur n'a pas répondu, on
   // n'affiche pas de bouton d'activation qui n'aboutirait pas.
   notifications: { actives: false, cle_publique: null },
+  // Repli prudent : cinq, la valeur du serveur. Un plafond trop haut par
+  // défaut laisserait envoyer des photos qui seraient refusées ensuite.
+  annonces: { photos_max: 5 },
   // Boutique fermée par défaut : elle ne doit apparaître nulle part tant que
   // le serveur ne l'a pas confirmée ouverte.
   boutique: { actif: false, zones: {}, livraison: false },

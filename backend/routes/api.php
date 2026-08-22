@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\PaiementController;
 use App\Http\Controllers\Api\PhotoController;
 use App\Http\Controllers\Api\CommandeController;
 use App\Http\Controllers\Api\OeuvreController;
+use App\Http\Controllers\Api\PreferencesNotificationController;
 use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\RappelDeboursementController;
 use App\Http\Controllers\Api\ReversementController;
@@ -126,6 +127,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/commandes/{commande}/paiement', [CommandeController::class, 'payer'])
         ->middleware('throttle:10,1');
     Route::get('/commandes/{commande}/paiement/statut', [CommandeController::class, 'statut']);
+
+    // Preferences de notification : trois canaux, cinq sujets. Le bareme
+    // complet est rendu par le serveur, verrous compris.
+    Route::get('/notifications/preferences', [PreferencesNotificationController::class, 'show']);
+    Route::put('/notifications/preferences', [PreferencesNotificationController::class, 'update']);
 
     // Upload fichier (retourne URL)
     Route::post('/upload', [PhotoController::class, 'upload'])->middleware('throttle:40,1');
