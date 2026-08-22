@@ -26,7 +26,7 @@ return [
     'vapid' => [
         // Adresse de contact exigée par la spécification : elle permet à un
         // service de poussée de joindre l'exploitant en cas d'abus.
-        'sujet' => env('VAPID_SUJET', 'mailto:contact@mavilla.sn'),
+        'sujet' => env('VAPID_SUJET', 'mailto:contactsmavilla@gmail.com'),
         'publique' => env('VAPID_CLE_PUBLIQUE', ''),
         'privee' => env('VAPID_CLE_PRIVEE', ''),
     ],

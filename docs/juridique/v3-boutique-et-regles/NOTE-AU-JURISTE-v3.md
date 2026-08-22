@@ -137,10 +137,22 @@ client. Quelle que soit la réponse, elle doit être écrite noir sur blanc.
 
 ### § 1 · Raison sociale de l'exploitant — **ouverte, et elle bloque autre chose**
 
-Elle bloque aussi les **mentions légales**, qui sont le seul des quatre documents que
-nous pourrions publier sans attendre votre relecture — raison sociale, adresse, registre
-de commerce, hébergeur, contact. Une page publiée sur quatre rendrait les trois notes
-d'attente crédibles.
+Elle bloque aussi les **mentions légales**, seul des quatre documents que nous pourrions
+publier sans attendre votre relecture. Une page publiée sur quatre rendrait les trois
+notes d'attente crédibles.
+
+Il y manque quatre informations, dont une seule est désormais connue :
+
+| | |
+|---|---|
+| Adresse de contact | **`contactsmavilla@gmail.com`** — déjà en ligne sur les quatre pages |
+| Raison sociale | à fournir |
+| Adresse du siège | à fournir |
+| Registre de commerce (RCCM) et NINEA | à fournir |
+
+L'hébergeur, lui, est connu : le site est servi par Render, l'interface applicative par
+Railway, tous deux hors du Sénégal. Si cela appelle une mention particulière sur le
+transfert de données, dites-le nous.
 
 ---
 
