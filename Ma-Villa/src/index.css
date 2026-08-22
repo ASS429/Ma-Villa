@@ -2278,3 +2278,137 @@ html.video-mode[data-theme="dark"] {
 .villes-404 a:hover { border-color: var(--border-strong); color: var(--text-1); }
 .villes-404 a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .villes-404 strong { color: var(--text-1); font-weight: 600; font-variant-numeric: lining-nums tabular-nums; }
+
+
+/* ══════════════════════════════════════════════════════════════
+   Confirmation — « ce qu'il vous reste à faire »
+   ══════════════════════════════════════════════════════════════
+
+   Le dernier écran du tunnel n'est plus un écran de félicitations.
+   C'est le seul moment où le client a une décharge d'attention et
+   quatre choses à faire. Une seule porte l'accent : appeler.
+*/
+
+.confirmee-sejour {
+  margin: 0;
+  font: var(--t-body-sm);
+  color: var(--text-2);
+  text-align: center;
+  text-wrap: pretty;
+}
+
+.confirmee-montant {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  margin: var(--space-3) 0 0;
+}
+.confirmee-montant strong {
+  font: var(--t-h3);
+  color: var(--text-1);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.confirmee-montant span { font: var(--t-body-sm); color: var(--text-3); }
+
+.confirmee-reference {
+  margin: 4px 0 0;
+  text-align: center;
+  font: var(--t-caption);
+  font-family: ui-monospace, Menlo, monospace;
+  color: var(--text-3);
+}
+
+.apres-bloc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border);
+}
+
+.apres-titre-section {
+  margin: 0 0 var(--space-1);
+  font: var(--t-body-sm);
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.apres {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 60px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.apres:hover { border-color: var(--border-strong); }
+.apres:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Une seule action en accent, et c'est le seul endroit du produit où le
+   numéro du propriétaire apparaît. Le reste garde le même poids : quatre
+   boutons colorés ne se hiérarchisent plus. */
+.apres.est-accent {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+.apres.est-accent:hover { opacity: 0.94; border-color: var(--accent); }
+
+.apres-icone {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-md);
+  background: var(--bg-elevated);
+  color: var(--text-2);
+}
+.apres.est-accent .apres-icone {
+  background: color-mix(in srgb, var(--on-accent) 18%, transparent);
+  color: var(--on-accent);
+}
+
+.apres-texte { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.apres-titre { font: var(--t-body-sm); font-weight: 600; }
+.apres-detail {
+  font: var(--t-caption);
+  color: var(--text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.apres.est-accent .apres-detail {
+  color: var(--on-accent);
+  opacity: 0.82;
+  /* Le numéro ne se tronque jamais : c'est la clé qu'on lit à voix haute. */
+  overflow: visible;
+  white-space: normal;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.apres-fleche { flex: none; color: var(--text-3); }
+.apres.est-accent .apres-fleche { color: var(--on-accent); opacity: 0.7; }
+
+.apres-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  font: var(--t-caption);
+  color: var(--text-3);
+  text-wrap: pretty;
+}
+.apres-note svg { flex: none; margin-top: 2px; }
+.apres-note a { color: var(--text-2); text-decoration: underline; }
+.apres-note a:hover { color: var(--text-1); }

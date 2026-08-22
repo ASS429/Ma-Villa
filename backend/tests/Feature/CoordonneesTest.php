@@ -160,6 +160,28 @@ class CoordonneesTest extends TestCase
     }
 
     /**
+     * L'écran de confirmation affiche l'adresse du séjour et propose de
+     * l'ouvrir dans un plan : sans ces champs, il perd sa première ligne.
+     *
+     * Ils ne sont pas sensibles au même titre que le numéro — une adresse
+     * approximative figure déjà sur la fiche publique — mais ils voyagent
+     * dans la même réponse, et un `makeHidden` mal placé les emporterait
+     * sans que rien d'autre ne le signale.
+     */
+    public function test_une_reservation_confirmee_porte_l_adresse_du_sejour(): void
+    {
+        ['reservation' => $r, 'client' => $client] = $this->reservation('confirmee');
+
+        $reponse = $this->actingAs($client, 'sanctum')
+             ->getJson("/api/reservations/{$r->id}")
+             ->assertOk();
+
+        $this->assertNotEmpty($reponse->json('logement.villa.adresse'));
+        $this->assertNotEmpty($reponse->json('logement.villa.ville'));
+        $this->assertNotEmpty($reponse->json('logement.villa.nom'));
+    }
+
+    /**
      * Symétrique : le propriétaire n'a pas à disposer du numéro d'un client
      * dont il n'a pas encore accepté la demande.
      */

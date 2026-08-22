@@ -27,7 +27,10 @@ export default function NavigationBasse() {
   // La commande d'un article suit la même règle : elle se termine par un
   // paiement, et proposer trois autres destinations juste sous le bouton de
   // validation est exactement ce qu'il ne faut pas faire.
-  const masquee = pathname.startsWith('/reservation/')
+  // La confirmation fait exception : c'est le dernier écran du tunnel, et on
+  // veut justement que le client reparte dans l'application — voir sa
+  // réservation, écrire au propriétaire. Le masquer l'y enfermerait.
+  const masquee = (pathname.startsWith('/reservation/') && !pathname.endsWith('/confirmee'))
     || pathname.startsWith('/paiement')
     || pathname.endsWith('/commander')
     || /^\/boutique\/commandes\/\d+/.test(pathname)

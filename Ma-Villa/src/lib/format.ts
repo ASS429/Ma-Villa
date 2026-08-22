@@ -55,6 +55,31 @@ export function libelleDuree(debut: string, fin: string): string {
   return `${n} nuit${n > 1 ? 's' : ''}`
 }
 
+/**
+ * Un séjour, en une seule mention de mois et d'année quand c'est possible.
+ *
+ * « 13 août 2026 – 17 août 2026 » répète deux fois ce qu'on lit une fois, et
+ * l'essentiel — les deux quantièmes — se noie dedans. « 13 – 17 août 2026 »
+ * se lit d'un coup. Un séjour à cheval sur deux mois garde les deux.
+ */
+export function periode(debut: string, fin: string): string {
+  const d = new Date(debut)
+  const f = new Date(fin)
+
+  const memeMois = d.getMonth() === f.getMonth() && d.getFullYear() === f.getFullYear()
+
+  if (memeMois) {
+    return `${d.getDate()} – ${dateCourte(fin)}`
+  }
+
+  const memeAnnee = d.getFullYear() === f.getFullYear()
+  const debutLisible = memeAnnee
+    ? d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+    : dateCourte(debut)
+
+  return `${debutLisible} – ${dateCourte(fin)}`
+}
+
 /** Date du jour au format attendu par `<input type="date">`. */
 export function aujourdhui(): string {
   return new Date().toISOString().split('T')[0]

@@ -126,7 +126,25 @@ export interface Reservation {
   montant_total: number
   statut: StatutReservation
   client?: { name: string; email: string; phone?: string | null }
-  logement: { nom: string; villa: { nom: string } }
+  /**
+   * La villa est chargée entière sur le détail d'une réservation — d'où
+   * l'adresse et le numéro, absents des réponses publiques.
+   *
+   * ⚠️ `telephone` n'est servi qu'une fois le séjour **engagé** (réservation
+   * confirmée ou paiement abouti) : le typer facultatif évite de croire qu'on
+   * l'a toujours. Voir `ReservationController::revelerLesCoordonnees()`.
+   */
+  logement: {
+    nom: string
+    villa: {
+      nom: string
+      ville?: string
+      adresse?: string
+      telephone?: string | null
+      latitude?: number | string | null
+      longitude?: number | string | null
+    }
+  }
   tarif: { type_tarif: TypeTarif }
   paiement?: PaiementReservation | null
 }
