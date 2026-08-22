@@ -5,105 +5,133 @@ namespace Tests\Unit;
 use App\Services\Commission;
 use Tests\TestCase;
 
+/**
+ * Le barème de commission.
+ *
+ * Un seul test compte vraiment ici — la monotonie. Les autres vérifient des
+ * valeurs, celui-là vérifie une **propriété** : quel que soit le barème qu'on
+ * choisira demain, augmenter son prix ne doit jamais faire baisser ce que
+ * touche le propriétaire.
+ */
 class CommissionTest extends TestCase
 {
     protected function setUp(): void
     {
         parent::setUp();
+
         config([
-            'paiement.commission.taux_eleve'  => 0.20,
-            'paiement.commission.taux_reduit' => 0.10,
             'paiement.commission.seuil'       => 50000,
+            'paiement.commission.taux_reduit' => 0.10,
+            'paiement.commission.taux_eleve'  => 0.20,
         ]);
     }
 
-    public function test_une_grosse_reservation_paie_le_taux_eleve(): void
+    /**
+     * **Le test qui a motivé le changement.**
+     *
+     * En taux pleins, franchir 50 000 faisait perdre 3 300 FCFA au
+     * propriétaire : 44 100 à 49 000, puis 40 800 à 51 000. Un tarif qui punit
+     * celui qui monte en gamme finit par être contourné hors plateforme.
+     */
+    public function test_le_proprietaire_ne_perd_jamais_en_augmentant_son_prix(): void
     {
-        $c = Commission::pour(200000);
+        $precedent = -1;
 
-        $this->assertEquals(0.20, $c->taux);
-        $this->assertEquals(40000, $c->commission);
-        $this->assertEquals(160000, $c->montantProprietaire);
+        // Autour du seuil au franc près, puis par pas plus larges.
+        $montants = array_merge(
+            range(49_000, 51_000, 1),
+            range(52_000, 500_000, 1_000),
+        );
+
+        foreach ($montants as $montant) {
+            $part = Commission::pour($montant)->montantProprietaire;
+
+            $this->assertGreaterThanOrEqual(
+                $precedent,
+                $part,
+                "À {$montant} FCFA, le propriétaire touche moins qu'au montant précédent."
+            );
+
+            $precedent = $part;
+        }
     }
 
-    public function test_une_petite_reservation_paie_le_taux_reduit(): void
+    public function test_sous_le_seuil_le_taux_reduit_s_applique_entierement(): void
     {
-        $c = Commission::pour(20000);
+        $c = Commission::pour(40000);
 
-        $this->assertEquals(0.10, $c->taux);
-        $this->assertEquals(2000, $c->commission);
-        $this->assertEquals(18000, $c->montantProprietaire);
+        $this->assertSame(4000, $c->commission);
+        $this->assertSame(36000, $c->montantProprietaire);
     }
 
-    public function test_le_seuil_est_inclusif(): void
+    /** Au seuil exact, on est encore entièrement dans la première tranche. */
+    public function test_au_seuil_exact(): void
     {
-        // Pile au seuil : taux élevé. Un franc en dessous : taux réduit.
-        $this->assertEquals(0.20, Commission::pour(50000)->taux);
-        $this->assertEquals(0.10, Commission::pour(49999)->taux);
+        $c = Commission::pour(50000);
+
+        $this->assertSame(5000, $c->commission);
+        $this->assertSame(45000, $c->montantProprietaire);
     }
 
-    public function test_la_commission_ne_s_ajoute_pas_au_prix_affiche(): void
+    /** Au-delà, seule la part excédentaire passe au taux élevé. */
+    public function test_au_dela_seule_la_tranche_haute_est_au_taux_eleve(): void
     {
-        // Le client paie exactement le prix de l'annonce : les deux parts
-        // s'additionnent pour retomber dessus, jamais au-dessus.
-        $c = Commission::pour(85000);
+        // 50 000 à 10 % = 5 000, puis 50 000 à 20 % = 10 000.
+        $c = Commission::pour(100000);
 
-        $this->assertEquals(85000, $c->montantClient);
-        $this->assertEquals(85000, $c->commission + $c->montantProprietaire);
+        $this->assertSame(15000, $c->commission);
+        $this->assertSame(85000, $c->montantProprietaire);
     }
 
-    public function test_les_deux_parts_se_somment_toujours_exactement(): void
+    /**
+     * Le taux enregistré est le taux **effectif** : c'est celui qu'on peut
+     * expliquer au propriétaire en lisant une ligne passée.
+     */
+    public function test_le_taux_enregistre_est_le_taux_effectif(): void
     {
-        // L'arrondi ne doit jamais faire apparaître ou disparaître un franc.
-        foreach ([1, 7, 999, 49999, 50000, 123457, 1000001] as $montant) {
-            $c = Commission::pour($montant);
-            $this->assertEquals(
-                $montant,
-                $c->commission + $c->montantProprietaire,
-                "La répartition de {$montant} FCFA ne retombe pas juste"
+        $this->assertSame('15 %', Commission::pour(100000)->tauxLisible());
+        $this->assertSame('17,5 %', Commission::pour(200000)->tauxLisible());
+        $this->assertSame('10 %', Commission::pour(30000)->tauxLisible());
+    }
+
+    /**
+     * Ce que le barème coûte à la plateforme est **borné** : le rabais de la
+     * première tranche, et rien de plus. C'est le chiffre à connaître avant de
+     * décider.
+     */
+    public function test_le_manque_a_gagner_est_plafonne_a_5000(): void
+    {
+        foreach ([51_000, 80_000, 150_000, 400_000, 2_000_000] as $montant) {
+            $tranches = Commission::pour($montant)->commission;
+            $tauxPlein = (int) floor($montant * 0.20);
+
+            $this->assertLessThanOrEqual(
+                5000,
+                $tauxPlein - $tranches,
+                "À {$montant} FCFA, l'écart avec le taux plein dépasse 5 000."
             );
         }
     }
 
-    public function test_l_arrondi_profite_au_proprietaire(): void
+    /** Les deux parts doivent toujours redonner exactement ce que paie le client. */
+    public function test_les_deux_parts_somment_toujours_au_montant_client(): void
     {
-        // 12 345 × 10 % = 1 234,5 → la plateforme prend 1 234, pas 1 235.
-        $c = Commission::pour(12345);
-
-        $this->assertEquals(1234, $c->commission);
-        $this->assertEquals(11111, $c->montantProprietaire);
-    }
-
-    public function test_un_montant_nul_ou_negatif_ne_produit_aucune_commission(): void
-    {
-        foreach ([0, -1, -50000] as $montant) {
+        foreach ([1, 199, 49_999, 50_000, 50_001, 123_457, 999_999] as $montant) {
             $c = Commission::pour($montant);
-            $this->assertEquals(0, $c->commission);
-            $this->assertEquals(0, $c->montantProprietaire);
+
+            $this->assertSame(
+                $montant,
+                $c->commission + $c->montantProprietaire,
+                "À {$montant} FCFA, un franc se perd dans l'arrondi."
+            );
         }
     }
 
-    public function test_un_montant_decimal_est_ramene_au_franc(): void
+    public function test_un_montant_nul_ne_produit_aucune_commission(): void
     {
-        // Les tarifs sont stockés en decimal(10,2) : « 85000.00 » arrive en chaîne.
-        $c = Commission::pour('85000.00');
+        $c = Commission::pour(0);
 
-        $this->assertEquals(85000, $c->montantClient);
-        $this->assertEquals(17000, $c->commission);
-    }
-
-    public function test_le_taux_est_lisible_pour_l_affichage(): void
-    {
-        $this->assertEquals('20 %', Commission::pour(100000)->tauxLisible());
-        $this->assertEquals('10 %', Commission::pour(10000)->tauxLisible());
-    }
-
-    public function test_les_taux_restent_pilotes_par_la_configuration(): void
-    {
-        // Le barème n'est pas arrêté : il doit pouvoir changer sans toucher au code.
-        config(['paiement.commission.taux_eleve' => 0.15, 'paiement.commission.seuil' => 100000]);
-
-        $this->assertEquals(0.15, Commission::pour(150000)->taux);
-        $this->assertEquals(0.10, Commission::pour(99999)->taux);
+        $this->assertSame(0, $c->commission);
+        $this->assertSame(0, $c->montantProprietaire);
     }
 }

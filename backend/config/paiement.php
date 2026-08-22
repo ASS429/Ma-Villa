@@ -63,7 +63,11 @@ return [
     | propriétaire touche la différence. Afficher un prix puis en facturer un
     | autre est le meilleur moyen de perdre la confiance sur un premier achat.
     |
-    | Deux taux, selon que la réservation est « grosse » ou « petite ».
+    | Deux taux, appliqués **par tranches** comme un barème d'imposition : les
+    | premiers francs au taux réduit, ceux au-delà du seuil au taux élevé.
+    |
+    | En taux pleins, le barème créait une marche : à 49 000 le propriétaire
+    | touchait 44 100, à 51 000 il touchait 40 800. Il perdait à vendre plus cher.
     |
     | ⚠️ Le seuil est une valeur par défaut, à confirmer. Il est exprimé en
     | montant plutôt qu'en catégorie : une règle par catégorie devrait être

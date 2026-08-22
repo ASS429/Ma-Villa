@@ -125,8 +125,8 @@ class PaiementTest extends TestCase
             'reservation_id' => $reservation->id,
             'token_paydunya' => 'JETON123',
             'statut' => 'en_attente',
-            'commission' => 40000,
-            'montant_proprietaire' => 160000,
+            'commission' => 35000,
+            'montant_proprietaire' => 165000,
         ]);
     }
 

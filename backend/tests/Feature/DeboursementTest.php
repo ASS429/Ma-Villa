@@ -128,7 +128,7 @@ class DeboursementTest extends TestCase
             }
 
             return $requete['account_alias'] === '771234567'
-                && $requete['amount'] === 80000
+                && $requete['amount'] === 85000
                 && $requete['withdraw_mode'] === 'wave-senegal';
         });
     }
@@ -174,7 +174,7 @@ class DeboursementTest extends TestCase
         $this->assertNull($paiement->refresh()->reversement_id, 'Le paiement doit redevenir exigible.');
 
         $this->assertSame(
-            80000.0,
+            85000.0,
             (float) $this->actingAs($this->proprietaire, 'sanctum')
                         ->getJson('/api/proprietaire/revenus')->json('du')
         );

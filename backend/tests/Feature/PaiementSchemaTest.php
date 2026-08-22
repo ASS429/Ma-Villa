@@ -48,10 +48,11 @@ class PaiementSchemaTest extends TestCase
         $this->assertDatabaseHas('paiements', [
             'reservation_id' => $reservation->id,
             'montant' => 200000,
-            'commission' => 40000,
-            'montant_proprietaire' => 160000,
+            'commission' => 35000,
+            'montant_proprietaire' => 165000,
         ]);
-        $this->assertEquals(0.2, (float) $paiement->fresh()->taux_commission);
+        // Taux effectif : 35 000 sur 200 000.
+        $this->assertEquals(0.175, (float) $paiement->fresh()->taux_commission);
     }
 
     public function test_un_changement_de_bareme_ne_reecrit_pas_un_paiement_passe(): void
@@ -65,8 +66,9 @@ class PaiementSchemaTest extends TestCase
 
         config(['paiement.commission.taux_eleve' => 0.35]);
 
-        $this->assertEquals(40000, (int) $paiement->fresh()->commission);
-        $this->assertEquals(0.2, (float) $paiement->fresh()->taux_commission);
+        $this->assertEquals(35000, (int) $paiement->fresh()->commission);
+        // Taux effectif : 35 000 sur 200 000.
+        $this->assertEquals(0.175, (float) $paiement->fresh()->taux_commission);
     }
 
     public function test_la_reponse_du_prestataire_n_est_pas_exposee(): void
