@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\AttentesController;
 use App\Http\Controllers\Api\AvisController;
 use App\Http\Controllers\Api\ConfigurationController;
 use App\Http\Controllers\Api\DiagnosticNotificationsController;
@@ -147,6 +148,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Admin
     Route::middleware('admin')->prefix('admin')->group(function () {
+        // Ce qui attend une décision. Première entrée du châssis : sans elle,
+        // savoir s'il y a du travail coûte l'ouverture de neuf pages.
+        Route::get('/attentes', AttentesController::class);
+
         Route::get('/stats', [AdminController::class, 'stats']);
         // Séries de trente jours et fil d'activité : ce que les chiffres
         // de tête ne disent pas — la tendance et ce qui vient d'arriver.

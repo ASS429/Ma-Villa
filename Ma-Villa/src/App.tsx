@@ -59,6 +59,7 @@ const Paiement  = lazy(() => import('./pages/paiement/Paiement'))
 const Confirmee = lazy(() => import('./pages/paiement/Confirmee'))
 
 const AdminLayout       = lazy(() => import('./pages/admin/AdminLayout'))
+const AdminAttentes     = lazy(() => import('./pages/admin/AdminAttentes'))
 const AdminDashboard    = lazy(() => import('./pages/admin/AdminDashboard'))
 const AdminVillas       = lazy(() => import('./pages/admin/AdminVillas'))
 const AdminUtilisateurs = lazy(() => import('./pages/admin/AdminUtilisateurs'))
@@ -433,7 +434,11 @@ export default function App() {
           </AdminRoute>
         }
       >
-        <Route index element={<AdminDashboard />} />
+        {/* L'accueil répond à « ai-je du travail ? ». Le tableau de bord, qui
+            occupait cette place, répondait à « comment va la plateforme ? » —
+            une bonne question, mais pas celle du matin. Il garde son écran. */}
+        <Route index element={<AdminAttentes />} />
+        <Route path="tableau-de-bord" element={<AdminDashboard />} />
         <Route path="villas" element={<AdminVillas />} />
         <Route path="utilisateurs" element={<AdminUtilisateurs />} />
         <Route path="avis" element={<AdminAvis />} />

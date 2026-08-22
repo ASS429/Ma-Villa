@@ -1851,3 +1851,163 @@
 .grille-notif-pied svg { flex: none; margin-top: 1px; }
 
 .grille-notif-actions { display: flex; gap: var(--space-2); justify-content: flex-end; }
+
+
+/* ══════════════════════════════════════════════════════════════
+   Ce qui attend — la file de travail de l'administration
+   ══════════════════════════════════════════════════════════════
+
+   Une ligne par décision à prendre. La gravité se lit au liseré de
+   gauche et à la couleur de l'icône, jamais au fond de la carte :
+   trois cartes rouges empilées ne se hiérarchisent plus entre elles,
+   et la plus grave se perd dans le lot.
+*/
+
+.attentes { display: flex; flex-direction: column; gap: var(--space-3); }
+
+.attente {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border-strong);
+  border-radius: var(--r-lg);
+}
+
+.attente.est-urgent { border-left-color: var(--danger); }
+.attente.est-action { border-left-color: var(--warning); }
+.attente.est-calme  { border-left-color: var(--border-strong); }
+
+.attente-icone {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-md);
+  background: var(--bg-elevated);
+  color: var(--text-2);
+}
+.attente.est-urgent .attente-icone {
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: var(--danger);
+}
+.attente.est-action .attente-icone {
+  background: color-mix(in srgb, var(--warning) 16%, transparent);
+  color: var(--warning);
+}
+
+.attente-texte { flex: 1; min-width: 0; }
+.attente-titre {
+  margin: 0;
+  font: var(--t-body-sm);
+  font-weight: 600;
+  color: var(--text-1);
+  text-wrap: pretty;
+}
+.attente-detail {
+  margin: 3px 0 0;
+  font: var(--t-caption);
+  color: var(--text-2);
+  text-wrap: pretty;
+}
+.attente-montant {
+  margin: var(--space-2) 0 0;
+  font: var(--t-body-sm);
+  font-weight: 600;
+  color: var(--text-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.attente-action {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  font: var(--t-body-sm);
+  font-weight: 500;
+  color: var(--text-1);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.attente-action:hover { background: var(--bg-elevated); border-color: var(--text-3); }
+.attente-action:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Sur mobile, l'action passe sous le texte et prend toute la largeur :
+   un bouton de 90 px coincé à droite d'un titre sur trois lignes est
+   à la fois illisible et difficile à viser. */
+@media (max-width: 560px) {
+  .attente { flex-wrap: wrap; }
+  /* 44 px : la cible au doigt. Les 36 px du bureau se visent à la souris,
+     pas au pouce sur un écran tenu d'une main. */
+  .attente-action { width: 100%; min-height: 44px; justify-content: center; margin-top: var(--space-1); }
+}
+
+/* ── L'argent détenu pour autrui ──────────────────────────────
+   En tête de l'écran parce que c'est le seul chiffre dont la
+   plateforme n'est pas propriétaire. */
+
+.fonds {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  margin-bottom: var(--space-5);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+}
+.fonds.est-bloque { border-color: color-mix(in srgb, var(--warning) 45%, var(--border)); }
+
+.fonds-principal { display: flex; align-items: center; gap: var(--space-3); flex: 1; min-width: 200px; }
+
+.fonds-icone {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-md);
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.fonds-libelle { margin: 0; font: var(--t-caption); color: var(--text-3); }
+.fonds-valeur {
+  margin: 1px 0 0;
+  font: var(--t-h2);
+  color: var(--text-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.fonds-detail { display: flex; gap: var(--space-5); margin: 0; }
+.fonds-detail dt { font: var(--t-caption); color: var(--text-3); }
+.fonds-detail dd {
+  margin: 2px 0 0;
+  font: var(--t-body-sm);
+  font-weight: 600;
+  color: var(--text-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.fonds-alerte {
+  flex-basis: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+  font: var(--t-caption);
+  color: var(--text-2);
+  text-wrap: pretty;
+}
+.fonds-alerte svg { flex: none; margin-top: 2px; color: var(--warning); }
+.fonds-alerte strong { color: var(--text-1); font-weight: 600; }

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutGrid, Building2, Users, MessageSquare, CreditCard,
-  Menu, X, Sun, Moon, LogOut, ArrowLeft, BellRing, ScrollText, Banknote, Send, Palette, ShoppingBag,
+  Menu, X, Sun, Moon, LogOut, ArrowLeft, BellRing, ScrollText, Banknote, Send, Palette, ShoppingBag, Inbox,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
@@ -16,11 +16,12 @@ interface Entree {
   Icone: typeof LayoutGrid
   end?: boolean
   /** Clé du compteur d'attente, s'il y en a un. */
-  attente?: 'villas' | 'avis'
+  attente?: 'villas' | 'total'
 }
 
 const ENTREES: Entree[] = [
-  { to: '/admin',              label: 'Tableau de bord', Icone: LayoutGrid,     end: true },
+  { to: '/admin',              label: 'Ce qui attend',   Icone: Inbox,          end: true, attente: 'total' },
+  { to: '/admin/tableau-de-bord', label: 'Tableau de bord', Icone: LayoutGrid },
   { to: '/admin/villas',       label: 'Villas',          Icone: Building2,      attente: 'villas' },
   { to: '/admin/utilisateurs', label: 'Utilisateurs',    Icone: Users },
   { to: '/admin/avis',         label: 'Avis',            Icone: MessageSquare },
@@ -49,12 +50,22 @@ function initiales(nom: string) {
  * jours et que leurs propriétaires, eux, attendent aussi.
  */
 function useAttentes() {
-  const [attentes, setAttentes] = useState<{ villas: number }>({ villas: 0 })
+  const [attentes, setAttentes] = useState<{ villas: number; total: number }>({ villas: 0, total: 0 })
   const emplacement = useLocation()
 
   const relire = useCallback(() => {
-    api.get('/admin/stats')
-      .then((r) => setAttentes({ villas: r.data?.villas?.en_attente ?? 0 }))
+    // Une seule requête pour les deux compteurs : la file de travail porte
+    // déjà le détail par sujet, et interroger en plus les statistiques pour
+    // en extraire un nombre qu'elle contient serait un aller-retour payé
+    // deux fois à chaque changement d'écran.
+    api.get('/admin/attentes')
+      .then((r) => {
+        const lignes: { cle: string; compte: number | null }[] = r.data?.lignes ?? []
+        setAttentes({
+          villas: lignes.find((l) => l.cle === 'villas')?.compte ?? 0,
+          total: r.data?.total ?? 0,
+        })
+      })
       .catch(() => { /* le compteur disparaît, la navigation reste utilisable */ })
   }, [])
 
@@ -66,11 +77,13 @@ function useAttentes() {
   return attentes
 }
 
-function Navigation({ attentes, onNaviguer }: { attentes: { villas: number }; onNaviguer?: () => void }) {
+interface Compteurs { villas: number; total: number }
+
+function Navigation({ attentes, onNaviguer }: { attentes: Compteurs; onNaviguer?: () => void }) {
   return (
     <nav className="console-nav" aria-label="Administration">
       {ENTREES.map(({ to, label, Icone, end, attente }) => {
-        const compte = attente === 'villas' ? attentes.villas : 0
+        const compte = attente ? attentes[attente] : 0
 
         return (
           <NavLink
