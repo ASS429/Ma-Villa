@@ -131,6 +131,24 @@
   font-weight: 600;
 }
 
+/* Planche 25 : un liseré d'accent de 3 px marque l'entrée active. Le fond
+   teinté seul se confond avec un survol ; le liseré dit « vous êtes ici »
+   sans dépendre de la couleur, qui n'est pas lue par tout le monde. */
+@layer components {
+  .console-lien { position: relative; }
+}
+.console-lien.est-actif::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 22px;
+  border-radius: 0 2px 2px 0;
+  background: var(--accent);
+}
+
 .console-lien-libelle { flex: 1; min-width: 0; }
 
 /* Compteur d'attente — la meilleure idée reprise de la console Campus

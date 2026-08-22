@@ -100,11 +100,22 @@ function Navigation({ attentes, onNaviguer }: { attentes: { villas: number }; on
 
 export default function AdminLayout() {
   const { user, logout } = useAuth()
-  const { isDark, toggleTheme } = useTheme()
+  const { isDark, toggleTheme, suggererTheme } = useTheme()
   const navigate = useNavigate()
   const emplacement = useLocation()
   const [tiroir, setTiroir] = useState(false)
   const attentes = useAttentes()
+
+  // Planche 25 : sombre par défaut ici, parce qu'un poste d'opérateur reste
+  // ouvert huit heures. Sans effet si l'utilisateur a déjà choisi son thème —
+  // « par défaut » ne veut pas dire « imposé ».
+  //
+  // La dépendance est volontairement vide : la suggestion vaut à l'entrée
+  // dans la console et son retour rétablit le système à la sortie. La relancer
+  // à chaque rendu rebasculerait le thème sous les doigts de quelqu'un qui
+  // vient de le changer.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => suggererTheme('dark'), [])
 
   // Le tiroir se referme au changement d'écran : le laisser ouvert masquerait
   // la page qu'on vient de demander.

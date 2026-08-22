@@ -6,6 +6,19 @@ interface ThemeContextType {
   theme: Theme
   toggleTheme: () => void
   isDark: boolean
+  /**
+   * Propose un thème pour un espace donné, **sans jamais écraser un choix
+   * explicite**.
+   *
+   * Planche 25 : la console d'administration est sombre par défaut — un poste
+   * d'opérateur reste ouvert huit heures. Mais « par défaut » ne veut pas dire
+   * « imposé » : quelqu'un qui a touché la bascule a tranché, et son choix
+   * vaut partout.
+   *
+   * Rend une fonction qui rétablit la préférence système, à appeler en
+   * quittant l'espace.
+   */
+  suggererTheme: (souhaite: Theme) => () => void
 }
 
 const ThemeContext = createContext<ThemeContextType | null>(null)
@@ -41,6 +54,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return () => mq.removeEventListener('change', onChange)
   }, [])
 
+  const suggererTheme = (souhaite: Theme) => {
+    // Un choix explicite prime, et rien ne se passe.
+    if (localStorage.getItem(CLE)) return () => {}
+
+    setTheme(souhaite)
+
+    return () => {
+      // Toujours aucun choix explicite en quittant : on revient au système.
+      if (!localStorage.getItem(CLE)) {
+        setTheme(window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      }
+    }
+  }
+
   const toggleTheme = () => {
     setTheme((t) => {
       const suivant = t === 'light' ? 'dark' : 'light'
@@ -50,7 +77,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, isDark: theme === 'dark' }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, suggererTheme, isDark: theme === 'dark' }}>
       {children}
     </ThemeContext.Provider>
   )
