@@ -24,7 +24,7 @@ export default function Register() {
   const { register, isLoading, user } = useAuth()
   const navigate = useNavigate()
   const [form, setForm] = useState({
-    name: '', email: '', password: '', password_confirmation: '',
+    name: '', email: '', phone: '', password: '', password_confirmation: '',
     role: 'client' as 'client' | 'proprietaire',
   })
   const [error, setError] = useState('')
@@ -89,6 +89,23 @@ export default function Register() {
           autoComplete="email"
           onChange={(e) => setForm({ ...form, email: e.target.value })}
         />
+
+        {/* Facultatif, et dit comme tel : c'est un écran de péage, chaque
+            champ obligatoire de plus coûte une inscription. Mais c'est lui
+            qui ouvre la connexion par numéro — beaucoup de propriétaires ont
+            une adresse électronique qu'ils ne consultent jamais, et se
+            reconnectent bien plus facilement par leur téléphone. */}
+        <FloatingInput
+          label="Téléphone (facultatif)"
+          type="tel"
+          inputMode="tel"
+          value={form.phone}
+          autoComplete="tel"
+          onChange={(e) => setForm({ ...form, phone: e.target.value })}
+        />
+        <p className="text-xs -mt-3" style={{ color: 'var(--text-3)' }}>
+          Il vous permettra de vous connecter sans retenir votre adresse.
+        </p>
 
         {/* Le rôle décide de tout l'espace personnel qui suivra : un groupe de
             boutons radio, et non une liste déroulante qu'on ouvre sans voir

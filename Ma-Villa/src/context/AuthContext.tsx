@@ -5,6 +5,11 @@ import type { User } from '../types'
 interface RegisterData {
   name: string
   email: string
+  /**
+   * Facultatif — mais c'est lui qui ouvre la connexion par numéro. Sans lui,
+   * le compte ne se retrouve que par son adresse.
+   */
+  phone?: string
   password: string
   password_confirmation: string
   role: 'client' | 'proprietaire'
@@ -66,10 +71,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => { annule = true }
   }, [token, user, effacerSession])
 
-  const login = async (email: string, password: string) => {
+  /**
+   * `identifiant` est une adresse **ou** un numéro.
+   *
+   * Beaucoup de propriétaires sénégalais n'ont pas d'adresse électronique
+   * qu'ils consultent ; tous ont un numéro. C'est le serveur qui tranche
+   * entre les deux — il sait ramener « +221 77 123 45 67 » et « 771234567 »
+   * à la même ligne, ce que le navigateur ne saurait pas faire seul.
+   */
+  const login = async (identifiant: string, password: string) => {
     setIsLoading(true)
     try {
-      const { data } = await api.post('/auth/login', { email, password })
+      const { data } = await api.post('/auth/login', { identifiant, password })
       enregistrerSession(data.user, data.token)
       return { user: data.user as User }
     } finally {
@@ -80,7 +93,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (donnees: RegisterData) => {
     setIsLoading(true)
     try {
-      const { data } = await api.post('/auth/register', donnees)
+      // Un champ facultatif laissé vide s'envoie absent, pas vide : une
+      // chaîne vide enregistrerait un numéro qui n'en est pas un.
+      const { data } = await api.post('/auth/register', {
+        ...donnees,
+        phone: donnees.phone?.trim() || undefined,
+      })
       enregistrerSession(data.user, data.token)
     } finally {
       setIsLoading(false)

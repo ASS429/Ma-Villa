@@ -15,6 +15,23 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Indicatif du pays, pour l'identifiant téléphonique
+    |--------------------------------------------------------------------------
+    |
+    | On se connecte au choix par adresse électronique ou par numéro. Le numéro
+    | est ramené à sa forme canonique avant comparaison, et cet indicatif est
+    | celui qu'on retire quand il précède un numéro local complet : « +221 77
+    | 123 45 67 » et « 77 123 45 67 » désignent la même ligne.
+    |
+    | Réglable pour n'avoir rien à modifier le jour d'une ouverture hors du
+    | Sénégal — un numéro étranger, lui, garde son indicatif.
+    |
+    */
+
+    'indicatif_local' => env('AUTH_INDICATIF_LOCAL', '221'),
+
     'defaults' => [
         'guard' => env('AUTH_GUARD', 'web'),
         'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),

@@ -26,7 +26,10 @@ class AuthController extends Controller
             'password' => ['required', 'confirmed', PasswordRule::min(8)],
             // Un compte admin ne se crée jamais par inscription publique.
             'role' => 'sometimes|in:client,proprietaire',
-            'phone' => 'sometimes|nullable|string|max:50',
+            // Le numéro sert désormais à se connecter : deux comptes qui le
+            // partagent rendraient la connexion ambiguë. La contrainte porte
+            // sur la forme canonique, la seule qui compare vraiment.
+            'phone' => ['sometimes', 'nullable', 'string', 'max:50', $this->numeroLibre()],
         ]);
 
         $user = User::create([
@@ -34,7 +37,9 @@ class AuthController extends Controller
             'email' => $data['email'],
             'password' => $data['password'],
             'role' => $data['role'] ?? 'client',
-            'phone' => $data['phone'] ?? null,
+            // Une chaîne vide n'est pas un numéro : la stocker laisserait
+            // un champ qui a l'air rempli et ne joint personne.
+            'phone' => ($data['phone'] ?? null) ?: null,
         ]);
 
         // Un transport email mal configuré ne doit jamais empêcher la création
@@ -56,28 +61,62 @@ class AuthController extends Controller
     public function login(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
+            // `identifiant` est la forme actuelle : une adresse **ou** un
+            // numéro. `email` reste accepté parce que le front et l'API ne
+            // sont jamais déployés en même temps — pendant la fenêtre, un
+            // écran ancien continue de l'envoyer, et refuser sa requête
+            // couperait la connexion à tout le monde le temps du décalage.
+            'identifiant' => 'required_without:email|nullable|string|max:255',
+            'email'       => 'required_without:identifiant|nullable|string|max:255',
+            'password'    => 'required|string',
         ]);
 
+        $identifiant = trim((string) ($data['identifiant'] ?? $data['email']));
+        $parNumero = ! str_contains($identifiant, '@');
+
+        // La limite porte sur la forme canonique, pas sur ce qui a été tapé :
+        // sinon « 77 123 45 67 » et « +221771234567 » ouvriraient chacun leur
+        // compteur, et cinq essais deviendraient dix.
+        $empreinte = $parNumero
+            ? (User::normaliserNumero($identifiant) ?? $identifiant)
+            : Str::lower($identifiant);
+
         // Sans limite, l'endpoint permet de tester des mots de passe en boucle.
-        $cle = 'login:'.Str::lower($data['email']).'|'.$request->ip();
+        $cle = 'login:'.$empreinte.'|'.$request->ip();
+
+        // Le message d'échec porte sur le champ que l'écran affiche.
+        $champ = isset($data['identifiant']) ? 'identifiant' : 'email';
 
         if (RateLimiter::tooManyAttempts($cle, 5)) {
             $secondes = RateLimiter::availableIn($cle);
 
             throw ValidationException::withMessages([
-                'email' => ["Trop de tentatives. Réessayez dans {$secondes} secondes."],
+                $champ => ["Trop de tentatives. Réessayez dans {$secondes} secondes."],
             ]);
         }
 
-        $user = User::where('email', $data['email'])->first();
+        $user = $parNumero
+            ? User::where('phone_normalise', User::normaliserNumero($identifiant))->first()
+            : User::where('email', $identifiant)->first();
+
+        // ⚠️ Un numéro qui ne se normalise pas vaut `null`, et `where(…, null)`
+        // ne compare pas : la requête ne rendrait rien, ce qui est le
+        // comportement voulu. On ne s'en remet pas au hasard pour autant.
+        if ($parNumero && User::normaliserNumero($identifiant) === null) {
+            $user = null;
+        }
 
         if (! $user || ! Hash::check($data['password'], $user->password)) {
             RateLimiter::hit($cle, 60);
 
+            // Un message unique, quelle que soit la cause. Distinguer
+            // « ce compte n'existe pas » de « mot de passe incorrect »
+            // transforme l'écran de connexion en annuaire : on y teste des
+            // numéros jusqu'à savoir qui est inscrit.
             throw ValidationException::withMessages([
-                'email' => ['Les identifiants sont incorrects.'],
+                $champ => [$parNumero
+                    ? 'Ce numéro et ce mot de passe ne correspondent pas.'
+                    : 'Cette adresse et ce mot de passe ne correspondent pas.'],
             ]);
         }
 
@@ -89,6 +128,36 @@ class AuthController extends Controller
             'user' => $user,
             'token' => $token,
         ]);
+    }
+
+    /**
+     * « Ce numéro n'est pas déjà pris. »
+     *
+     * L'unicité ne peut pas se déclarer sur `phone` : la colonne garde la
+     * saisie telle quelle, et « +221 77 123 45 67 » y cohabiterait sans
+     * difficulté avec « 77 123 45 67 ». C'est la forme canonique qui décide,
+     * comme à la connexion.
+     *
+     * Le message ne dit pas *qui* détient le numéro, et propose la seule
+     * suite utile : se connecter.
+     */
+    private function numeroLibre(?int $saufId = null): \Closure
+    {
+        return function (string $attribut, ?string $valeur, \Closure $echoue) use ($saufId) {
+            $normalise = User::normaliserNumero($valeur);
+
+            if ($normalise === null) {
+                return;
+            }
+
+            $existe = User::where('phone_normalise', $normalise)
+                ->when($saufId, fn ($q) => $q->where('id', '!=', $saufId))
+                ->exists();
+
+            if ($existe) {
+                $echoue('Un compte utilise déjà ce numéro. Connectez-vous plutôt.');
+            }
+        };
     }
 
     /* ── Mot de passe oublié ────────────────────────────────────── */
@@ -241,7 +310,7 @@ class AuthController extends Controller
         $data = $request->validate([
             'name'                  => 'sometimes|string|max:255',
             'email'                 => 'sometimes|email|unique:users,email,' . $user->id,
-            'phone'                 => 'sometimes|nullable|string|max:50',
+            'phone'                 => ['sometimes', 'nullable', 'string', 'max:50', $this->numeroLibre($user->id)],
             'current_password'      => 'required_with:password|string',
             'password'              => 'sometimes|string|min:8|confirmed',
             'password_confirmation' => 'sometimes|string',
@@ -259,7 +328,7 @@ class AuthController extends Controller
         }
 
         if (isset($data['name']))  $user->name  = $data['name'];
-        if (array_key_exists('phone', $data)) $user->phone = $data['phone'];
+        if (array_key_exists('phone', $data)) $user->phone = $data['phone'] ?: null;
 
         // Changer d'adresse reprend la vérification à zéro. Sans cela le compte
         // reste marqué « vérifié » sur une adresse que personne n'a confirmée —

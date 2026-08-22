@@ -24,7 +24,7 @@ export default function Login() {
   const { login, isLoading, user } = useAuth()
   const navigate = useNavigate()
   const [params] = useSearchParams()
-  const [form, setForm] = useState({ email: '', password: '' })
+  const [form, setForm] = useState({ identifiant: '', password: '' })
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
@@ -40,7 +40,7 @@ export default function Login() {
     e.preventDefault()
     setError('')
     try {
-      const { user } = await login(form.email, form.password)
+      const { user } = await login(form.identifiant, form.password)
       navigate(destination(user.role))
     } catch (err) {
       setError(messageErreur(err, 'Email ou mot de passe incorrect.'))
@@ -65,13 +65,21 @@ export default function Login() {
       {error && <AlerteAuth type="erreur">{error}</AlerteAuth>}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        {/* Un seul champ pour les deux : demander à quelqu'un de choisir
+            entre « téléphone » et « e-mail » avant de taper est une décision
+            de plus sur un écran qui n'a aucune valeur propre. Le serveur
+            reconnaît l'un ou l'autre.
+
+            `type="text"` et non `email` : une validation de navigateur sur
+            un numéro refuserait la saisie avant tout envoi. */}
         <FloatingInput
-          label="Email"
-          type="email"
+          label="Téléphone ou e-mail"
+          type="text"
+          inputMode="email"
           required
-          value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
-          autoComplete="email"
+          value={form.identifiant}
+          onChange={(e) => setForm({ ...form, identifiant: e.target.value })}
+          autoComplete="username"
         />
 
         <FloatingInput
