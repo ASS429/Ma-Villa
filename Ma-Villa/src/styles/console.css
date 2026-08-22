@@ -256,7 +256,9 @@
      à réapprendre où vit la navigation en changeant de taille d'écran. */
   left: 0;
   z-index: calc(var(--z-sheet) + 1);
-  width: min(280px, 84vw);
+  /* 296 px : la largeur retenue planche 37. Un tiroir sert à changer de
+     lieu, pas à saisir — au-delà on est tenté d'y mettre un formulaire. */
+  width: min(296px, 84vw);
   display: flex;
   flex-direction: column;
   padding-top: var(--safe-t);
@@ -940,6 +942,11 @@
   line-height: 1;
 }
 .reservation-actions .console-pastille { margin-left: var(--space-1); }
+
+/* Planche 38, règle 4 : la pastille est en accent, sauf si elle porte un
+   retard. C'est le seul cas où sa couleur change — et le châssis doit alors
+   le répéter en toutes lettres, une couleur seule ne portant pas d'information. */
+.console-pastille.est-en-retard { background: var(--danger); color: #fff; }
 
 /* La conversation occupe toute la hauteur utile : le champ de saisie reste
    visible sans faire défiler, comme dans n'importe quelle messagerie. La

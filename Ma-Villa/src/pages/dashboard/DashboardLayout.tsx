@@ -6,7 +6,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
-import { MessagesProvider, useMessages } from '../../context/MessagesContext'
+import { useMessages } from '../../context/MessagesContext'
 import Button, { ButtonLink } from '../../components/ui/Button'
 import Marque from '../../components/Marque'
 
@@ -226,14 +226,10 @@ function Espace() {
 }
 
 /**
- * Le compteur de messages est monté ici, au-dessus de l'écran : la pastille de
- * navigation et celles des cartes de réservation lisent le même chiffre, donc
- * une seule requête sert les deux.
+ * Le compteur de messages n'est plus monté ici mais dans `main.tsx` : la
+ * navigation basse est globale et porte la même pastille. Une seule requête
+ * sert donc la navigation du pouce, celle du bureau et les cartes.
  */
 export default function DashboardLayout() {
-  return (
-    <MessagesProvider>
-      <Espace />
-    </MessagesProvider>
-  )
+  return <Espace />
 }

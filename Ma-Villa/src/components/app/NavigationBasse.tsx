@@ -2,6 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { Home, Search, CalendarDays, User, Palette } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useConfig } from '../../context/ConfigContext'
+import { useMessages } from '../../context/MessagesContext'
 
 /**
  * Navigation basse — planche 09, « châssis d'application ».
@@ -17,6 +18,7 @@ import { useConfig } from '../../context/ConfigContext'
 export default function NavigationBasse() {
   const { user } = useAuth()
   const { boutique } = useConfig()
+  const { total: nonLus } = useMessages()
   const { pathname } = useLocation()
 
   // Le tunnel de paiement et les feuilles occupent l'écran : y superposer une
@@ -43,7 +45,8 @@ export default function NavigationBasse() {
     ...(boutique.actif
       ? [{ to: '/boutique', libelle: 'Boutique', Icone: Palette, exact: false }]
       : []),
-    { to: user ? '/dashboard/reservations' : espace, libelle: 'Réservations', Icone: CalendarDays },
+    // La pastille ne se met que sur ce qui attend une réponse d'un humain.
+    { to: user ? '/dashboard/reservations' : espace, libelle: 'Réservations', Icone: CalendarDays, pastille: nonLus },
     { to: user ? '/dashboard/profil' : espace, libelle: 'Compte', Icone: User },
   ]
 
@@ -55,7 +58,7 @@ export default function NavigationBasse() {
       // répartition doit suivre, sinon le cinquième déborde.
       style={{ gridTemplateColumns: `repeat(${onglets.length}, 1fr)` }}
     >
-      {onglets.map(({ to, libelle, Icone, exact }) => (
+      {onglets.map(({ to, libelle, Icone, exact, pastille }) => (
         <NavLink
           key={libelle}
           to={to}
@@ -64,6 +67,16 @@ export default function NavigationBasse() {
         >
           <Icone size={22} strokeWidth={1.9} aria-hidden="true" />
           <span>{libelle}</span>
+          {/* Un nombre, jamais un point : « 3 » dit s'il faut ouvrir
+              maintenant, un point dit seulement « quelque chose ». */}
+          {Boolean(pastille) && (
+            <span
+              className="nav-basse-pastille"
+              aria-label={`${pastille} message${pastille! > 1 ? 's' : ''} en attente`}
+            >
+              {pastille! > 9 ? '9+' : pastille}
+            </span>
+          )}
         </NavLink>
       ))}
     </nav>

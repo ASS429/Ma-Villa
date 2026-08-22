@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Download, Share, Plus, X } from 'lucide-react'
+import { aReserve } from '../../lib/installation'
 import {
   demanderInstallation,
   estIOS,
@@ -10,16 +11,10 @@ import {
 
 const CLE_REFUS = 'installation-refusee-le'
 
-/** Un refus vaut deux mois de silence. Redemander plus tôt est du harcèlement. */
-const DELAI_APRES_REFUS = 60 * 24 * 3600 * 1000
+/** Un refus vaut six mois de silence. Redemander plus tôt est du harcèlement. */
+const DELAI_APRES_REFUS = 180 * 24 * 3600 * 1000
 
-/**
- * Un visiteur qui vient d'arriver n'a aucune raison d'installer quoi que ce
- * soit : il ne sait pas encore si le service lui convient. On attend qu'il ait
- * regardé quelques écrans.
- */
-const PAGES_AVANT_PROPOSITION = 3
-const CLE_PAGES = 'pages-vues'
+
 
 function refusRecent(): boolean {
   try {
@@ -28,26 +23,6 @@ function refusRecent(): boolean {
   } catch {
     return false
   }
-}
-
-/**
- * Mémorisé au niveau du module : en mode strict React monte le composant deux
- * fois, et sans cela une seule visite compterait pour deux pages.
- */
-let pagesVues: number | null = null
-
-function compterPage(): number {
-  if (pagesVues !== null) return pagesVues
-
-  try {
-    pagesVues = Number(sessionStorage.getItem(CLE_PAGES) ?? '0') + 1
-    sessionStorage.setItem(CLE_PAGES, String(pagesVues))
-  } catch {
-    // Navigation privée : on ne bloque pas la proposition pour autant.
-    pagesVues = PAGES_AVANT_PROPOSITION
-  }
-
-  return pagesVues
 }
 
 /** Safari est le seul navigateur iOS où le geste « écran d'accueil » existe. */
@@ -59,24 +34,27 @@ function safariIOS(): boolean {
  * Faut-il proposer l'installation dès le premier rendu ?
  *
  * Trois refus, et il faut les respecter tous les trois : déjà installée,
- * refusée récemment, ou visiteur qui vient d'arriver. Une bannière qui surgit
- * à la première seconde se fait refuser une fois pour toutes — et le navigateur
- * ne redonne jamais de seconde chance.
+ * refusée dans les six derniers mois, ou pas encore de réservation. Une
+ * bannière qui surgit à la première seconde se fait refuser une fois pour
+ * toutes — et le navigateur ne redonne jamais de seconde chance.
  */
 function proposerDEntree(): boolean {
   if (estInstallee() || refusRecent()) return false
-  if (compterPage() < PAGES_AVANT_PROPOSITION) return false
+  if (!aReserve()) return false
 
   return safariIOS() || installationPossible()
 }
 
 /**
- * Propose d'installer Ma Villa sur l'écran d'accueil.
+ * Propose de garder Ma Villa sur l'écran d'accueil.
  *
- * Trois raisons de ne rien afficher, et il faut les respecter toutes : déjà
- * installée, refusée récemment, ou visiteur qui vient d'arriver. Une bannière
- * d'installation qui surgit à la première seconde est le meilleur moyen de se
- * faire refuser une fois pour toutes — le navigateur ne repropose jamais.
+ * **Non modale, sans voile, refermable** — planche 36. Ce n'est pas une
+ * superposition : elle ne vole pas la mise au point, ne bloque rien, et se
+ * laisse ignorer. L'invitation d'installation est la superposition la plus
+ * détestée du web mobile ; celle-ci n'en est pas une.
+ *
+ * Elle attend la première réservation confirmée, et son argument est
+ * vérifiable : les réservations restent consultables sans connexion.
  */
 export default function InvitationInstallation() {
   // Décidé à l'initialisation : tout ce dont dépend la réponse est déjà connu
@@ -95,7 +73,7 @@ export default function InvitationInstallation() {
     if (ios) return
 
     return surChangementInstallation((dispo) => {
-      setVisible(dispo && !refusRecent() && compterPage() >= PAGES_AVANT_PROPOSITION)
+      setVisible(dispo && !refusRecent() && aReserve())
     })
   }, [ios])
 
@@ -117,12 +95,15 @@ export default function InvitationInstallation() {
   }
 
   return (
-    <div className="invite-install" role="dialog" aria-labelledby="invite-install-titre">
+    // `complementary` et non `dialog` : rien n'est bloqué, rien n'attend de
+    // réponse. Un lecteur d'écran l'annonce comme un complément, pas comme une
+    // interruption à traiter.
+    <aside className="invite-install" aria-labelledby="invite-install-titre">
       <img src="/icon-192.png" alt="" width={44} height={44} className="invite-install-icone" />
 
       <div className="invite-install-texte">
         <p id="invite-install-titre" className="invite-install-titre">
-          Installer Ma Villa
+          Garder Ma Villa sur votre écran
         </p>
         <p className="invite-install-detail">
           {ios ? (
@@ -131,7 +112,9 @@ export default function InvitationInstallation() {
               « Sur l'écran d'accueil » <Plus size={13} style={{ verticalAlign: '-2px' }} />
             </>
           ) : (
-            'Accès direct depuis l\'écran d\'accueil, même hors ligne.'
+            // Un argument vérifiable plutôt qu'une promesse : le client vient
+            // de réserver, il sait ce qu'il y a à retrouver.
+            'Vos réservations consultables sans connexion.'
           )}
         </p>
       </div>
@@ -139,13 +122,13 @@ export default function InvitationInstallation() {
       {!ios && (
         <button type="button" className="btn btn-primaire btn-sm invite-install-action" onClick={installer}>
           <Download size={15} aria-hidden="true" />
-          Installer
+          Ajouter
         </button>
       )}
 
       <button type="button" className="invite-install-fermer" onClick={refuser} aria-label="Ne pas installer">
         <X size={18} aria-hidden="true" />
       </button>
-    </div>
+    </aside>
   )
 }

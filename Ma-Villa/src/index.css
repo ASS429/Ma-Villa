@@ -1453,7 +1453,10 @@ html.video-mode[data-theme="dark"] {
 .feuille {
   width: 100%;
   max-width: 560px;
-  max-height: 88vh;
+  /* 88 % : le voile reste visible au-dessus, sinon on ne sait plus qu'on
+     est dans une superposition. En `dvh` et non `vh` : sur mobile, `vh`
+     ignore la barre d'adresse et le pied d'action passe sous l'écran. */
+  max-height: 88dvh;
   display: flex;
   flex-direction: column;
   background: var(--bg-surface);
@@ -1779,6 +1782,27 @@ html.video-mode[data-theme="dark"] {
 .nav-basse-onglet.est-actif { color: var(--accent); font-weight: 600; }
 .nav-basse-onglet:active { transform: scale(0.94); }
 .nav-basse-onglet:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* Planche 38 : la pastille se décale de 6 px du centre de l'icône, et reste
+   hors de la cible tactile — sinon on la touche en visant l'onglet. */
+.nav-basse-onglet { position: relative; }
+.nav-basse-pastille {
+  position: absolute;
+  top: 6px;
+  left: calc(50% + 6px);
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font: 600 10px/1 var(--font-ui);
+  font-variant-numeric: lining-nums tabular-nums;
+  pointer-events: none;
+}
+.nav-basse-pastille.est-en-retard { background: var(--danger); color: #fff; }
 
 /* ── Réponse au toucher, partout ──────────────────────────────
    Un élément qui ne bouge pas sous le doigt donne l'impression d'un site

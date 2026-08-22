@@ -256,7 +256,15 @@ export default function AdminReversements() {
 
       {cible && (
         <>
-          <div className="console-voile" onClick={() => !envoi && setCible(null)} aria-hidden="true" />
+          {/* Planche 37 : une modale ne se ferme pas en cliquant à côté quand
+              un champ est rempli. Perdre une référence de transaction saisie à
+              la main pour un clic de trop est le genre d'incident qui fait
+              renoncer à l'écran. */}
+          <div
+            className="console-voile"
+            onClick={() => { if (!envoi && !reference.trim() && !note.trim()) setCible(null) }}
+            aria-hidden="true"
+          />
           <div className="modale" role="dialog" aria-modal="true" aria-labelledby="titre-versement">
             <div className="modale-entete">
               <h2 id="titre-versement" className="panneau-titre" style={{ margin: 0 }}>

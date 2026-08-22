@@ -93,6 +93,17 @@ export default function AdminOeuvres() {
 
   const fermer = () => { setCreation(false); setEdition(null) }
 
+  // Un formulaire est « commencé » dès qu'il diffère de son état d'ouverture :
+  // à la création, dès qu'un champ porte quelque chose ; à l'édition, dès
+  // qu'une valeur a bougé.
+  const formulaireCommence = edition
+    ? formulaire.titre !== edition.titre
+      || formulaire.artiste !== edition.artiste
+      || formulaire.prix !== String(edition.prix)
+      || formulaire.stock !== String(edition.stock)
+      || formulaire.description !== (edition.description ?? '')
+    : Boolean(formulaire.titre.trim() || formulaire.artiste.trim() || formulaire.prix)
+
   const enregistrer = async (e: React.FormEvent) => {
     e.preventDefault()
     if (envoi) return
@@ -222,7 +233,13 @@ export default function AdminOeuvres() {
 
       {ouvert && (
         <>
-          <div className="console-voile" onClick={() => !envoi && fermer()} aria-hidden="true" />
+          {/* Voir AdminReversements : on ne referme pas sur un formulaire
+              commencé. Ici la saisie peut représenter dix minutes de travail. */}
+          <div
+            className="console-voile"
+            onClick={() => { if (!envoi && !formulaireCommence) fermer() }}
+            aria-hidden="true"
+          />
           <div className="modale modale-large" role="dialog" aria-modal="true" aria-labelledby="titre-oeuvre">
             <div className="modale-entete">
               <h2 id="titre-oeuvre" className="panneau-titre" style={{ margin: 0 }}>

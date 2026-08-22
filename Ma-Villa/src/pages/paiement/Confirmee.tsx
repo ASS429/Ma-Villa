@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import api from '../../services/api'
 import { useRequete } from '../../lib/useRequete'
@@ -5,6 +6,7 @@ import { fcfa, dateCourte } from '../../lib/format'
 import Seo from '../../components/Seo'
 import type { Reservation } from '../../types'
 import Marque from '../../components/Marque'
+import { marquerPremiereReservation } from '../../lib/installation'
 
 /**
  * « C'est réservé » — planche 12, écran de succès.
@@ -20,6 +22,12 @@ export default function Confirmee() {
     async (signal) => (await api.get(`/reservations/${id}`, { signal })).data,
     `reservation-${id}`
   )
+
+  // C'est ici, et nulle part ailleurs, que l'invitation à garder Ma Villa sur
+  // l'écran d'accueil devient légitime : le client a maintenant quelque chose
+  // à retrouver. Elle n'apparaît pas sur cet écran — le tunnel reste nu — mais
+  // à partir d'ici, sur les écrans qui l'accueillent.
+  useEffect(() => { marquerPremiereReservation() }, [])
 
   return (
     <div className="tunnel">
