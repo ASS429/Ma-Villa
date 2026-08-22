@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Une commande d'œuvre.
+ * Une commande d'article.
  *
- * Une œuvre par commande : une pièce est unique, l'exemplaire vendu ne peut
+ * Un article par commande : une pièce est unique, l'exemplaire vendu ne peut
  * plus l'être. Le titre, l'artiste et le prix sont recopiés à la commande —
  * un changement de prix ne doit jamais réécrire une vente passée.
  */
@@ -56,7 +56,7 @@ class Commande extends Model
     }
 
     /**
-     * Une commande qui immobilise l'œuvre.
+     * Une commande qui immobilise l'article.
      *
      * Une commande annulée la libère ; toutes les autres la retiennent, y
      * compris une commande à régler à la livraison qui n'a rien encaissé.

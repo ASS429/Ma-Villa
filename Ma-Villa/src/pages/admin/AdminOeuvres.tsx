@@ -60,7 +60,7 @@ export default function AdminOeuvres() {
   const { donnees, chargement, erreur, reessayer } = useRequete<Page<Oeuvre> | Oeuvre[]>(
     async (signal) => (await api.get(`/admin/oeuvres?${query}`, { signal })).data,
     `admin-oeuvres-${query}`,
-    { messageErreurParDefaut: 'Impossible de charger les œuvres.' }
+    { messageErreurParDefaut: 'Impossible de charger les articles.' }
   )
 
   const resultat = versPage<Oeuvre>(donnees)
@@ -126,11 +126,11 @@ export default function AdminOeuvres() {
 
       if (edition) {
         await api.patch(`/admin/oeuvres/${edition.id}`, charge)
-        toast.succes('Œuvre mise à jour.')
+        toast.succes('Article mise à jour.')
       } else {
         const { data } = await api.post('/admin/oeuvres', charge)
-        toast.succes('Œuvre créée. Ajoutez-lui des photos.')
-        // On enchaîne sur l'édition : une œuvre sans photo ne se vend pas, et
+        toast.succes('Article créée. Ajoutez-lui des photos.')
+        // On enchaîne sur l'édition : un article sans photo ne se vend pas, et
         // refermer ici obligerait à la rouvrir aussitôt.
         setCreation(false)
         setEdition(data)
@@ -141,7 +141,7 @@ export default function AdminOeuvres() {
       fermer()
       reessayer()
     } catch (err) {
-      toast.erreur(messageErreur(err, "L'œuvre n'a pas pu être enregistrée."))
+      toast.erreur(messageErreur(err, "L'article n'a pas pu être enregistrée."))
     } finally {
       setEnvoi(false)
     }
@@ -150,19 +150,19 @@ export default function AdminOeuvres() {
   const supprimer = async (oeuvre: Oeuvre) => {
     try {
       await api.delete(`/admin/oeuvres/${oeuvre.id}`)
-      toast.succes('Œuvre supprimée.')
+      toast.succes('Article supprimée.')
       fermer()
       reessayer()
     } catch (err) {
-      toast.erreur(messageErreur(err, "L'œuvre n'a pas pu être supprimée."))
+      toast.erreur(messageErreur(err, "L'article n'a pas pu être supprimée."))
     }
   }
 
   return (
     <div>
-      <h1 className="console-titre">Œuvres</h1>
+      <h1 className="console-titre">Articles</h1>
       <p className="console-sous-titre">
-        Ma Villa est le seul vendeur : une œuvre publiée part en vitrine sans
+        Ma Villa est le seul vendeur : un article publiée part en vitrine sans
         validation. Une pièce se vend une fois — commander la retire aussitôt.
       </p>
 
@@ -182,7 +182,7 @@ export default function AdminOeuvres() {
         </div>
 
         <Button variante="primaire" taille="sm" onClick={ouvrirCreation} iconeAvant={<Plus size={15} />}>
-          Nouvelle œuvre
+          Nouvelle article
         </Button>
       </div>
 
@@ -200,7 +200,7 @@ export default function AdminOeuvres() {
       ) : liste.length === 0 ? (
         <div className="console-vide">
           <span className="console-vide-icone"><Palette size={22} /></span>
-          <p>Aucune œuvre pour l'instant. Créez la première : elle restera en brouillon tant que vous ne l'aurez pas publiée.</p>
+          <p>Aucun article pour l'instant. Créez la première : elle restera en brouillon tant que vous ne l'aurez pas publiée.</p>
         </div>
       ) : (
         <>
@@ -227,7 +227,7 @@ export default function AdminOeuvres() {
             ))}
           </div>
 
-          <Pagination page={resultat} onChange={setPage} unite="œuvres" />
+          <Pagination page={resultat} onChange={setPage} unite="articles" />
         </>
       )}
 
@@ -243,7 +243,7 @@ export default function AdminOeuvres() {
           <div className="modale modale-large" role="dialog" aria-modal="true" aria-labelledby="titre-oeuvre">
             <div className="modale-entete">
               <h2 id="titre-oeuvre" className="panneau-titre" style={{ margin: 0 }}>
-                {edition ? edition.titre : 'Nouvelle œuvre'}
+                {edition ? edition.titre : 'Nouvelle article'}
               </h2>
               <Button variante="discret" taille="sm" onClick={fermer} iconeAvant={<X size={18} />} aria-label="Fermer" />
             </div>
@@ -342,7 +342,7 @@ export default function AdminOeuvres() {
                 />
                 <span>
                   <span className="choix-titre">Coup de cœur</span>
-                  <span className="choix-aide">Remonte l'œuvre en tête de la vitrine.</span>
+                  <span className="choix-aide">Remonte l'article en tête de la vitrine.</span>
                 </span>
               </label>
 
@@ -364,7 +364,7 @@ export default function AdminOeuvres() {
               </div>
             </form>
 
-            {/* Les photos ne s'attachent qu'à une œuvre existante : il faut un
+            {/* Les photos ne s'attachent qu'à un article existante : il faut un
                 identifiant pour les téléverser. */}
             {edition && (
               <div className="modale-photos">

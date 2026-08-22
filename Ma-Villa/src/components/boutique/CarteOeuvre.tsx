@@ -5,14 +5,14 @@ import Inclinable from '../ui/Inclinable'
 import type { Oeuvre } from '../../types'
 
 /**
- * Carte d'œuvre.
+ * Carte d'article.
  *
  * Format portrait, à l'inverse des cartes de villa qui sont en 4/3 : une villa
- * se compare sur ses équipements, une œuvre se regarde. La photo occupe donc
+ * se compare sur ses équipements, un article se regarde. La photo occupe donc
  * la carte, et le texte se réduit à ce qu'on lit sous un cartel de galerie —
  * titre, artiste, prix.
  *
- * Une œuvre vendue garde sa carte, marquée. La retirer donnerait une vitrine
+ * Un article vendue garde sa carte, marquée. La retirer donnerait une vitrine
  * clairsemée sans dire pourquoi, quand « vendue » raconte au contraire qu'ici
  * on achète.
  */

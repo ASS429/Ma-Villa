@@ -135,7 +135,7 @@ export default function Boutique() {
               value={saisie}
               onChange={(e) => setSaisie(e.target.value)}
               placeholder="Un titre, un artiste, une technique…"
-              aria-label="Rechercher une œuvre"
+              aria-label="Rechercher un article"
             />
             <Button type="submit" variante="primaire" taille="sm">Chercher</Button>
           </form>

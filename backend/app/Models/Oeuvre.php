@@ -8,10 +8,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
- * Une œuvre de la boutique.
+ * Un article de la boutique.
  *
  * Ma Villa est le seul vendeur : l'artiste est une information portée par
- * l'œuvre, pas un compte. Voir la migration pour les trois arbitrages.
+ * l'article, pas un compte. Voir la migration pour les trois arbitrages.
  */
 class Oeuvre extends Model
 {
@@ -43,7 +43,7 @@ class Oeuvre extends Model
     /**
      * Ce qui est visible du public.
      *
-     * Une œuvre vendue **reste visible** : la fiche est indexée, et une galerie
+     * Un article vendue **reste visible** : la fiche est indexée, et une galerie
      * qui efface ce qu'elle a vendu perd la preuve qu'elle vend. Seul le
      * brouillon est caché.
      */

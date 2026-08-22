@@ -24,7 +24,10 @@ const ENTREES: Entree[] = [
   { to: '/admin/villas',       label: 'Villas',          Icone: Building2,      attente: 'villas' },
   { to: '/admin/utilisateurs', label: 'Utilisateurs',    Icone: Users },
   { to: '/admin/avis',         label: 'Avis',            Icone: MessageSquare },
-  { to: '/admin/oeuvres',      label: 'Œuvres',          Icone: Palette },
+  // « Articles » et non « Œuvres » : le catalogue est de l'artisanat, et un
+  // opérateur qui cherche un bonnet dans « Œuvres » hésite. Le chemin, lui,
+  // reste `/oeuvres` — personne ne lit une URL d'administration.
+  { to: '/admin/oeuvres',      label: 'Articles',        Icone: Palette },
   { to: '/admin/commandes',    label: 'Commandes',       Icone: ShoppingBag },
   { to: '/admin/paiement',     label: 'Encaissement',    Icone: CreditCard },
   { to: '/admin/reversements', label: 'Reversements',   Icone: Banknote },

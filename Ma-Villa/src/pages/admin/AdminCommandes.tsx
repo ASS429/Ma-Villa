@@ -72,7 +72,7 @@ export default function AdminCommandes() {
     <div>
       <h1 className="console-titre">Commandes</h1>
       <p className="console-sous-titre">
-        Une œuvre par commande. Marquer une commande livrée la solde lorsqu'elle
+        Un article par commande. Marquer une commande livrée la solde lorsqu'elle
         est payable à la livraison — c'est le moment où l'argent change de mains.
       </p>
 

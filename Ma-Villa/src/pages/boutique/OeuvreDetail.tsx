@@ -23,7 +23,7 @@ export default function OeuvreDetail() {
   const { donnees: oeuvre, chargement, erreur, reessayer } = useRequete<Oeuvre>(
     async (signal) => (await api.get(`/oeuvres/${id}`, { signal })).data,
     `oeuvre-${id}`,
-    { messageErreurParDefaut: 'Cette œuvre est introuvable.' }
+    { messageErreurParDefaut: 'Cet article est introuvable.' }
   )
 
   // On attend de **savoir** avant de trancher : au premier rendu la
@@ -43,11 +43,11 @@ export default function OeuvreDetail() {
   return (
     <>
       <Seo
-        titre={oeuvre ? `${oeuvre.titre} — ${oeuvre.artiste}` : 'Œuvre'}
+        titre={oeuvre ? `${oeuvre.titre} — ${oeuvre.artiste}` : 'Article'}
         description={
           oeuvre
             ? `${oeuvre.titre} par ${oeuvre.artiste}. ${[oeuvre.technique, oeuvre.dimensions].filter(Boolean).join(', ')}. ${fcfa(oeuvre.prix)}.`
-            : 'Une œuvre de la boutique Ma Villa.'
+            : 'Un article de la boutique Ma Villa.'
         }
         image={photos[0]?.url}
       />
@@ -56,7 +56,7 @@ export default function OeuvreDetail() {
       <main className="oeuvre">
         <Link to="/boutique" className="oeuvre-retour">
           <ArrowLeft size={16} aria-hidden="true" />
-          Toutes les œuvres
+          Toutes les articles
         </Link>
 
         {erreur && !chargement && (
@@ -110,7 +110,7 @@ export default function OeuvreDetail() {
               <h1 className="oeuvre-titre">{oeuvre.titre}</h1>
               <p className="oeuvre-artiste">{oeuvre.artiste}</p>
 
-              {/* Le cartel, comme en galerie : ce qu'on lit sous une œuvre. */}
+              {/* Le cartel, comme en galerie : ce qu'on lit sous un article. */}
               <dl className="oeuvre-cartel">
                 {oeuvre.technique && (
                   <div><dt>Technique</dt><dd>{oeuvre.technique}</dd></div>
@@ -149,12 +149,12 @@ export default function OeuvreDetail() {
                 {vendue ? (
                   <p className="oeuvre-indisponible">
                     {oeuvre.stock === 0 && oeuvre.categorie === 'tableaux'
-                      ? "Cette pièce a trouvé preneur. Écrivez-nous si vous cherchez une œuvre du même artiste."
+                      ? "Cette pièce a trouvé preneur. Écrivez-nous si vous cherchez un article du même artiste."
                       : "Cet article est épuisé pour le moment. Écrivez-nous : l'artisan en refait régulièrement."}
                   </p>
                 ) : user ? (
                   <ButtonLink to={`/boutique/${oeuvre.id}/commander`} variante="primaire" bloc>
-                    Commander cette œuvre
+                    Commander cet article
                   </ButtonLink>
                 ) : (
                   <>

@@ -44,7 +44,7 @@ export default function Commander() {
   const { donnees: oeuvre, chargement, erreur } = useRequete<Oeuvre>(
     async (signal) => (await api.get(`/oeuvres/${id}`, { signal })).data,
     `oeuvre-${id}`,
-    { messageErreurParDefaut: 'Cette œuvre est introuvable.' }
+    { messageErreurParDefaut: 'Cet article est introuvable.' }
   )
 
   // On attend de **savoir** avant de trancher : au premier rendu la
@@ -93,20 +93,20 @@ export default function Commander() {
 
   return (
     <>
-      <Seo titre="Commander une œuvre" description="Finalisez votre commande." />
+      <Seo titre="Commander un article" description="Finalisez votre commande." />
       <Navbar />
 
       <main className="achat">
         <Link to={`/boutique/${id}`} className="oeuvre-retour">
           <ArrowLeft size={16} aria-hidden="true" />
-          Retour à l'œuvre
+          Retour à l'article
         </Link>
 
         {erreur && <div className="console-erreur" role="alert">{erreur}</div>}
 
         {indisponible && (
           <div className="console-erreur" role="alert">
-            Cette œuvre vient d'être vendue. Elle n'est plus disponible.
+            Cet article vient d'être vendue. Elle n'est plus disponible.
           </div>
         )}
 
@@ -222,7 +222,7 @@ export default function Commander() {
                       <span className="choix-titre">
                         <HandCoins size={14} aria-hidden="true" /> Payer à la livraison
                       </span>
-                      <span className="choix-aide">Vous réglez en main propre à la remise de l'œuvre.</span>
+                      <span className="choix-aide">Vous réglez en main propre à la remise de l'article.</span>
                     </span>
                   </label>
                 )}
@@ -233,7 +233,7 @@ export default function Commander() {
                 frais découverts ensuite sont la première cause d'abandon. */}
             <div className="achat-total">
               <dl>
-                <div><dt>Œuvre</dt><dd>{fcfa(oeuvre.prix)}</dd></div>
+                <div><dt>Article</dt><dd>{fcfa(oeuvre.prix)}</dd></div>
                 <div>
                   <dt>Livraison</dt>
                   <dd>{zone ? (frais === 0 ? 'Gratuite' : fcfa(frais)) : '—'}</dd>

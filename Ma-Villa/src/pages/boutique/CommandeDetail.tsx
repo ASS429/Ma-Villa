@@ -179,7 +179,7 @@ export default function CommandeDetail() {
               ) : (
                 <p className="commande-annulee">
                   <XCircle size={16} aria-hidden="true" />
-                  Commande annulée. L'œuvre est de nouveau en vente.
+                  Commande annulée. L'article est de nouveau en vente.
                 </p>
               )}
             </section>
@@ -187,7 +187,7 @@ export default function CommandeDetail() {
             <section className="panneau">
               <h2 className="panneau-titre">Détail</h2>
               <dl className="commande-detail">
-                <div><dt>Œuvre</dt><dd>{fcfa(commande.montant_oeuvre)}</dd></div>
+                <div><dt>Article</dt><dd>{fcfa(commande.montant_oeuvre)}</dd></div>
                 <div>
                   <dt>Livraison</dt>
                   <dd>{commande.frais_livraison === 0 ? 'Gratuite' : fcfa(commande.frais_livraison)}</dd>
@@ -214,7 +214,7 @@ export default function CommandeDetail() {
                 <HandCoins size={16} aria-hidden="true" />
                 <p>
                   Vous réglez <strong>{fcfa(commande.montant_total)}</strong> en main
-                  propre à la remise de l'œuvre. Préparez l'appoint si possible.
+                  propre à la remise de l'article. Préparez l'appoint si possible.
                 </p>
               </div>
             )}

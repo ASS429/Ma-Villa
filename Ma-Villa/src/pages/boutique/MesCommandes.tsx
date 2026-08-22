@@ -40,7 +40,7 @@ export default function MesCommandes() {
 
   return (
     <>
-      <Seo titre="Mes commandes" description="Suivez vos commandes d'œuvres." />
+      <Seo titre="Mes commandes" description="Suivez vos commandes d'articles." />
       <Navbar />
 
       <main className="boutique">
@@ -65,7 +65,7 @@ export default function MesCommandes() {
         ) : commandes.length === 0 ? (
           <div className="console-vide">
             <span className="console-vide-icone"><Inbox size={22} /></span>
-            <p>Vous n'avez pas encore commandé d'œuvre.</p>
+            <p>Vous n'avez pas encore commandé d'article.</p>
             <ButtonLink to="/boutique" variante="primaire" taille="sm">Voir la boutique</ButtonLink>
           </div>
         ) : (

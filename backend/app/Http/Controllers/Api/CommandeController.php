@@ -16,15 +16,15 @@ use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
- * Commander une œuvre.
+ * Commander un article.
  *
  * Deux règles gouvernent tout ce fichier, et ce sont les deux seules qui
  * coûtent réellement quelque chose si on les manque :
  *
- * 1. **Aucun montant ne vient de la requête.** Le prix est lu sur l'œuvre, les
+ * 1. **Aucun montant ne vient de la requête.** Le prix est lu sur l'article, les
  *    frais de livraison dans la configuration. C'est la leçon de la faille du
  *    tarif, où le client choisissait ce qu'il payait.
- * 2. **Une œuvre ne se vend qu'une fois.** La ligne est verrouillée avant
+ * 2. **Un article ne se vend qu'une fois.** La ligne est verrouillée avant
  *    d'être vendue : deux acheteurs simultanés sur la dernière toile est le
  *    seul incident qu'une galerie ne peut pas rattraper.
  */
@@ -68,7 +68,7 @@ class CommandeController extends Controller
     /**
      * Passer commande.
      *
-     * La création et la mise en vendu de l'œuvre tiennent dans une seule
+     * La création et la mise en vendu de l'article tiennent dans une seule
      * transaction, la ligne verrouillée : sans cela, deux requêtes concurrentes
      * liraient toutes deux « publiée » et vendraient deux fois la même pièce.
      */
@@ -125,7 +125,7 @@ class CommandeController extends Controller
                 // porterait pas, et l'ecran lirait un statut nul.
                 'statut_paiement' => 'en_attente',
                 // Payer à la livraison confirme d'emblée : l'acheteur s'est
-                // engagé, et c'est cet engagement qui retire l'œuvre de la vente.
+                // engagé, et c'est cet engagement qui retire l'article de la vente.
                 'statut'          => $donnees['mode_paiement'] === 'livraison' ? 'confirmee' : 'en_attente',
                 'reference'       => 'MV-ART-'.Str::upper(Str::random(8)),
             ]);
@@ -147,7 +147,7 @@ class CommandeController extends Controller
 
         if ($resultat === null) {
             return response()->json([
-                'message' => 'Cette œuvre vient d\'être vendue. Elle n\'est plus disponible.',
+                'message' => 'Cet article vient d\'être vendue. Elle n\'est plus disponible.',
             ], 409);
         }
 
@@ -159,7 +159,7 @@ class CommandeController extends Controller
     /**
      * Annuler sa propre commande, tant que rien n'est parti.
      *
-     * L'annulation **remet l'œuvre en vente** : une pièce immobilisée par une
+     * L'annulation **remet l'article en vente** : une pièce immobilisée par une
      * commande abandonnée est une pièce invendable.
      */
     public function annuler(Request $request, Commande $commande): JsonResponse
@@ -257,7 +257,7 @@ class CommandeController extends Controller
         }
     }
 
-    /** Annuler et remettre l'œuvre en vente, d'un seul geste. */
+    /** Annuler et remettre l'article en vente, d'un seul geste. */
     private function libererEtAnnuler(Commande $commande): void
     {
         DB::transaction(function () use ($commande) {
@@ -300,8 +300,8 @@ class CommandeController extends Controller
         }
 
         $message = match ($commande->statut) {
-            'expediee' => 'Votre œuvre est en route.',
-            'livree'   => 'Votre œuvre a été livrée. Merci !',
+            'expediee' => 'Votre article est en route.',
+            'livree'   => 'Votre article a été livrée. Merci !',
             'annulee'  => 'Votre commande a été annulée.',
             default    => null,
         };

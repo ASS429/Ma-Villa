@@ -38,7 +38,7 @@ class ConfigurationController extends Controller
             'annonces' => [
                 'photos_max' => (int) config('annonces.photos_max'),
             ],
-            // Boutique d'œuvres. Les zones de livraison viennent d'ici : le
+            // Boutique d'articles. Les zones de livraison viennent d'ici : le
             // client doit connaître son total **avant** de payer, et relever
             // un tarif ne doit pas demander de redéployer l'interface.
             'boutique' => [

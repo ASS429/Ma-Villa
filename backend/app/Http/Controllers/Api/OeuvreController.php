@@ -13,7 +13,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * La vitrine de la boutique, et son administration.
  *
  * Ma Villa est le seul vendeur : il n'y a donc ni modération ni cloisonnement
- * par compte. Publier une œuvre est une action d'administration, point.
+ * par compte. Publier un article est une action d'administration, point.
  */
 class OeuvreController extends Controller
 {
@@ -96,7 +96,7 @@ class OeuvreController extends Controller
         $this->exigerBoutiqueOuverte();
 
         // Un brouillon n'existe pas pour le public. 404 plutôt que 403 : dire
-        // « interdit » confirmerait qu'une œuvre se prépare à cette adresse.
+        // « interdit » confirmerait qu'un article se prépare à cette adresse.
         if ($oeuvre->statut === 'brouillon' && ! $this->estAdmin()) {
             throw new NotFoundHttpException();
         }
@@ -202,7 +202,7 @@ class OeuvreController extends Controller
     }
 
     /**
-     * Une œuvre commandée ne se supprime pas.
+     * Un article commandée ne se supprime pas.
      *
      * La contrainte de base de données le refuserait de toute façon, mais elle
      * répondrait par une erreur serveur illisible. Mieux vaut dire pourquoi.
@@ -211,7 +211,7 @@ class OeuvreController extends Controller
     {
         if ($oeuvre->commandes()->exists()) {
             return response()->json([
-                'message' => 'Cette œuvre a déjà été commandée : elle ne peut plus être supprimée. '
+                'message' => 'Cet article a déjà été commandée : elle ne peut plus être supprimée. '
                            .'Repassez-la en brouillon pour la retirer de la vitrine.',
             ], 422);
         }
@@ -219,7 +219,7 @@ class OeuvreController extends Controller
         $oeuvre->photos()->delete();
         $oeuvre->delete();
 
-        return response()->json(['message' => 'Œuvre supprimée.']);
+        return response()->json(['message' => 'Article supprimée.']);
     }
 
     /** @return array<string, mixed> */
