@@ -12,7 +12,7 @@ import type { Oeuvre } from '../../types'
  * la carte, et le texte se réduit à ce qu'on lit sous un cartel de galerie —
  * titre, artiste, prix.
  *
- * Un article vendue garde sa carte, marquée. La retirer donnerait une vitrine
+ * Un article vendu garde sa carte, marquée. Le retirer donnerait une vitrine
  * clairsemée sans dire pourquoi, quand « vendue » raconte au contraire qu'ici
  * on achète.
  */

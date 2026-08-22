@@ -43,7 +43,7 @@ class Oeuvre extends Model
     /**
      * Ce qui est visible du public.
      *
-     * Un article vendue **reste visible** : la fiche est indexée, et une galerie
+     * Un article vendu **reste visible** : la fiche est indexée, et une galerie
      * qui efface ce qu'elle a vendu perd la preuve qu'elle vend. Seul le
      * brouillon est caché.
      */

@@ -182,7 +182,7 @@ export default function AdminOeuvres() {
         </div>
 
         <Button variante="primaire" taille="sm" onClick={ouvrirCreation} iconeAvant={<Plus size={15} />}>
-          Nouvelle article
+          Nouvel article
         </Button>
       </div>
 
@@ -243,7 +243,7 @@ export default function AdminOeuvres() {
           <div className="modale modale-large" role="dialog" aria-modal="true" aria-labelledby="titre-oeuvre">
             <div className="modale-entete">
               <h2 id="titre-oeuvre" className="panneau-titre" style={{ margin: 0 }}>
-                {edition ? edition.titre : 'Nouvelle article'}
+                {edition ? edition.titre : 'Nouvel article'}
               </h2>
               <Button variante="discret" taille="sm" onClick={fermer} iconeAvant={<X size={18} />} aria-label="Fermer" />
             </div>
