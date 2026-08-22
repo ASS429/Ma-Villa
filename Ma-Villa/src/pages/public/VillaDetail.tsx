@@ -12,6 +12,7 @@ import MoyensPaiement from '../../components/MoyensPaiement'
 import { GrilleTarifaire, ParcoursReservation } from '../../components/BlocTarifaire'
 import { useRequete } from '../../lib/useRequete'
 import { messageErreur } from '../../lib/erreurs'
+import NotFound from '../NotFound'
 import { fcfa, dateCourte, noteLisible, nuits, aujourdhui } from '../../lib/format'
 import { type Occupation, type VillaDetail as Villa } from '../../types'
 
@@ -197,7 +198,7 @@ export default function VillaDetail() {
   const { paiement } = useConfig()
   const navigate = useNavigate()
 
-  const { donnees: villa, chargement, erreur, reessayer } = useRequete<Villa>(
+  const { donnees: villa, chargement, erreur, statut, reessayer } = useRequete<Villa>(
     async (signal) => (await api.get(`/villas/${id}`, { signal })).data,
     `villa-${id}`,
     { messageErreurParDefaut: 'Impossible de charger cette villa.' }
@@ -342,6 +343,22 @@ export default function VillaDetail() {
         </div>
       </div>
     )
+  }
+
+  /*
+   * L'annonce n'existe pas — le cas le plus fréquent, et de loin.
+   *
+   * La plupart des visiteurs arrivent ici par un lien WhatsApp vers une villa
+   * que le propriétaire a retirée. Leur proposer « Réessayer » est une
+   * impasse : la villa ne reviendra pas. On sert donc la page de rattrapage,
+   * qui lit la ville dans l'adresse morte et propose des villas semblables.
+   *
+   * Un 500 ou un réseau coupé restent traités plus bas : là, réessayer a un
+   * sens, et renvoyer le visiteur ailleurs lui ferait perdre une annonce qui
+   * existe pourtant.
+   */
+  if (statut === 404) {
+    return <NotFound />
   }
 
   if (erreur || !villa) {

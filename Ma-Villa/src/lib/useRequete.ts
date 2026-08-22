@@ -6,6 +6,16 @@ interface Etat<T> {
   donnees: T | null
   chargement: boolean
   erreur: string
+  /**
+   * Code HTTP de l'échec, quand il y en a un.
+   *
+   * Un message d'erreur ne permet pas de distinguer « cette ressource
+   * n'existe pas » de « le serveur n'a pas répondu », alors que les deux
+   * appellent des écrans opposés : une page de rattrapage dans le premier
+   * cas, un bouton « Réessayer » dans le second. Réessayer un 404 ne donnera
+   * jamais rien.
+   */
+  statut: number | null
 }
 
 /**
@@ -24,7 +34,7 @@ export function useRequete<T>(
   cle: string,
   options: { messageErreurParDefaut?: string } = {}
 ) {
-  const [etat, setEtat] = useState<Etat<T>>({ donnees: null, chargement: true, erreur: '' })
+  const [etat, setEtat] = useState<Etat<T>>({ donnees: null, chargement: true, erreur: '', statut: null })
   const [tentative, setTentative] = useState(0)
 
   // La fonction est recréée à chaque rendu : on la lit via une réf pour que
@@ -42,17 +52,22 @@ export function useRequete<T>(
     // Repasser en « chargement » est un effet de bord assumé du départ de la
     // requête : sans lui, l'écran garderait les résultats précédents.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setEtat((e) => ({ ...e, chargement: true, erreur: '' }))
+    setEtat((e) => ({ ...e, chargement: true, erreur: '', statut: null }))
 
     chargerRef.current(controleur.signal)
       .then((donnees) => {
         if (controleur.signal.aborted) return
-        setEtat({ donnees, chargement: false, erreur: '' })
+        setEtat({ donnees, chargement: false, erreur: '', statut: null })
       })
       .catch((err) => {
         // Une requête annulée (navigation, filtre changé) n'est pas une erreur.
         if (controleur.signal.aborted || axios.isCancel(err)) return
-        setEtat({ donnees: null, chargement: false, erreur: messageErreur(err, messageParDefaut) })
+        setEtat({
+          donnees: null,
+          chargement: false,
+          erreur: messageErreur(err, messageParDefaut),
+          statut: axios.isAxiosError(err) ? (err.response?.status ?? null) : null,
+        })
       })
 
     return () => controleur.abort()

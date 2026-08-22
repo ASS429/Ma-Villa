@@ -2191,3 +2191,90 @@ html.video-mode[data-theme="dark"] {
   .succes-cercle, .succes-coche { animation: none; stroke-dashoffset: 0; }
   .tunnel-pulsation { animation: none; }
 }
+
+
+/* ══════════════════════════════════════════════════════════════
+   Page introuvable
+   ══════════════════════════════════════════════════════════════
+
+   La recherche occupe la place que prenait le « 404 » décoratif.
+   Le grand chiffre ne dit rien à personne ; le champ, lui, ramène
+   le visiteur vers ce qu'il cherchait.
+*/
+
+.recherche-404 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 6px 6px 6px var(--space-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+}
+.recherche-404:focus-within { border-color: var(--accent); }
+
+.recherche-404-icone { flex: none; display: grid; place-items: center; color: var(--text-3); }
+
+.recherche-404 input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-1);
+  font: var(--t-body);
+  outline: none;
+}
+.recherche-404 input::placeholder { color: var(--text-3); }
+/* Chrome pose une croix de purge sur `type=search` : elle double le
+   bouton « Chercher » et déplace le curseur. */
+.recherche-404 input::-webkit-search-cancel-button { display: none; }
+
+.recherche-404 button {
+  flex: none;
+  min-height: 44px;
+  padding: 0 var(--space-5);
+  border: 0;
+  border-radius: var(--r-full);
+  background: var(--accent);
+  color: var(--on-accent);
+  font: var(--t-body-sm);
+  font-weight: 500;
+  cursor: pointer;
+}
+.recherche-404 button:hover { opacity: 0.92; }
+.recherche-404 button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Sous 480 px, le bouton passe sous le champ : côte à côte, il ne reste
+   qu'une vingtaine de caractères visibles pour saisir une ville. */
+@media (max-width: 480px) {
+  .recherche-404 {
+    flex-wrap: wrap;
+    border-radius: var(--r-lg);
+    padding: var(--space-3);
+  }
+  .recherche-404 input { flex: 1 1 auto; }
+  .recherche-404 button { flex: 1 0 100%; margin-top: var(--space-2); }
+}
+
+.villes-404 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.villes-404 a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  font: var(--t-body-sm);
+  color: var(--text-2);
+  text-decoration: none;
+}
+.villes-404 a:hover { border-color: var(--border-strong); color: var(--text-1); }
+.villes-404 a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.villes-404 strong { color: var(--text-1); font-weight: 600; font-variant-numeric: lining-nums tabular-nums; }
