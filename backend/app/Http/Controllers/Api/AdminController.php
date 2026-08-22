@@ -257,23 +257,78 @@ class AdminController extends Controller
 
     /* ── Actions ─────────────────────────────────────────────────── */
 
+    /**
+     * Valide, rejette, ou retire une annonce.
+     *
+     * **Un refus exige un motif.** C'est ce motif qui part au propriétaire et
+     * au journal d'audit : un rejet sans raison produit un appel au service
+     * client et une annonce que personne ne corrige jamais.
+     *
+     * Retirer une annonce déjà publiée emprunte le même chemin — c'est le même
+     * geste, avec les mêmes conséquences pour celui qui la subit.
+     */
     public function validerVilla(Request $request, Villa $villa): JsonResponse
     {
-        $request->validate(['statut' => 'required|in:validee,rejetee']);
+        $donnees = $request->validate([
+            'statut' => 'required|in:validee,rejetee',
+            // Exigé seulement au refus : valider n'a pas à se justifier.
+            'motif'  => 'required_if:statut,rejetee|nullable|string|min:10|max:500',
+        ], [
+            'motif.required_if' => 'Dites pourquoi : le propriétaire recevra ce motif.',
+            'motif.min'         => 'Un motif tient en une phrase, pas en un mot.',
+        ]);
 
         $avant = $villa->statut;
-        $villa->update(['statut' => $request->statut]);
+        $villa->update(['statut' => $donnees['statut']]);
+
+        // « Retirée » et « rejetée » sont deux gestes différents dans le
+        // journal, même s'ils mènent au même statut : refuser une annonce qui
+        // n'a jamais été en ligne n'a pas les mêmes suites que dépublier une
+        // annonce qui recevait des réservations.
+        $action = match (true) {
+            $donnees['statut'] === 'validee' => 'villa.validee',
+            $avant === 'validee'             => 'villa.retiree',
+            default                          => 'villa.rejetee',
+        };
 
         JournalAdmin::consigner(
             $request->user(),
-            $request->statut === 'validee' ? 'villa.validee' : 'villa.rejetee',
+            $action,
             $villa,
             $villa->nom,
-            ['statut_avant' => $avant, 'statut_apres' => $villa->statut],
+            array_filter([
+                'statut_avant' => $avant,
+                'statut_apres' => $villa->statut,
+                'motif'        => $donnees['motif'] ?? null,
+            ]),
             $request->ip(),
         );
 
+        if ($action !== 'villa.validee') {
+            $this->prevenirDuRefus($villa, $donnees['motif'] ?? '', $action === 'villa.retiree');
+        }
+
         return response()->json($villa);
+    }
+
+    /**
+     * Le propriétaire apprend le refus par le produit, pas en constatant que
+     * son annonce a disparu. Le motif voyage avec : sans lui, il ne peut ni
+     * corriger ni contester.
+     */
+    private function prevenirDuRefus(Villa $villa, string $motif, bool $retiree): void
+    {
+        $proprietaire = $villa->proprietaire;
+        if (! $proprietaire) {
+            return;
+        }
+
+        app(\App\Services\Push::class)->versUtilisateur($proprietaire, [
+            'titre'  => $retiree ? 'Annonce retirée' : 'Annonce refusée',
+            'corps'  => $villa->nom.' — '.\Illuminate\Support\Str::limit($motif, 100),
+            'url'    => '/dashboard/villas',
+            'groupe' => "villa-{$villa->id}",
+        ]);
     }
 
     public function toggleVedette(Request $request, Villa $villa): JsonResponse

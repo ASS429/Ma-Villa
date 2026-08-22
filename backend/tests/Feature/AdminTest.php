@@ -141,7 +141,10 @@ class AdminTest extends TestCase
         $villa = Villa::factory()->create(['statut' => 'en_attente']);
 
         $this->actingAs($admin, 'sanctum')
-             ->patchJson("/api/admin/villas/{$villa->id}/statut", ['statut' => 'rejetee'])
+             ->patchJson("/api/admin/villas/{$villa->id}/statut", [
+                 'statut' => 'rejetee',
+                 'motif'  => "Photos reprises d'une autre annonce.",
+             ])
              ->assertOk();
 
         $this->assertDatabaseHas('villas', ['id' => $villa->id, 'statut' => 'rejetee']);

@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Star, ExternalLink, Building2, Check, X } from 'lucide-react'
+import { Search, Star, ExternalLink, Building2, Check, X, EyeOff } from 'lucide-react'
 import api from '../../services/api'
 import { useRequete } from '../../lib/useRequete'
 import { useToast } from '../../context/ToastContext'
 import { messageErreur } from '../../lib/erreurs'
 import { depuis } from '../../lib/format'
 import Button from '../../components/ui/Button'
+import { ChampZoneTexte } from '../../components/ui/Champ'
 import Badge from '../../components/ui/Badge'
 import Pagination from '../../components/console/Pagination'
 import { versPage, type Page } from '../../lib/page'
@@ -32,6 +33,9 @@ const ONGLETS = [
 export default function AdminVillas() {
   const toast = useToast()
   const [statut, setStatut] = useState('en_attente')
+  // Le panneau de motif : ouvert sur une villa, il porte la raison du retrait.
+  const [aRetirer, setARetirer] = useState<Villa | null>(null)
+  const [motif, setMotif] = useState('')
   const [recherche, setRecherche] = useState('')
   const [terme, setTerme] = useState('')
   const [page, setPage] = useState(1)
@@ -55,11 +59,21 @@ export default function AdminVillas() {
   const page_ = versPage(donnees)
   const villas = page_?.data ?? []
 
-  const changerStatut = async (villa: Villa, nouveau: 'validee' | 'rejetee') => {
+  const changerStatut = async (villa: Villa, nouveau: 'validee' | 'rejetee', raison?: string) => {
     setEnCours(villa.id)
     try {
-      await api.patch(`/admin/villas/${villa.id}/statut`, { statut: nouveau })
-      toast.succes(`« ${villa.nom} » ${nouveau === 'validee' ? 'validée et publiée' : 'rejetée'}.`)
+      await api.patch(`/admin/villas/${villa.id}/statut`, {
+        statut: nouveau,
+        // Le motif ne part qu'au refus : valider n'a pas à se justifier.
+        ...(raison ? { motif: raison } : {}),
+      })
+      toast.succes(
+        nouveau === 'validee'
+          ? `« ${villa.nom} » validée et publiée.`
+          : `« ${villa.nom} » retirée. Le propriétaire reçoit le motif.`
+      )
+      setARetirer(null)
+      setMotif('')
       reessayer()
     } catch (err) {
       toast.erreur(messageErreur(err, "La décision n'a pas pu être enregistrée."))
@@ -209,15 +223,31 @@ export default function AdminVillas() {
                   )}
 
                   {statut === 'validee' && (
-                    <Button
-                      variante={villa.vedette ? 'primaire' : 'secondaire'}
-                      taille="sm"
-                      onClick={() => basculerVedette(villa)}
-                      disabled={enCours === villa.id}
-                      iconeAvant={<Star size={15} fill={villa.vedette ? 'currentColor' : 'none'} />}
-                    >
-                      {villa.vedette ? 'En vedette' : 'Mettre en vedette'}
-                    </Button>
+                    <>
+                      <Button
+                        variante={villa.vedette ? 'primaire' : 'secondaire'}
+                        taille="sm"
+                        onClick={() => basculerVedette(villa)}
+                        disabled={enCours === villa.id}
+                        iconeAvant={<Star size={15} fill={villa.vedette ? 'currentColor' : 'none'} />}
+                      >
+                        {villa.vedette ? 'En vedette' : 'Mettre en vedette'}
+                      </Button>
+
+                      {/* Une annonce en ligne doit pouvoir être retirée : elle
+                          peut se révéler frauduleuse, ou son propriétaire en
+                          demander le retrait. En discret, jamais en accent —
+                          retirer doit être possible, pas facile. */}
+                      <Button
+                        variante="discret"
+                        taille="sm"
+                        onClick={() => { setARetirer(villa); setMotif('') }}
+                        disabled={enCours === villa.id}
+                        iconeAvant={<EyeOff size={15} />}
+                      >
+                        Retirer
+                      </Button>
+                    </>
                   )}
 
                   {statut === 'rejetee' && (
@@ -238,6 +268,60 @@ export default function AdminVillas() {
       )}
 
       <Pagination page={page_} onChange={setPage} unite="villa" />
+
+      {aRetirer && (
+        <>
+          {/* Le clic à côté ne referme pas quand un motif est commencé : le
+              perdre obligerait à le réécrire, et on finit par retirer sans
+              motif — ce que la règle cherche justement à empêcher. */}
+          <div
+            className="console-voile"
+            onClick={() => { if (!motif.trim()) setARetirer(null) }}
+            aria-hidden="true"
+          />
+          <div className="modale" role="dialog" aria-modal="true" aria-labelledby="titre-retrait">
+            <div className="modale-entete">
+              <h2 id="titre-retrait" className="panneau-titre" style={{ margin: 0 }}>
+                Retirer « {aRetirer.nom} »
+              </h2>
+              <Button
+                variante="discret" taille="sm" onClick={() => setARetirer(null)}
+                iconeAvant={<X size={18} />} aria-label="Fermer"
+              />
+            </div>
+
+            <p className="console-sous-titre">
+              L'annonce quitte le site immédiatement. <strong>Le propriétaire
+              reçoit ce motif</strong> — c'est ce qui lui permet de corriger ou
+              de contester.
+            </p>
+
+            <div className="modale-formulaire">
+              <ChampZoneTexte
+                label="Motif du retrait"
+                aide="Une phrase suffit. Elle sera lue par le propriétaire et consignée au journal."
+                rows={3}
+                value={motif}
+                onChange={(e) => setMotif(e.target.value)}
+                maxLength={500}
+                required
+              />
+            </div>
+
+            <div className="modale-actions">
+              <Button variante="secondaire" onClick={() => setARetirer(null)}>Annuler</Button>
+              <Button
+                variante="primaire"
+                onClick={() => changerStatut(aRetirer, 'rejetee', motif.trim())}
+                disabled={motif.trim().length < 10 || enCours === aRetirer.id}
+                chargement={enCours === aRetirer.id}
+              >
+                Retirer l'annonce
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
