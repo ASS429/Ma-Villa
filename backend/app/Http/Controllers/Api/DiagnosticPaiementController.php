@@ -37,6 +37,10 @@ class DiagnosticPaiementController extends Controller
         if (! $this->paydunya->estConfigure()) {
             return response()->json($etat + [
                 'facture' => ['ok' => false, 'erreur' => 'Clés incomplètes : master, privée et token sont requis.'],
+                'ok'      => false,
+                'verdict' => $etat['paiement_actif']
+                    ? 'Non. Le paiement est ouvert aux clients mais les clés manquent : chaque règlement échoue, et le client croit que sa banque refuse.'
+                    : 'Non, et le paiement est fermé. Les clés PayDunya ne sont pas posées.',
             ]);
         }
 
@@ -52,6 +56,8 @@ class DiagnosticPaiementController extends Controller
         } catch (\Throwable $e) {
             return response()->json($etat + [
                 'facture' => ['ok' => false, 'erreur' => $e->getMessage()],
+                'ok'      => false,
+                'verdict' => 'Non. PayDunya refuse de créer une facture avec ces clés — aucun encaissement ne peut aboutir.',
             ]);
         }
 
@@ -66,6 +72,14 @@ class DiagnosticPaiementController extends Controller
         if (! is_string($telephone) || $telephone === '') {
             return response()->json($etat + [
                 'softpay' => ['essaye' => false, 'note' => 'Ajoutez ?telephone=77XXXXXXX&methode=wave pour tester aussi SoftPay.'],
+                'ok'      => true,
+                // Nuance qui compte : la facture passe, mais SoftPay est un
+                // second appel qui peut échouer seul. Conclure « tout va
+                // bien » sur la seule facture, c'est promettre le parcours
+                // sans clic intermédiaire qu'on n'a pas vérifié.
+                'verdict' => $etat['softpay_disponible']
+                    ? 'Oui, PayDunya répond et crée des factures. Le parcours Wave ou Orange Money direct n\'a pas été testé — donnez un numéro pour le vérifier.'
+                    : 'Oui pour la facture, mais en clés de test : le parcours direct Wave ou Orange Money n\'est pas servi, les clients passeront par la page PayDunya.',
             ]);
         }
 
@@ -77,6 +91,8 @@ class DiagnosticPaiementController extends Controller
                 : $this->paydunya->payerAvecOrangeMoney($facture['token'], 'Sonde Ma Villa', (string) $request->user()->email, $telephone);
 
             return response()->json($etat + [
+                'ok'      => true,
+                'verdict' => 'Oui. La facture est créée et le paiement direct part sur le téléphone indiqué.',
                 'softpay' => [
                     'essaye'          => true,
                     'methode'         => $methode,
@@ -89,6 +105,11 @@ class DiagnosticPaiementController extends Controller
         } catch (\Throwable $e) {
             return response()->json($etat + [
                 'softpay' => ['essaye' => true, 'methode' => $methode, 'ok' => false, 'erreur' => $e->getMessage()],
+                'ok'      => false,
+                // Une facture qui passe et un SoftPay qui tombe est le cas le
+                // plus trompeur : l'encaissement marche, mais chaque client
+                // doit franchir une page de plus, et on le perd là.
+                'verdict' => 'À moitié. La facture est créée, mais le paiement direct échoue : les clients devront passer par la page PayDunya.',
             ]);
         }
     }

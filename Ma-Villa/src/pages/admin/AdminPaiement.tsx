@@ -12,6 +12,9 @@ interface EmpreinteCle {
 }
 
 interface Sonde {
+  /** Le verdict en une phrase, et de quel côté il penche. */
+  ok?: boolean
+  verdict?: string
   paiement_actif: boolean
   mode_declare: string
   cles: Record<string, EmpreinteCle>
@@ -89,6 +92,14 @@ export default function AdminPaiement() {
 
       {sonde && (
         <>
+          {/* Le verdict d'abord : c'est la réponse à la question posée. Le
+              détail sert à comprendre, pas à conclure. Une liste de clés et
+              de valeurs oblige l'exploitant à faire lui-même la synthèse —
+              et il la fera mal, parce qu'il ne connaît pas PayDunya. */}
+          {sonde.verdict && (
+            <Alerte ton={sonde.ok ? 'succes' : 'danger'}>{sonde.verdict}</Alerte>
+          )}
+
           <Bloc titre="Configuration">
             <Ligne libelle="Paiement ouvert aux clients" valeur={sonde.paiement_actif ? 'oui' : 'non'} bon={sonde.paiement_actif} />
             <Ligne libelle="Mode déclaré" valeur={sonde.mode_declare} />

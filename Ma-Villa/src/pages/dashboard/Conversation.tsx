@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Send, MessagesSquare } from 'lucide-react'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
@@ -38,6 +38,7 @@ const heure = (iso: string) =>
 
 export default function Conversation() {
   const { id } = useParams<{ id: string }>()
+  const naviguer = useNavigate()
   const { user } = useAuth()
   const { rafraichir } = useMessages()
   const [brouillon, setBrouillon] = useState('')
@@ -45,7 +46,7 @@ export default function Conversation() {
   const [erreurEnvoi, setErreurEnvoi] = useState('')
   const filRef = useRef<HTMLDivElement>(null)
 
-  const { donnees: messages, chargement, erreur, reessayer } = useRequete<Message[]>(
+  const { donnees: messages, chargement, erreur, statut, reessayer } = useRequete<Message[]>(
     async (signal) => (await api.get(`/reservations/${id}/messages`, { signal })).data,
     `messages-${id}`,
     { messageErreurParDefaut: 'Impossible de charger la conversation.' }
@@ -109,7 +110,19 @@ export default function Conversation() {
         </div>
       </div>
 
-      {erreur && !chargement && (
+      {/* Un refus d'accès n'est pas une panne : réessayer ne donnera jamais
+          rien, et « accès refusé » laisse croire à une faute. On nomme la
+          cause réelle — presque toujours le mauvais compte, sur un téléphone
+          partagé ou après un changement de numéro. */}
+      {statut === 403 && !chargement ? (
+        <div className="console-erreur" role="alert">
+          Cette réservation appartient à un autre compte. Connectez-vous avec
+          celui qui l'a créée.
+          <Button variante="secondaire" taille="sm" onClick={() => naviguer('/login')}>
+            Changer de compte
+          </Button>
+        </div>
+      ) : erreur && !chargement && (
         <div className="console-erreur" role="alert">
           {erreur}
           <Button variante="secondaire" taille="sm" onClick={reessayer}>Réessayer</Button>
