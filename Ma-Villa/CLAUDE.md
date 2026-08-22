@@ -73,8 +73,8 @@ API Laravel dans `../backend/`. `VITE_API_URL` pointe vers `.../api`.
 ## Design
 
 Le design system est en place : tokens dans `src/index.css`, primitifs
-`Button` / `Champ` / `Badge` dans `src/components/ui/`. Relevé de l'existant dans
-`../docs/02-DESIGN-SYSTEM-EXTRAIT.md`.
+`Button` / `Champ` / `Badge` dans `src/components/ui/`. Il n'existe plus de relevé
+séparé — les tokens font foi, et un document parallèle finissait par les contredire.
 
 **Couche de profondeur** (`src/styles/profondeur.css`, 18 août 2026) : perspective
 commune, `Inclinable` pour les cartes, élévations, entrée en scène, transition
@@ -135,16 +135,17 @@ elle, c'est l'URL Render. Détail et pièges dans `../docs/`.
 npx tsc -b          # doit passer
 npx eslint src      # doit être à zéro — c'est l'état actuel, ne pas le dégrader
 npm run build
-cd ../backend && php artisan test    # 229 tests
+cd ../backend && php artisan test    # 421 tests
 ```
 
 ---
 
 ## État et suite
 
-`../docs/08-AUDIT-COMPLET-ET-REFONTE.md` est l'état de référence (18 août 2026) :
-audit sécurité, corrections appliquées et vérifiées, PWA, refonte visuelle.
-`../docs/01-AUDIT-WEB.md` garde le plan en trois jalons d'origine.
+`../docs/11-CE-QUI-RESTE.md` dit où en est le produit et ce qui reste.
+`../docs/08-AUDIT-COMPLET-ET-REFONTE.md` garde la trace de l'audit du 18 août —
+sécurité, accessibilité, PWA — utile comme historique, pas comme état courant.
+`../docs/05-INFRASTRUCTURE.md` liste ce qui tourne et les variables qui le règlent.
 
 **Fait :** paiement Wave / Orange Money (encaissement réel validé) · PWA
 installable avec notifications poussées · 30 vulnérabilités Composer corrigées.

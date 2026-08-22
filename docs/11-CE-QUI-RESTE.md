@@ -10,7 +10,7 @@ _Écrit pour être lu sans connaître le code. Chaque point dit **ce que c'est**
 | | |
 |---|---|
 | **Le gros du design est construit** | tout ce qui restait au matin est en ligne |
-| **Une seule chose vous attend** | vos informations d'entreprise, pour les mentions légales |
+| **Une seule chose vous attend** | la réponse du juriste sur l'exercice sans société |
 | **Deux blocages ne dépendent de personne ici** | PayDunya et le juriste |
 | **Le reste est du polissage** | utile, mais rien qui empêche d'ouvrir |
 
@@ -51,17 +51,19 @@ la seule phrase qui compte : *aucun paiement n'a été prélevé*.
 
 ## 2. Ce qui vous attend, vous
 
-### Les mentions légales — une heure, et il ne manque que vos informations
+### Les mentions légales — elles attendent le juriste, finalement
 
-C'est le seul des quatre textes juridiques qui **n'a pas besoin du juriste** : raison
-sociale, adresse, registre de commerce, hébergeur, contact.
+Je pensais pouvoir les publier sans lui : il ne manquait, croyais-je, que vos
+informations d'entreprise. **Ces informations n'existent pas** — l'activité est exercée
+de manière informelle, sans société déclarée.
 
-**Pourquoi ça compte.** Les quatre pages portent aujourd'hui la même note d'attente, ce
-qui donne l'impression que rien n'est fait. Une page publiée sur quatre rend les trois
-autres crédibles.
+Publier des mentions légales revient donc à écrire noir sur blanc *qui* édite le site, et
+je ne sais pas ce qu'il est obligatoire d'y faire figurer quand l'éditeur est une
+personne physique non déclarée, ni ce qu'il serait imprudent d'y mettre. La question part
+au juriste dans la note du 22 août.
 
-> **Ce qu'il me faut :** raison sociale exacte, adresse du siège, numéro de registre de
-> commerce (NINEA / RCCM), et l'adresse de contact à publier.
+**La seule information disponible est l'adresse de contact** — `contactsmavilla@gmail.com` —
+et elle est déjà en ligne sur les quatre pages.
 
 ---
 
@@ -124,3 +126,18 @@ entre Saly et la Casamance. Le **net**, lui, s'affiche toujours.
 propriétaires d'un retard : délibérément non**, tant qu'aucun délai ne leur est promis —
 annoncer un retard contre une promesse inexistante crée l'inquiétude sans motif. À
 rouvrir le jour où vous annoncerez un délai.
+
+---
+
+## 6. Le point à ne pas laisser traîner
+
+La plateforme **encaisse de l'argent qui appartient à des propriétaires** et le conserve
+jusqu'à un virement fait à la main. Elle le fait aujourd'hui sans structure déclarée.
+
+Je ne sais pas si c'est tenable, et ce n'est pas à moi d'en juger — la question part au
+juriste dans la note du 22 août, formulée sans détour : l'encaissement pour le compte de
+tiers peut-il se faire ainsi, et sinon, qu'est-ce qui est le plus urgent — créer la
+société, ou cesser d'encaisser en attendant ?
+
+C'est le seul point de ce document qui pourrait obliger à **changer le fonctionnement du
+produit**, et pas seulement à écrire un texte. Tout le reste peut attendre.

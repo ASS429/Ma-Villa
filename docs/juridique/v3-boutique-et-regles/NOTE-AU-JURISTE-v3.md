@@ -2,13 +2,17 @@
 
 _22 août 2026. Fait suite aux notes du 10 août et du 18 août._
 
-**Objet.** Deux choses, et la seconde est la plus lourde.
+**Objet.** Trois choses, dans l'ordre inverse de leur importance.
 
 1. Un chiffre de la note du 18 août est devenu **faux** : le mode de calcul de la
    commission a changé le 21 août.
 2. **Un second métier est apparu** — la vente d'objets d'artisanat. Les quatre documents
    que vous avez relus ne le couvrent nulle part, et il ne relève pas du même droit que
    la location.
+3. **Il n'existe aucune société.** L'activité est exercée de manière informelle, par une
+   personne physique — pas de raison sociale, pas de siège déclaré, pas de registre de
+   commerce. Vos textes supposaient l'inverse. Voir le § 3, qui est le cœur de cette
+   note.
 
 Ce document décrit ce que le logiciel fait réellement au 22 août 2026. Il n'a pas valeur
 d'avis juridique et n'est pas destiné à être publié.
@@ -135,24 +139,51 @@ client. Quelle que soit la réponse, elle doit être écrite noir sur blanc.
 
 ### § 5 · Préavis avant un changement de taux de commission — **ouverte**
 
-### § 1 · Raison sociale de l'exploitant — **ouverte, et elle bloque autre chose**
+### § 1 · Raison sociale de l'exploitant — **il n'y en a pas**
 
-Elle bloque aussi les **mentions légales**, seul des quatre documents que nous pourrions
-publier sans attendre votre relecture. Une page publiée sur quatre rendrait les trois
-notes d'attente crédibles.
+C'est le point sur lequel nous avons le plus besoin de vous, et la réponse n'est pas
+celle que la question suppose.
 
-Il y manque quatre informations, dont une seule est désormais connue :
+**Il n'existe aujourd'hui aucune société.** Pas de raison sociale, pas de siège déclaré,
+pas de registre de commerce ni de NINEA. L'activité est exercée **de manière
+informelle**, par une personne physique.
 
-| | |
-|---|---|
-| Adresse de contact | **`contactsmavilla@gmail.com`** — déjà en ligne sur les quatre pages |
-| Raison sociale | à fournir |
-| Adresse du siège | à fournir |
-| Registre de commerce (RCCM) et NINEA | à fournir |
+La seule information d'entreprise dont nous disposons est l'adresse de contact —
+`contactsmavilla@gmail.com` — déjà publiée sur les quatre pages.
 
-L'hébergeur, lui, est connu : le site est servi par Render, l'interface applicative par
-Railway, tous deux hors du Sénégal. Si cela appelle une mention particulière sur le
-transfert de données, dites-le nous.
+L'hébergement, lui, est connu : le site est servi par Render, l'interface applicative par
+Railway, tous deux hors du Sénégal.
+
+> **Ce que nous vous demandons, dans cet ordre :**
+>
+> 1. **Peut-on publier des mentions légales sans société ?** Si oui, quelles mentions
+>    tiennent lieu d'identification de l'éditeur — nom de la personne physique, adresse
+>    personnelle, autre chose ? Nous ne savons pas ce qu'il est obligatoire d'y faire
+>    figurer, ni ce qu'il est prudent de ne pas y mettre.
+> 2. **Les conditions générales peuvent-elles nommer une personne physique** là où elles
+>    prévoyaient une raison sociale, sans autre changement ?
+> 3. **À partir de quel seuil la déclaration devient-elle exigible ?** Chiffre d'affaires,
+>    nombre de transactions, ancienneté — nous préférons connaître la limite avant de
+>    l'atteindre.
+
+### Le point que cela rend urgent
+
+La note du 18 août signalait déjà que la plateforme **détient des fonds appartenant à des
+tiers** entre l'encaissement et le reversement. Cette question se posait alors en
+théorie ; elle se pose maintenant en pratique, puisqu'aucune structure ne porte
+l'activité.
+
+Concrètement, aujourd'hui : l'argent des clients arrive sur un compte marchand PayDunya,
+et la part des propriétaires y reste jusqu'à un virement fait à la main. Nous ne savons
+pas si cette situation est tenable en l'état, ni ce qu'elle expose.
+
+> **Ce que nous vous demandons :** est-ce que l'encaissement pour le compte de tiers peut
+> se faire sans structure déclarée ? Si non, qu'est-ce qui est le plus urgent — créer la
+> société, ou cesser d'encaisser en attendant et revenir au règlement direct entre client
+> et propriétaire ?
+
+Nous n'avons pas d'avis sur la réponse. Nous avons besoin de la vôtre pour savoir si le
+produit peut continuer de fonctionner comme il fonctionne.
 
 ---
 
@@ -203,18 +234,14 @@ livraison — des données plus précises que ce que la location collecte.
 
 ---
 
-## 6. Ce qui n'a pas changé et reste sans réponse
+## 6. Ce qui n'a pas changé
 
-Tout le § 4 de la note du 18 août demeure d'actualité :
+L'encaissement fonctionne comme décrit le 18 août : Wave et Orange Money, par PayDunya,
+en argent réel. Le remboursement et le reversement restent des gestes manuels.
 
-- Ma Villa **détient des fonds appartenant à des tiers** entre l'encaissement et le
-  reversement.
-- Exercer cette activité en **personne physique** est-il tenable ?
-- L'encaissement pour compte de tiers appelle-t-il un **statut ou une déclaration**
-  particulière au Sénégal ?
-
-S'y ajoute désormais une activité de **vente pour compte propre**, ce qui n'est pas la
-même chose et peut appeler d'autres obligations.
+S'ajoute désormais une activité de **vente pour compte propre** — la boutique — qui n'est
+pas de même nature que l'encaissement pour compte de tiers et peut appeler d'autres
+obligations. Les deux coexistent sous la même absence de structure.
 
 ---
 
