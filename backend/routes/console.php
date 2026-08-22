@@ -25,6 +25,19 @@ Artisan::command('inspire', function () {
  | ne pas marteler l'API du prestataire. `withoutOverlapping` évite deux passes
  | simultanées sur la même transaction si l'une prend du retard.
  */
+/*
+ | Une demande sans reponse coute plus cher qu'un refus : le client attend, ne
+ | cherche pas ailleurs, et decouvre trop tard qu'il n'a nulle part ou dormir.
+ |
+ | Toutes les heures : le delai est de vingt-quatre heures, une precision a
+ | l'heure suffit et evite de reveiller la base toutes les cinq minutes pour
+ | une requete qui ne rendra presque toujours rien.
+ */
+Schedule::command('mavilla:annuler-demandes-sans-reponse')
+    ->hourly()
+    ->withoutOverlapping()
+    ->runInBackground();
+
 Schedule::command('mavilla:suivre-reversements')
     ->everyFiveMinutes()
     ->withoutOverlapping()
