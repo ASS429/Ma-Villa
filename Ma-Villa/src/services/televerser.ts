@@ -1,4 +1,5 @@
 import { URL_API } from './api'
+import { poidsLisible, reduireImage } from '../lib/image'
 
 /**
  * Envoie un fichier au serveur et renvoie son URL publique.
@@ -15,8 +16,13 @@ import { URL_API } from './api'
  * développement — c'est-à-dire nulle part où un propriétaire publie vraiment.
  */
 export async function televerserFichier(fichier: File): Promise<string> {
+  // Réduite avant l'envoi si elle dépasse le seuil. Sur un forfait payé au
+  // volume, envoyer huit mégaoctets pour se les faire refuser coûte de
+  // l'argent à celui qui publie — et bloquait dix-sept annonces.
+  const aEnvoyer = await reduireImage(fichier)
+
   const corps = new FormData()
-  corps.append('file', fichier)
+  corps.append('file', aEnvoyer)
 
   let reponse: Response
   try {
@@ -39,8 +45,10 @@ export async function televerserFichier(fichier: File): Promise<string> {
 
   // Les deux refus qu'un propriétaire rencontre réellement méritent un message
   // qui dit quoi faire, pas un « échec » sans suite.
+  // La cause en deux mots, avec le poids : « Trop lourde · 8,4 Mo » se
+  // comprend et se répare, « échec » ne se répare pas.
   if (reponse.status === 413) {
-    throw new Error('Ce fichier est trop lourd. Choisissez une image plus légère.')
+    throw new Error(`Trop lourde · ${poidsLisible(aEnvoyer.size)} — même après réduction.`)
   }
   if (reponse.status === 422) {
     const donnees = await reponse.json().catch(() => ({}))
