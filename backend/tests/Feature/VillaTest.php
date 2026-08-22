@@ -356,7 +356,11 @@ class VillaTest extends TestCase
                  'telephone'   => '+221 77 000 00 00',
              ]);
 
-        $response->assertStatus(201)->assertJsonFragment(['nom' => 'Villa Ngor', 'statut' => 'en_attente']);
+        // Même complète, une annonce naît en **brouillon** : c'est le
+        // propriétaire qui décide de la soumettre, par `POST /villas/{id}/publier`.
+        // Créer et soumettre étaient un seul geste ; les séparer est ce qui
+        // permet de s'arrêter au milieu sans rien perdre.
+        $response->assertStatus(201)->assertJsonFragment(['nom' => 'Villa Ngor', 'statut' => 'brouillon']);
         $this->assertDatabaseHas('villas', ['nom' => 'Villa Ngor', 'user_id' => $proprietaire->id]);
     }
 

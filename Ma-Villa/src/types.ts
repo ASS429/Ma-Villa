@@ -13,7 +13,12 @@ export type TypeTarif = 'journee' | 'nuitee' | 'demi_journee' | 'pass'
 
 export type StatutReservation = 'en_attente' | 'confirmee' | 'annulee'
 
-export type StatutVilla = 'en_attente' | 'validee' | 'rejetee'
+/**
+ * `brouillon` : l'annonce existe pour son auteur seul. Ni le public ni la
+ * modération ne la voient — c'est ce qui permet de remplir le formulaire en
+ * plusieurs fois sans encombrer la file de validation.
+ */
+export type StatutVilla = 'brouillon' | 'en_attente' | 'validee' | 'rejetee'
 
 export interface User {
   id: number
@@ -180,6 +185,7 @@ export const LIBELLES_LOGEMENT: Record<TypeLogement, string> = {
  * de gestion. Une clé de base de données n'est pas un libellé.
  */
 export const LIBELLES_STATUT_VILLA: Record<StatutVilla, string> = {
+  brouillon: 'Brouillon',
   en_attente: 'En attente de validation',
   validee: 'Publiée',
   rejetee: 'Rejetée',

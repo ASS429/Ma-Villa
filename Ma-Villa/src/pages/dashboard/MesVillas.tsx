@@ -10,14 +10,15 @@ interface Villa {
   id: number
   nom: string
   ville: string
-  statut: 'en_attente' | 'validee' | 'rejetee'
+  statut: 'brouillon' | 'en_attente' | 'validee' | 'rejetee'
   telephone: string
   created_at: string
 }
 
 /* Tons issus du composant Badge, donc des tokens : les couleurs Tailwind
    écrites en dur ne suivaient pas le thème sombre. */
-const STATUT: Record<Villa['statut'], { label: string; ton: 'warning' | 'success' | 'danger' }> = {
+const STATUT: Record<Villa['statut'], { label: string; ton: 'warning' | 'success' | 'danger' | 'neutre' }> = {
+  brouillon: { label: 'Brouillon', ton: 'neutre' },
   en_attente: { label: 'En attente', ton: 'warning' },
   validee: { label: 'Publiée', ton: 'success' },
   rejetee: { label: 'Rejetée', ton: 'danger' },
@@ -81,12 +82,23 @@ export default function MesVillas() {
             const statut = STATUT[villa.statut]
 
             return (
-              <Link key={villa.id} to={`/dashboard/villas/${villa.id}`} className="panneau raccourci">
+              <Link
+                key={villa.id}
+                // Un brouillon se reprend dans le formulaire, là où il a été
+                // laissé ; l'écran de gestion suppose une annonce complète et
+                // n'aurait presque rien à montrer.
+                to={villa.statut === 'brouillon'
+                  ? `/dashboard/villas/nouvelle?brouillon=${villa.id}`
+                  : `/dashboard/villas/${villa.id}`}
+                className="panneau raccourci"
+              >
                 <span className="chiffre-icone" aria-hidden="true"><Building2 size={16} /></span>
 
                 <span className="raccourci-texte">
                   <span className="raccourci-titre">{villa.nom}</span>
-                  <span className="raccourci-detail">{villa.ville} · déposée {depuis(villa.created_at)}</span>
+                  <span className="raccourci-detail">
+                    {villa.ville} · {villa.statut === 'brouillon' ? 'commencée' : 'déposée'} {depuis(villa.created_at)}
+                  </span>
                 </span>
 
                 <Badge ton={statut.ton}>{statut.label}</Badge>

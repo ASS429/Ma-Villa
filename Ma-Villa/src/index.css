@@ -2412,3 +2412,291 @@ html.video-mode[data-theme="dark"] {
 .apres-note svg { flex: none; margin-top: 2px; }
 .apres-note a { color: var(--text-2); text-decoration: underline; }
 .apres-note a:hover { color: var(--text-1); }
+
+/* ══════════════════════════════════════════════════════════════
+   Publier une villa
+   ══════════════════════════════════════════════════════════════
+
+   Le seul écran dont l'échec se mesure en annonces qui n'existent
+   pas. Tout ici sert à rendre l'abandon réversible : une question
+   à la fois, un chemin visible, et un aperçu permanent de ce qu'on
+   est en train de fabriquer.
+
+   Les champs sont stylés par descendance plutôt que par une classe
+   de plus : `.champ` existe déjà et porte la mise en colonne ; ce
+   qui manquait n'était que l'apparence du contrôle.
+*/
+
+.publication-entete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.publication-brouillon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 6px var(--space-3);
+  border-radius: var(--r-full);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  color: var(--success);
+  font: var(--t-caption);
+  font-weight: 500;
+}
+
+.publication-corps {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr) 260px;
+  gap: var(--space-5);
+  align-items: start;
+}
+
+/* ── Le chemin ─────────────────────────────────────────────── */
+
+.publication-etapes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.publication-etape {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--r-md);
+  font: var(--t-body-sm);
+  color: var(--text-3);
+}
+.publication-etape.est-courante { background: var(--bg-elevated); color: var(--text-1); font-weight: 600; }
+.publication-etape.est-faite { color: var(--text-2); }
+
+.publication-puce {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-full);
+  border: 1px solid var(--border-strong);
+  font: var(--t-caption);
+  font-variant-numeric: lining-nums;
+}
+.publication-etape.est-courante .publication-puce {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+.publication-etape.est-faite .publication-puce {
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  border-color: transparent;
+  color: var(--success);
+}
+
+/* ── La question du moment ─────────────────────────────────── */
+
+.publication-panneau {
+  padding: var(--space-5);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+}
+
+.publication-titre { margin: 0; font: var(--t-h3); color: var(--text-1); }
+
+.publication-aide {
+  margin: var(--space-2) 0 var(--space-5);
+  font: var(--t-body-sm);
+  color: var(--text-2);
+  max-width: 58ch;
+  text-wrap: pretty;
+}
+
+.publication-champs { display: flex; flex-direction: column; gap: var(--space-4); }
+
+.publication-panneau .champ > span {
+  font: var(--t-label);
+  color: var(--text-2);
+}
+
+.publication-panneau .champ input,
+.publication-panneau .champ select,
+.publication-panneau .champ textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 11px 14px;
+  border-radius: var(--r-md);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--text-1);
+  font: var(--t-body);
+}
+.publication-panneau .champ textarea { min-height: 120px; resize: vertical; }
+.publication-panneau .champ input::placeholder,
+.publication-panneau .champ textarea::placeholder { color: var(--text-3); }
+.publication-panneau .champ input:focus,
+.publication-panneau .champ select:focus,
+.publication-panneau .champ textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.publication-options { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+.publication-option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  font: var(--t-body-sm);
+  color: var(--text-1);
+  cursor: pointer;
+}
+.publication-option input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+.publication-position { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.publication-position-lue { font: var(--t-caption); color: var(--text-3); font-variant-numeric: lining-nums; }
+
+/* ── Le net et la fourchette ───────────────────────────────── */
+
+.publication-net {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--r-md);
+  background: var(--accent-bg);
+  font: var(--t-body-sm);
+  color: var(--text-2);
+  text-wrap: pretty;
+}
+.publication-net strong { color: var(--text-1); font-variant-numeric: lining-nums tabular-nums; }
+
+.publication-repere {
+  margin: 0;
+  font: var(--t-caption);
+  color: var(--text-2);
+  text-wrap: pretty;
+}
+.publication-repere strong { color: var(--text-1); font-variant-numeric: lining-nums tabular-nums; }
+.publication-repere.est-muet { color: var(--text-3); }
+
+.publication-erreur {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  color: var(--danger);
+  font: var(--t-body-sm);
+}
+
+.publication-manques {
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--r-md);
+  border: 1px solid color-mix(in srgb, var(--warning) 45%, var(--border));
+  font: var(--t-body-sm);
+  color: var(--text-2);
+}
+.publication-manques p { margin: 0 0 var(--space-2); font-weight: 600; color: var(--text-1); }
+.publication-manques ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.publication-manques button {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.publication-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+.publication-espace { flex: 1; }
+
+/* ── L'aperçu ──────────────────────────────────────────────── */
+
+.publication-apercu { position: sticky; top: var(--space-5); }
+
+.publication-apercu-titre {
+  margin: 0 0 var(--space-2);
+  font: var(--t-eyebrow);
+  letter-spacing: var(--t-eyebrow-ls);
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.apercu-carte {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.apercu-photo {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  background: var(--bg-elevated);
+  font: var(--t-caption);
+  color: var(--text-3);
+}
+.apercu-photo img { width: 100%; height: 100%; object-fit: cover; }
+
+.apercu-corps { padding: var(--space-3) var(--space-4) var(--space-4); }
+.apercu-nom { margin: 0; font: var(--t-body); font-weight: 600; color: var(--text-1); }
+.apercu-ville { margin: 2px 0 0; font: var(--t-caption); color: var(--text-3); }
+.apercu-prix { margin: var(--space-2) 0 0; font: var(--t-body-sm); color: var(--text-2); }
+.apercu-prix strong { color: var(--text-1); font-variant-numeric: lining-nums tabular-nums; }
+
+/* Les trous sont nommés, jamais remplis par un exemple : un aperçu
+   qui invente laisse publier une annonce qu'on n'a pas relue. */
+.apercu-nom em, .apercu-ville em, .apercu-prix em { color: var(--text-3); font-style: italic; }
+
+.publication-apercu-note {
+  margin: var(--space-3) 0 0;
+  font: var(--t-caption);
+  color: var(--text-3);
+  text-wrap: pretty;
+}
+
+/* ── Étroit ────────────────────────────────────────────────── */
+
+@media (max-width: 1100px) {
+  .publication-corps { grid-template-columns: minmax(0, 1fr); }
+
+  /* Le chemin passe à l'horizontale et défile : empilé, il repousse
+     la question sous la ligne de flottaison. */
+  .publication-etapes {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: var(--space-2);
+    padding-bottom: var(--space-2);
+    scrollbar-width: none;
+  }
+  .publication-etapes::-webkit-scrollbar { display: none; }
+  .publication-etape { flex: none; white-space: nowrap; }
+
+  /* L'aperçu passe en dessous : il informe, il ne guide pas. */
+  .publication-apercu { position: static; }
+  .apercu-carte { max-width: 320px; }
+}
+
+@media (max-width: 560px) {
+  .publication-panneau { padding: var(--space-4); }
+  .publication-actions { flex-wrap: wrap; }
+  .publication-espace { display: none; }
+  .publication-actions .btn { flex: 1 1 auto; justify-content: center; }
+}

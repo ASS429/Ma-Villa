@@ -8,6 +8,7 @@ use App\Models\Logement;
 use App\Models\Reservation;
 use App\Models\Tarif;
 use App\Models\Villa;
+use App\Services\Commission;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -232,11 +233,185 @@ class VillaController extends Controller
         return response()->json($villas);
     }
 
+    /**
+     * Ouvre un brouillon.
+     *
+     * Un nom et une ville suffisent. Le reste s'ajoute étape par étape, et
+     * chaque étape est enregistrée : l'abandon devient réversible au lieu
+     * d'être empêché. Tant que l'annonce est un brouillon, elle n'existe ni
+     * pour le public ni pour la modération.
+     */
     public function store(VillaRequest $request): JsonResponse
     {
-        $villa = $request->user()->villas()->create($request->validated());
+        $villa = $request->user()->villas()->create(
+            $request->validated() + ['statut' => 'brouillon']
+        );
 
         return response()->json($villa, 201);
+    }
+
+    /**
+     * Soumet un brouillon à la modération.
+     *
+     * C'est **ici** que la complétude se vérifie, et nulle part ailleurs.
+     * L'ancien formulaire l'exigeait à la création, ce qui revenait à refuser
+     * de commencer tant qu'on n'avait pas fini.
+     *
+     * Ce qui est exigé est le minimum vendable : de quoi savoir ce qu'on loue
+     * (un logement), à quel prix (une formule), et comment joindre le
+     * propriétaire. Les photos n'en font pas partie — le plafond de cinq est
+     * une limite de stockage, pas un seuil de qualité, et l'utilisateur a
+     * explicitement écarté tout plancher.
+     */
+    public function publier(Request $request, Villa $villa): JsonResponse
+    {
+        if ($villa->user_id !== $request->user()->id) {
+            return response()->json(['message' => "Cette annonce n'est pas la vôtre."], 403);
+        }
+
+        if ($villa->statut !== 'brouillon' && $villa->statut !== 'rejetee') {
+            return response()->json([
+                'message' => $villa->statut === 'validee'
+                    ? 'Cette annonce est déjà en ligne.'
+                    : 'Cette annonce est déjà soumise à validation.',
+            ], 422);
+        }
+
+        $manques = $this->ceQuiManque($villa);
+
+        if ($manques !== []) {
+            // 422 avec le détail : l'écran affiche l'étape à reprendre plutôt
+            // qu'un refus qui laisse chercher.
+            return response()->json([
+                'message' => 'Il manque encore quelque chose pour publier.',
+                'manques' => $manques,
+            ], 422);
+        }
+
+        $villa->update(['statut' => 'en_attente']);
+
+        return response()->json($villa->fresh());
+    }
+
+    /**
+     * Ce qu'il manque au brouillon, dit par étape.
+     *
+     * Chaque entrée porte l'étape concernée : l'écran sait alors où renvoyer,
+     * ce qu'une liste de champs ne permettrait pas — « tarif_id manquant » ne
+     * dit pas quoi faire.
+     */
+    private function ceQuiManque(Villa $villa): array
+    {
+        $manques = [];
+
+        if (blank($villa->adresse)) {
+            $manques[] = ['etape' => 'adresse', 'message' => "L'adresse du logement n'est pas renseignée."];
+        }
+
+        if (blank($villa->telephone)) {
+            $manques[] = ['etape' => 'adresse', 'message' => 'Aucun numéro ne permet de vous joindre.'];
+        }
+
+        if (blank($villa->description)) {
+            $manques[] = ['etape' => 'description', 'message' => "L'annonce n'a pas de description."];
+        }
+
+        $logement = $villa->logements()->withCount('tarifs')->first();
+
+        if (! $logement) {
+            $manques[] = ['etape' => 'logement', 'message' => "Aucun logement n'a été décrit."];
+        } elseif ($logement->tarifs_count === 0) {
+            $manques[] = ['etape' => 'prix', 'message' => 'Aucun tarif n\'a été fixé.'];
+        }
+
+        return $manques;
+    }
+
+    /**
+     * Ce que gagne le propriétaire, et ce qui se pratique autour.
+     *
+     * Deux chiffres, à l'étape où il hésite le plus. Le **net** d'abord :
+     * sans lui, il découvre la commission après la première réservation, ce
+     * qui est le meilleur moyen de le perdre. La **fourchette locale**
+     * ensuite, et seulement si elle veut dire quelque chose.
+     *
+     * ⚠️ Le seuil est le point à ne pas perdre. À Ziguinchor avec neuf
+     * villas, une fourchette est une invention : un propriétaire qui fixe son
+     * prix dessus le regrettera, et c'est nous qui le lui aurons soufflé. En
+     * dessous du seuil, on ne renvoie rien — pas une médiane nationale, qui
+     * serait fausse dans les deux sens entre Saly et la Casamance.
+     */
+    public function reperesDePrix(Request $request): JsonResponse
+    {
+        $donnees = $request->validate([
+            'ville'          => 'required|string|max:100',
+            'prix'           => 'sometimes|nullable|numeric|min:0',
+            // Sans ces deux-là, la fourchette compare une piscine à la
+            // journée avec une villa entière à la semaine. Le chiffre serait
+            // exact et la comparaison absurde — c'est précisément le défaut
+            // que le designer signalait.
+            'type_tarif'     => 'sometimes|nullable|in:journee,nuitee,demi_journee,pass',
+            'type_logement'  => 'sometimes|nullable|in:villa_entiere,appartement,chambre,piscine',
+        ]);
+
+        $seuil = (int) config('annonces.reperes_prix_minimum', 10);
+
+        $prix = Tarif::query()
+            ->when(filled($donnees['type_tarif'] ?? null),
+                fn (Builder $q) => $q->where('type_tarif', $donnees['type_tarif']))
+            ->whereHas('logement', fn (Builder $q) => $q
+                ->when(filled($donnees['type_logement'] ?? null),
+                    fn (Builder $l) => $l->where('type', $donnees['type_logement'])))
+            ->whereHas('logement.villa', fn (Builder $q) => $q
+                ->where('statut', 'validee')
+                ->where('ville', 'like', $donnees['ville']))
+            ->orderBy('prix')
+            ->pluck('prix')
+            ->map(fn ($p) => (int) $p)
+            ->values();
+
+        $net = null;
+        if (! blank($donnees['prix'] ?? null) && (int) $donnees['prix'] > 0) {
+            $repartition = Commission::pour((int) $donnees['prix']);
+            $net = [
+                'proprietaire' => $repartition->montantProprietaire,
+                'commission'   => $repartition->commission,
+                'taux'         => round($repartition->taux * 100, 1),
+            ];
+        }
+
+        if ($prix->count() < $seuil) {
+            return response()->json([
+                'ville'      => $donnees['ville'],
+                'comparable' => false,
+                'annonces'   => $prix->count(),
+                'seuil'      => $seuil,
+                'net'        => $net,
+            ]);
+        }
+
+        // Les extrêmes d'une petite population sont du bruit : une villa de
+        // standing et un studio bradé écraseraient la fourchette. Les quartiles
+        // décrivent ce qui se pratique vraiment.
+        $quartile = function (float $position) use ($prix) {
+            $rang = ($prix->count() - 1) * $position;
+            $bas = (int) floor($rang);
+            $haut = (int) ceil($rang);
+
+            return $bas === $haut
+                ? $prix[$bas]
+                : (int) round($prix[$bas] + ($prix[$haut] - $prix[$bas]) * ($rang - $bas));
+        };
+
+        return response()->json([
+            'ville'      => $donnees['ville'],
+            'comparable' => true,
+            'annonces'   => $prix->count(),
+            'bas'        => $quartile(0.25),
+            'haut'       => $quartile(0.75),
+            'median'     => $quartile(0.5),
+            'net'        => $net,
+        ]);
     }
 
     public function show(Request $request, Villa $villa): JsonResponse

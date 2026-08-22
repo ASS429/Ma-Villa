@@ -83,6 +83,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/villas/{villa}', [VillaController::class, 'update']);
     Route::delete('/villas/{villa}', [VillaController::class, 'destroy']);
 
+    // Soumettre un brouillon. C'est ici que la complétude se vérifie — la
+    // création, elle, ne demande qu'un nom et une ville.
+    Route::post('/villas/{villa}/publier', [VillaController::class, 'publier']);
+
+    // Ce que le propriétaire gagnera, et ce qui se pratique dans sa ville.
+    // À l'étape du prix, où il hésite le plus.
+    Route::get('/reperes-de-prix', [VillaController::class, 'reperesDePrix']);
+
     // Logements
     Route::post('/villas/{villa}/logements', [LogementController::class, 'store']);
     Route::put('/villas/{villa}/logements/{logement}', [LogementController::class, 'update']);
