@@ -18,6 +18,14 @@ interface Props {
   videIcone?: typeof Inbox
   /** Ce qu'on dit quand il n'y a rien — jamais « aucun résultat ». */
   videTexte: ReactNode
+  /**
+   * La sortie offerte depuis le vide.
+   *
+   * Un écran vide sans issue est une impasse : on y arrive, on lit qu'il n'y
+   * a rien, et il faut ressortir par la navigation. Quand une action peut
+   * remplir l'écran — explorer, créer — elle a sa place ici.
+   */
+  videAction?: ReactNode
 
   /** Nombre de lignes fantômes pendant le chargement. */
   squelette?: number
@@ -46,7 +54,7 @@ interface Props {
 export default function ListeConsole({
   titre, sousTitre, outils,
   chargement, erreur, reessayer,
-  vide, videIcone: Icone = Inbox, videTexte,
+  vide, videIcone: Icone = Inbox, videTexte, videAction,
   squelette = 3,
   children,
 }: Props) {
@@ -81,6 +89,7 @@ export default function ListeConsole({
         <div className="console-vide">
           <span className="console-vide-icone"><Icone size={22} /></span>
           <p>{videTexte}</p>
+          {videAction}
         </div>
       ) : (
         children

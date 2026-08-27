@@ -10,6 +10,7 @@ import { LIBELLES_STATUT_COMMANDE, type Commande, type StatutCommande } from '..
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import Pagination from '../../components/console/Pagination'
+import ListeConsole from '../../components/console/ListeConsole'
 
 const TON: Record<StatutCommande, 'success' | 'warning' | 'danger' | 'neutre'> = {
   en_attente: 'warning',
@@ -70,13 +71,21 @@ export default function AdminCommandes() {
 
   return (
     <div>
-      <h1 className="console-titre">Commandes</h1>
-      <p className="console-sous-titre">
-        Un article par commande. Marquer une commande livrée la solde lorsqu'elle
-        est payable à la livraison — c'est le moment où l'argent change de mains.
-      </p>
-
-      <div className="console-filtres">
+      <ListeConsole
+        titre="Commandes"
+        sousTitre={<>
+          Un article par commande. Marquer une commande livrée la solde lorsqu'elle
+          est payable à la livraison — c'est le moment où l'argent change de mains.
+        </>}
+        chargement={chargement}
+        erreur={erreur}
+        reessayer={reessayer}
+        vide={liste.length === 0}
+        videIcone={ShoppingBag}
+        videTexte={filtre
+          ? 'Aucune commande dans cet état.'
+          : "Aucune commande pour l'instant. La boutique est ouverte, mais personne n'a encore acheté."}
+        outils={<div className="console-filtres">
         <div className="console-onglets" role="tablist">
           {FILTRES.map((f) => (
             <button
@@ -90,27 +99,9 @@ export default function AdminCommandes() {
             </button>
           ))}
         </div>
-      </div>
-
-      {erreur && !chargement && (
-        <div className="console-erreur" role="alert">
-          {erreur}
-          <Button variante="secondaire" taille="sm" onClick={reessayer}>Réessayer</Button>
-        </div>
-      )}
-
-      {chargement ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {[0, 1, 2].map((n) => <div key={n} className="skeleton" style={{ height: 92, borderRadius: 10 }} />)}
-        </div>
-      ) : liste.length === 0 ? (
-        <div className="console-vide">
-          <span className="console-vide-icone"><ShoppingBag size={22} /></span>
-          <p>Aucune commande {filtre ? 'dans cet état' : 'pour l\'instant'}.</p>
-        </div>
-      ) : (
-        <>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+      </div>}
+      >
+          <div className="liste-console">
             {liste.map((c) => {
               const suite = SUITE[c.statut]
               const aRegler = c.mode_paiement === 'en_ligne' && c.statut_paiement !== 'reussi'
@@ -189,8 +180,7 @@ export default function AdminCommandes() {
           </div>
 
           <Pagination page={resultat} onChange={setPage} unite="commandes" />
-        </>
-      )}
+      </ListeConsole>
     </div>
   )
 }

@@ -7,9 +7,10 @@ import { useConfig } from '../../context/ConfigContext'
 import { useMessages } from '../../context/MessagesContext'
 import { useToast } from '../../context/ToastContext'
 import { useRequete } from '../../lib/useRequete'
+import ListeConsole from '../../components/console/ListeConsole'
 import { messageErreur } from '../../lib/erreurs'
 import { fcfa, dateCourte, nuits } from '../../lib/format'
-import Button from '../../components/ui/Button'
+import Button, { ButtonLink } from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 
 interface Reservation {
@@ -108,16 +109,27 @@ export default function Reservations() {
 
   return (
     <div>
-      <h1 className="console-titre">Réservations</h1>
-      <p className="console-sous-titre">
-        {estProprietaire
+      <ListeConsole
+        titre="Réservations"
+        sousTitre={estProprietaire
           ? enAttente > 0
             ? `${enAttente} demande${enAttente > 1 ? 's' : ''} attend${enAttente > 1 ? 'ent' : ''} votre réponse.`
             : 'Aucune demande en attente.'
           : 'Vos séjours, et ce qu’il reste à régler.'}
-      </p>
-
-      <div className="console-filtres">
+        chargement={chargement}
+        erreur={erreur}
+        reessayer={reessayer}
+        vide={liste.length === 0}
+        videIcone={Inbox}
+        videTexte={filtre === 'toutes'
+          ? estProprietaire
+            ? <>Aucune réservation pour l'instant. Elles apparaîtront ici dès qu'un client réservera.</>
+            : <>Aucune réservation pour l'instant. Le séjour se réserve depuis la fiche d'une villa.</>
+          : 'Aucune réservation dans cette catégorie.'}
+        videAction={filtre === 'toutes' && !estProprietaire
+          ? <ButtonLink to="/villas" variante="primaire" taille="sm">Parcourir les villas</ButtonLink>
+          : undefined}
+        outils={<div className="console-filtres">
         <div className="console-onglets" role="tablist">
           {FILTRES.map((f) => (
             <button
@@ -131,37 +143,9 @@ export default function Reservations() {
             </button>
           ))}
         </div>
-      </div>
-
-      {erreur && !chargement && (
-        <div className="console-erreur" role="alert">
-          {erreur}
-          <Button variante="secondaire" taille="sm" onClick={reessayer}>Réessayer</Button>
-        </div>
-      )}
-
-      {chargement ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-          {[1, 2, 3].map((n) => (
-            <div key={n} className="panneau">
-              <div className="skeleton" style={{ height: 15, width: '40%', borderRadius: 6, marginBottom: 10 }} />
-              <div className="skeleton" style={{ height: 12, width: '60%', borderRadius: 6 }} />
-            </div>
-          ))}
-        </div>
-      ) : liste.length === 0 ? (
-        <div className="console-vide">
-          <span className="console-vide-icone"><Inbox size={22} /></span>
-          <p>
-            {filtre === 'toutes'
-              ? estProprietaire
-                ? <>Aucune réservation pour l'instant. Elles apparaîtront ici dès qu'un client réservera.</>
-                : <>Aucune réservation pour l'instant. <strong>Parcourez les villas</strong> pour en faire une.</>
-              : 'Aucune réservation dans cette catégorie.'}
-          </p>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+      </div>}
+      >
+        <div className="liste-console">
           {liste.map((r) => {
             const statut = STATUT[r.statut]
             const payable = paiement.actif && resteARegler(r, paiement.montant_minimum)
@@ -265,7 +249,7 @@ export default function Reservations() {
             )
           })}
         </div>
-      )}
+      </ListeConsole>
     </div>
   )
 }

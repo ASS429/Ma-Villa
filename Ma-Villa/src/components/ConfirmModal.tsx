@@ -73,8 +73,14 @@ export default function ConfirmModal({
           <button
             ref={confirmRef}
             onClick={onConfirm}
-            className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
-            style={{ background: danger ? 'var(--danger)' : 'var(--accent)' }}
+            /* `--on-accent` plutôt que du blanc en dur : c'est le bouton
+               d'une action irréversible, et sur l'accent clair du mode jour
+               le blanc tombait sous le seuil de contraste lisible. */
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90 active:scale-[0.98]"
+            style={{
+              background: danger ? 'var(--danger)' : 'var(--accent)',
+              color: danger ? 'var(--on-danger)' : 'var(--on-accent)',
+            }}
           >
             {confirmLabel}
           </button>

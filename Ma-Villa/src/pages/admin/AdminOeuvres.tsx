@@ -11,6 +11,7 @@ import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import { Champ, ChampSelection, ChampZoneTexte } from '../../components/ui/Champ'
 import Pagination from '../../components/console/Pagination'
+import ListeConsole from '../../components/console/ListeConsole'
 import TeleverseurPhotos from '../../components/console/TeleverseurPhotos'
 
 const TON: Record<StatutOeuvre, 'success' | 'warning' | 'neutre'> = {
@@ -20,10 +21,12 @@ const TON: Record<StatutOeuvre, 'success' | 'warning' | 'neutre'> = {
 }
 
 const FILTRES = [
-  { valeur: '', label: 'Toutes' },
+  { valeur: '', label: 'Tous' },
   { valeur: 'publiee', label: 'En vente' },
   { valeur: 'brouillon', label: 'Brouillons' },
-  { valeur: 'vendue', label: 'Vendues' },
+  // La valeur reste `vendue` — c'est l'énumération en base, elle ne se
+  // traduit pas. Seul le libellé suit le genre du mot « article ».
+  { valeur: 'vendue', label: 'Vendus' },
 ]
 
 /** Le formulaire vide, à l'ouverture. */
@@ -160,13 +163,19 @@ export default function AdminOeuvres() {
 
   return (
     <div>
-      <h1 className="console-titre">Articles</h1>
-      <p className="console-sous-titre">
-        Ma Villa est le seul vendeur : un article publiée part en vitrine sans
-        validation. Une pièce se vend une fois — commander la retire aussitôt.
-      </p>
-
-      <div className="console-filtres">
+      <ListeConsole
+        titre="Articles"
+        sousTitre={<>
+          Ma Villa est le seul vendeur : un article publié part en vitrine sans
+          validation. Une pièce se vend une fois — commander la retire aussitôt.
+        </>}
+        chargement={chargement}
+        erreur={erreur}
+        reessayer={reessayer}
+        vide={liste.length === 0}
+        videIcone={Palette}
+        videTexte={"Aucun article pour l'instant. Créez le premier : il restera en brouillon tant que vous ne l'aurez pas publié."}
+        outils={<div className="console-filtres">
         <div className="console-onglets" role="tablist">
           {FILTRES.map((f) => (
             <button
@@ -184,26 +193,8 @@ export default function AdminOeuvres() {
         <Button variante="primaire" taille="sm" onClick={ouvrirCreation} iconeAvant={<Plus size={15} />}>
           Nouvel article
         </Button>
-      </div>
-
-      {erreur && !chargement && (
-        <div className="console-erreur" role="alert">
-          {erreur}
-          <Button variante="secondaire" taille="sm" onClick={reessayer}>Réessayer</Button>
-        </div>
-      )}
-
-      {chargement ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {[0, 1, 2].map((n) => <div key={n} className="skeleton" style={{ height: 64, borderRadius: 10 }} />)}
-        </div>
-      ) : liste.length === 0 ? (
-        <div className="console-vide">
-          <span className="console-vide-icone"><Palette size={22} /></span>
-          <p>Aucun article pour l'instant. Créez la première : elle restera en brouillon tant que vous ne l'aurez pas publiée.</p>
-        </div>
-      ) : (
-        <>
+      </div>}
+      >
           <div className="admin-oeuvres">
             {liste.map((o) => (
               <button key={o.id} className="admin-oeuvre" onClick={() => ouvrirEdition(o)}>
@@ -228,8 +219,7 @@ export default function AdminOeuvres() {
           </div>
 
           <Pagination page={resultat} onChange={setPage} unite="articles" />
-        </>
-      )}
+      </ListeConsole>
 
       {ouvert && (
         <>
@@ -331,7 +321,7 @@ export default function AdminOeuvres() {
               >
                 <option value="brouillon">Brouillon</option>
                 <option value="publiee">En vente</option>
-                {edition?.statut === 'vendue' && <option value="vendue">Vendue</option>}
+                {edition?.statut === 'vendue' && <option value="vendue">Vendu</option>}
               </ChampSelection>
 
               <label className={`choix${formulaire.vedette ? ' est-actif' : ''}`}>

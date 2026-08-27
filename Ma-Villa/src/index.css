@@ -46,6 +46,7 @@
   --warning:       #9A5203;
   --danger:        #C42020;
   --on-accent:     #FFFFFF;
+  --on-danger:     #FFFFFF;
 
   /* Absents de la planche, déduits des tokens ci-dessus. */
   --bg-input:      rgba(0, 0, 0, 0.04);
@@ -161,6 +162,10 @@
   --warning:       #FBBF24;
   --danger:        #F87171;
   --on-accent:     #1A1614;
+  /* Le rouge sombre est **clair** : du blanc dessus donne 2,8 pour 1, sous le
+     seuil lisible. C'est le bouton d'une suppression — celui qu'il faut lire
+     avant de cliquer. */
+  --on-danger:     #1A1614;
 
   --bg-input:      rgba(255, 255, 255, 0.05);
   --header-bg:     rgba(12, 10, 8, 0.92);
@@ -368,7 +373,7 @@ body {
 
 .btn-danger {
   background: var(--danger);
-  color: #fff;
+  color: var(--on-danger);
 }
 .btn-danger:hover:not(:disabled) { opacity: 0.9; }
 
