@@ -91,21 +91,29 @@ d'un article. À régler avant d'ouvrir commercialement la boutique.
 
 ---
 
-## 4. Le polissage qui reste
+## 4. Le polissage — fait le 27 août
 
-Rien ici n'empêche d'ouvrir. Par ordre d'utilité :
+Tout est en ligne.
 
-- **Le tableau de bord de l'administration** (une demi-journée) : il fonctionne, mais le
-  design veut qu'il réponde à une seule question — « la plateforme va-t-elle bien ce
-  matin ? » — par un seul chiffre.
-- **Les quatre écrans d'authentification restants** (une journée) : mot de passe oublié,
-  réinitialisation, e-mail vérifié, inscription. Ils marchent ; c'est leur forme qui
-  n'est pas encore au niveau des écrans refaits.
-- **Les listes de l'administration** (deux jours) : utilisateurs, articles, commandes,
-  modération. Un gabarit commun, où ce qui change est la colonne qui porte le risque.
-- **Une page de maintenance** (une heure) : une durée annoncée et un numéro. Une
-  maintenance sans horaire de fin est indistinguable d'une panne.
-- **Gérer une villa**, **Réservations**, **Favoris**, **Profil** : mêmes remarques.
+**Le tableau de bord** répond à une seule question par un seul chiffre : les fonds
+détenus pour les propriétaires. Une phrase conclut, et elle penche du côté du problème
+dès qu'il y en a un.
+
+**Les erreurs d'authentification** descendent sous le champ qu'elles concernent. Les
+boutons restent gris tant que les champs requis manquent. Un lien expiré occupe l'écran
+avec une sortie, au lieu d'un bandeau rouge sur un formulaire devenu inutile.
+
+**Les sept listes** — cinq de l'administration, deux de l'espace personnel — partagent
+un gabarit. Ce qui reste propre à chaque écran est la colonne qui porte le risque.
+
+**Une page de maintenance** existe, qui ne charge rien : elle s'affiche même quand le
+reste est tombé. ⚠️ **L'heure de retour qu'elle annonce est à modifier à la main** avant
+de l'employer — une heure fausse est pire que pas d'heure.
+
+**Un défaut d'accessibilité trouvé en chemin :** le bouton de suppression portait du
+texte blanc sur rouge dans les deux thèmes. En mode sombre, le rouge est clair et le
+contraste tombait à 2,8 pour 1 — sur le bouton qu'il faut justement lire avant de
+cliquer. Corrigé, mesuré à 5,9 et 6,5 pour 1.
 
 ---
 
