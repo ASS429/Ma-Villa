@@ -2011,3 +2011,88 @@
 }
 .fonds-alerte svg { flex: none; margin-top: 2px; color: var(--warning); }
 .fonds-alerte strong { color: var(--text-1); font-weight: 600; }
+
+/* ══════════════════════════════════════════════════════════════
+   Tableau de bord — la seule question
+   ══════════════════════════════════════════════════════════════
+
+   « Est-ce que la plateforme va bien ce matin ? » Un chiffre, une
+   phrase. Les fonds détenus pour les propriétaires sont le seul
+   nombre dont une anomalie est un problème immédiat ; le reste du
+   tableau de bord est de la culture générale, et vient après.
+*/
+
+.verdict {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  margin-bottom: var(--space-5);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+}
+
+.verdict-chiffre { display: flex; align-items: center; gap: var(--space-3); flex: 1; min-width: 260px; }
+
+.verdict-icone {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-md);
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.verdict-libelle { margin: 0; font: var(--t-caption); color: var(--text-3); }
+
+.verdict-valeur {
+  margin: 2px 0 0;
+  font: var(--t-h1);
+  letter-spacing: var(--t-h1-ls);
+  color: var(--text-1);
+  /* Cormorant dessine des chiffres elzéviriens par défaut : sans cela,
+     « 170 000 » se lit « I7O OOO ». */
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.verdict-detail {
+  margin: 4px 0 0;
+  font: var(--t-caption);
+  color: var(--text-3);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* La phrase qui conclut. Elle prend le pas dès qu'il y a un problème :
+   un tableau de bord qui dit « tout va bien » alors qu'un versement est
+   bloqué ne sera plus jamais cru. */
+.verdict-phrase {
+  flex: 1 1 260px;
+  margin: 0;
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--border);
+  font: var(--t-body-sm);
+  color: var(--text-2);
+  text-wrap: pretty;
+}
+.verdict-phrase.est-alerte {
+  border-left-color: var(--warning);
+  color: var(--text-1);
+  font-weight: 500;
+}
+
+@media (max-width: 720px) {
+  .verdict { padding: var(--space-4); }
+  .verdict-phrase {
+    padding: var(--space-3) 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+  .verdict-phrase.est-alerte { border-left: 0; border-top-color: var(--warning); }
+}
+
+/* La pile de lignes d'une liste de console — un seul écart, partout. */
+.liste-console { display: flex; flex-direction: column; gap: var(--space-3); }

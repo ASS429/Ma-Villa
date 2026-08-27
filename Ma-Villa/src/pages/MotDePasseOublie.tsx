@@ -36,7 +36,7 @@ export default function MotDePasseOublie() {
 
       <CoquilleAuth
         titre="Mot de passe oublié"
-        sousTitre={envoye ? undefined : 'Nous vous enverrons un lien de réinitialisation.'}
+        sousTitre={envoye ? undefined : "Par adresse électronique — c'est le seul chemin de récupération."}
         pied={<Link to="/login" className="th-text-1 font-medium hover:underline underline-offset-4">Retour à la connexion</Link>}
       >
         {envoye ? (
@@ -62,11 +62,14 @@ export default function MotDePasseOublie() {
               autoComplete="email"
             />
 
+            {/* Gris tant que l'adresse manque, et `--on-accent` plutôt que
+                du blanc en dur : sur l'accent clair du mode jour, le blanc
+                tombait sous le seuil de contraste lisible. */}
             <button
               type="submit"
-              disabled={envoi}
-              className="py-3 rounded-xl font-semibold text-white transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50 disabled:translate-y-0 mt-1"
-              style={{ background: 'var(--accent)' }}
+              disabled={envoi || !email.trim()}
+              className="py-3 rounded-xl font-semibold transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50 disabled:translate-y-0 mt-1"
+              style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
             >
               {envoi ? 'Envoi…' : 'Envoyer le lien'}
             </button>

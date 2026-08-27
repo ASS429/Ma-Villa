@@ -5,8 +5,8 @@ import {
 import api from '../../services/api'
 import { useRequete } from '../../lib/useRequete'
 import { depuis } from '../../lib/format'
-import Button from '../../components/ui/Button'
 import Pagination from '../../components/console/Pagination'
+import ListeConsole from '../../components/console/ListeConsole'
 import { versPage, type Page } from '../../lib/page'
 
 interface Trace {
@@ -79,13 +79,23 @@ export default function AdminJournal() {
 
   return (
     <div>
-      <h1 className="console-titre">Journal</h1>
-      <p className="console-sous-titre">
-        Qui a validé, rejeté ou supprimé quoi, et quand. Devant un propriétaire qui
-        conteste un refus, c'est la seule chose à produire.
-      </p>
-
-      <div className="console-filtres">
+      <ListeConsole
+        titre="Journal"
+        sousTitre={<>
+          Qui a validé, rejeté ou supprimé quoi, et quand. Devant un propriétaire qui
+          conteste un refus, c'est la seule chose à produire.
+        </>}
+        chargement={chargement}
+        erreur={erreur}
+        reessayer={reessayer}
+        vide={traces.length === 0}
+        videIcone={ScrollText}
+        squelette={5}
+        videTexte={action
+          ? 'Aucune action de ce type pour l’instant.'
+          : <>Aucune action consignée. Le journal se remplit dès qu'une annonce est
+             validée, un avis ou un compte supprimé.</>}
+        outils={<div className="console-filtres">
         <div className="console-onglets" role="tablist">
           {FILTRES.map((f) => (
             <button
@@ -99,32 +109,8 @@ export default function AdminJournal() {
             </button>
           ))}
         </div>
-      </div>
-
-      {erreur && !chargement && (
-        <div className="console-erreur" role="alert">
-          {erreur}
-          <Button variante="secondaire" taille="sm" onClick={reessayer}>Réessayer</Button>
-        </div>
-      )}
-
-      {chargement ? (
-        <div className="tableau-cadre" style={{ padding: 'var(--space-4)' }}>
-          {[1, 2, 3, 4, 5].map((n) => (
-            <div key={n} className="skeleton" style={{ height: 40, borderRadius: 10, marginBottom: 8 }} />
-          ))}
-        </div>
-      ) : traces.length === 0 ? (
-        <div className="console-vide">
-          <span className="console-vide-icone"><ScrollText size={22} /></span>
-          <p>
-            {action
-              ? 'Aucune action de ce type pour l’instant.'
-              : <>Aucune action consignée. Le journal se remplit dès qu'une annonce est
-                 validée, un avis ou un compte supprimé.</>}
-          </p>
-        </div>
-      ) : (
+      </div>}
+      >
         <div className="tableau-cadre">
           <table className="tableau">
             <thead>
@@ -178,9 +164,9 @@ export default function AdminJournal() {
             </tbody>
           </table>
         </div>
-      )}
 
-      <Pagination page={page_} onChange={setPage} unite="action" />
+        <Pagination page={page_} onChange={setPage} unite="action" />
+      </ListeConsole>
     </div>
   )
 }

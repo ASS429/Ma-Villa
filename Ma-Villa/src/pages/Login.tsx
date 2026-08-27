@@ -5,7 +5,7 @@ import CoquilleAuth, { AlerteAuth } from '../components/CoquilleAuth'
 import FloatingInput from '../components/FloatingInput'
 import Seo from '../components/Seo'
 import Button from '../components/ui/Button'
-import { messageErreur } from '../lib/erreurs'
+import { erreursParChamp, messageErreur } from '../lib/erreurs'
 
 function IconEye({ show }: { show: boolean }) {
   return show ? (
@@ -26,6 +26,11 @@ export default function Login() {
   const [params] = useSearchParams()
   const [form, setForm] = useState({ identifiant: '', password: '' })
   const [error, setError] = useState('')
+  // Les erreurs de champ vont sous le champ, jamais en bandeau : un message
+  // affiché en haut oblige à relire tout le formulaire pour savoir où
+  // corriger. Le bandeau ne garde que ce qui ne concerne aucun champ — une
+  // panne de réseau, un serveur qui ne répond pas.
+  const [erreursChamp, setErreursChamp] = useState<Record<string, string>>({})
   const [showPassword, setShowPassword] = useState(false)
 
   // Après une session expirée, on ramène l'utilisateur là où il était.
@@ -39,11 +44,17 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setErreursChamp({})
     try {
       const { user } = await login(form.identifiant, form.password)
       navigate(destination(user.role))
     } catch (err) {
-      setError(messageErreur(err, 'Email ou mot de passe incorrect.'))
+      const champs = erreursParChamp(err)
+      if (Object.keys(champs).length > 0) {
+        setErreursChamp(champs)
+      } else {
+        setError(messageErreur(err, 'La connexion a échoué.'))
+      }
     }
   }
 
@@ -80,6 +91,7 @@ export default function Login() {
           value={form.identifiant}
           onChange={(e) => setForm({ ...form, identifiant: e.target.value })}
           autoComplete="username"
+          error={erreursChamp.identifiant ?? erreursChamp.email}
         />
 
         <FloatingInput
@@ -89,6 +101,7 @@ export default function Login() {
           value={form.password}
           onChange={(e) => setForm({ ...form, password: e.target.value })}
           autoComplete="current-password"
+          error={erreursChamp.password}
           rightElement={
             // Nommé et atteignable au clavier : sans nom, un lecteur d'écran
             // annonce « bouton » sans dire lequel ; exclu de la tabulation, il
@@ -115,8 +128,20 @@ export default function Login() {
           </Link>
         </div>
 
-        <Button type="submit" variante="primaire" taille="md" bloc chargement={isLoading} className="mt-1">
-          Se connecter
+        {/* Gris tant que les deux champs manquent, et sans message d'erreur
+            préventif : on ne reproche rien à quelqu'un qui n'a pas fini de
+            taper. Le libellé change pendant l'envoi, le bouton garde sa
+            taille — un bouton qui rétrécit fait sauter la mise en page. */}
+        <Button
+          type="submit"
+          variante="primaire"
+          taille="md"
+          bloc
+          chargement={isLoading}
+          disabled={!form.identifiant.trim() || !form.password}
+          className="mt-1"
+        >
+          {isLoading ? 'Vérification…' : 'Se connecter'}
         </Button>
       </form>
     </CoquilleAuth>

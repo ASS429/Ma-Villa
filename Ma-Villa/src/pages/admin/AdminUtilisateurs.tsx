@@ -10,6 +10,7 @@ import ConfirmModal from '../../components/ConfirmModal'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import Pagination from '../../components/console/Pagination'
+import ListeConsole from '../../components/console/ListeConsole'
 import { versPage, type Page } from '../../lib/page'
 
 interface Utilisateur {
@@ -98,12 +99,21 @@ export default function AdminUtilisateurs() {
         />
       )}
 
-      <h1 className="console-titre">Utilisateurs</h1>
-      <p className="console-sous-titre">
-        {page_ ? `${page_.total} compte${page_.total > 1 ? 's' : ''} sur la plateforme` : 'Comptes de la plateforme'}
-      </p>
-
-      <div className="console-filtres">
+      <ListeConsole
+        titre="Utilisateurs"
+        sousTitre={page_
+          ? `${page_.total} compte${page_.total > 1 ? 's' : ''} sur la plateforme`
+          : 'Comptes de la plateforme'}
+        chargement={chargement}
+        erreur={erreur}
+        reessayer={reessayer}
+        vide={comptes.length === 0}
+        videIcone={Users}
+        squelette={5}
+        videTexte={terme
+          ? <>Aucun compte ne correspond à <strong>{terme}</strong>.</>
+          : 'Aucun compte pour ce filtre.'}
+        outils={<div className="console-filtres">
         <div className="console-onglets" role="tablist">
           {FILTRES.map((f) => (
             <button
@@ -129,34 +139,11 @@ export default function AdminUtilisateurs() {
             aria-label="Rechercher un compte"
           />
         </div>
-      </div>
-
-      {erreur && !chargement && (
-        <div className="console-erreur" role="alert">
-          {erreur}
-          <Button variante="secondaire" taille="sm" onClick={reessayer} >Réessayer</Button>
-        </div>
-      )}
-
-      {chargement ? (
-        <div className="tableau-cadre" style={{ padding: 'var(--space-4)' }}>
-          {[1, 2, 3, 4, 5].map((n) => (
-            <div key={n} className="skeleton" style={{ height: 44, borderRadius: 10, marginBottom: 8 }} />
-          ))}
-        </div>
-      ) : comptes.length === 0 ? (
-        <div className="console-vide">
-          <span className="console-vide-icone"><Users size={22} /></span>
-          <p>
-            {terme
-              ? <>Aucun compte ne correspond à <strong>{terme}</strong>.</>
-              : 'Aucun compte pour ce filtre.'}
-          </p>
-        </div>
-      ) : (
-        /* Un tableau plutôt que des cartes : sur cet écran on balaie une
-           colonne — les rôles, les dates — plutôt qu'on ne lit une fiche.
-           Le cadre porte le défilement horizontal, jamais la page. */
+      </div>}
+      >
+        {/* Un tableau plutôt que des cartes : sur cet écran on balaie une
+            colonne — les rôles, les dates — plutôt qu'on ne lit une fiche.
+            Le cadre porte le défilement horizontal, jamais la page. */}
         <div className="tableau-cadre">
           <table className="tableau">
             <thead>
@@ -217,9 +204,9 @@ export default function AdminUtilisateurs() {
             </tbody>
           </table>
         </div>
-      )}
 
-      <Pagination page={page_} onChange={setPage} unite="compte" />
+        <Pagination page={page_} onChange={setPage} unite="compte" />
+      </ListeConsole>
     </div>
   )
 }

@@ -37,7 +37,7 @@ export default function FloatingInput({ label, error, rightElement, ...props }: 
           borderRadius: '0.75rem',
           fontSize: '0.9375rem',
           background: 'var(--bg-input)',
-          border: `1px solid ${error ? 'rgb(239,68,68)' : focused ? 'var(--accent)' : 'var(--border)'}`,
+          border: `1px solid ${error ? 'var(--danger)' : focused ? 'var(--accent)' : 'var(--border)'}`,
           color: 'var(--text-1)',
           boxShadow: focused && !error ? '0 0 0 3px var(--accent-bg)' : 'none',
           outline: 'none',
@@ -52,7 +52,7 @@ export default function FloatingInput({ label, error, rightElement, ...props }: 
           left: '1rem',
           pointerEvents: 'none',
           transition: 'all 180ms cubic-bezier(0.4, 0, 0.2, 1)',
-          color: error ? 'rgb(239,68,68)' : focused ? 'var(--accent)' : 'var(--text-3)',
+          color: error ? 'var(--danger)' : focused ? 'var(--accent)' : 'var(--text-3)',
           ...(floated
             ? { top: '0.45rem', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }
             : { top: '50%', transform: 'translateY(-50%)', fontSize: '0.9375rem' }

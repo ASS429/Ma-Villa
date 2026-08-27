@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex" />
+    <title>Ma Villa — maintenance</title>
+
+    <!--
+      Page autonome, servie quand l'application ne peut pas l'être.
+
+      Elle ne charge donc **rien** : ni police distante, ni feuille de style,
+      ni script. Une page de maintenance qui dépend du serveur en panne ne
+      s'affiche pas, et c'est le seul moment où elle sert à quelque chose.
+
+      Le nom du fichier et son contenu sont figés à la main : le pré-rendu ne
+      la touche pas, elle n'est pas une route de l'application.
+    -->
+    <style>
+      :root {
+        --bg: #F7F4EF;
+        --surface: #FFFFFF;
+        --encre: #1A1614;
+        --gris: #5C5650;
+        --gris-clair: #A69E97;
+        --accent: #A34D1F;
+        --bordure: rgba(0, 0, 0, 0.1);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #17130F;
+          --surface: #221C17;
+          --encre: #F5F0EB;
+          --gris: #A69E97;
+          --gris-clair: #726A62;
+          --accent: #D98A5A;
+          --bordure: rgba(255, 255, 255, 0.12);
+        }
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: var(--bg);
+        color: var(--encre);
+        font: 400 16px/1.6 -apple-system, "Segoe UI", Roboto, sans-serif;
+      }
+
+      .carte {
+        width: 100%;
+        max-width: 460px;
+        padding: 36px 28px 30px;
+        background: var(--surface);
+        border: 1px solid var(--bordure);
+        border-radius: 20px;
+        text-align: center;
+      }
+
+      .marque {
+        font: 700 15px/1 -apple-system, "Segoe UI", Roboto, sans-serif;
+        letter-spacing: 0.02em;
+        color: var(--accent);
+        margin: 0 0 24px;
+      }
+
+      h1 { margin: 0 0 10px; font-size: 26px; font-weight: 500; letter-spacing: -0.02em; }
+
+      p { margin: 0 0 18px; color: var(--gris); text-wrap: pretty; }
+
+      /* L'horaire est le cœur de cette page. Une maintenance sans heure de
+         fin est indistinguable d'une panne : le visiteur ne sait pas s'il
+         doit revenir dans dix minutes ou changer de site. */
+      .horaire {
+        display: inline-block;
+        padding: 10px 18px;
+        margin-bottom: 20px;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--accent) 12%, transparent);
+        color: var(--accent);
+        font-weight: 600;
+        font-variant-numeric: lining-nums tabular-nums;
+      }
+
+      .contact {
+        padding-top: 18px;
+        border-top: 1px solid var(--bordure);
+        font-size: 14px;
+        color: var(--gris-clair);
+      }
+
+      .contact a { color: var(--encre); font-weight: 500; }
+
+      .numero {
+        display: inline-block;
+        min-height: 44px;
+        line-height: 44px;
+        font-variant-numeric: lining-nums tabular-nums;
+      }
+    </style>
+  </head>
+
+  <body>
+    <main class="carte">
+      <p class="marque">MA VILLA</p>
+
+      <h1>Nous revenons très vite</h1>
+
+      <!-- ⚠️ Les deux valeurs ci-dessous sont à mettre à jour à la main avant
+           de basculer le site sur cette page. Une heure fausse est pire que
+           pas d'heure du tout. -->
+      <p class="horaire">Retour prévu à 14 h 00</p>
+
+      <p>
+        Une mise à jour est en cours. Vos réservations et vos paiements sont
+        intacts&nbsp;: rien n'est perdu, rien n'a été prélevé pendant
+        l'interruption.
+      </p>
+
+      <div class="contact">
+        Besoin de joindre quelqu'un tout de suite&nbsp;?<br />
+        <a class="numero" href="tel:+221781571009">+221 78 157 10 09</a><br />
+        <a href="mailto:contactsmavilla@gmail.com">contactsmavilla@gmail.com</a>
+      </div>
+    </main>
+
+    <script>
+      // La page se recharge d'elle-même toutes les deux minutes : sans cela,
+      // un visiteur patient reste devant l'écran de maintenance alors que le
+      // site est revenu, et conclut que la panne dure.
+      setTimeout(function () { location.reload() }, 120000)
+    </script>
+  </body>
+</html>

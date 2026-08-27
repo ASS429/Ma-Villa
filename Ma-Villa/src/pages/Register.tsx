@@ -5,7 +5,7 @@ import CoquilleAuth, { AlerteAuth } from '../components/CoquilleAuth'
 import FloatingInput from '../components/FloatingInput'
 import Seo from '../components/Seo'
 import Button from '../components/ui/Button'
-import { messageErreur } from '../lib/erreurs'
+import { erreursParChamp, messageErreur } from '../lib/erreurs'
 
 function IconEye({ show }: { show: boolean }) {
   return show ? (
@@ -28,6 +28,7 @@ export default function Register() {
     role: 'client' as 'client' | 'proprietaire',
   })
   const [error, setError] = useState('')
+  const [erreursChamp, setErreursChamp] = useState<Record<string, string>>({})
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
 
@@ -42,11 +43,17 @@ export default function Register() {
       setError('Les mots de passe ne correspondent pas.')
       return
     }
+    setErreursChamp({})
     try {
       await register(form)
       navigate('/dashboard')
     } catch (err) {
-      setError(messageErreur(err))
+      // « Un compte existe déjà avec cette adresse » doit s'afficher sous
+      // l'adresse, pas en tête du formulaire : sinon on relit cinq champs
+      // pour trouver celui qui pose problème.
+      const champs = erreursParChamp(err)
+      if (Object.keys(champs).length > 0) setErreursChamp(champs)
+      else setError(messageErreur(err))
     }
   }
 
@@ -88,6 +95,7 @@ export default function Register() {
           value={form.email}
           autoComplete="email"
           onChange={(e) => setForm({ ...form, email: e.target.value })}
+          error={erreursChamp.email}
         />
 
         {/* Facultatif, et dit comme tel : c'est un écran de péage, chaque
@@ -102,6 +110,7 @@ export default function Register() {
           value={form.phone}
           autoComplete="tel"
           onChange={(e) => setForm({ ...form, phone: e.target.value })}
+          error={erreursChamp.phone}
         />
         <p className="text-xs -mt-3" style={{ color: 'var(--text-3)' }}>
           Il vous permettra de vous connecter sans retenir votre adresse.
@@ -182,11 +191,16 @@ export default function Register() {
           variante="primaire"
           taille="md"
           bloc
-          disabled={!passwordMatch}
+          disabled={
+            !passwordMatch
+            || !form.name.trim()
+            || !form.email.trim()
+            || form.password.length < 8
+          }
           chargement={isLoading}
           className="mt-1"
         >
-          Créer mon compte
+          {isLoading ? 'Création…' : 'Créer mon compte'}
         </Button>
       </form>
     </CoquilleAuth>

@@ -5,6 +5,30 @@ import { AxiosError } from 'axios'
  * Le code avalait les erreurs (`.catch(() => {})`) : quand l'API tombait,
  * l'utilisateur voyait un écran vide sans explication ni moyen de réessayer.
  */
+/**
+ * Les erreurs de validation, rangées par champ.
+ *
+ * `messageErreur` aplatit tout en une phrase, ce qui convient à un écran de
+ * liste mais pas à un formulaire : un message qui parle du mot de passe
+ * affiché au-dessus de l'adresse oblige à lire pour comprendre où corriger.
+ * Le serveur sait de quel champ il parle ; autant s'en servir.
+ *
+ * Renvoie un objet vide quand l'erreur n'est pas une erreur de validation —
+ * l'appelant retombe alors sur `messageErreur`.
+ */
+export function erreursParChamp(erreur: unknown): Record<string, string> {
+  if (!(erreur instanceof AxiosError) || !erreur.response) return {}
+
+  const champs = (erreur.response.data as { errors?: Record<string, string[]> })?.errors
+  if (!champs) return {}
+
+  return Object.fromEntries(
+    Object.entries(champs)
+      .map(([champ, messages]) => [champ, messages[0]])
+      .filter(([, message]) => Boolean(message))
+  )
+}
+
 export function messageErreur(erreur: unknown, repli = 'Une erreur est survenue.'): string {
   if (!(erreur instanceof AxiosError)) {
     return erreur instanceof Error ? erreur.message : repli

@@ -28,6 +28,18 @@ interface Serie {
   villes: { ville: string; total: number }[]
 }
 
+/** Ce que « Ce qui attend » sait de l'argent détenu pour autrui. */
+interface Attentes {
+  total: number
+  fonds: {
+    exigible: number
+    a_venir: number
+    detenus: number
+    non_versable: number
+    automatique: boolean
+  }
+}
+
 interface Evenement {
   type: 'villa' | 'compte' | 'reservation'
   id: number
@@ -145,35 +157,66 @@ export default function AdminDashboard() {
     { messageErreurParDefaut: "Impossible de charger l'activité." }
   )
 
+  // Les fonds détenus sont déjà calculés pour « Ce qui attend » : les
+  // recalculer ici donnerait deux chiffres à tenir d'accord, et le jour où
+  // ils divergeraient, personne ne saurait lequel croire.
+  const { donnees: attentes } = useRequete<Attentes>(
+    async (signal) => (await api.get('/admin/attentes', { signal })).data,
+    'attentes-tableau',
+  )
+
   const jours = serie?.jours ?? []
+  const fonds = attentes?.fonds
 
   return (
     <div>
       <h1 className="console-titre">Tableau de bord</h1>
       <p className="console-sous-titre">
-        Vue d'ensemble de la plateforme{stats ? ` — ${stats.fenetre_jours} derniers jours` : ''}
+        Comment va la plateforme{stats ? ` — ${stats.fenetre_jours} derniers jours` : ''}
       </p>
 
-      {/* Ce qui réclame une action passe avant les chiffres de fond : c'est
-          le métier quotidien de l'administrateur, pas la culture générale. */}
-      {stats && stats.villas.en_attente > 0 && (
-        <div className="panneau" style={{ marginBottom: 'var(--space-5)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
-            <span className="chiffre-icone" style={{ background: 'color-mix(in srgb, var(--warning) 16%, transparent)', color: 'var(--warning)' }}>
-              <AlertTriangle size={16} />
-            </span>
-            <div style={{ flex: 1, minWidth: 180 }}>
-              <p style={{ margin: 0, font: 'var(--t-body-sm)', fontWeight: 600, color: 'var(--text-1)' }}>
-                {stats.villas.en_attente} annonce{stats.villas.en_attente > 1 ? 's' : ''} en attente de validation
+      {/* ── La seule question ─────────────────────────────────────
+          « Est-ce que la plateforme va bien ce matin ? » Une réponse en un
+          chiffre : les fonds détenus. C'est l'argent des propriétaires que
+          la plateforme garde, et le seul dont une anomalie est un problème
+          immédiat — le reste est de la culture générale.
+
+          Ce qui réclame une action ne s'affiche pas ici : c'est l'écran
+          d'accueil qui le porte, et le répéter ferait deux endroits à tenir
+          d'accord. On y renvoie. */}
+      <section className="verdict">
+        <div className="verdict-chiffre">
+          <span className="verdict-icone" aria-hidden="true"><Wallet size={18} /></span>
+          <div>
+            <p className="verdict-libelle">Détenu pour les propriétaires</p>
+            <p className="verdict-valeur">{fonds ? fcfa(fonds.detenus) : '—'}</p>
+            {fonds && (
+              <p className="verdict-detail">
+                {fcfa(fonds.exigible)} exigibles · {fcfa(fonds.a_venir)} sur des séjours en cours
               </p>
-              <p style={{ margin: 0, font: 'var(--t-caption)', color: 'var(--text-2)' }}>
-                Tant qu'elles ne sont pas traitées, elles restent invisibles au public.
-              </p>
-            </div>
-            <ButtonLink variante="primaire" taille="sm" to="/admin/villas">Les examiner</ButtonLink>
+            )}
           </div>
         </div>
-      )}
+
+        {/* La phrase qui conclut. Elle penche du côté du problème dès qu'il
+            y en a un : un tableau de bord qui dit « tout va bien » alors
+            qu'un versement est bloqué ne sera plus jamais cru. */}
+        <p className={`verdict-phrase${fonds && fonds.non_versable > 0 ? ' est-alerte' : ''}`}>
+          {!fonds
+            ? 'Relevé en cours…'
+            : fonds.non_versable > 0
+              ? `Non. ${fcfa(fonds.non_versable)} sont encaissés et ne peuvent pas être reversés : le déboursement automatique n'est pas ouvert.`
+              : fonds.detenus === 0
+                ? 'Oui. Rien n\'est détenu pour autrui à cet instant.'
+                : 'Oui. Tout ce qui est exigible peut être reversé.'}
+        </p>
+
+        {attentes && attentes.total > 0 && (
+          <ButtonLink variante="secondaire" taille="sm" to="/admin">
+            {attentes.total} point{attentes.total > 1 ? 's' : ''} à traiter
+          </ButtonLink>
+        )}
+      </section>
 
       {chargement || !stats ? (
         <Squelette n={8} />
