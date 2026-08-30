@@ -4,7 +4,7 @@
  * Planche 36 : l'invitation n'attend plus un nombre de pages vues mais la
  * **première réservation confirmée**. Trois pages ne prouvent rien — on peut en
  * regarder trois et repartir. Une réservation confirmée est le seul moment où
- * « garder Ma Villa sous la main » rend un service : il y a désormais quelque
+ * « garder PasseTemps sous la main » rend un service : il y a désormais quelque
  * chose à retrouver, et l'argument devient vérifiable plutôt que promotionnel.
  *
  * Ici plutôt que dans le composant : un module qui exporte autre chose qu'un

@@ -12,7 +12,7 @@ interface SeoProps {
   donneesStructurees?: Record<string, unknown>
 }
 
-const SITE = 'Ma Villa'
+const SITE = 'PasseTemps'
 const IMAGE_DEFAUT = '/og-image.jpg'
 
 function baliseMeta(cle: 'name' | 'property', valeur: string, contenu: string) {

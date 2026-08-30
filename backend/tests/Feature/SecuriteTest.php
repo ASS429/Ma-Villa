@@ -322,7 +322,7 @@ class SecuriteTest extends TestCase
 
         $ouvert = User::create([
             'email'    => 'admin@mavilla.sn',
-            'name'     => 'Admin Ma Villa',
+            'name'     => 'Admin PasseTemps',
             'role'     => 'admin',
             'password' => Hash::make('password'),
         ]);
@@ -381,7 +381,7 @@ class SecuriteTest extends TestCase
     {
         $admin = User::create([
             'email'    => 'admin@mavilla.sn',
-            'name'     => 'Admin Ma Villa',
+            'name'     => 'Admin PasseTemps',
             'role'     => 'admin',
             'password' => Hash::make('secret-solide-de-lexploitant'),
         ]);

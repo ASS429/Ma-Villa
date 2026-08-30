@@ -1,4 +1,4 @@
-# Ma Villa — audit complet, corrections et refonte
+# PasseTemps — audit complet, corrections et refonte
 
 **Date :** 18 août 2026
 **Périmètre :** sécurité, fonctionnel, accessibilité, performance, design, PWA
@@ -388,7 +388,7 @@ pas une couche globale.
 
 Demandé après la première passe : *« refais le dashboard admin en t'inspirant
 de Campus Crush »*. Trois idées reprises de cette console, le reste adapté à
-Ma Villa.
+PasseTemps.
 
 ### Ce qui a été repris de Campus Crush
 

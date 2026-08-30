@@ -21,11 +21,11 @@ use Illuminate\Console\Command;
  *
  * À lancer périodiquement :
  *
- *     php artisan mavilla:suivre-reversements
+ *     php artisan passetemps:suivre-reversements
  */
 class SuivreLesReversements extends Command
 {
-    protected $signature = 'mavilla:suivre-reversements
+    protected $signature = 'passetemps:suivre-reversements
                             {--age=2 : ne relire que les versements en cours depuis au moins N minutes}';
 
     protected $description = 'Interroge PayDunya sur les reversements restés en cours';

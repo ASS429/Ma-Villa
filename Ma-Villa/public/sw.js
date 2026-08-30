@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════════════════════════
-   Service worker — Ma Villa
+   Service worker — PasseTemps
 
    Écrit à la main plutôt que généré : ce fichier décide de ce qui est
    conservé sur l'appareil du visiteur, et cette décision-là ne se délègue
@@ -16,10 +16,10 @@
    ════════════════════════════════════════════════════════════════ */
 
 const VERSION = 'v1'
-const CACHE_COQUILLE = `mavilla-coquille-${VERSION}`
-const CACHE_ASSETS = `mavilla-assets-${VERSION}`
-const CACHE_IMAGES = `mavilla-images-${VERSION}`
-const CACHE_API = `mavilla-api-${VERSION}`
+const CACHE_COQUILLE = `passetemps-coquille-${VERSION}`
+const CACHE_ASSETS = `passetemps-assets-${VERSION}`
+const CACHE_IMAGES = `passetemps-images-${VERSION}`
+const CACHE_API = `passetemps-api-${VERSION}`
 
 const NOTRES = [CACHE_COQUILLE, CACHE_ASSETS, CACHE_IMAGES, CACHE_API]
 
@@ -78,7 +78,10 @@ self.addEventListener('activate', (evt) => {
       .then((cles) =>
         Promise.all(
           cles
-            .filter((c) => c.startsWith('mavilla-') && !NOTRES.includes(c))
+            // Les deux préfixes : le changement de nom laisserait sinon les
+            // anciens caches sur les appareils déjà installés, à occuper de
+            // la place pour des fichiers que plus rien ne sert.
+            .filter((c) => (c.startsWith('passetemps-') || c.startsWith('mavilla-')) && !NOTRES.includes(c))
             .map((c) => caches.delete(c))
         )
       )
@@ -217,7 +220,7 @@ self.addEventListener('push', (evt) => {
     charge = { corps: evt.data ? evt.data.text() : '' }
   }
 
-  const titre = charge.titre || 'Ma Villa'
+  const titre = charge.titre || 'PasseTemps'
   const options = {
     body: charge.corps || '',
     icon: charge.icone || '/icon-192.png',

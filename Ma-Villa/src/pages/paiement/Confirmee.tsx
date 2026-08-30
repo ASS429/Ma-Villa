@@ -78,7 +78,7 @@ export default function Confirmee() {
     `reservation-${id}`
   )
 
-  // C'est ici, et nulle part ailleurs, que l'invitation à garder Ma Villa sur
+  // C'est ici, et nulle part ailleurs, que l'invitation à garder PasseTemps sur
   // l'écran d'accueil devient légitime : le client a maintenant quelque chose
   // à retrouver. Elle n'apparaît pas sur cet écran — il reste nu — mais à
   // partir d'ici, sur les écrans qui l'accueillent.
@@ -111,7 +111,7 @@ export default function Confirmee() {
       lieu: adresse || villa.ville || '',
       debut: reservation.date_debut,
       fin: reservation.date_fin,
-      note: `Réservation Ma Villa n° ${reservation.id}${villa.telephone ? ` · propriétaire ${villa.telephone}` : ''}`,
+      note: `Réservation PasseTemps n° ${reservation.id}${villa.telephone ? ` · propriétaire ${villa.telephone}` : ''}`,
     }, `sejour-${reservation.id}.ics`)
   }
 

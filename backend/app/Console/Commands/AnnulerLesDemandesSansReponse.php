@@ -18,11 +18,11 @@ use Illuminate\Support\Facades\DB;
  * restée « en attente » n'a donc jamais été réglée. La règle vaut tant que ce
  * comportement tient — un test l'y attache.
  *
- *     php artisan mavilla:annuler-demandes-sans-reponse
+ *     php artisan passetemps:annuler-demandes-sans-reponse
  */
 class AnnulerLesDemandesSansReponse extends Command
 {
-    protected $signature = 'mavilla:annuler-demandes-sans-reponse';
+    protected $signature = 'passetemps:annuler-demandes-sans-reponse';
 
     protected $description = 'Annule les demandes de réservation restées sans réponse au-delà du délai';
 

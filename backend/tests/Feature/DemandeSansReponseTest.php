@@ -76,7 +76,7 @@ class DemandeSansReponseTest extends TestCase
     {
         $demande = $this->demande(ageHeures: 25);
 
-        $this->artisan('mavilla:annuler-demandes-sans-reponse')->assertSuccessful();
+        $this->artisan('passetemps:annuler-demandes-sans-reponse')->assertSuccessful();
 
         $this->assertSame('annulee', $demande->refresh()->statut);
     }
@@ -85,7 +85,7 @@ class DemandeSansReponseTest extends TestCase
     {
         $demande = $this->demande(ageHeures: 23);
 
-        $this->artisan('mavilla:annuler-demandes-sans-reponse')->assertSuccessful();
+        $this->artisan('passetemps:annuler-demandes-sans-reponse')->assertSuccessful();
 
         $this->assertSame('en_attente', $demande->refresh()->statut);
     }
@@ -95,7 +95,7 @@ class DemandeSansReponseTest extends TestCase
         config(['reservations.delai_reponse_heures' => 48]);
         $demande = $this->demande(ageHeures: 25);
 
-        $this->artisan('mavilla:annuler-demandes-sans-reponse')->assertSuccessful();
+        $this->artisan('passetemps:annuler-demandes-sans-reponse')->assertSuccessful();
 
         $this->assertSame('en_attente', $demande->refresh()->statut);
     }
@@ -106,7 +106,7 @@ class DemandeSansReponseTest extends TestCase
     {
         $demande = $this->demande('confirmee', ageHeures: 100);
 
-        $this->artisan('mavilla:annuler-demandes-sans-reponse')->assertSuccessful();
+        $this->artisan('passetemps:annuler-demandes-sans-reponse')->assertSuccessful();
 
         $this->assertSame('confirmee', $demande->refresh()->statut);
     }
@@ -128,7 +128,7 @@ class DemandeSansReponseTest extends TestCase
         $paiement->appliquerRepartition(Commission::pour(300000));
         $paiement->save();
 
-        $this->artisan('mavilla:annuler-demandes-sans-reponse')->assertSuccessful();
+        $this->artisan('passetemps:annuler-demandes-sans-reponse')->assertSuccessful();
 
         $this->assertSame('en_attente', $demande->refresh()->statut);
     }
@@ -159,7 +159,7 @@ class DemandeSansReponseTest extends TestCase
         $vieilles = collect(range(1, 3))->map(fn () => $this->demande(ageHeures: 30));
         $recente = $this->demande(ageHeures: 2);
 
-        $this->artisan('mavilla:annuler-demandes-sans-reponse')->assertSuccessful();
+        $this->artisan('passetemps:annuler-demandes-sans-reponse')->assertSuccessful();
 
         foreach ($vieilles as $d) {
             $this->assertSame('annulee', $d->refresh()->statut);
@@ -169,7 +169,7 @@ class DemandeSansReponseTest extends TestCase
 
     public function test_sans_rien_a_faire_la_commande_ne_dit_rien_d_alarmant(): void
     {
-        $this->artisan('mavilla:annuler-demandes-sans-reponse')
+        $this->artisan('passetemps:annuler-demandes-sans-reponse')
              ->expectsOutputToContain('Aucune demande à annuler.')
              ->assertSuccessful();
     }

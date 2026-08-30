@@ -321,7 +321,7 @@ class CommandeController extends Controller
     /**
      * Lance le règlement en ligne d'une commande.
      *
-     * Aucune commission n'est calculée : Ma Villa est le vendeur, la totalité
+     * Aucune commission n'est calculée : PasseTemps est le vendeur, la totalité
      * lui revient. C'est toute la différence avec le paiement d'une réservation.
      */
     public function payer(Request $request, Commande $commande): JsonResponse

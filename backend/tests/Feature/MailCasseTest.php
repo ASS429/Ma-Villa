@@ -72,7 +72,7 @@ class MailCasseTest extends TestCase
     {
         $this->transportInvalide();
 
-        $this->artisan('mavilla:diagnostic')
+        $this->artisan('passetemps:diagnostic')
              ->expectsOutputToContain("n'est pas un transport valide")
              ->assertFailed();
     }

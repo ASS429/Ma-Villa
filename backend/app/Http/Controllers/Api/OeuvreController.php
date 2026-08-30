@@ -12,7 +12,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 /**
  * La vitrine de la boutique, et son administration.
  *
- * Ma Villa est le seul vendeur : il n'y a donc ni modération ni cloisonnement
+ * PasseTemps est le seul vendeur : il n'y a donc ni modération ni cloisonnement
  * par compte. Publier un article est une action d'administration, point.
  */
 class OeuvreController extends Controller

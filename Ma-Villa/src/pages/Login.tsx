@@ -61,7 +61,7 @@ export default function Login() {
   return (
     <CoquilleAuth
       titre="Connexion"
-      sousTitre="Accédez à votre espace Ma Villa"
+      sousTitre="Accédez à votre espace PasseTemps"
       pied={
         <>
           Pas encore de compte ?{' '}
@@ -71,7 +71,7 @@ export default function Login() {
         </>
       }
     >
-      <Seo titre="Connexion" description="Connectez-vous à votre espace Ma Villa." chemin="/login" />
+      <Seo titre="Connexion" description="Connectez-vous à votre espace PasseTemps." chemin="/login" />
 
       {error && <AlerteAuth type="erreur">{error}</AlerteAuth>}
 

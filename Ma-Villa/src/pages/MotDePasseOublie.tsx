@@ -30,7 +30,7 @@ export default function MotDePasseOublie() {
     <>
       <Seo
         titre="Mot de passe oublié"
-        description="Réinitialisez le mot de passe de votre compte Ma Villa."
+        description="Réinitialisez le mot de passe de votre compte PasseTemps."
         indexable={false}
       />
 

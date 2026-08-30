@@ -42,7 +42,7 @@ export default function Footer() {
         </div>
 
         <p className="text-sm th-text-3 mt-10 pt-6" style={{ borderTop: '1px solid var(--border)' }}>
-          © {new Date().getFullYear()} Ma Villa · Sénégal
+          © {new Date().getFullYear()} PasseTemps · Sénégal
         </p>
       </div>
     </footer>

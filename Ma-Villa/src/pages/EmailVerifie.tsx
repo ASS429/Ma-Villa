@@ -63,7 +63,7 @@ export default function EmailVerifie() {
 
   return (
     <>
-      <Seo titre={titre} description="Confirmation de votre adresse Ma Villa." indexable={false} />
+      <Seo titre={titre} description="Confirmation de votre adresse PasseTemps." indexable={false} />
 
       <CoquilleAuth
         titre={titre}

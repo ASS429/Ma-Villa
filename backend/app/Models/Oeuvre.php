@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 /**
  * Un article de la boutique.
  *
- * Ma Villa est le seul vendeur : l'artiste est une information portée par
+ * PasseTemps est le seul vendeur : l'artiste est une information portée par
  * l'article, pas un compte. Voir la migration pour les trois arbitrages.
  */
 class Oeuvre extends Model

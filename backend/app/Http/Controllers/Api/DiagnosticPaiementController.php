@@ -51,7 +51,7 @@ class DiagnosticPaiementController extends Controller
         try {
             $facture = $this->paydunya->creerFacture(
                 montant: (int) config('paiement.montant_minimum'),
-                description: 'Sonde de configuration Ma Villa',
+                description: 'Sonde de configuration PasseTemps',
             );
         } catch (\Throwable $e) {
             return response()->json($etat + [
@@ -87,8 +87,8 @@ class DiagnosticPaiementController extends Controller
 
         try {
             $resultat = $methode === 'wave'
-                ? $this->paydunya->payerAvecWave($facture['token'], 'Sonde Ma Villa', (string) $request->user()->email, $telephone)
-                : $this->paydunya->payerAvecOrangeMoney($facture['token'], 'Sonde Ma Villa', (string) $request->user()->email, $telephone);
+                ? $this->paydunya->payerAvecWave($facture['token'], 'Sonde PasseTemps', (string) $request->user()->email, $telephone)
+                : $this->paydunya->payerAvecOrangeMoney($facture['token'], 'Sonde PasseTemps', (string) $request->user()->email, $telephone);
 
             return response()->json($etat + [
                 'ok'      => true,

@@ -46,7 +46,7 @@ Route::post('/paiements/ipn', [PaiementController::class, 'ipn'])->name('paiemen
 // et sa seule garde est la signature de la cle maitresse.
 Route::post('/reversements/rappel', RappelDeboursementController::class)
     ->name('reversements.rappel');
-// Boutique d'oeuvres d'art. Ma Villa est le seul vendeur : pas de role
+// Boutique d'oeuvres d'art. PasseTemps est le seul vendeur : pas de role
 // artiste, pas de moderation. Les routes repondent 404 tant que
 // BOUTIQUE_ACTIVE n'est pas levee -- un metier s'ouvre par decision.
 Route::get('/oeuvres', [OeuvreController::class, 'index']);

@@ -10,7 +10,7 @@ type Taille = 'sm' | 'md' | 'lg'
  * sur les écrans d'authentification, et deux tiroirs mobiles où le nom n'était
  * même pas un lien. Un composant unique fait disparaître la question.
  *
- * Le lien porte un libellé explicite : « Ma Villa » lu seul ne dit pas où il
+ * Le lien porte un libellé explicite : « PasseTemps » lu seul ne dit pas où il
  * mène, et c'est le premier élément que rencontre un lecteur d'écran.
  */
 export default function Marque({
@@ -40,7 +40,7 @@ export default function Marque({
   ].filter(Boolean).join(' ')
 
   return (
-    <Link to="/" className={classes} aria-label="Ma Villa — retour à l'accueil" onClick={onClick}>
+    <Link to="/" className={classes} aria-label="PasseTemps — retour à l'accueil" onClick={onClick}>
       <img
         src="/logo.webp"
         alt=""
@@ -49,7 +49,7 @@ export default function Marque({
         height={72}
         className="marque-icone"
       />
-      <span className="marque-nom">Ma Villa</span>
+      <span className="marque-nom">PasseTemps</span>
       {role && <span className="marque-role">{role}</span>}
     </Link>
   )

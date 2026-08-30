@@ -32,7 +32,7 @@ class ReinitialiserMotDePasse extends Notification implements ShouldQueue
         $minutes = config('auth.passwords.'.config('auth.defaults.passwords').'.expire');
 
         return (new MailMessage)
-            ->subject('Réinitialisation de votre mot de passe Ma Villa')
+            ->subject('Réinitialisation de votre mot de passe PasseTemps')
             ->greeting('Bonjour '.$notifiable->name.',')
             ->line('Vous avez demandé à réinitialiser votre mot de passe.')
             ->action('Choisir un nouveau mot de passe', $url)

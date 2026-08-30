@@ -70,7 +70,7 @@ export default function NouvelleVersion() {
 
   return (
     <div className="bandeau-version" role="status">
-      <span>Une version plus récente de Ma Villa est disponible.</span>
+      <span>Une version plus récente de PasseTemps est disponible.</span>
       <button type="button" onClick={() => window.location.reload()}>
         Recharger
       </button>

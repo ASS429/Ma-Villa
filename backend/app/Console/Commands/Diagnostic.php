@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Storage;
  */
 class Diagnostic extends Command
 {
-    protected $signature = 'mavilla:diagnostic {--email= : envoie un message de test à cette adresse}';
+    protected $signature = 'passetemps:diagnostic {--email= : envoie un message de test à cette adresse}';
 
     protected $description = "Vérifie base, stockage, file d'attente et envoi d'emails";
 
@@ -22,7 +22,7 @@ class Diagnostic extends Command
 
     public function handle(): int
     {
-        $this->info('Diagnostic Ma Villa');
+        $this->info('Diagnostic PasseTemps');
         $this->newLine();
 
         $this->verifierBase();
@@ -171,9 +171,9 @@ class Diagnostic extends Command
 
         try {
             Mail::raw(
-                "Ceci est un message de test envoyé par la commande mavilla:diagnostic.\n"
+                "Ceci est un message de test envoyé par la commande passetemps:diagnostic.\n"
                 ."Si vous le recevez, la configuration email est fonctionnelle.",
-                fn ($m) => $m->to($destinataire)->subject('Ma Villa — test de configuration email')
+                fn ($m) => $m->to($destinataire)->subject('PasseTemps — test de configuration email')
             );
             $this->ok("Message de test envoyé à {$destinataire} (vérifiez la réception, y compris les indésirables)");
         } catch (\Throwable $e) {

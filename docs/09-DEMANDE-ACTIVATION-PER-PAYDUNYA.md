@@ -18,7 +18,7 @@
 
 ## Objet
 
-`Demande d'activation de l'API PER / Déboursement — application « Ma Villa »`
+`Demande d'activation de l'API PER / Déboursement — application « PasseTemps »`
 
 ---
 
@@ -27,9 +27,9 @@
 Bonjour,
 
 Je vous écris au sujet de notre compte marchand, application
-**« Ma Villa »**, ouvert au nom de **Arfang Souleymane Sané**.
+**« PasseTemps »**, ouvert au nom de **Arfang Souleymane Sané**.
 
-Nous exploitons Ma Villa, une place de marché de location de villas et de
+Nous exploitons PasseTemps, une place de marché de location de villas et de
 logements de vacances au Sénégal. L'encaissement passe déjà par PayDunya : nous
 utilisons **WebPay** et **SoftPay** (Wave et Orange Money Sénégal) en production,
 et cela fonctionne.
@@ -88,7 +88,7 @@ utile.
 Bien cordialement,
 
 **Arfang Souleymane Sané**
-Développeur — Ma Villa
+Développeur — PasseTemps
 +221 78 157 10 09 · sanarfang429@gmail.com
 https://mavilla-web.onrender.com
 

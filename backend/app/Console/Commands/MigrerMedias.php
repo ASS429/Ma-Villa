@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Storage;
  */
 class MigrerMedias extends Command
 {
-    protected $signature = 'mavilla:migrer-medias
+    protected $signature = 'passetemps:migrer-medias
                             {--source=public : disque de départ}
                             {--simulation : affiche ce qui serait fait, sans rien écrire}';
 

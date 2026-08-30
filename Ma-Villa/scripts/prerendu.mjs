@@ -104,7 +104,7 @@ async function toutesLesVillas() {
 
 function pageVilla(villa) {
   const ville = villa.ville ?? ''
-  const titre = `${villa.nom}${ville ? ` — ${ville}` : ''} — Ma Villa`
+  const titre = `${villa.nom}${ville ? ` — ${ville}` : ''} — PasseTemps`
 
   const prix = villa.prix_min != null
     ? `À partir de ${fcfa(villa.prix_min)}${villa.prix_min_unite ? ` / ${UNITE[villa.prix_min_unite] ?? villa.prix_min_unite}` : ''}. `
@@ -152,13 +152,13 @@ function pageVilla(villa) {
 const PAGES_FIXES = [
   {
     chemin: '',
-    titre: 'Ma Villa — Location de villas au Sénégal',
+    titre: 'PasseTemps — Location de villas au Sénégal',
     description: 'Louez une villa, un appartement ou une piscine à la journée au Sénégal — Saly, '
       + 'Mbour, Dakar. Tarifs affichés, disponibilités en temps réel, paiement Wave ou Orange Money.',
     donnees: {
       '@context': 'https://schema.org',
       '@type': 'WebSite',
-      name: 'Ma Villa',
+      name: 'PasseTemps',
       url: SITE,
       inLanguage: 'fr',
       potentialAction: {
@@ -170,21 +170,21 @@ const PAGES_FIXES = [
   },
   {
     chemin: 'villas',
-    titre: 'Toutes les villas — Ma Villa',
+    titre: 'Toutes les villas — PasseTemps',
     description: 'Parcourez les villas, appartements, chambres et piscines à la journée '
       + 'disponibles au Sénégal. Filtrez par ville, dates, budget et équipements.',
   },
   // Les quatre pages légales portent une note d'attente depuis le 20 août 2026 :
   // la rédaction est confiée au juriste. Les descriptions le disent, sans quoi un
   // moteur indexerait ces pages comme des textes en vigueur.
-  { chemin: 'conditions-generales', titre: "Conditions générales d'utilisation — Ma Villa",
-    description: "Conditions générales de Ma Villa — en cours de rédaction par notre conseil juridique. Cette page décrit en attendant le fonctionnement réel du service." },
-  { chemin: 'confidentialite', titre: 'Politique de confidentialité — Ma Villa',
-    description: "Politique de confidentialité de Ma Villa — en cours de rédaction. Cette page indique quelles données nous conservons et ce que nous n'en faisons pas." },
-  { chemin: 'annulation', titre: "Conditions d'annulation — Ma Villa",
-    description: "Conditions d'annulation de Ma Villa — en cours de rédaction. Cette page indique comment une demande de remboursement est traitée en attendant." },
-  { chemin: 'mentions-legales', titre: 'Mentions légales — Ma Villa',
-    description: 'Éditeur, hébergement et prestataire de paiement de Ma Villa. Mentions en cours de complétion par notre conseil juridique.' },
+  { chemin: 'conditions-generales', titre: "Conditions générales d'utilisation — PasseTemps",
+    description: "Conditions générales de PasseTemps — en cours de rédaction par notre conseil juridique. Cette page décrit en attendant le fonctionnement réel du service." },
+  { chemin: 'confidentialite', titre: 'Politique de confidentialité — PasseTemps',
+    description: "Politique de confidentialité de PasseTemps — en cours de rédaction. Cette page indique quelles données nous conservons et ce que nous n'en faisons pas." },
+  { chemin: 'annulation', titre: "Conditions d'annulation — PasseTemps",
+    description: "Conditions d'annulation de PasseTemps — en cours de rédaction. Cette page indique comment une demande de remboursement est traitée en attendant." },
+  { chemin: 'mentions-legales', titre: 'Mentions légales — PasseTemps',
+    description: 'Éditeur, hébergement et prestataire de paiement de PasseTemps. Mentions en cours de complétion par notre conseil juridique.' },
 ]
 
 /* ── Injection dans le gabarit ────────────────────────────────── */

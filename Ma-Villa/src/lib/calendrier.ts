@@ -39,10 +39,10 @@ export function evenementIcal(sejour: Sejour): string {
   const lignes = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Ma Villa//FR',
+    'PRODID:-//PasseTemps//FR',
     'CALSCALE:GREGORIAN',
     'BEGIN:VEVENT',
-    `UID:${Date.now()}@mavilla`,
+    `UID:${Date.now()}@passetemps`,
     `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
     `DTSTART;VALUE=DATE:${jour(sejour.debut)}`,
     `DTEND;VALUE=DATE:${lendemain.toISOString().slice(0, 10).replace(/-/g, '')}`,

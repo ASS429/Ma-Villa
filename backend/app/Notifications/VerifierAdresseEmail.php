@@ -15,9 +15,9 @@ class VerifierAdresseEmail extends VerifyEmail
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Confirmez votre adresse email — Ma Villa')
+            ->subject('Confirmez votre adresse email — PasseTemps')
             ->greeting('Bienvenue '.$notifiable->name.',')
-            ->line('Confirmez votre adresse email pour sécuriser votre compte Ma Villa.')
+            ->line('Confirmez votre adresse email pour sécuriser votre compte PasseTemps.')
             ->action('Confirmer mon adresse', $this->verificationUrl($notifiable))
             ->line('Si vous n\'avez pas créé de compte, ignorez cet email.');
     }

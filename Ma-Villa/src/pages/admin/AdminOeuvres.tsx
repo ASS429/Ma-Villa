@@ -166,7 +166,7 @@ export default function AdminOeuvres() {
       <ListeConsole
         titre="Articles"
         sousTitre={<>
-          Ma Villa est le seul vendeur : un article publié part en vitrine sans
+          PasseTemps est le seul vendeur : un article publié part en vitrine sans
           validation. Une pièce se vend une fois — commander la retire aussitôt.
         </>}
         chargement={chargement}

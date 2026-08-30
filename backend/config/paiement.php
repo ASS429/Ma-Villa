@@ -106,7 +106,7 @@ return [
         'token'        => env('PAYDUNYA_TOKEN'),
 
         'boutique' => [
-            'nom'         => env('PAYDUNYA_BOUTIQUE_NOM', 'Ma Villa'),
+            'nom'         => env('PAYDUNYA_BOUTIQUE_NOM', 'PasseTemps'),
             'description' => 'Location de villas et logements de vacances au Sénégal',
         ],
     ],

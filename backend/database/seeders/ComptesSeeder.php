@@ -56,7 +56,7 @@ class ComptesSeeder extends Seeder
     {
         return $this->creerOuSecuriser(
             self::ADMIN,
-            ['name' => 'Admin Ma Villa', 'role' => 'admin'],
+            ['name' => 'Admin PasseTemps', 'role' => 'admin'],
             (string) env('ADMIN_PASSWORD', '')
         );
     }

@@ -5,7 +5,7 @@
 | Boutique d'œuvres d'art
 |--------------------------------------------------------------------------
 |
-| Second métier de la plateforme, décidé le 12 août 2026. Ma Villa est le seul
+| Second métier de la plateforme, décidé le 12 août 2026. PasseTemps est le seul
 | vendeur : pas de commission, pas de reversement, l'argent d'une vente lui
 | revient entièrement.
 |

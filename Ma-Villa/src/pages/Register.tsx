@@ -60,7 +60,7 @@ export default function Register() {
   return (
     <CoquilleAuth
       titre="Créer un compte"
-      sousTitre="Rejoignez Ma Villa dès aujourd'hui"
+      sousTitre="Rejoignez PasseTemps dès aujourd'hui"
       pied={
         <>
           Déjà un compte ?{' '}
@@ -72,7 +72,7 @@ export default function Register() {
     >
       <Seo
         titre="Créer un compte"
-        description="Créez votre compte Ma Villa pour réserver un logement ou publier votre villa."
+        description="Créez votre compte PasseTemps pour réserver un logement ou publier votre villa."
         chemin="/register"
       />
 

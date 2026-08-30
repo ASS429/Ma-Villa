@@ -44,7 +44,7 @@ while true; do
 done &
 
 echo "==> Diagnostic d'infrastructure..."
-php artisan mavilla:diagnostic || true
+php artisan passetemps:diagnostic || true
 
 echo "==> Démarrage du serveur sur le port ${PORT:-10000}..."
 exec php artisan serve --host=0.0.0.0 --port=${PORT:-10000}

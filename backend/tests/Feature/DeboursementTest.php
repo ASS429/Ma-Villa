@@ -378,7 +378,7 @@ class DeboursementTest extends TestCase
             ]),
         ]);
 
-        $this->artisan('mavilla:suivre-reversements')->assertSuccessful();
+        $this->artisan('passetemps:suivre-reversements')->assertSuccessful();
 
         $this->assertSame('reussi', $reversement->refresh()->statut);
     }
@@ -388,7 +388,7 @@ class DeboursementTest extends TestCase
         $reversement = $this->reversementEnCours();
         Http::fake();
 
-        $this->artisan('mavilla:suivre-reversements')->assertSuccessful();
+        $this->artisan('passetemps:suivre-reversements')->assertSuccessful();
 
         Http::assertNothingSent();
         $this->assertSame('en_cours', $reversement->refresh()->statut);

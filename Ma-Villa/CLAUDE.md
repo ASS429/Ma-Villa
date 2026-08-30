@@ -1,4 +1,4 @@
-# Ma Villa — application web
+# PasseTemps — application web
 
 > Point d'entrée pour Claude Code sur le dossier `Ma-Villa/`.
 > Le contexte produit complet est dans `../docs/` et `../Ma_Villa_Document_Reference_v2.docx`.
@@ -7,7 +7,7 @@
 
 ## Le produit
 
-**Ma Villa** est une marketplace de location de villas et logements de vacances au Sénégal
+**PasseTemps** est une marketplace de location de villas et logements de vacances au Sénégal
 (Saly, Mbour, Dakar), en préparation de lancement commercial.
 
 Le modèle métier est la chose à comprendre avant de toucher au code :
@@ -306,7 +306,7 @@ Le rappel `POST /api/reversements/rappel` est public (PayDunya refuse
 l'initiation si l'URL ne répond pas), signé par le SHA-512 de la clé maîtresse,
 et son corps n'est jamais cru : le statut est relu chez PayDunya.
 
-`mavilla:suivre-reversements` tranche les versements restés en cours, toutes les
+`passetemps:suivre-reversements` tranche les versements restés en cours, toutes les
 cinq minutes via `schedule:work` lancé par `start.sh`. Sans lui, un rappel perdu
 laisserait un montant invisible des deux consoles à la fois.
 
@@ -322,7 +322,7 @@ l'utilisateur décident de toute l'architecture :
 
 | Décision | Conséquence |
 |---|---|
-| **Ma Villa est le seul vendeur** | pas de rôle « artiste », pas de modération, pas de commission ni de reversement. L'artiste est une **colonne de l'œuvre**, pas un compte |
+| **PasseTemps est le seul vendeur** | pas de rôle « artiste », pas de modération, pas de commission ni de reversement. L'artiste est une **colonne de l'œuvre**, pas un compte |
 | **Une œuvre par commande** | pas de panier : on commande un article à la fois |
 | **Frais de livraison par zone** | le client connaît son total **avant** de payer |
 

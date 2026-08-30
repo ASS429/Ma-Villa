@@ -46,7 +46,7 @@ function proposerDEntree(): boolean {
 }
 
 /**
- * Propose de garder Ma Villa sur l'écran d'accueil.
+ * Propose de garder PasseTemps sur l'écran d'accueil.
  *
  * **Non modale, sans voile, refermable** — planche 36. Ce n'est pas une
  * superposition : elle ne vole pas la mise au point, ne bloque rien, et se
@@ -103,7 +103,7 @@ export default function InvitationInstallation() {
 
       <div className="invite-install-texte">
         <p id="invite-install-titre" className="invite-install-titre">
-          Garder Ma Villa sur votre écran
+          Garder PasseTemps sur votre écran
         </p>
         <p className="invite-install-detail">
           {ios ? (

@@ -81,7 +81,7 @@ class PhotoController extends Controller
     /**
      * Photos d'un article de la boutique.
      *
-     * Pas de `authorize` : la route vit derrière le filtre `admin`, et Ma Villa
+     * Pas de `authorize` : la route vit derrière le filtre `admin`, et PasseTemps
      * est le seul vendeur — il n'y a pas de propriétaire d'article à distinguer.
      * Mêmes règles de validation que pour une villa : le schéma doit être
      * http(s), et le nombre par envoi est plafonné.

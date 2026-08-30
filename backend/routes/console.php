@@ -33,12 +33,12 @@ Artisan::command('inspire', function () {
  | l'heure suffit et evite de reveiller la base toutes les cinq minutes pour
  | une requete qui ne rendra presque toujours rien.
  */
-Schedule::command('mavilla:annuler-demandes-sans-reponse')
+Schedule::command('passetemps:annuler-demandes-sans-reponse')
     ->hourly()
     ->withoutOverlapping()
     ->runInBackground();
 
-Schedule::command('mavilla:suivre-reversements')
+Schedule::command('passetemps:suivre-reversements')
     ->everyFiveMinutes()
     ->withoutOverlapping()
     ->runInBackground();

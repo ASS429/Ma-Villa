@@ -47,7 +47,7 @@ export default function OeuvreDetail() {
         description={
           oeuvre
             ? `${oeuvre.titre} par ${oeuvre.artiste}. ${[oeuvre.technique, oeuvre.dimensions].filter(Boolean).join(', ')}. ${fcfa(oeuvre.prix)}.`
-            : 'Un article de la boutique Ma Villa.'
+            : 'Un article de la boutique PasseTemps.'
         }
         image={photos[0]?.url}
       />

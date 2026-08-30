@@ -4,7 +4,7 @@
  * Les textes précédents, relus le 12 août, affirmaient que la plateforme
  * n'encaisse aucun paiement et que le règlement se fait directement entre le
  * client et le propriétaire. C'est devenu faux le 18 août 2026, jour du premier
- * encaissement réel : Ma Villa encaisse, prélève une commission, et détient les
+ * encaissement réel : PasseTemps encaisse, prélève une commission, et détient les
  * fonds jusqu'au reversement.
  *
  * Les laisser en ligne présentés comme définitifs exposait à ce qu'un client
@@ -38,7 +38,7 @@ export interface DocumentLegal {
 }
 
 const MAJ = '20 août 2026'
-const EXPLOITANT = 'Ma Villa'
+const EXPLOITANT = 'PasseTemps'
 const CONTACT = 'contactsmavilla@gmail.com'
 
 /**
@@ -77,14 +77,14 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
   cgu: {
     cle: 'cgu',
     titre: 'Conditions générales d\'utilisation',
-    description: 'Conditions générales de Ma Villa — document en cours de rédaction par notre conseil juridique.',
+    description: 'Conditions générales de PasseTemps — document en cours de rédaction par notre conseil juridique.',
     miseAJour: MAJ,
     chapeau:
       'Nos conditions générales sont en cours de rédaction par un juriste. Cette page décrit en attendant le fonctionnement réel de la plateforme.',
     sections: [
       REDACTION,
       {
-        titre: 'Ce qu\'est Ma Villa',
+        titre: 'Ce qu\'est PasseTemps',
         paragraphes: [
           `${EXPLOITANT} met en relation des propriétaires de villas et de logements de vacances situés au Sénégal avec des clients souhaitant les louer.`,
           'Le séjour lui-même est fourni par le propriétaire, qui reste responsable de l\'état du bien, de sa conformité à l\'annonce et du déroulement du séjour.',
@@ -111,7 +111,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
   confidentialite: {
     cle: 'confidentialite',
     titre: 'Politique de confidentialité',
-    description: 'Traitement des données personnelles par Ma Villa — document en cours de rédaction par notre conseil juridique.',
+    description: 'Traitement des données personnelles par PasseTemps — document en cours de rédaction par notre conseil juridique.',
     miseAJour: MAJ,
     chapeau:
       'Notre politique de confidentialité est en cours de rédaction par un juriste. Cette page indique en attendant quelles données nous détenons et pourquoi.',
@@ -178,7 +178,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
   mentions: {
     cle: 'mentions',
     titre: 'Mentions légales',
-    description: 'Éditeur, hébergeur et contact de la plateforme Ma Villa.',
+    description: 'Éditeur, hébergeur et contact de la plateforme PasseTemps.',
     miseAJour: MAJ,
     chapeau:
       'Nos mentions légales sont en cours de complétion par un juriste. Les informations vérifiées figurent ci-dessous.',
@@ -187,7 +187,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
       {
         titre: 'Éditeur',
         paragraphes: [
-          `Le site Ma Villa est édité par ${EXPLOITANT}.`,
+          `Le site PasseTemps est édité par ${EXPLOITANT}.`,
           `Contact : ${CONTACT}.`,
           'La forme juridique de l\'exploitant, son immatriculation et l\'identité de son directeur de publication seront précisées ici dès que le juriste aura arrêté la structure retenue.',
         ],

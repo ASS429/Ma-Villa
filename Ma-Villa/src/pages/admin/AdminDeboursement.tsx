@@ -116,7 +116,7 @@ export default function AdminDeboursement() {
               />
               <p className="text-xs th-text-3 mt-3">
                 Un versement en cours est tranché par <code>php artisan
-                mavilla:suivre-reversements</code>, au cas où le rappel de PayDunya
+                passetemps:suivre-reversements</code>, au cas où le rappel de PayDunya
                 n'arriverait jamais. Un échec rend ses paiements à la file.
               </p>
             </Bloc>

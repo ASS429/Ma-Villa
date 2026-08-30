@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Schema;
  * Décidée le 12 août 2026. Trois arbitrages, pris le 20 août, décident de tout
  * ce schéma :
  *
- * 1. **Ma Villa est le seul vendeur.** Pas de rôle « artiste », pas de
+ * 1. **PasseTemps est le seul vendeur.** Pas de rôle « artiste », pas de
  *    modération, pas de commission ni de reversement : l'argent d'une vente
  *    revient entièrement à la plateforme. L'artiste est donc une **information
  *    portée par l'œuvre**, pas un compte.

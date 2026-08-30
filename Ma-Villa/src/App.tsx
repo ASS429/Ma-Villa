@@ -281,12 +281,12 @@ function AppelProprietaires() {
             Créez votre annonce, fixez vos tarifs par formule — nuitée, journée,
             piscine seule — et gérez vos disponibilités depuis un tableau de bord simple.
           </p>
-          {/* Seul endroit où « Publier ma villa » prend l'accent : c'est la
+          {/* Seul endroit où « Publier PasseTemps » prend l'accent : c'est la
               section qui lui est consacrée, donc la conversion du parcours en
               cours. Ailleurs, elle reste secondaire pour ne pas détourner la
               couleur d'action vers une action qui ne concerne pas le client. */}
           <ButtonLink to="/register" variante="primaire" taille="md">
-            Publier ma villa
+            Publier PasseTemps
           </ButtonLink>
         </ScrollReveal>
       </div>
@@ -300,13 +300,13 @@ function Home() {
   return (
     <div style={{ background: 'var(--bg)', color: 'var(--text-1)' }}>
       <Seo
-        titre="Ma Villa"
+        titre="PasseTemps"
         description="Louez une villa, un appartement ou une piscine à la journée au Sénégal — Saly, Mbour, Dakar. Tarifs affichés, disponibilités en temps réel, réservation directe auprès des propriétaires."
         chemin="/"
         donneesStructurees={{
           '@context': 'https://schema.org',
           '@type': 'WebSite',
-          name: 'Ma Villa',
+          name: 'PasseTemps',
           description: 'Location de villas et logements de vacances au Sénégal',
           inLanguage: 'fr',
           potentialAction: {
