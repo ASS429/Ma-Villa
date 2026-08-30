@@ -153,7 +153,7 @@ const PAGES_FIXES = [
   {
     chemin: '',
     titre: 'PasseTemps — Location de villas au Sénégal',
-    description: 'Louez une villa, un appartement ou une piscine à la journée au Sénégal — Saly, '
+    description: 'Louez une villa, une résidence, un appartement ou une chambre au Sénégal — Saly, '
       + 'Mbour, Dakar. Tarifs affichés, disponibilités en temps réel, paiement Wave ou Orange Money.',
     donnees: {
       '@context': 'https://schema.org',
@@ -171,7 +171,7 @@ const PAGES_FIXES = [
   {
     chemin: 'villas',
     titre: 'Toutes les villas — PasseTemps',
-    description: 'Parcourez les villas, appartements, chambres et piscines à la journée '
+    description: 'Parcourez les villas, résidences, appartements et chambres '
       + 'disponibles au Sénégal. Filtrez par ville, dates, budget et équipements.',
   },
   // Les quatre pages légales portent une note d'attente depuis le 20 août 2026 :

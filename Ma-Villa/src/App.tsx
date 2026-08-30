@@ -178,7 +178,7 @@ function FeaturedVillas() {
 function CommentCaMarche() {
   const etapes = [
     { n: '1', titre: 'Cherchez', texte: 'Filtrez par ville, dates et budget. Les prix sont affichés, sans surprise.' },
-    { n: '2', titre: 'Réservez', texte: 'Choisissez un logement et une formule : nuitée, journée, ou piscine seule.' },
+    { n: '2', titre: 'Réservez', texte: 'Choisissez un logement et une formule : à la nuitée, à la journée ou à la demi-journée.' },
     { n: '3', titre: 'Profitez', texte: 'Le propriétaire confirme, vous recevez ses coordonnées par email.' },
   ]
 
@@ -279,7 +279,7 @@ function AppelProprietaires() {
           </h2>
           <p className="text-sm th-text-2 max-w-xl mx-auto mb-8 leading-relaxed">
             Créez votre annonce, fixez vos tarifs par formule — nuitée, journée,
-            piscine seule — et gérez vos disponibilités depuis un tableau de bord simple.
+            résidence — et gérez vos disponibilités depuis un tableau de bord simple.
           </p>
           {/* Seul endroit où « Publier PasseTemps » prend l'accent : c'est la
               section qui lui est consacrée, donc la conversion du parcours en
@@ -301,7 +301,7 @@ function Home() {
     <div style={{ background: 'var(--bg)', color: 'var(--text-1)' }}>
       <Seo
         titre="PasseTemps"
-        description="Louez une villa, un appartement ou une piscine à la journée au Sénégal — Saly, Mbour, Dakar. Tarifs affichés, disponibilités en temps réel, réservation directe auprès des propriétaires."
+        description="Louez une villa, une résidence, un appartement ou une chambre au Sénégal — Saly, Mbour, Dakar. Tarifs affichés, disponibilités en temps réel, réservation directe auprès des propriétaires."
         chemin="/"
         donneesStructurees={{
           '@context': 'https://schema.org',
@@ -327,7 +327,7 @@ function Home() {
 
       {/* « Que cherchez-vous ? » avant « Où ? » : chercher un lieu sans
           savoir ce qu'on loue oblige à filtrer ensuite dans un catalogue
-          mélangé, où une piscine à la journée côtoie un studio au mois. */}
+          mélangé, où une chambre à la nuitée côtoie un studio au mois. */}
       <section className="px-6 md:px-12 lg:px-16 py-16" style={{ borderTop: '1px solid var(--border)' }}>
         <div className="max-w-3xl mx-auto">
           <ScrollReveal className="mb-8">

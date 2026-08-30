@@ -41,10 +41,10 @@ export default function Hero() {
         <FadeIn delay={200} duration={700}>
           <p className="mb-8 text-white/85 max-w-2xl" style={{ font: 'var(--t-body-lg)' }}>
             <span className="hidden md:inline">
-              Villas, appartements, chambres — et même la piscine seule pour une journée.
+              Villas, résidences, appartements, chambres — à la nuitée comme à la journée.
             </span>
             <span className="md:hidden">
-              Villas, chambres, ou la piscine seule pour la journée.
+              Villas, résidences, appartements ou chambres.
             </span>
             {/* Le paiement est annoncé mais inactif : le dire au futur tant que
                 c'est le cas, plutôt que de laisser croire qu'on peut régler ici. */}

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import Button from '../ui/Button'
 import { fcfa } from '../../lib/format'
-import { LIBELLES_LOGEMENT, type TypeLogement } from '../../types'
+import { LIBELLES_LOGEMENT, TYPES_LOGEMENT_PROPOSES } from '../../types'
 
-const TYPES: TypeLogement[] = ['villa_entiere', 'appartement', 'chambre', 'piscine']
+
 const NOTES = [
   { valeur: '', libelle: 'Toutes' },
   { valeur: '3', libelle: '3★ et +' },
@@ -117,7 +117,7 @@ export default function FeuilleFiltres({
           <section className="feuille-section">
             <h3 className="feuille-section-titre">Type de logement</h3>
             <div className="feuille-pastilles">
-              {TYPES.map((t) => (
+              {TYPES_LOGEMENT_PROPOSES.map((t) => (
                 <button
                   key={t}
                   type="button"

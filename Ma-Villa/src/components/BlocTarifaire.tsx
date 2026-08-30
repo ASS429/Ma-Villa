@@ -6,7 +6,7 @@ import { FORMULES, libelleOptions, tarifLeMoinsCher } from '../lib/tarifs'
  * Bloc « logements × formules × options » — planche 08.
  *
  * C'est le cœur de ce que la plateforme sait représenter et qu'Airbnb ne sait
- * pas : une même villa loue la villa entière, une chambre, ou la piscine seule,
+ * pas : une même villa loue la villa entière, une chambre ou un appartement,
  * à la nuitée comme à la demi-journée, avec ou sans climatisation ni buffet.
  *
  * Les deux approches de la planche cohabitent, comme arbitré :

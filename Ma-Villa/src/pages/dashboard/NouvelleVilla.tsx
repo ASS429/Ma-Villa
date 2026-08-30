@@ -8,7 +8,7 @@ import TeleverseurPhotos from '../../components/console/TeleverseurPhotos'
 import Button from '../../components/ui/Button'
 import { useToast } from '../../context/ToastContext'
 import {
-  LIBELLES_LOGEMENT, LIBELLES_TARIF,
+  LIBELLES_LOGEMENT, LIBELLES_TARIF, TYPES_LOGEMENT_PROPOSES,
   type Photo, type TypeLogement, type TypeTarif,
 } from '../../types'
 
@@ -455,7 +455,9 @@ export default function NouvelleVilla() {
                   value={logement.type}
                   onChange={(e) => setLogement({ ...logement, type: e.target.value as TypeLogement })}
                 >
-                  {(Object.keys(LIBELLES_LOGEMENT) as TypeLogement[]).map((t) => (
+                  {/* La liste proposée, pas la table des libellés : celle-ci
+                      nomme aussi les types qu'on ne crée plus. */}
+                  {TYPES_LOGEMENT_PROPOSES.map((t) => (
                     <option key={t} value={t}>{LIBELLES_LOGEMENT[t]}</option>
                   ))}
                 </select>

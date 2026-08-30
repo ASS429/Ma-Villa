@@ -12,14 +12,30 @@ class CategorieTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_les_sept_categories_sont_creees_par_la_migration(): void
+    /**
+     * Le catalogue proposé au public, dans l'ordre où il s'affiche.
+     *
+     * « Piscine seule » en est sortie le 28 août 2026 et « Résidence » y est
+     * entrée. La piscine reste **en base**, désactivée : des logements s'y
+     * rattachent, et les supprimer les ferait disparaître de la recherche.
+     */
+    public function test_les_categories_actives_sont_celles_du_catalogue(): void
     {
         $cles = Categorie::actives()->pluck('cle')->all();
 
         $this->assertEquals(
-            ['villa', 'appartement', 'studio', 'chambre', 'piscine', 'hotel', 'auberge'],
+            ['villa', 'appartement', 'residence', 'studio', 'chambre', 'hotel', 'auberge'],
             $cles
         );
+    }
+
+    public function test_la_piscine_survit_en_base_mais_n_est_plus_proposee(): void
+    {
+        $piscine = Categorie::where('cle', 'piscine')->first();
+
+        $this->assertNotNull($piscine, 'La ligne doit survivre : des logements la référencent.');
+        $this->assertFalse((bool) $piscine->actif);
+        $this->assertNotContains('piscine', Categorie::actives()->pluck('cle')->all());
     }
 
     public function test_une_categorie_porte_son_unite_de_prix_et_ses_formules(): void

@@ -7,7 +7,12 @@
 
 export type Role = 'client' | 'proprietaire' | 'admin'
 
-export type TypeLogement = 'villa_entiere' | 'appartement' | 'chambre' | 'piscine'
+/**
+ * `piscine` n'est plus proposé depuis le 28 août 2026, mais reste dans le type :
+ * des logements publiés le portent encore, et l'énumération en base ne se
+ * réécrit pas sous eux. Voir `TYPES_LOGEMENT_PROPOSES`.
+ */
+export type TypeLogement = 'villa_entiere' | 'appartement' | 'residence' | 'chambre' | 'piscine'
 
 export type TypeTarif = 'journee' | 'nuitee' | 'demi_journee' | 'pass'
 
@@ -172,12 +177,33 @@ export const LIBELLES_TARIF: Record<TypeTarif, string> = {
   pass: 'Pass',
 }
 
+/**
+ * Les libellés de **tous** les types, y compris ceux qu'on ne propose plus.
+ *
+ * Un logement déjà publié garde son type : retirer son libellé n'effacerait
+ * pas le logement, cela afficherait « undefined » sur sa fiche.
+ */
 export const LIBELLES_LOGEMENT: Record<TypeLogement, string> = {
   villa_entiere: 'Villa entière',
   appartement: 'Appartement',
+  residence: 'Résidence',
   chambre: 'Chambre',
   piscine: 'Piscine',
 }
+
+/**
+ * Ce qu'on propose à la création et au filtrage — la piscine seule en est
+ * sortie le 28 août 2026, la résidence y est entrée.
+ *
+ * Distinct de `LIBELLES_LOGEMENT` à dessein : cesser de proposer un type n'est
+ * pas la même chose que cesser de savoir le nommer.
+ */
+export const TYPES_LOGEMENT_PROPOSES: TypeLogement[] = [
+  'villa_entiere',
+  'appartement',
+  'residence',
+  'chambre',
+]
 
 /** Unité affichée à côté du prix « à partir de ». */
 /**
