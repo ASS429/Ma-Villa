@@ -19,7 +19,7 @@ interface Entree {
 
 const PROPRIETAIRE: Entree[] = [
   { to: '/dashboard',              label: 'Accueil',      Icone: Home, end: true },
-  { to: '/dashboard/villas',       label: 'Mes villas',   Icone: Building2 },
+  { to: '/dashboard/villas',       label: 'Mes hébergements', Icone: Building2 },
   { to: '/dashboard/reservations', label: 'Réservations', Icone: CalendarDays },
   { to: '/dashboard/revenus',      label: 'Revenus',      Icone: Wallet },
   { to: '/dashboard/profil',       label: 'Profil',       Icone: User },
@@ -131,7 +131,7 @@ function Espace() {
         {estProprietaire && (
           <div style={{ padding: 'var(--space-3) var(--space-3) 0' }}>
             <ButtonLink to="/dashboard/villas/nouvelle" variante="primaire" taille="sm" bloc iconeAvant={<Plus size={15} />}>
-              Publier une villa
+              Publier une annonce
             </ButtonLink>
           </div>
         )}
@@ -200,7 +200,7 @@ function Espace() {
                     iconeAvant={<Plus size={15} />}
                     onClick={() => setTiroir(false)}
                   >
-                    Publier une villa
+                    Publier une annonce
                   </ButtonLink>
                 </div>
               )}

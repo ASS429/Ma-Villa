@@ -54,7 +54,7 @@ export default function Destinations() {
             {destinations.map((d) => (
               <Link
                 key={d.ville}
-                to={`/villas?ville=${encodeURIComponent(d.ville)}`}
+                to={`/hebergements?ville=${encodeURIComponent(d.ville)}`}
                 className="destination"
                 aria-label={`${d.ville}, ${d.nb} villa${d.nb > 1 ? 's' : ''}`}
               >

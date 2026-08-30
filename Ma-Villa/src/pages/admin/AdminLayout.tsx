@@ -22,7 +22,7 @@ interface Entree {
 const ENTREES: Entree[] = [
   { to: '/admin',              label: 'Ce qui attend',   Icone: Inbox,          end: true, attente: 'total' },
   { to: '/admin/tableau-de-bord', label: 'Tableau de bord', Icone: LayoutGrid },
-  { to: '/admin/villas',       label: 'Villas',          Icone: Building2,      attente: 'villas' },
+  { to: '/admin/villas',       label: 'Hébergements',    Icone: Building2,      attente: 'villas' },
   { to: '/admin/utilisateurs', label: 'Utilisateurs',    Icone: Users },
   { to: '/admin/avis',         label: 'Avis',            Icone: MessageSquare },
   // « Articles » et non « Œuvres » : le catalogue est de l'artisanat, et un

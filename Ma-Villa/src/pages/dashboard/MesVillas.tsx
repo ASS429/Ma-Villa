@@ -36,7 +36,7 @@ export default function MesVillas() {
 
   return (
     <div>
-      <h1 className="console-titre">Mes villas</h1>
+      <h1 className="console-titre">Mes hébergements</h1>
       <p className="console-sous-titre">
         {villas.length > 0
           ? `${villas.length} annonce${villas.length > 1 ? 's' : ''}${enAttente > 0 ? ` · ${enAttente} en cours de validation` : ''}`
@@ -45,7 +45,7 @@ export default function MesVillas() {
 
       <div className="console-filtres">
         <ButtonLink to="/dashboard/villas/nouvelle" variante="primaire" taille="sm" iconeAvant={<Plus size={15} />}>
-          Nouvelle villa
+          Nouvelle annonce
         </ButtonLink>
       </div>
 
@@ -69,7 +69,7 @@ export default function MesVillas() {
         <div className="console-vide">
           <span className="console-vide-icone"><Building2 size={22} /></span>
           <p>
-            <strong>Aucune villa pour l'instant.</strong> Publiez votre première annonce pour
+            <strong>Aucun hébergement pour l'instant.</strong> Publiez votre première annonce pour
             commencer à recevoir des réservations.
           </p>
           <ButtonLink to="/dashboard/villas/nouvelle" variante="primaire" taille="sm" iconeAvant={<Plus size={15} />}>

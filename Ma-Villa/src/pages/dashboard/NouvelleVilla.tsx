@@ -336,7 +336,7 @@ export default function NouvelleVilla() {
     <div className="publication">
       <header className="publication-entete">
         <div>
-          <h1 className="console-titre">Publier une villa</h1>
+          <h1 className="console-titre">Publier une annonce</h1>
           <p className="console-sous-titre">
             {restantes === 0
               ? 'Dernière étape.'

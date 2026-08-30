@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
-import { Routes, Route, Navigate, Link } from 'react-router-dom'
+import { Routes, Route, Navigate, Link, useParams } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import { useToast } from './context/ToastContext'
 import api from './services/api'
@@ -147,7 +147,7 @@ function FeaturedVillas() {
               Villas en vedette
             </h2>
           </div>
-          <Link to="/villas" className="text-sm transition-colors th-text-2 hover:th-text-1">
+          <Link to="/hebergements" className="text-sm transition-colors th-text-2 hover:th-text-1">
             Voir toutes →
           </Link>
         </ScrollReveal>
@@ -307,7 +307,7 @@ function Home() {
           '@context': 'https://schema.org',
           '@type': 'WebSite',
           name: 'PasseTemps',
-          description: 'Location de villas et logements de vacances au Sénégal',
+          description: 'Villas, résidences, appartements et chambres à louer au Sénégal',
           inLanguage: 'fr',
           potentialAction: {
             '@type': 'SearchAction',
@@ -355,6 +355,18 @@ function Home() {
   )
 }
 
+/**
+ * `/villas/12` → `/hebergements/12`, en gardant la barre oblique finale.
+ *
+ * Elle n'est pas décorative : Render applique sa réécriture avant de résoudre
+ * l'index d'un dossier, et c'est elle qui distingue la page pré-rendue du
+ * gabarit générique.
+ */
+function RedirectionHebergement() {
+  const { id } = useParams()
+  return <Navigate to={`/hebergements/${id}/`} replace />
+}
+
 /* ─── App ────────────────────────────────────────────────────── */
 
 export default function App() {
@@ -372,8 +384,17 @@ export default function App() {
       <main id="contenu">
       <Routes>
       <Route path="/" element={<Home />} />
-      <Route path="/villas" element={<Villas />} />
-      <Route path="/villas/:id" element={<VillaDetail />} />
+      <Route path="/hebergements" element={<Villas />} />
+      <Route path="/hebergements/:id" element={<VillaDetail />} />
+
+      {/* Les anciennes adresses continuent de répondre, et pour longtemps.
+          La plupart des visiteurs arrivent par un lien WhatsApp vers
+          `/villas/{id}` : casser ces liens perdrait exactement les clients
+          que la page de reprise a été écrite pour rattraper. La redirection
+          remplace l'entrée d'historique, pour que le retour arrière ne
+          reboucle pas sur elle. */}
+      <Route path="/villas" element={<Navigate to="/hebergements" replace />} />
+      <Route path="/villas/:id" element={<RedirectionHebergement />} />
 
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />

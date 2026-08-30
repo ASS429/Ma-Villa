@@ -98,7 +98,7 @@ export default function AdminVillas() {
 
   return (
     <div>
-      <h1 className="console-titre">Villas</h1>
+      <h1 className="console-titre">Hébergements</h1>
       <p className="console-sous-titre">
         Chaque annonce passe par ici avant d'être visible du public.
       </p>
@@ -126,7 +126,7 @@ export default function AdminVillas() {
             placeholder="Nom ou ville…"
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
-            aria-label="Rechercher une villa"
+            aria-label="Rechercher un hébergement"
           />
         </div>
       </div>
@@ -154,10 +154,10 @@ export default function AdminVillas() {
           <span className="console-vide-icone"><Building2 size={22} /></span>
           <p>
             {terme
-              ? <>Aucune villa ne correspond à <strong>{terme}</strong>.</>
+              ? <>Aucun hébergement ne correspond à <strong>{terme}</strong>.</>
               : statut === 'en_attente'
                 ? <>Aucune annonce en attente. <strong>Tout est traité.</strong></>
-                : 'Aucune villa dans cette catégorie.'}
+                : 'Aucun hébergement dans cette catégorie.'}
           </p>
         </div>
       ) : (
@@ -188,7 +188,7 @@ export default function AdminVillas() {
                       telle que le public la verra n'a pas de sens, et revenir
                       en arrière ferait perdre la position dans la liste. */}
                   <Link
-                    to={`/villas/${villa.id}/`}
+                    to={`/hebergements/${villa.id}/`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{

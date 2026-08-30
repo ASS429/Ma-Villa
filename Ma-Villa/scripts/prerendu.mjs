@@ -133,7 +133,7 @@ function pageVilla(villa) {
         price: String(Math.round(Number(villa.prix_min))),
         priceCurrency: 'XOF',
         availability: 'https://schema.org/InStock',
-        url: `${SITE}/villas/${villa.id}/`,
+        url: `${SITE}/hebergements/${villa.id}/`,
       },
     } : {}),
     ...(nbAvis > 0 && note > 0 ? {
@@ -146,13 +146,13 @@ function pageVilla(villa) {
     } : {}),
   }
 
-  return { chemin: `villas/${villa.id}`, titre, description, image: photo, donnees }
+  return { chemin: `hebergements/${villa.id}`, titre, description, image: photo, donnees }
 }
 
 const PAGES_FIXES = [
   {
     chemin: '',
-    titre: 'PasseTemps — Location de villas au Sénégal',
+    titre: 'PasseTemps — Villas, résidences et chambres au Sénégal',
     description: 'Louez une villa, une résidence, un appartement ou une chambre au Sénégal — Saly, '
       + 'Mbour, Dakar. Tarifs affichés, disponibilités en temps réel, paiement Wave ou Orange Money.',
     donnees: {
@@ -169,8 +169,8 @@ const PAGES_FIXES = [
     },
   },
   {
-    chemin: 'villas',
-    titre: 'Toutes les villas — PasseTemps',
+    chemin: 'hebergements',
+    titre: 'Tous les hébergements — PasseTemps',
     description: 'Parcourez les villas, résidences, appartements et chambres '
       + 'disponibles au Sénégal. Filtrez par ville, dates, budget et équipements.',
   },

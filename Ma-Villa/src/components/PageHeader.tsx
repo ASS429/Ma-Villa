@@ -53,10 +53,10 @@ export default function PageHeader() {
         <Marque taille="md" />
 
         <nav className="hidden md:flex items-center gap-6">
-          <NavLink to="/villas" className={({ isActive }) =>
+          <NavLink to="/hebergements" className={({ isActive }) =>
             `text-sm transition-colors ${isActive ? 'th-text-1 font-medium' : 'th-text-2 hover:th-text-1'}`
           }>
-            Villas
+            Hébergements
           </NavLink>
           {user && (
             <NavLink to={dashLink} className={({ isActive }) =>
@@ -127,13 +127,13 @@ export default function PageHeader() {
             </div>
             <nav className="flex-1 flex flex-col px-4 py-4 gap-1">
               <NavLink
-                to="/villas"
+                to="/hebergements"
                 onClick={() => setOpen(false)}
                 className={({ isActive }) =>
                   `px-4 py-3 rounded-xl text-sm font-medium transition-colors ${isActive ? 'th-elevated th-text-1' : 'th-text-2 hover:th-elevated'}`
                 }
               >
-                Villas
+                Hébergements
               </NavLink>
               {user && (
                 <NavLink

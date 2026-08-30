@@ -41,7 +41,7 @@ function villeDeLAdresse(adresse: string, destinations: Destination[]): string |
  * D'où quatre partis pris, tous repris de la planche 31 :
  *
  *   — **le titre nomme la cause la plus probable, pas le code d'erreur.**
- *     « Cette villa n'est plus en ligne » est vrai neuf fois sur dix ;
+ *     « Cette annonce n'est plus en ligne » est vrai neuf fois sur dix ;
  *     « 404 » n'est jamais utile. Le grand chiffre décoratif disparaît :
  *     il occupait la place de la recherche ;
  *   — **un champ de recherche, pas un bouton d'accueil.** La recherche et les
@@ -107,7 +107,7 @@ export default function NotFound() {
           résultats de recherche, et le visiteur y revient indéfiniment. */}
       <Seo
         titre="Page introuvable"
-        description="Cette page n'existe plus. Retrouvez une villa au Sénégal — Saly, Mbour, Dakar."
+        description="Cette page n'existe plus. Retrouvez un hébergement au Sénégal — Saly, Mbour, Dakar."
         chemin={emplacement.pathname}
         indexable={false}
       />
@@ -130,7 +130,7 @@ export default function NotFound() {
           className="th-text-1 mb-4"
           style={{ font: 'var(--t-h1)', letterSpacing: 'var(--t-h1-ls)' }}
         >
-          Cette villa n'est plus en ligne
+          Cette annonce n'est plus en ligne
         </h1>
 
         <p className="th-text-2 mb-8" style={{ font: 'var(--t-body)', maxWidth: '52ch' }}>
@@ -146,8 +146,8 @@ export default function NotFound() {
             type="search"
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
-            placeholder="Chercher une villa à Saly, Mbour, Dakar…"
-            aria-label="Chercher une villa par ville"
+            placeholder="Chercher à Saly, Mbour, Dakar…"
+            aria-label="Chercher un hébergement par ville"
             autoComplete="off"
           />
           <button type="submit">Chercher</button>
@@ -157,8 +157,8 @@ export default function NotFound() {
           <ul className="villes-404">
             {destinations.slice(0, 3).map((d) => (
               <li key={d.ville}>
-                <Link to={`/villas?ville=${encodeURIComponent(d.ville)}`}>
-                  <strong>{d.nb}</strong> villa{d.nb > 1 ? 's' : ''} à {d.ville}
+                <Link to={`/hebergements?ville=${encodeURIComponent(d.ville)}`}>
+                  <strong>{d.nb}</strong> hébergement{d.nb > 1 ? 's' : ''} à {d.ville}
                 </Link>
               </li>
             ))}
@@ -172,7 +172,7 @@ export default function NotFound() {
           style={{ borderTop: '1px solid var(--border)', paddingTop: 'var(--space-7)' }}
         >
           <h2 className="th-text-1 mb-6" style={{ font: 'var(--t-h3)' }}>
-            {ville ? `Des villas semblables, à ${ville}` : 'Nos villas en vedette'}
+            {ville ? `Des hébergements semblables, à ${ville}` : 'Nos hébergements en vedette'}
           </h2>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

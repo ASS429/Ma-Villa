@@ -175,12 +175,12 @@ export default function Villas() {
 
   const descriptionSeo = filtres.ville
     ? `Villas et logements à louer à ${filtres.ville} — tarifs en FCFA, disponibilités en temps réel.`
-    : 'Toutes les villas, appartements et piscines à louer au Sénégal. Filtrez par ville, dates, budget et type de logement.'
+    : 'Villas, résidences, appartements et chambres à louer au Sénégal. Filtrez par ville, dates, budget et type de logement.'
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text-1)' }}>
       <Seo
-        titre={filtres.ville ? `Villas à ${filtres.ville}` : 'Toutes les villas'}
+        titre={filtres.ville ? `Hébergements à ${filtres.ville}` : 'Tous les hébergements'}
         description={descriptionSeo}
         chemin="/villas"
       />
@@ -194,7 +194,7 @@ export default function Villas() {
           <h1 className="text-2xl md:text-3xl font-normal th-text-1" style={{ letterSpacing: '-0.02em' }}>
             {categorieActive
               ? `${categorieActive.nom_pluriel}${filtres.ville ? ` à ${filtres.ville}` : ' au Sénégal'}`
-              : 'Villas disponibles'}
+              : 'Hébergements disponibles'}
           </h1>
         </div>
 

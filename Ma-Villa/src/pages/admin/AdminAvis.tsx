@@ -101,7 +101,7 @@ export default function AdminAvis() {
 
                   {a.villa && (
                     <Link
-                      to={`/villas/${a.villa.id}/`}
+                      to={`/hebergements/${a.villa.id}/`}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{

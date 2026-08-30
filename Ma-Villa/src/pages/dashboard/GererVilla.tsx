@@ -275,7 +275,7 @@ export default function GererVilla() {
           </p>
         </div>
         <Link
-          to={`/villas/${id}/`}
+          to={`/hebergements/${id}/`}
           target="_blank"
           className="text-sm transition-all hover:opacity-70 px-3 py-1.5 rounded-xl"
           style={{ border: '1px solid var(--border)', color: 'var(--text-2)' }}

@@ -364,7 +364,7 @@ export default function VillaDetail() {
   if (erreur || !villa) {
     return (
       <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text-1)' }}>
-        <Seo titre="Villa introuvable" description="Cette villa n'est pas disponible." indexable={false} />
+        <Seo titre="Annonce introuvable" description="Cette annonce n'est pas disponible." indexable={false} />
         <PageHeader />
         <div className="flex flex-col items-center justify-center py-32 gap-4 px-6 text-center">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: 'var(--bg-elevated)' }}>
@@ -372,13 +372,13 @@ export default function VillaDetail() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75" />
             </svg>
           </div>
-          <p className="th-text-1 font-medium">Cette villa n'est pas disponible</p>
+          <p className="th-text-1 font-medium">Cette annonce n'est pas disponible</p>
           <p className="th-text-2 text-sm max-w-sm">{erreur || 'Elle a peut-être été retirée par son propriétaire.'}</p>
           <div className="flex gap-3 mt-2">
             <button onClick={reessayer} className="px-5 py-2.5 rounded-xl text-sm font-medium transition-opacity hover:opacity-90" style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}>
               Réessayer
             </button>
-            <Link to="/villas" className="px-5 py-2.5 rounded-xl text-sm font-medium th-text-1" style={{ border: '1px solid var(--border-2)', textDecoration: 'none' }}>
+            <Link to="/hebergements" className="px-5 py-2.5 rounded-xl text-sm font-medium th-text-1" style={{ border: '1px solid var(--border-2)', textDecoration: 'none' }}>
               Voir les villas
             </Link>
           </div>

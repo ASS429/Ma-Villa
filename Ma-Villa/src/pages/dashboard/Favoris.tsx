@@ -55,7 +55,7 @@ export default function Favoris() {
           pour la retrouver sans refaire la recherche.
         </>}
         videAction={
-          <ButtonLink to="/villas" variante="primaire" taille="sm" iconeAvant={<Compass size={15} />}>
+          <ButtonLink to="/hebergements" variante="primaire" taille="sm" iconeAvant={<Compass size={15} />}>
             Explorer les villas
           </ButtonLink>
         }

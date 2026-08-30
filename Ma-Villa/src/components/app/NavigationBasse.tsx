@@ -41,7 +41,7 @@ export default function NavigationBasse() {
 
   const onglets = [
     { to: '/', libelle: 'Explorer', Icone: Home, exact: true },
-    { to: '/villas', libelle: 'Recherche', Icone: Search },
+    { to: '/hebergements', libelle: 'Recherche', Icone: Search },
     // La boutique n'apparaît que si elle est ouverte : un onglet qui renvoie
     // à l'accueil est pire que pas d'onglet du tout. C'est aussi la seule
     // façon d'y accéder au pouce — sinon il faut remonter au menu du haut.

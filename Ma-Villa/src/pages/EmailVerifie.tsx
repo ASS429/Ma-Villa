@@ -70,7 +70,7 @@ export default function EmailVerifie() {
         pied={
           expire
             ? <Link to="/login" className="th-text-1 font-medium hover:underline underline-offset-4">Se connecter</Link>
-            : <Link to="/villas" className="th-text-1 font-medium hover:underline underline-offset-4">Découvrir les villas</Link>
+            : <Link to="/hebergements" className="th-text-1 font-medium hover:underline underline-offset-4">Découvrir les villas</Link>
         }
       >
         {/* Un lien expiré occupe l'écran entier avec une sortie, plutôt que

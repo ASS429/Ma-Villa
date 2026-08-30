@@ -250,11 +250,11 @@ export default function Dashboard() {
         {estProprietaire ? (
           <>
             <Raccourci to="/dashboard/villas" Icone={Building2} titre="Mes villas" detail="Logements, tarifs, photos, disponibilités" />
-            <Raccourci to="/dashboard/villas/nouvelle" Icone={Plus} titre="Publier une villa" detail="Créer une nouvelle annonce" />
+            <Raccourci to="/dashboard/villas/nouvelle" Icone={Plus} titre="Publier une annonce" detail="Villa, résidence, appartement ou chambre" />
           </>
         ) : (
           <>
-            <Raccourci to="/villas" Icone={Compass} titre="Explorer" detail="Villas, appartements, piscines à la journée" />
+            <Raccourci to="/hebergements" Icone={Compass} titre="Explorer" detail="Villas, appartements, piscines à la journée" />
             <Raccourci to="/dashboard/favoris" Icone={Heart} titre="Mes favoris" detail="Les logements que vous avez enregistrés" />
           </>
         )}

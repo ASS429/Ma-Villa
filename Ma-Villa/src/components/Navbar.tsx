@@ -85,8 +85,8 @@ export default function Navbar() {
 
           {/* Desktop links */}
           <div className="hidden md:flex items-center gap-7">
-            <NavLink to="/villas" className={`text-sm transition-colors ${navTextClass}`}>
-              Villas
+            <NavLink to="/hebergements" className={`text-sm transition-colors ${navTextClass}`}>
+              Hébergements
             </NavLink>
             {boutique.actif && (
               <NavLink to="/boutique" className={`text-sm transition-colors ${navTextClass}`}>
@@ -193,7 +193,7 @@ export default function Navbar() {
             </div>
 
             <nav className="flex-1 flex flex-col px-4 py-4 gap-1">
-              <MobileLink to="/villas" onClick={close}>Villas</MobileLink>
+              <MobileLink to="/hebergements" onClick={close}>Hébergements</MobileLink>
               {boutique.actif && <MobileLink to="/boutique" onClick={close}>Boutique</MobileLink>}
               {boutique.actif && user && (
                 <MobileLink to="/boutique/commandes" onClick={close}>Mes commandes</MobileLink>

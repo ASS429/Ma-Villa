@@ -13,14 +13,14 @@ export default function Footer() {
           <div>
             <Marque taille="md" />
             <p className="text-sm th-text-2 mt-2 max-w-xs leading-relaxed">
-              Location de villas et logements de vacances au Sénégal.
+              Villas, résidences, appartements et chambres à louer au Sénégal.
             </p>
           </div>
 
           <nav className="flex flex-wrap gap-x-12 gap-y-8 text-sm" aria-label="Pied de page">
             <div className="flex flex-col gap-2.5">
               <p className="font-semibold th-text-1">Explorer</p>
-              <Link to="/villas" className="th-text-2 hover:th-text-1 transition-colors">Toutes les villas</Link>
+              <Link to="/hebergements" className="th-text-2 hover:th-text-1 transition-colors">Tous les hébergements</Link>
               {user ? (
                 <Link to={dashLink} className="th-text-2 hover:th-text-1 transition-colors">Mon espace</Link>
               ) : (
