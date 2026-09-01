@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Paiement extends Model
 {
     protected $fillable = [
-        'reservation_id', 'methode', 'montant', 'statut', 'reference',
+        'reservation_id', 'methode', 'telephone_payeur', 'montant', 'statut', 'reference',
         'commission', 'montant_proprietaire', 'taux_commission',
         'token_paydunya', 'url_paiement', 'url_application', 'reponse_prestataire', 'paye_le',
     ];

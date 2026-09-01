@@ -98,6 +98,10 @@ class PaiementController extends Controller
             $paiement = $reservation->paiement ?? new Paiement(['reservation_id' => $reservation->id]);
             $paiement->fill([
                 'methode'        => $donnees['methode'],
+                // Le numéro qui paie n'est pas celui du compte : on s'inscrit
+                // avec son téléphone et on paie avec le Wave d'un proche. Sans
+                // lui, un remboursement n'a pas d'adresse.
+                'telephone_payeur' => $donnees['telephone'],
                 'statut'         => 'en_attente',
                 'reference'      => $reference,
                 'token_paydunya' => $facture['token'],

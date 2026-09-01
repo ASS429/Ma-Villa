@@ -2147,3 +2147,21 @@
 @media (max-width: 520px) {
   .remboursement-recherche { flex-direction: column; align-items: stretch; }
 }
+
+/* Où renvoyer l'argent. Discret sous le montant, mais toujours présent : c'est
+   le seul renseignement dont on a besoin pour agir, et aller le chercher
+   ailleurs fait quitter l'écran au milieu d'une décision. */
+.reglement { margin-top: var(--space-2); text-align: left; }
+.reglement-ligne {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font: var(--t-body-sm);
+  color: var(--text-2);
+}
+.reglement-ligne svg { flex: none; color: var(--text-3); }
+.reglement-ligne strong { color: var(--text-1); font-variant-numeric: lining-nums tabular-nums; }
+.reglement-note { margin: 2px 0 0; font: var(--t-caption); color: var(--text-3); text-wrap: pretty; }
+.reglement-note.est-douteux { color: var(--warning); }
+.reglement-note a { color: var(--accent); text-decoration: underline; }

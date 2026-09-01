@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Undo2, Inbox, X, AlertTriangle, Search } from 'lucide-react'
+import { Undo2, Inbox, X, AlertTriangle, Search, Smartphone } from 'lucide-react'
 import api from '../../services/api'
 import { useToast } from '../../context/ToastContext'
 import { useRequete } from '../../lib/useRequete'
@@ -11,6 +11,33 @@ import Badge from '../../components/ui/Badge'
 import { Champ, ChampZoneTexte } from '../../components/ui/Champ'
 
 type Imputation = 'plateforme' | 'proprietaire' | 'client'
+
+/**
+ * Où renvoyer l'argent.
+ *
+ * `telephone_origine` dit d'où sort le numéro affiché, et ce n'est pas un
+ * détail : celui du compte n'est pas celui du paiement — on s'inscrit avec son
+ * téléphone et on paie avec le Wave d'un proche. Un virement mobile parti au
+ * mauvais numéro ne revient pas.
+ */
+interface Reglement {
+  methode: string
+  methode_nom: string
+  telephone: string | null
+  telephone_origine: 'paiement' | 'prestataire' | 'compte' | null
+  reference: string | null
+  paye_le: string | null
+  recu_url: string | null
+}
+
+const ORIGINE: Record<'paiement' | 'prestataire' | 'compte', { note: string; sur: boolean }> = {
+  paiement: { note: 'Numéro saisi au moment du paiement.', sur: true },
+  prestataire: { note: 'Numéro transmis par PayDunya.', sur: true },
+  compte: {
+    note: "⚠️ Numéro du compte, pas celui du paiement — ce règlement est antérieur au 1ᵉʳ septembre 2026. Vérifiez le reçu PayDunya avant de virer.",
+    sur: false,
+  },
+}
 
 /** Une réservation dont le client attend une décision. */
 interface Demande {
@@ -26,6 +53,7 @@ interface Demande {
   montant: number
   part_proprietaire: number
   proprietaire_deja_paye: boolean
+  paiement: Reglement | null
 }
 
 interface Ligne {
@@ -59,12 +87,53 @@ interface Proposition {
   part_proprietaire: number
   proprietaire_deja_paye: boolean
   avertissement: string | null
+  paiement: Reglement
 }
 
 const TON: Record<Imputation, 'danger' | 'warning' | 'neutre'> = {
   plateforme: 'danger',
   proprietaire: 'warning',
   client: 'neutre',
+}
+
+/**
+ * Où renvoyer l'argent, affiché là où la décision se prend.
+ *
+ * L'écran disait tout du séjour et rien du règlement : il fallait le quitter
+ * pour aller chercher, chez PayDunya, le numéro et le moyen — c'est-à-dire les
+ * deux seules choses dont on a besoin pour virer.
+ */
+function Reglement({ reglement }: { reglement: Reglement }) {
+  const origine = reglement.telephone_origine ? ORIGINE[reglement.telephone_origine] : null
+
+  return (
+    <div className="reglement">
+      <p className="reglement-ligne">
+        <Smartphone size={14} aria-hidden="true" />
+        <strong>{reglement.telephone ?? 'Numéro inconnu'}</strong>
+        <span>· {reglement.methode_nom}</span>
+      </p>
+      {origine && (
+        <p className={`reglement-note${origine.sur ? '' : ' est-douteux'}`}>{origine.note}</p>
+      )}
+      {!reglement.telephone && (
+        <p className="reglement-note est-douteux">
+          Aucun numéro enregistré pour ce règlement. Le reçu PayDunya porte celui
+          qui a été débité.
+        </p>
+      )}
+      <p className="reglement-note">
+        {reglement.reference ?? 'Sans référence'}
+        {reglement.paye_le ? ` · payé le ${dateCourte(reglement.paye_le)}` : ''}
+        {reglement.recu_url && (
+          <>
+            {' · '}
+            <a href={reglement.recu_url} target="_blank" rel="noopener noreferrer">Reçu PayDunya</a>
+          </>
+        )}
+      </p>
+    </div>
+  )
 }
 
 /**
@@ -284,7 +353,10 @@ export default function AdminRemboursements() {
                         </>
                       )}
                     </td>
-                    <td className="tableau-nombre tableau-fort">{fcfa(d.montant)}</td>
+                    <td className="tableau-nombre tableau-fort">
+                      {fcfa(d.montant)}
+                      {d.paiement && <Reglement reglement={d.paiement} />}
+                    </td>
                     <td>
                       <Button
                         variante="primaire" taille="sm"
@@ -377,6 +449,16 @@ export default function AdminRemboursements() {
                   {proposition?.explication ?? 'Calcul en cours…'}
                 </p>
               </>
+            )}
+
+            {proposition?.paiement && (
+              <div className="console-note">
+                <Smartphone size={16} aria-hidden="true" />
+                <div>
+                  <p><strong>Où renvoyer l'argent</strong></p>
+                  <Reglement reglement={proposition.paiement} />
+                </div>
+              </div>
             )}
 
             {/* L'avertissement, pas le refus : l'argent est déjà sorti dans la

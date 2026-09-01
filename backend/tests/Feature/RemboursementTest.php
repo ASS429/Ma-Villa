@@ -279,6 +279,66 @@ class RemboursementTest extends TestCase
             ->assertStatus(422);
     }
 
+    /* ── Où renvoyer l'argent ────────────────────────────────────── */
+
+    /**
+     * Le renseignement sans lequel tout le reste ne sert à rien.
+     *
+     * On ne rembourse pas un client, on crédite un numéro. Et **ce n'est pas
+     * celui du compte** : on s'inscrit avec son téléphone et on paie avec le
+     * Wave d'un proche. Virer sur le mauvais est une perte sèche.
+     */
+    public function test_l_ecran_montre_le_numero_qui_a_paye_et_non_celui_du_compte(): void
+    {
+        $paiement = $this->sejourPaye(100000);
+        $paiement->update(['telephone_payeur' => '+221 78 555 44 33']);
+
+        User::find(Reservation::find($paiement->reservation_id)->user_id)
+            ->update(['phone' => '+221 77 000 00 00']);
+
+        $reponse = $this->actingAs($this->admin)
+            ->getJson("/api/admin/reservations/{$paiement->reservation_id}/remboursement?impute_a=client")
+            ->assertOk();
+
+        $reponse->assertJsonPath('paiement.telephone', '+221 78 555 44 33');
+        $reponse->assertJsonPath('paiement.telephone_origine', 'paiement');
+        $reponse->assertJsonPath('paiement.methode_nom', 'Wave');
+    }
+
+    /**
+     * Les règlements antérieurs n'ont pas le numéro. On affiche celui du compte
+     * **en le disant**, plutôt que de le faire passer pour l'autre : c'est la
+     * différence entre un repli et un piège.
+     */
+    public function test_sans_numero_de_paiement_le_repli_est_annonce_comme_tel(): void
+    {
+        $paiement = $this->sejourPaye(100000);
+
+        User::find(Reservation::find($paiement->reservation_id)->user_id)
+            ->update(['phone' => '+221 77 000 00 00']);
+
+        $this->actingAs($this->admin)
+            ->getJson("/api/admin/reservations/{$paiement->reservation_id}/remboursement?impute_a=client")
+            ->assertOk()
+            ->assertJsonPath('paiement.telephone', '+221 77 000 00 00')
+            ->assertJsonPath('paiement.telephone_origine', 'compte');
+    }
+
+    /** La demande en attente porte le même renseignement, sans second appel. */
+    public function test_la_liste_des_demandes_porte_le_moyen_de_paiement(): void
+    {
+        $paiement = $this->sejourPaye(100000);
+        $paiement->update(['telephone_payeur' => '+221 78 555 44 33']);
+        Reservation::find($paiement->reservation_id)
+            ->update(['annulation_demandee_le' => now(), 'annulation_motif' => 'Empêchement']);
+
+        $this->actingAs($this->admin)
+            ->getJson('/api/admin/remboursements')
+            ->assertOk()
+            ->assertJsonPath('demandes.0.paiement.telephone', '+221 78 555 44 33')
+            ->assertJsonPath('demandes.0.paiement.methode_nom', 'Wave');
+    }
+
     /* ── Le client demande, il n'impose plus ─────────────────────── */
 
     /**

@@ -55,7 +55,8 @@ class RemboursementController extends Controller
             ->where('statut', '!=', 'annulee')
             ->with([
                 'client:id,name,email,phone',
-                'paiement:id,reservation_id,montant,montant_proprietaire,methode,statut,reversement_id',
+                'paiement',
+                'paiement.reservation.client:id,phone',
                 'logement.villa:id,nom,ville',
             ])
             ->orderBy('annulation_demandee_le')
@@ -73,6 +74,12 @@ class RemboursementController extends Controller
                 'montant'                => (float) ($r->paiement?->montant ?? 0),
                 'part_proprietaire'      => (float) ($r->paiement?->montant_proprietaire ?? 0),
                 'proprietaire_deja_paye' => $r->paiement?->reversement_id !== null,
+                // Sans ça, l'exploitant lit la demande puis quitte l'écran pour
+                // chercher où virer. Le renseignement doit être là où la
+                // décision se prend.
+                'paiement'               => $r->paiement
+                    ? $this->commentIlAPaye($r->paiement)
+                    : null,
             ])
             ->all();
     }
@@ -107,6 +114,7 @@ class RemboursementController extends Controller
             'deja_rendu'         => (float) Remboursement::where('paiement_id', $paiement->id)->sum('montant'),
             'montant_encaisse'   => (float) $paiement->montant,
             'part_proprietaire'  => (float) $paiement->montant_proprietaire,
+            'paiement'           => $this->commentIlAPaye($paiement),
         ] + $this->etatDuVersement($paiement));
     }
 
@@ -211,6 +219,44 @@ class RemboursementController extends Controller
                 201
             );
         });
+    }
+
+    /**
+     * Où renvoyer l'argent — et d'où vient ce qu'on affiche.
+     *
+     * Trois sources possibles, de la plus sûre à la plus douteuse, et l'écran
+     * dit **laquelle** il montre. C'est tout l'intérêt du champ `origine` :
+     * afficher le numéro du compte sans prévenir qu'il n'est pas celui du
+     * paiement, c'est inviter à virer sur le mauvais — et un virement mobile
+     * parti au mauvais numéro ne revient pas.
+     *
+     * @return array<string, mixed>
+     */
+    private function commentIlAPaye(Paiement $paiement): array
+    {
+        $brut = $paiement->reponse_prestataire ?? [];
+        $duPrestataire = $brut['customer']['phone'] ?? null;
+        $duCompte = $paiement->reservation?->client?->phone;
+
+        [$numero, $origine] = match (true) {
+            (bool) $paiement->telephone_payeur => [$paiement->telephone_payeur, 'paiement'],
+            (bool) $duPrestataire              => [$duPrestataire, 'prestataire'],
+            (bool) $duCompte                   => [$duCompte, 'compte'],
+            default                            => [null, null],
+        };
+
+        return [
+            'methode'           => $paiement->methode,
+            'methode_nom'       => collect(config('paiement.moyens', []))
+                ->firstWhere('cle', $paiement->methode)['nom'] ?? $paiement->methode,
+            'telephone'         => $numero,
+            'telephone_origine' => $origine,
+            'reference'         => $paiement->reference,
+            'paye_le'           => $paiement->paye_le?->toIso8601String(),
+            // Le reçu PayDunya porte le numéro réellement débité : c'est la
+            // seule preuve quand le nôtre manque.
+            'recu_url'          => $brut['receipt_url'] ?? null,
+        ];
     }
 
     /**
