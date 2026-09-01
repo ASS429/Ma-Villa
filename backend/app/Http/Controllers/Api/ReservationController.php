@@ -186,12 +186,55 @@ class ReservationController extends Controller
 
     public function updateStatut(Request $request, Reservation $reservation): JsonResponse
     {
-        $request->validate(['statut' => 'required|in:confirmee,annulee']);
+        $request->validate([
+            'statut' => 'required|in:confirmee,annulee',
+            'motif'  => 'sometimes|nullable|string|max:500',
+        ]);
         $this->authorize('update', $reservation);
 
         // Un client ne peut qu'annuler, pas confirmer
         if ($request->user()->role === 'client' && $request->statut !== 'annulee') {
             return response()->json(['message' => 'Non autorisé.'], 403);
+        }
+
+        /*
+         * Un client ne peut plus annuler seul une réservation **payée**.
+         *
+         * Il le pouvait, à tout moment, y compris la veille de l'arrivée :
+         * il attendait alors son argent sans qu'aucune règle ne dise combien,
+         * l'exploitant découvrait l'annulation après coup, et le propriétaire
+         * pouvait avoir été payé entre-temps.
+         *
+         * La demande n'est **pas** un statut : la réservation reste confirmée
+         * et les dates restent bloquées jusqu'à la décision. Les libérer tout
+         * de suite laisserait un second client réserver un séjour qu'on n'a
+         * pas encore décidé d'annuler.
+         *
+         * Rien ne change quand rien n'a été encaissé : il n'y a alors aucun
+         * argent à rendre, donc aucune décision à prendre.
+         */
+        $estClient = $request->user()->id === $reservation->user_id
+            && $request->user()->role !== 'admin';
+
+        $aPaye = $reservation->loadMissing('paiement')->paiement?->statut === 'reussi';
+
+        if ($estClient && $request->statut === 'annulee' && $aPaye) {
+            if ($reservation->annulation_demandee_le !== null) {
+                return response()->json([
+                    'message' => 'Votre demande est déjà enregistrée. Nous revenons vers vous.',
+                ], 422);
+            }
+
+            $reservation->update([
+                'annulation_demandee_le' => now(),
+                'annulation_motif' => $request->input('motif'),
+            ]);
+
+            return response()->json([
+                'message' => "Votre demande d'annulation est enregistrée. "
+                           . 'Le remboursement se traite avec nous : nous revenons vers vous.',
+                'reservation' => $reservation->fresh(),
+            ]);
         }
 
         $reservation->update(['statut' => $request->statut]);

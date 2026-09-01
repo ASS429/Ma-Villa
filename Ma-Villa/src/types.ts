@@ -157,6 +157,13 @@ export interface Reservation {
   }
   tarif: { type_tarif: TypeTarif }
   paiement?: PaiementReservation | null
+  /**
+   * Un client qui a payé **demande** l'annulation, il ne l'impose plus : la
+   * réservation reste confirmée et la date bloquée jusqu'à la décision, faute
+   * de quoi il attendrait son argent sans que personne ne le sache.
+   */
+  annulation_demandee_le?: string | null
+  annulation_motif?: string | null
 }
 
 /** Plages déjà occupées, par identifiant de logement. */

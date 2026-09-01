@@ -9,9 +9,10 @@ import { useToast } from '../../context/ToastContext'
 import { useRequete } from '../../lib/useRequete'
 import ListeConsole from '../../components/console/ListeConsole'
 import { messageErreur } from '../../lib/erreurs'
-import { fcfa, dateCourte, nuits } from '../../lib/format'
+import { fcfa, dateCourte, nuits, aujourdhui } from '../../lib/format'
 import Button, { ButtonLink } from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
+import { ChampZoneTexte } from '../../components/ui/Champ'
 
 interface Reservation {
   id: number
@@ -28,6 +29,13 @@ interface Reservation {
     reference: string | null
     paye_le: string | null
   } | null
+  /**
+   * Un client qui a payé **demande** l'annulation, il ne l'impose plus : la
+   * date reste bloquée jusqu'à la décision, sans quoi il attendrait son argent
+   * sans que personne ne le sache.
+   */
+  annulation_demandee_le?: string | null
+  annulation_motif?: string | null
 }
 
 const TARIF: Record<string, string> = {
@@ -75,6 +83,8 @@ export default function Reservations() {
   const toast = useToast()
   const [filtre, setFiltre] = useState('toutes')
   const [enCours, setEnCours] = useState<number | null>(null)
+  const [aAnnuler, setAAnnuler] = useState<Reservation | null>(null)
+  const [motif, setMotif] = useState('')
 
   const estProprietaire = user?.role === 'proprietaire'
 
@@ -90,14 +100,18 @@ export default function Reservations() {
   const liste = filtre === 'toutes' ? toutes : toutes.filter((r) => r.statut === filtre)
   const enAttente = toutes.filter((r) => r.statut === 'en_attente').length
 
-  const changerStatut = async (r: Reservation, statut: 'confirmee' | 'annulee') => {
+  const changerStatut = async (r: Reservation, statut: 'confirmee' | 'annulee', motif?: string) => {
     setEnCours(r.id)
     try {
-      await api.patch(`/reservations/${r.id}/statut`, { statut })
+      const { data } = await api.patch(`/reservations/${r.id}/statut`, { statut, motif })
+      // Le serveur décide laquelle des deux issues s'applique : annulation
+      // immédiate, ou demande à instruire quand l'argent est déjà encaissé.
+      // La deviner ici, c'est promettre un remboursement qu'on ne fera peut-être pas.
       toast.succes(
-        statut === 'confirmee'
-          ? `Réservation confirmée. ${r.client?.name ?? 'Le client'} en est prévenu.`
-          : 'Réservation annulée.'
+        data?.message
+          ?? (statut === 'confirmee'
+            ? `Réservation confirmée. ${r.client?.name ?? 'Le client'} en est prévenu.`
+            : 'Réservation annulée.')
       )
       reessayer()
     } catch (err) {
@@ -105,6 +119,21 @@ export default function Reservations() {
     } finally {
       setEnCours(null)
     }
+  }
+
+  /*
+   * Le motif est exigé, et c'est délibéré. C'est lui qui décide de
+   * l'imputation, donc du montant rendu : « la villa était inhabitable » et
+   * « j'ai changé d'avis » ne valent pas la même somme. Le demander après coup
+   * par messagerie, c'est le demander à quelqu'un qui a déjà tourné la page.
+   */
+  const demanderAnnulation = async () => {
+    const r = aAnnuler
+    if (!r || motif.trim().length < 10 || enCours === r.id) return
+
+    await changerStatut(r, 'annulee', motif.trim())
+    setAAnnuler(null)
+    setMotif('')
   }
 
   return (
@@ -149,7 +178,15 @@ export default function Reservations() {
           {liste.map((r) => {
             const statut = STATUT[r.statut]
             const payable = paiement.actif && resteARegler(r, paiement.montant_minimum)
-            const annulable = !estProprietaire && r.statut === 'en_attente'
+            const paye = r.paiement?.statut === 'reussi'
+            // Sans argent encaissé, l'annulation est immédiate : il n'y a rien
+            // à rendre, donc rien à décider, et faire attendre serait gratuit.
+            const annulable = !estProprietaire && r.statut === 'en_attente' && !paye
+            // Un séjour terminé ne s'annule plus : il a eu lieu. Ce qui reste
+            // à dire se dit par la messagerie, et se règle en remboursement.
+            const demandable = !estProprietaire && paye
+              && r.statut !== 'annulee' && !r.annulation_demandee_le
+              && r.date_fin >= aujourdhui()
 
             return (
               <article key={r.id} className={`panneau reservation est-${r.statut}`}>
@@ -190,6 +227,15 @@ export default function Reservations() {
                     {fcfa(r.montant_total)}
                   </p>
                 </div>
+
+                {r.annulation_demandee_le && r.statut !== 'annulee' && (
+                  <p className="reservation-demande">
+                    Annulation demandée le {dateCourte(r.annulation_demandee_le)}.
+                    {estProprietaire
+                      ? " PasseTemps instruit la demande : ne relouez pas ces dates avant la décision."
+                      : ' Nous instruisons la demande et revenons vers vous ; le remboursement suit la décision.'}
+                  </p>
+                )}
 
                 <div className="reservation-actions">
                   {/* Depuis que le numero du proprietaire a quitte la fiche
@@ -238,6 +284,16 @@ export default function Reservations() {
                     </Button>
                   )}
 
+                  {demandable && (
+                    <Button
+                      variante="secondaire" taille="sm"
+                      onClick={() => { setAAnnuler(r); setMotif('') }}
+                      disabled={enCours === r.id}
+                    >
+                      Demander l'annulation
+                    </Button>
+                  )}
+
                   {payable && (
                     <Link to={`/reservation/${r.id}/paiement`} className="btn btn-primaire btn-sm">
                       <CreditCard size={15} aria-hidden="true" />
@@ -250,6 +306,67 @@ export default function Reservations() {
           })}
         </div>
       </ListeConsole>
+
+      {aAnnuler && (
+        <>
+          <div
+            className="console-voile"
+            onClick={() => { if (!motif.trim() && enCours === null) setAAnnuler(null) }}
+            aria-hidden="true"
+          />
+          <div className="modale" role="dialog" aria-modal="true" aria-labelledby="titre-annulation">
+            <div className="modale-entete">
+              <h2 id="titre-annulation" className="panneau-titre" style={{ margin: 0 }}>
+                Demander l'annulation
+              </h2>
+              <Button
+                variante="discret" taille="sm" onClick={() => setAAnnuler(null)}
+                iconeAvant={<X size={18} />} aria-label="Fermer"
+              />
+            </div>
+
+            {/* Dire tout de suite que ce n'est pas immédiat, et pourquoi. Un
+                client qui croit avoir annulé et voit sa réservation encore
+                confirmée conclut que le bouton n'a pas marché — et recommence. */}
+            <p className="console-sous-titre">
+              Votre séjour du {dateCourte(aAnnuler.date_debut)} au{' '}
+              {dateCourte(aAnnuler.date_fin)} est réglé : l'annulation n'est donc
+              pas automatique. <strong>Nous instruisons la demande</strong> et
+              revenons vers vous ; le remboursement dépend du motif et du délai
+              avant l'arrivée.
+            </p>
+
+            <div className="modale-formulaire">
+              <ChampZoneTexte
+                label="Pourquoi annulez-vous ?"
+                aide="Le motif décide du remboursement : soyez précis."
+                rows={4}
+                maxLength={500}
+                value={motif}
+                onChange={(e) => setMotif(e.target.value)}
+                placeholder="Ex. Mon vol du 12 est annulé, je ne peux pas arriver à temps."
+              />
+            </div>
+
+            <div className="modale-actions">
+              <Button
+                variante="secondaire" onClick={() => setAAnnuler(null)}
+                disabled={enCours === aAnnuler.id}
+              >
+                Revenir
+              </Button>
+              <Button
+                variante="primaire"
+                onClick={demanderAnnulation}
+                chargement={enCours === aAnnuler.id}
+                disabled={motif.trim().length < 10}
+              >
+                Envoyer la demande
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Avis;
 use App\Models\Commande;
 use App\Models\Paiement;
+use App\Models\Reservation;
 use App\Models\Reversement;
 use App\Models\Villa;
 use Illuminate\Http\JsonResponse;
@@ -44,6 +45,7 @@ class AttentesController extends Controller
     {
         $lignes = array_values(array_filter([
             $this->annoncesAValider(),
+            $this->annulationsDemandees(),
             $this->versementsDus(),
             $this->versementsEnPanne(),
             $this->commandesImpayees(),
@@ -90,6 +92,41 @@ class AttentesController extends Controller
                 : "Tant qu'elles ne sont pas validées, elles n'existent pour personne.",
             'lien'         => '/admin/villas',
             'libelle_lien' => 'Examiner',
+        ];
+    }
+
+    /**
+     * Les clients qui attendent une décision sur leur argent.
+     *
+     * Passe avant les versements dus : quelqu'un attend d'être remboursé, et
+     * chaque jour qui passe le convainc un peu plus qu'on garde sa mise.
+     */
+    private function annulationsDemandees(): ?array
+    {
+        $demandes = Reservation::whereNotNull('annulation_demandee_le')
+            ->where('statut', '!=', 'annulee')
+            ->get(['id', 'annulation_demandee_le']);
+
+        if ($demandes->isEmpty()) {
+            return null;
+        }
+
+        $plusVieille = $demandes->min('annulation_demandee_le');
+        $jours = $plusVieille ? (int) Carbon::parse($plusVieille)->diffInDays(now()) : 0;
+        $compte = $demandes->count();
+
+        return [
+            'cle'          => 'annulations',
+            'gravite'      => $jours >= 2 ? 'urgent' : 'action',
+            'compte'       => $compte,
+            'titre'        => $compte === 1
+                ? "Un client demande l'annulation de sa réservation"
+                : "{$compte} clients demandent l'annulation de leur réservation",
+            'detail'       => $jours > 0
+                ? "La plus ancienne attend depuis {$jours} jours. Son argent est chez nous, et le silence se lit comme un refus."
+                : "Leur argent est chez nous tant que la décision n'est pas prise.",
+            'lien'         => '/admin/remboursements',
+            'libelle_lien' => 'Décider',
         ];
     }
 

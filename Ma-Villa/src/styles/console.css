@@ -827,6 +827,20 @@
 }
 .reservation-paye { font: var(--t-caption); font-weight: 500; color: var(--success); }
 
+/* La demande d'annulation en cours, sur la carte du séjour.
+   Ni un badge de statut — la réservation reste confirmée — ni une alerte :
+   c'est un accusé de réception, et sans lui le client redemande ou téléphone. */
+.reservation-demande {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3);
+  border-radius: var(--r-sm);
+  border-left: 2px solid var(--warning);
+  background: color-mix(in oklab, var(--warning) 7%, transparent);
+  font: var(--t-body-sm);
+  color: var(--text-2);
+  text-wrap: pretty;
+}
+
 .reservation-actions {
   display: flex;
   flex-wrap: wrap;
@@ -2103,3 +2117,33 @@
 .sonde-avertissements li { display: flex; flex-direction: column; gap: 2px; padding-left: var(--space-3); border-left: 2px solid var(--warning); }
 .sonde-avertissements strong { font: var(--t-body-sm); font-weight: 600; color: var(--text-1); }
 .sonde-avertissements span { font: var(--t-caption); color: var(--text-2); text-wrap: pretty; }
+
+/* ════════════════════════════════════════════════════════════════
+   REMBOURSEMENTS — l'argent rendu au client
+   ════════════════════════════════════════════════════════════════ */
+
+/* La variante alertante de l'encart. Réservée au cas qui coûte de l'argent :
+   un propriétaire déjà payé qu'il faudra rattraper à la main. Le ton neutre
+   convient au fonctionnement, pas à une somme qui va manquer. */
+.console-note-alerte {
+  border-color: color-mix(in oklab, var(--warning) 45%, var(--border));
+  background: color-mix(in oklab, var(--warning) 8%, var(--bg-elevated));
+}
+.console-note-alerte svg { color: var(--warning); }
+
+/* Ouvrir un remboursement par numéro : le cas où c'est nous qui annulons, et
+   où aucun client n'a rien demandé. Aligné en bas pour que le bouton suive la
+   ligne de base du champ plutôt que celle de son étiquette. */
+.remboursement-recherche {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border);
+}
+.remboursement-recherche > *:first-child { flex: 1 1 auto; min-width: 0; }
+
+@media (max-width: 520px) {
+  .remboursement-recherche { flex-direction: column; align-items: stretch; }
+}

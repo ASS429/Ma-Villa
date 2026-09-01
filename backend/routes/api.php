@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\OeuvreController;
 use App\Http\Controllers\Api\PreferencesNotificationController;
 use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\RappelDeboursementController;
+use App\Http\Controllers\Api\RemboursementController;
 use App\Http\Controllers\Api\ReversementController;
 use App\Http\Controllers\Api\TarifController;
 use App\Http\Controllers\Api\VillaController;
@@ -190,6 +191,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/oeuvres/{oeuvre}/photos/{photo}', [PhotoController::class, 'destroyForOeuvre']);
         Route::get('/commandes', [CommandeController::class, 'indexAdmin']);
         Route::patch('/commandes/{commande}/statut', [CommandeController::class, 'avancer']);
+
+        // Rendre l'argent au client. Comme les reversements, on enregistre
+        // ce qui a ete fait chez le prestataire -- rien ne part d'ici.
+        Route::get('/remboursements', [RemboursementController::class, 'index']);
+        Route::get('/reservations/{reservation}/remboursement', [RemboursementController::class, 'proposition']);
+        Route::post('/reservations/{reservation}/remboursement', [RemboursementController::class, 'store'])
+            ->middleware('throttle:20,1');
 
         Route::get('/reversements', [ReversementController::class, 'index']);
         Route::post('/reversements', [ReversementController::class, 'store'])

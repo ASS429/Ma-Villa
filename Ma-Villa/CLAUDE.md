@@ -258,6 +258,47 @@ Deux autres règles tenues par les tests (`tests/Feature/ReversementTest.php`,
 `pages/admin/AdminReversements.tsx` (file d'attente + enregistrement).
 Chaque versement part au journal d'audit et déclenche une notification poussée.
 
+### Remboursements — le sens inverse
+
+Écrit le 1er septembre 2026. Même principe que les reversements : la table
+`remboursements` **constate** un virement de retour fait chez PayDunya, elle ne
+le déclenche pas. Ce qu'elle apporte, c'est que le remboursement cesse d'être
+invisible — retranché du chiffre d'affaires, motivé, imputé.
+
+Une seule question décide du montant : **à qui l'annulation est-elle imputable ?**
+
+| Cause | Ce qui est rendu |
+|---|---|
+| **plateforme** ou **propriétaire** | tout, **commission comprise** |
+| **client** | barème sur sa part ; la commission reste acquise |
+
+Barème (`config/reservations.php`) : 7 jours ou plus → tout · 2 à 6 jours → la
+moitié · moins de 48 h → rien. `App\Services\Remboursement::proposer()` le lit
+du palier le plus lointain au plus proche, premier seuil atteint gagnant.
+
+⚠️ **Le service propose, il ne décide pas.** Le montant reste modifiable dans
+l'écran — une règle qu'on ne peut pas contourner se contourne hors du logiciel,
+donc sans trace. Il est en revanche **borné par l'encaissement**, cumul des
+remboursements partiels compris.
+
+Trois différences avec les reversements, toutes assumées :
+
+- **`montant` vient de la requête.** Un reversement est la somme de ce qui est dû,
+  calculable ; un remboursement est une décision. Il reste hors de `$fillable` et
+  posé explicitement après contrôle.
+- **Un propriétaire déjà payé ne bloque rien.** L'écran prévient et laisse passer :
+  l'argent est sorti dans la réalité. `a_recuperer_proprietaire` inscrit ce qu'il
+  doit — sans ce chiffre, personne ne le réclamerait.
+- **Le client demande, il n'impose plus.** Une réservation **payée** qu'un client
+  annule enregistre `annulation_demandee_le` et **reste `confirmee`** : la date
+  reste bloquée jusqu'à la décision. Ce n'est volontairement **pas** un statut —
+  en ajouter un aurait changé le comportement de tout ce qui filtre sur `statut`.
+  Sans paiement, l'annulation reste immédiate.
+
+La demande remonte dans « Ce qui attend » et l'écran est
+`pages/admin/AdminRemboursements.tsx`. `tests/Feature/RemboursementTest.php`
+(15 tests). Mode d'emploi : `../docs/14-REMBOURSEMENTS.md`.
+
 ### Déboursement automatique (PayDunya PER)
 
 Deux façons de verser coexistent, et c'est volontaire :

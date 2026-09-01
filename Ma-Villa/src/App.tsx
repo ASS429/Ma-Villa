@@ -69,6 +69,7 @@ const AdminNotifications = lazy(() => import('./pages/admin/AdminNotifications')
 const AdminCourriel     = lazy(() => import('./pages/admin/AdminCourriel'))
 const AdminJournal      = lazy(() => import('./pages/admin/AdminJournal'))
 const AdminReversements = lazy(() => import('./pages/admin/AdminReversements'))
+const AdminRemboursements = lazy(() => import('./pages/admin/AdminRemboursements'))
 const AdminDeboursement = lazy(() => import('./pages/admin/AdminDeboursement'))
 const AdminOeuvres      = lazy(() => import('./pages/admin/AdminOeuvres'))
 const AdminCommandes    = lazy(() => import('./pages/admin/AdminCommandes'))
@@ -469,6 +470,7 @@ export default function App() {
         <Route path="courriel" element={<AdminCourriel />} />
         <Route path="journal" element={<AdminJournal />} />
         <Route path="reversements" element={<AdminReversements />} />
+        <Route path="remboursements" element={<AdminRemboursements />} />
         <Route path="deboursement" element={<AdminDeboursement />} />
         <Route path="oeuvres" element={<AdminOeuvres />} />
         <Route path="commandes" element={<AdminCommandes />} />

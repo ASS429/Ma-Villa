@@ -13,6 +13,7 @@ class Reservation extends Model
     protected $fillable = [
         'user_id', 'logement_id', 'tarif_id',
         'date_debut', 'date_fin', 'nb_personnes', 'montant_total', 'statut',
+        'annulation_demandee_le', 'annulation_motif',
     ];
 
     protected function casts(): array
@@ -21,6 +22,7 @@ class Reservation extends Model
             'date_debut' => 'date',
             'date_fin' => 'date',
             'montant_total' => 'decimal:2',
+            'annulation_demandee_le' => 'datetime',
         ];
     }
 
@@ -60,6 +62,12 @@ class Reservation extends Model
     public function messages(): HasMany
     {
         return $this->hasMany(Message::class)->orderBy('created_at');
+    }
+
+    /** Ce qui a été rendu au client sur cette réservation, s'il y a lieu. */
+    public function remboursements(): HasMany
+    {
+        return $this->hasMany(Remboursement::class);
     }
 
     public function paiement(): HasOne
