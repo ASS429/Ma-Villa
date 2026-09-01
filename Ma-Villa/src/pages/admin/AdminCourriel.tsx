@@ -15,6 +15,7 @@ interface Sonde {
   hote: string | null
   port: number | null
   transports_connus: string[]
+  avertissements?: { sujet: string; message: string }[]
   envoi?: { tente: boolean; ok?: boolean; erreur?: string; destinataire?: string }
 }
 
@@ -78,6 +79,22 @@ export default function AdminCourriel() {
         <>
           {/* Le verdict d'abord : c'est la réponse à la question posée. */}
           <Alerte ton={sonde.ok ? 'succes' : 'danger'}>{sonde.verdict}</Alerte>
+
+          {/* Ce qui part sans erreur mais arrive mal, ou signé du mauvais
+              nom. Aucun envoi de test ne le révèle : le message part, et
+              c'est chez le destinataire que ça se voit. */}
+          {sonde.avertissements && sonde.avertissements.length > 0 && (
+            <Bloc titre="À corriger avant d'écrire à de vrais utilisateurs">
+              <ul className="sonde-avertissements">
+                {sonde.avertissements.map((a) => (
+                  <li key={a.sujet}>
+                    <strong>{a.sujet}</strong>
+                    <span>{a.message}</span>
+                  </li>
+                ))}
+              </ul>
+            </Bloc>
+          )}
 
           <Bloc titre="Configuration">
             <Ligne

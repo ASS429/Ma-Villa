@@ -2096,3 +2096,10 @@
 
 /* La pile de lignes d'une liste de console — un seul écart, partout. */
 .liste-console { display: flex; flex-direction: column; gap: var(--space-3); }
+
+/* Les avertissements d'une sonde : un défaut par ligne, son sujet en tête
+   pour qu'on sache où corriger sans lire la phrase entière. */
+.sonde-avertissements { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.sonde-avertissements li { display: flex; flex-direction: column; gap: 2px; padding-left: var(--space-3); border-left: 2px solid var(--warning); }
+.sonde-avertissements strong { font: var(--t-body-sm); font-weight: 600; color: var(--text-1); }
+.sonde-avertissements span { font: var(--t-caption); color: var(--text-2); text-wrap: pretty; }

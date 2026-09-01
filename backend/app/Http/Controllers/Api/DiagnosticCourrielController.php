@@ -27,6 +27,85 @@ use Illuminate\Support\Facades\Mail;
  */
 class DiagnosticCourrielController extends Controller
 {
+    /**
+     * Ce qui part sans erreur mais arrive mal, ou arrive signé du mauvais nom.
+     *
+     * Un transport valide ne dit rien de ce que le destinataire voit. Ces
+     * contrôles couvrent les défauts qui ne lèvent aucune exception — donc
+     * ceux qu'aucun envoi de test ne révèle.
+     *
+     * @return array<int, array{sujet: string, message: string}>
+     */
+    private function avertissements(string $transport, ?string $expediteur): array
+    {
+        $avertissements = [];
+
+        $marque = (string) config('app.name');
+
+        // Le nom affiché voyage dans chaque message et survit aux renommages :
+        // il est posé une fois dans un panneau, et plus personne ne le relit.
+        $nomAffiche = (string) config('mail.from.name');
+        if ($nomAffiche !== '' && $marque !== '' && $nomAffiche !== $marque) {
+            $avertissements[] = [
+                'sujet'   => 'Nom affiché',
+                'message' => "Les messages sont signés « {$nomAffiche} » alors que la plateforme s'appelle « {$marque} ». C'est le nom que le destinataire lit avant d'ouvrir.",
+            ];
+        }
+
+        if (blank($expediteur)) {
+            $avertissements[] = [
+                'sujet'   => 'Adresse d\'expédition',
+                'message' => "Aucune adresse d'expédition n'est définie.",
+            ];
+
+            return $avertissements;
+        }
+
+        if (str_contains($expediteur, 'example.com') || str_contains($expediteur, 'hello@')) {
+            $avertissements[] = [
+                'sujet'   => 'Adresse d\'expédition',
+                'message' => "L'adresse {$expediteur} ressemble à une valeur d'exemple.",
+            ];
+        }
+
+        // Le destinataire compare l'expéditeur à ce qu'il a vu sur le site.
+        // Deux adresses différentes, et un lien de réinitialisation ressemble
+        // à une tentative d'hameçonnage — ce qu'on apprend justement aux gens
+        // à repérer.
+        $contactPublie = 'contactsmavilla@gmail.com';
+        if ($expediteur !== $contactPublie) {
+            $avertissements[] = [
+                'sujet'   => 'Cohérence avec le site',
+                'message' => "Les messages partent de {$expediteur}, mais le site publie {$contactPublie} comme adresse de contact. Un lien de réinitialisation venu d'une autre adresse se lit comme une tentative d'hameçonnage.",
+            ];
+        }
+
+        // Un domaine public en expéditeur passe l'authentification mais échoue
+        // l'alignement DMARC : le message part et finit en indésirables.
+        foreach (['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com'] as $public) {
+            if (str_ends_with($expediteur, '@' . $public)) {
+                $avertissements[] = [
+                    'sujet'   => 'Domaine d\'expédition',
+                    'message' => "L'expéditeur est une adresse {$public}. Ces domaines refusent qu'un tiers écrive en leur nom : le message part, mais il est classé indésirable chez une bonne part des destinataires. Une adresse sur votre propre domaine, avec SPF et DKIM, change tout.",
+                ];
+                break;
+            }
+        }
+
+        // Gmail affiche ses mots de passe d'application par groupes de quatre.
+        // Recopiés tels quels, les espaces partent dans l'authentification et
+        // le serveur refuse — sans jamais dire que c'est à cause d'eux.
+        $motDePasse = (string) config("mail.mailers.{$transport}.password");
+        if ($motDePasse !== '' && str_contains($motDePasse, ' ')) {
+            $avertissements[] = [
+                'sujet'   => 'Mot de passe',
+                'message' => "Le mot de passe contient des espaces. Google affiche ses mots de passe d'application par groupes de quatre, mais ils se saisissent **collés**. Avec les espaces, l'authentification est refusée.",
+            ];
+        }
+
+        return $avertissements;
+    }
+
     public function __invoke(Request $request): JsonResponse
     {
         $donnees = $request->validate([
@@ -72,9 +151,8 @@ class DiagnosticCourrielController extends Controller
             ]);
         }
 
-        $expediteurDouteux = blank($expediteur)
-            || str_contains((string) $expediteur, 'example.com')
-            || str_contains((string) $expediteur, 'hello@');
+        $etat['avertissements'] = $this->avertissements($transport, $expediteur);
+        $expediteurDouteux = $etat['avertissements'] !== [];
 
         // ── L'envoi réel, seulement sur demande ───────────────────────
         $destinataire = $donnees['email'] ?? null;
@@ -83,8 +161,8 @@ class DiagnosticCourrielController extends Controller
             return response()->json($etat + [
                 'ok'      => ! $expediteurDouteux,
                 'verdict' => $expediteurDouteux
-                    ? "À moitié. Le transport « {$transport} » est configuré, mais l'adresse d'expédition ({$expediteur}) ressemble à une valeur d'exemple : les messages partiraient d'une adresse qui n'existe pas, et finiraient en indésirables."
-                    : "Le transport « {$transport} » est configuré, et l'adresse d'expédition tient. Rien ne prouve encore qu'un message arrive : donnez une adresse pour envoyer un test.",
+                    ? "À moitié. Le transport « {$transport} » est configuré, mais " . count($etat['avertissements']) . ' point' . (count($etat['avertissements']) > 1 ? 's' : '') . " demande" . (count($etat['avertissements']) > 1 ? 'nt' : '') . " correction avant d'écrire à de vrais utilisateurs."
+                    : "Le transport « {$transport} » est configuré, et l'expéditeur tient. Rien ne prouve encore qu'un message arrive : donnez une adresse pour envoyer un test.",
                 'envoi'   => ['tente' => false],
             ]);
         }
