@@ -48,10 +48,11 @@ export default function PageLegale({ document }: { document: DocumentLegal['cle'
               <path d="M12 8v5M12 16.5v.01" strokeLinecap="round" />
             </svg>
             <p className="text-sm th-text-2 leading-relaxed">
-              <span className="th-text-1 font-medium">Document en cours de validation.</span>{' '}
-              Ce texte est une version de travail, actuellement relue par notre conseil
-              juridique. Les mentions entre crochets seront complétées avant sa version
-              définitive. Pour toute question dans l'intervalle, contactez-nous.
+              <span className="th-text-1 font-medium">Ceci n'est pas un contrat.</span>{' '}
+              Nos conditions sont en cours de rédaction par un juriste. Cette page décrit
+              en attendant le fonctionnement réel du service, sans engagement contractuel
+              de notre part ni de la vôtre. Pour toute question dans l'intervalle,
+              contactez-nous.
             </p>
           </div>
         )}

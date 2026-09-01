@@ -37,7 +37,7 @@ export interface DocumentLegal {
   sections: Section[]
 }
 
-const MAJ = '20 août 2026'
+const MAJ = '1er septembre 2026'
 const EXPLOITANT = 'PasseTemps'
 const CONTACT = 'contactsmavilla@gmail.com'
 
@@ -67,8 +67,9 @@ const ARGENT: Section = {
     'La commission est prélevée sur le montant affiché : le prix indiqué sur l\'annonce est celui que vous réglez, jamais un prix auquel s\'ajouterait un supplément.',
   ],
   liste: [
-    'Commission de 10 % sur les réservations inférieures à 50 000 FCFA.',
-    'Commission de 20 % à partir de 50 000 FCFA.',
+    'Commission de 10 % sur les 50 000 premiers francs de la réservation.',
+    'Commission de 20 % sur la part qui dépasse 50 000 francs.',
+    'Exemple : sur une réservation de 100 000 FCFA, la commission est de 15 000 FCFA — 5 000 sur la première tranche, 10 000 sur la seconde — et le propriétaire perçoit 85 000 FCFA.',
     'Aucun autre frais n\'est prélevé au client.',
   ],
 }
@@ -125,6 +126,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
         liste: [
           'Votre compte : nom, adresse électronique, numéro de téléphone, mot de passe chiffré.',
           'Vos réservations : dates, logement, montant, statut du paiement.',
+          'Le numéro de téléphone que vous indiquez pour payer, conservé afin de pouvoir vous rembourser sur ce même numéro le cas échéant.',
           'Vos messages échangés avec un propriétaire au sujet d\'une réservation.',
           'Vos avis, vos favoris, et les annonces que vous publiez si vous êtes propriétaire.',
           'Si vous acceptez les notifications, l\'identifiant technique de votre navigateur ou de votre téléphone.',
@@ -141,7 +143,8 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
       {
         titre: 'Où sont hébergées vos données',
         paragraphes: [
-          'Le site et l\'application sont hébergés par Render ; la base de données et le service applicatif le sont par Railway. Les photographies des annonces sont stockées chez Cloudflare R2.',
+          'Le site et l\'application sont hébergés par Render ; la base de données et le service applicatif le sont par Railway. Les photographies des annonces sont stockées chez Cloudflare R2. Les courriels du service — confirmation d\'inscription, réinitialisation de mot de passe, jalons d\'une réservation — sont acheminés par Resend.',
+          'Ces prestataires sont tous établis hors du Sénégal.',
           `Pour demander l'accès à vos données, leur correction ou la suppression de votre compte, écrivez à ${CONTACT}.`,
         ],
       },
@@ -158,18 +161,21 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
     sections: [
       REDACTION,
       {
-        titre: 'En attendant la publication du barème',
+        titre: 'Comment une annulation se décide',
         paragraphes: [
-          'Aucun barème d\'annulation automatique n\'est en vigueur à ce jour. Nous ne pouvons donc pas vous annoncer par avance un pourcentage de remboursement.',
-          'Toute demande d\'annulation est traitée individuellement, par écrit, et une réponse motivée vous est adressée.',
-          'Une réservation annulée reste consultable dans votre espace, et sa messagerie reste ouverte : c\'est là que la demande se règle, et la conversation en garde la trace.',
+          `Aucun barème contractuel n'est publié à ce jour : la rédaction est confiée à un juriste, et ${EXPLOITANT} ne veut pas annoncer une règle qu'il faudrait ensuite corriger. Chaque demande est donc examinée individuellement, et une réponse motivée vous est adressée par écrit.`,
+          'Deux éléments pèsent sur la décision, et vous pouvez les anticiper : qui est à l\'origine de l\'annulation, et combien de temps sépare la demande de la date d\'arrivée.',
+          `Lorsque l'annulation est imputable à ${EXPLOITANT} ou au propriétaire — logement indisponible, séjour impossible à fournir — la somme réglée vous est rendue en entier, commission comprise.`,
+          'Lorsque vous renoncez de votre fait, la part rendue diminue à mesure que la date d\'arrivée approche : le logement vous était réservé, et le propriétaire a refusé d\'autres clients pour ces dates.',
         ],
       },
       {
         titre: 'Comment demander une annulation',
         paragraphes: [
-          'Ouvrez la réservation concernée depuis votre espace, puis écrivez au propriétaire par la messagerie. Vous pouvez annuler vous-même une demande tant qu\'elle n\'a pas été acceptée.',
-          `Si la demande porte sur un remboursement, écrivez également à ${CONTACT} : c'est ${EXPLOITANT} qui détient les fonds jusqu'au reversement, et donc ${EXPLOITANT} qui procède au remboursement le cas échéant.`,
+          'Tant qu\'aucun règlement n\'est intervenu, vous annulez vous-même votre demande depuis votre espace, sans formalité : il n\'y a alors aucune somme à rendre.',
+          `Une fois la réservation réglée, le bouton devient « Demander l'annulation » et vous êtes invité à indiquer le motif. Votre demande est enregistrée, ${EXPLOITANT} l'examine, et le séjour reste réservé à votre nom jusqu'à la décision. Le motif compte : c'est lui qui détermine la somme rendue.`,
+          `Le remboursement, s'il a lieu, est effectué par ${EXPLOITANT} sur le numéro qui a servi au paiement, puisque c'est ${EXPLOITANT} qui détient les fonds jusqu'au reversement. Pour toute question, écrivez à ${CONTACT}.`,
+          `Une réservation annulée reste consultable dans votre espace, et sa messagerie reste ouverte : la conversation en garde la trace.`,
         ],
       },
     ],
