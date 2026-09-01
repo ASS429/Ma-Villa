@@ -130,11 +130,17 @@ return [
     | réellement. Les deux problèmes se règlent sans attendre d'avoir un
     | serveur de courrier entrant.
     |
-    | Laissée vide, aucune en-tête `Reply-To` n'est posée.
+    | Par défaut, c'est l'adresse de contact publiée sur le site : celle que
+    | le visiteur a déjà vue, et qui reçoit vraiment. Aucun réglage à poser
+    | pour que le cas courant fonctionne.
+    |
+    | À vider explicitement (`MAIL_REPLY_TO_ADDRESS=`) le jour où le domaine
+    | aura son propre courrier entrant : l'expéditeur suffira alors, et une
+    | adresse de réponse différente ne ferait plus qu'embrouiller.
     |
     */
     'reply_to' => [
-        'address' => env('MAIL_REPLY_TO_ADDRESS'),
+        'address' => env('MAIL_REPLY_TO_ADDRESS', env('CONTACT_PUBLIC', 'contactsmavilla@gmail.com')),
         'name' => env('MAIL_REPLY_TO_NAME', env('MAIL_FROM_NAME', env('APP_NAME'))),
     ],
 
