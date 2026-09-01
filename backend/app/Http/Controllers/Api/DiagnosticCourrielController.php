@@ -73,10 +73,17 @@ class DiagnosticCourrielController extends Controller
         // à une tentative d'hameçonnage — ce qu'on apprend justement aux gens
         // à repérer.
         $contactPublie = (string) config('mail.contact_publie');
-        if ($contactPublie !== '' && $expediteur !== $contactPublie) {
+        $adresseDeReponse = (string) config('mail.reply_to.address');
+
+        // L'adresse de réponse suffit à faire le lien. L'expéditeur peut
+        // porter le domaine de la marque — ce que réclament SPF et DKIM —
+        // tant que « Répondre » ramène vers la boîte que le site publie.
+        $reconnaissable = $expediteur === $contactPublie || $adresseDeReponse === $contactPublie;
+
+        if ($contactPublie !== '' && ! $reconnaissable) {
             $avertissements[] = [
                 'sujet'   => 'Cohérence avec le site',
-                'message' => "Les messages partent de {$expediteur}, mais le site publie {$contactPublie} comme adresse de contact. Un lien de réinitialisation venu d'une autre adresse se lit comme une tentative d'hameçonnage.",
+                'message' => "Les messages partent de {$expediteur}, mais le site publie {$contactPublie} comme adresse de contact. Un lien de réinitialisation venu d'une autre adresse se lit comme une tentative d'hameçonnage. Deux façons de le régler : publier la même adresse sur le site, ou poser `MAIL_REPLY_TO_ADDRESS={$contactPublie}` — les réponses retomberont alors sur une boîte qui existe.",
             ];
         }
 
@@ -110,6 +117,20 @@ class DiagnosticCourrielController extends Controller
             $avertissements[] = [
                 'sujet'   => 'Compte et expéditeur',
                 'message' => "Le compte authentifié est {$identifiant}, mais les messages prétendent partir de {$expediteur}. Gmail n'accepte cela que si la seconde adresse est déclarée dans « Envoyer des e-mails en tant que » du premier compte ; sinon il réécrit l'expéditeur en silence, et vos utilisateurs reçoivent le message au nom de {$identifiant}. La sonde ne peut pas le voir : regardez l'expéditeur du message de test.",
+            ];
+        }
+
+        /*
+         * Expédier depuis un domaine n'est pas y recevoir.
+         *
+         * Un service d'envoi écrit au nom de l'adresse choisie sans qu'aucune
+         * boîte n'existe derrière. Le message part, arrive — et la réponse
+         * rebondit, au moment précis où quelqu'un cherche de l'aide.
+         */
+        if (blank($adresseDeReponse) && ! str_ends_with($expediteur, '@gmail.com')) {
+            $avertissements[] = [
+                'sujet'   => 'Réponses',
+                'message' => "Aucune adresse de réponse n'est posée. Si {$expediteur} n'a pas de boîte derrière — expédier depuis un domaine n'est pas y recevoir — toute réponse rebondira. `MAIL_REPLY_TO_ADDRESS` fait retomber les réponses sur une boîte qui existe.",
             ];
         }
 

@@ -117,6 +117,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Adresse de réponse
+    |--------------------------------------------------------------------------
+    |
+    | Expédier depuis un domaine n'est pas y recevoir. Un service d'envoi
+    | comme Resend écrit **au nom de** `contact@passetemps.sn` sans qu'aucune
+    | boîte n'existe derrière : le message part, arrive bien, et toute réponse
+    | rebondit.
+    |
+    | D'où cette adresse : l'expéditeur porte le domaine de la marque — ce que
+    | veulent SPF et DKIM — et les réponses partent vers une boîte qui existe
+    | réellement. Les deux problèmes se règlent sans attendre d'avoir un
+    | serveur de courrier entrant.
+    |
+    | Laissée vide, aucune en-tête `Reply-To` n'est posée.
+    |
+    */
+    'reply_to' => [
+        'address' => env('MAIL_REPLY_TO_ADDRESS'),
+        'name' => env('MAIL_REPLY_TO_NAME', env('MAIL_FROM_NAME', env('APP_NAME'))),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | L'adresse de contact publiée sur le site
     |--------------------------------------------------------------------------
     |
