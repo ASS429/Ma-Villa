@@ -32,13 +32,41 @@
  */
 
 import { readFile, writeFile, mkdir, access } from 'node:fs/promises'
+import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..')
 const DIST = join(RACINE, 'dist')
 
-const SITE = (process.env.VITE_SITE_URL || 'https://mavilla-web.onrender.com').replace(/\/$/, '')
+/**
+ * Le domaine qui fait autorité, dans l'ordre où on le cherche.
+ *
+ * Ce script tourne dans node, pas dans Vite : `.env.production` ne lui arrive
+ * pas tout seul. Sur Render la variable est dans l'environnement du processus
+ * et tout allait bien ; en local elle manquait, et une même commande
+ * produisait deux sites différents — canoniques, plan de site et image de
+ * partage compris. Un pré-rendu qu'on ne peut pas reproduire hors du serveur
+ * ne se vérifie jamais avant d'être en ligne.
+ *
+ * Le repli en dur reste l'hôte Render : il sert toujours, et il vaut mieux
+ * qu'une adresse vide.
+ */
+function domaine() {
+  if (process.env.VITE_SITE_URL) return process.env.VITE_SITE_URL
+
+  try {
+    const fichier = readFileSync(join(RACINE, '.env.production'), 'utf8')
+    const ligne = fichier.match(/^\s*VITE_SITE_URL\s*=\s*(.+)$/m)
+    if (ligne) return ligne[1].trim().replace(/^["']|["']$/g, '')
+  } catch {
+    // Pas de fichier : on retombe sur l'hôte connu.
+  }
+
+  return 'https://mavilla-web.onrender.com'
+}
+
+const SITE = domaine().replace(/\/$/, '')
 const API = (process.env.VITE_API_URL || 'https://ma-villa-production.up.railway.app/api').replace(/\/$/, '')
 
 /** Le prix est en FCFA, sans décimales — convention du projet. */
@@ -163,7 +191,7 @@ const PAGES_FIXES = [
       inLanguage: 'fr',
       potentialAction: {
         '@type': 'SearchAction',
-        target: `${SITE}/villas?ville={search_term_string}`,
+        target: `${SITE}/hebergements?ville={search_term_string}`,
         'query-input': 'required name=search_term_string',
       },
     },

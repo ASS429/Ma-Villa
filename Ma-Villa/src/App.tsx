@@ -311,7 +311,7 @@ function Home() {
           inLanguage: 'fr',
           potentialAction: {
             '@type': 'SearchAction',
-            target: `${window.location.origin}/villas?ville={search_term_string}`,
+            target: `${window.location.origin}/hebergements?ville={search_term_string}`,
             'query-input': 'required name=search_term_string',
           },
         }}
