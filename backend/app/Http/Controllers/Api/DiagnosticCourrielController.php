@@ -235,7 +235,7 @@ class DiagnosticCourrielController extends Controller
             return response()->json($etat + [
                 'ok'      => false,
                 'verdict' => $silence
-                    ? "Non. {$transport} n'a pas répondu en douze secondes. Le service ne refuse pas : il se tait. Sur un hébergeur, c'est presque toujours le port sortant qui est fermé — le 587 vers smtp.gmail.com doit être ouvert depuis le conteneur."
+                    ? "Non. {$transport} n'a pas répondu en douze secondes. Le service ne refuse pas : il se tait — signature d'un port fermé en sortie, pas d'un refus d'identifiants. Les hébergeurs bloquent couramment le SMTP (25, 465, 587) pour endiguer le courrier indésirable, et aucun réglage ne le contourne. Un service qui expédie en HTTP passe, lui : `MAIL_MAILER=resend` et `RESEND_API_KEY`, le transport étant déjà installé."
                     : "Non. Le serveur a refusé l'envoi. C'est la réponse du service de courrier, telle quelle — elle nomme presque toujours la cause : identifiants, port, ou domaine d'expédition non vérifié.",
                 'envoi'   => ['tente' => true, 'ok' => false, 'erreur' => $message],
             ]);
