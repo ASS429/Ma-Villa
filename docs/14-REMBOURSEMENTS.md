@@ -83,6 +83,31 @@ c'est une clause contractuelle, pas un réglage.
 
 ---
 
+## Où renvoyer l'argent
+
+On ne rembourse pas un client : **on crédite un numéro**. L'écran l'affiche donc à côté
+du montant, dans la liste des demandes comme dans la fenêtre de décision — numéro, moyen
+(Wave ou Orange Money), référence de la transaction, date, et le lien vers le reçu
+PayDunya quand le prestataire le fournit.
+
+⚠️ **Le numéro du compte n'est pas celui du paiement.** On s'inscrit avec son téléphone
+personnel et on paie avec le Wave d'un proche, ou avec un second numéro Orange Money.
+C'est pourquoi l'écran indique toujours **d'où vient** le numéro qu'il montre :
+
+| Ce qui est écrit sous le numéro | Ce que ça veut dire |
+|---|---|
+| « Numéro saisi au moment du paiement » | c'est le bon, virez dessus |
+| « Numéro transmis par PayDunya » | le bon aussi |
+| **en jaune** : « Numéro du compte, pas celui du paiement » | règlement antérieur au 1ᵉʳ septembre 2026 — **ouvrez le reçu PayDunya avant de virer** |
+
+Le troisième cas disparaîtra de lui-même : depuis le 1ᵉʳ septembre, chaque paiement
+conserve le numéro qui l'a effectué. Il ne concerne que les réservations réglées avant.
+
+Un virement mobile parti au mauvais numéro ne revient pas — c'est la seule raison
+pour laquelle l'écran est aussi bavard sur ce point.
+
+---
+
 ## Le cas qui coûte de l'argent
 
 **Un propriétaire déjà payé.** L'écran l'affiche en jaune, et laisse passer.
