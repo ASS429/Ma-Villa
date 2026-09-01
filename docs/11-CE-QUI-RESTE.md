@@ -50,6 +50,36 @@ la seule phrase qui compte : *aucun paiement n'a été prélevé*.
 
 ---
 
+## 1 bis. Rendre l'argent — fait le 1er septembre
+
+L'argent ne savait aller que dans un sens. Un séjour qui ne pouvait pas avoir lieu se
+remboursait chez PayDunya, à la main, et l'application n'en gardait **rien** : le chiffre
+d'affaires comptait encore la vente, le motif restait dans votre tête, et un propriétaire
+déjà payé gardait une somme que plus rien ne réclamait.
+
+Un écran **Remboursements** existe maintenant dans la console. Comme les reversements, il
+ne déplace pas d'argent : vous faites le virement de retour, puis vous l'enregistrez —
+et l'enregistrement annule la réservation, libère la date, coupe le versement au
+propriétaire et écrit au journal.
+
+Une seule question décide du montant : **à qui l'annulation est-elle imputable ?**
+Votre faute ou celle du propriétaire, le client récupère tout, commission comprise. Il se
+désiste, le barème s'applique sur sa part : sept jours ou plus, tout ; deux à six jours,
+la moitié ; moins de quarante-huit heures, rien. **Le barème propose, il ne décide pas** —
+le montant reste modifiable.
+
+Un client qui a payé **ne peut plus annuler seul**. Il le pouvait la veille de l'arrivée.
+Sa demande arrive maintenant dans « Ce qui attend », avec son motif, et la réservation
+reste confirmée — dates bloquées — jusqu'à votre décision.
+
+⚠️ **Le barème n'est écrit nulle part côté client, et c'est volontaire.** C'est une clause
+contractuelle : il doit passer par le juriste avec les CGU. Annoncer une règle de
+remboursement qu'on devra corriger ensuite est pire que de ne rien annoncer.
+
+Mode d'emploi complet : `docs/14-REMBOURSEMENTS.md`.
+
+---
+
 ## 2. Ce qui vous attend, vous
 
 ### Les mentions légales — elles attendent le juriste, finalement
