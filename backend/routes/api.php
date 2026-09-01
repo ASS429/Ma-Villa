@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AttentesController;
 use App\Http\Controllers\Api\AvisController;
 use App\Http\Controllers\Api\ConfigurationController;
+use App\Http\Controllers\Api\DiagnosticCourrielController;
 use App\Http\Controllers\Api\DiagnosticNotificationsController;
 use App\Http\Controllers\Api\DiagnosticReversementController;
 use App\Http\Controllers\Api\DiagnosticPaiementController;
@@ -203,6 +204,12 @@ Route::middleware('auth:sanctum')->group(function () {
         // clés existent ; celle-ci signe réellement un jeton, seule preuve que
         // l'extension gmp est là et que la crypto aboutit.
         Route::get('/diagnostic/notifications', DiagnosticNotificationsController::class);
+
+        // Sonde du courrier. C'est elle qui tient la recuperation des comptes :
+        // sans SMS, un mot de passe oublie se repare par courriel ou pas du
+        // tout. Et la panne est silencieuse par construction, `forgotPassword`
+        // repondant la meme chose qu'il ait envoye ou non.
+        Route::get('/diagnostic/courriel', DiagnosticCourrielController::class);
 
         // Sonde du deboursement. Elle ne fait qu'initier : la documentation
         // PayDunya est formelle, un jeton cree reste « created » tant qu'il

@@ -22,6 +22,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Catalogue de démonstration
+    |--------------------------------------------------------------------------
+    |
+    | Les dix-neuf articles fictifs ne se posent que si on le demande.
+    |
+    | La garde était « boutique ouverte et catalogue vide ». Elle a tenu tant
+    | que « vide » voulait dire « jamais rempli ». Le 1er septembre 2026 les
+    | articles fictifs ont été effacés pour faire place au vrai catalogue : la
+    | boutique est restée ouverte et le catalogue est redevenu vide — les deux
+    | conditions réunies, le peuplement les aurait ramenés au redémarrage
+    | suivant.
+    |
+    | ⚠️ À laisser à `false` en production. Ouvrir la boutique et y poser de
+    | faux articles sont deux décisions distinctes.
+    |
+    */
+    'demo' => (bool) env('BOUTIQUE_DEMO', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Catégories
     |--------------------------------------------------------------------------
     |

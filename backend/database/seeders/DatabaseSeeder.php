@@ -15,18 +15,22 @@ class DatabaseSeeder extends Seeder
         // garde ci-dessous, elle n'était jamais exécutée en production.
         $this->call(ComptesSeeder::class);
 
-        // La boutique se peuple dès qu'elle est ouverte, et seulement si elle
-        // est vide. Deux gardes, et il faut les deux.
+        // Le catalogue de démonstration ne se pose que si on le demande
+        // explicitement.
         //
-        // `boutique.actif` : des articles fictifs ne doivent pas apparaître
-        // parce qu'un conteneur a redémarré, mais parce qu'on a décidé d'ouvrir
-        // le métier. Le compte : une fois le vrai catalogue saisi, ce
-        // peuplement ne doit plus jamais intervenir — pas même pour « compléter ».
+        // La garde était « boutique ouverte et catalogue vide ». Elle a tenu
+        // tant que « vide » voulait dire « jamais rempli ». Le 1er septembre
+        // 2026 les articles fictifs ont été effacés pour faire place au vrai
+        // catalogue : la boutique est restée ouverte et le catalogue est
+        // redevenu vide — les deux conditions réunies, le peuplement les
+        // aurait ramenés au redémarrage suivant.
         //
-        // C'est placé avant la garde des villas parce qu'il ne dépend pas
-        // d'elles : une base où les villas existent déjà est exactement le cas
-        // où l'on ouvre la boutique.
-        if (config('boutique.actif') && Oeuvre::count() === 0) {
+        // Un réglage dédié dit ce qu'on veut vraiment : des données de
+        // démonstration, ou pas. Il vaut `false` par défaut, donc rien ne
+        // revient tout seul en production. Passer par la configuration et non
+        // par `env()` : cette dernière rend `null` dès que la configuration
+        // est mise en cache, ce que fait tout déploiement sérieux.
+        if (config('boutique.demo') && Oeuvre::count() === 0) {
             $this->call(BoutiqueSeeder::class);
         }
 

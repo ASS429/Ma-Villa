@@ -18,10 +18,10 @@ class PeuplementBoutiqueTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** Boutique ouverte et vide : elle se remplit. */
-    public function test_la_boutique_ouverte_et_vide_se_peuple(): void
+    /** Catalogue de démonstration demandé, boutique vide : elle se remplit. */
+    public function test_le_catalogue_de_demonstration_demande_se_pose(): void
     {
-        config(['boutique.actif' => true]);
+        config(['boutique.actif' => true, 'boutique.demo' => true]);
 
         $this->seed(DatabaseSeeder::class);
 
@@ -31,12 +31,32 @@ class PeuplementBoutiqueTest extends TestCase
 
     /**
      * Boutique fermée : rien. Des articles fictifs ne doivent pas apparaître
-     * parce qu'un conteneur a redémarré, mais parce qu'on a décidé d'ouvrir
-     * le métier.
+     * parce qu'un conteneur a redémarré, mais parce qu'on l'a décidé.
      */
     public function test_la_boutique_fermee_ne_se_peuple_pas(): void
     {
-        config(['boutique.actif' => false]);
+        config(['boutique.actif' => false, 'boutique.demo' => false]);
+
+        $this->seed(DatabaseSeeder::class);
+
+        $this->assertSame(0, Oeuvre::count());
+    }
+
+    /**
+     * ⚠️ Le cas qui a motivé le réglage, et le plus coûteux du lot.
+     *
+     * Le 1er septembre 2026, les articles fictifs ont été effacés pour faire
+     * place au vrai catalogue. La boutique est restée **ouverte**, et le
+     * catalogue est redevenu **vide** : sous l'ancienne garde — « ouverte et
+     * vide » — le peuplement les aurait tous ramenés au redémarrage suivant,
+     * dans une boutique que le public voit.
+     *
+     * Ouvrir le métier et y poser de faux articles sont deux décisions
+     * distinctes, et ce test est ce qui les tient séparées.
+     */
+    public function test_une_boutique_ouverte_et_videe_ne_se_repeuple_pas(): void
+    {
+        config(['boutique.actif' => true, 'boutique.demo' => false]);
 
         $this->seed(DatabaseSeeder::class);
 
@@ -51,7 +71,7 @@ class PeuplementBoutiqueTest extends TestCase
      */
     public function test_une_boutique_deja_garnie_reste_intacte(): void
     {
-        config(['boutique.actif' => true]);
+        config(['boutique.actif' => true, 'boutique.demo' => true]);
 
         Oeuvre::create([
             'titre' => 'Le vrai catalogue', 'artiste' => 'Un artisan',
@@ -67,7 +87,7 @@ class PeuplementBoutiqueTest extends TestCase
     /** Relancer sur une boutique fictive ne duplique rien non plus. */
     public function test_relancer_ne_duplique_pas(): void
     {
-        config(['boutique.actif' => true]);
+        config(['boutique.actif' => true, 'boutique.demo' => true]);
 
         $this->seed(DatabaseSeeder::class);
         $this->seed(DatabaseSeeder::class);

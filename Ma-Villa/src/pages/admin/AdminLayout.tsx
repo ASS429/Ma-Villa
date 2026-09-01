@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutGrid, Building2, Users, MessageSquare, CreditCard,
-  Menu, X, Sun, Moon, LogOut, ArrowLeft, BellRing, ScrollText, Banknote, Send, Palette, ShoppingBag, Inbox,
+  Menu, X, Sun, Moon, LogOut, ArrowLeft, BellRing, ScrollText, Banknote, Send, Palette, ShoppingBag, Inbox, Mail,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
@@ -33,6 +33,7 @@ const ENTREES: Entree[] = [
   { to: '/admin/paiement',     label: 'Encaissement',    Icone: CreditCard },
   { to: '/admin/reversements', label: 'Reversements',   Icone: Banknote },
   { to: '/admin/notifications', label: 'Notifications',  Icone: BellRing },
+  { to: '/admin/courriel',     label: 'Courrier',        Icone: Mail },
   { to: '/admin/deboursement', label: 'Déboursement',   Icone: Send },
   { to: '/admin/journal',      label: 'Journal',        Icone: ScrollText },
 ]

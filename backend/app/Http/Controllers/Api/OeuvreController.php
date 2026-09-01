@@ -202,7 +202,7 @@ class OeuvreController extends Controller
     }
 
     /**
-     * Un article commandée ne se supprime pas.
+     * Un article commandé ne se supprime pas.
      *
      * La contrainte de base de données le refuserait de toute façon, mais elle
      * répondrait par une erreur serveur illisible. Mieux vaut dire pourquoi.
@@ -211,15 +211,15 @@ class OeuvreController extends Controller
     {
         if ($oeuvre->commandes()->exists()) {
             return response()->json([
-                'message' => 'Cet article a déjà été commandée : elle ne peut plus être supprimée. '
-                           .'Repassez-la en brouillon pour la retirer de la vitrine.',
+                'message' => 'Cet article a déjà été commandé : il ne peut plus être supprimé. '
+                           .'Repassez-le en brouillon pour le retirer de la vitrine.',
             ], 422);
         }
 
         $oeuvre->photos()->delete();
         $oeuvre->delete();
 
-        return response()->json(['message' => 'Article supprimée.']);
+        return response()->json(['message' => 'Article supprimé.']);
     }
 
     /** @return array<string, mixed> */
