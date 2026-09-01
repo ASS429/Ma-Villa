@@ -11,6 +11,7 @@ _Écrit pour être lu sans connaître le code. Chaque point dit **ce que c'est**
 |---|---|
 | **Le gros du design est construit** | tout ce qui restait au matin est en ligne |
 | **Une seule chose vous attend** | la réponse du juriste sur l'exercice sans société |
+| **Le courrier fonctionne** | depuis le 1er septembre, par Resend sur `passetemps.sn` |
 | **Deux blocages ne dépendent de personne ici** | PayDunya et le juriste |
 | **Le reste est du polissage** | utile, mais rien qui empêche d'ouvrir |
 
