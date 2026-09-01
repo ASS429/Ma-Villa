@@ -108,9 +108,13 @@ class DiagnosticCourrielController extends Controller
 
     public function __invoke(Request $request): JsonResponse
     {
-        $donnees = $request->validate([
-            'email' => 'sometimes|nullable|email',
-        ]);
+        // Pas de `validate()` ici, et c'est délibéré.
+        //
+        // Une adresse mal formée y produirait un 422 : une erreur de
+        // formulaire, en anglais, dans la console du navigateur — sur un
+        // écran dont le métier est justement d'expliquer ce qui ne va pas.
+        // Une sonde qui échoue de façon opaque est une sonde de moins.
+        $destinataire = trim((string) $request->query('email', ''));
 
         $transport = (string) config('mail.default');
         $expediteur = config('mail.from.address');
@@ -154,10 +158,17 @@ class DiagnosticCourrielController extends Controller
         $etat['avertissements'] = $this->avertissements($transport, $expediteur);
         $expediteurDouteux = $etat['avertissements'] !== [];
 
-        // ── L'envoi réel, seulement sur demande ───────────────────────
-        $destinataire = $donnees['email'] ?? null;
+        // ── L'adresse de test, si elle tient debout ───────────────────
+        if ($destinataire !== '' && ! filter_var($destinataire, FILTER_VALIDATE_EMAIL)) {
+            return response()->json($etat + [
+                'ok'      => false,
+                'verdict' => "L'adresse de test « {$destinataire} » n'est pas une adresse valide. Rien n'a été envoyé — corrigez-la et relancez.",
+                'envoi'   => ['tente' => false],
+            ]);
+        }
 
-        if (blank($destinataire)) {
+        // ── L'envoi réel, seulement sur demande ───────────────────────
+        if ($destinataire === '') {
             return response()->json($etat + [
                 'ok'      => ! $expediteurDouteux,
                 'verdict' => $expediteurDouteux
