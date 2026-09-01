@@ -72,8 +72,8 @@ class DiagnosticCourrielController extends Controller
         // Deux adresses différentes, et un lien de réinitialisation ressemble
         // à une tentative d'hameçonnage — ce qu'on apprend justement aux gens
         // à repérer.
-        $contactPublie = 'contactsmavilla@gmail.com';
-        if ($expediteur !== $contactPublie) {
+        $contactPublie = (string) config('mail.contact_publie');
+        if ($contactPublie !== '' && $expediteur !== $contactPublie) {
             $avertissements[] = [
                 'sujet'   => 'Cohérence avec le site',
                 'message' => "Les messages partent de {$expediteur}, mais le site publie {$contactPublie} comme adresse de contact. Un lien de réinitialisation venu d'une autre adresse se lit comme une tentative d'hameçonnage.",

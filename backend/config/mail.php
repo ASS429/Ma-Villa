@@ -115,4 +115,23 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | L'adresse de contact publiée sur le site
+    |--------------------------------------------------------------------------
+    |
+    | Elle ne sert à aucun envoi : la sonde s'en sert pour vérifier que
+    | l'expéditeur est bien celui que le destinataire a vu sur le site.
+    |
+    | Deux adresses différentes, et un lien de réinitialisation se lit comme
+    | une tentative d'hameçonnage — exactement ce qu'on apprend aux gens à
+    | repérer.
+    |
+    | ⚠️ À tenir d'accord avec `CONTACT` dans `pages/legal/contenu.ts`. Le
+    | jour où l'expédition passera sur le domaine propre, les deux changent
+    | ensemble.
+    |
+    */
+    'contact_publie' => env('CONTACT_PUBLIC', 'contactsmavilla@gmail.com'),
+
 ];
