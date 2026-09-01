@@ -42,7 +42,7 @@ export default function HomeScreen({ navigation }: any) {
       >
         {/* ── Hero ── */}
         <View style={s.hero}>
-          <Text style={s.logoMark}>MA VILLA</Text>
+          <Text style={s.logoMark}>PASSETEMPS</Text>
           <Text style={s.tagline}>
             Trouvez la villa{'\n'}parfaite{'\n'}au Sénégal
           </Text>
@@ -155,7 +155,7 @@ export default function HomeScreen({ navigation }: any) {
         {/* ── Features ── */}
         <View style={s.section}>
           <Text style={[s.sectionTitle, { color: colors.text1, marginBottom: 14 }]}>
-            Pourquoi Ma Villa ?
+            Pourquoi PasseTemps ?
           </Text>
           {[
             {

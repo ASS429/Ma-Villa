@@ -1,6 +1,6 @@
 # Infrastructure et réglages
 
-_Mis à jour le 22 août 2026. Ce document dit ce qui tourne, où, et quelles variables le
+_Mis à jour le 31 août 2026. Ce document dit ce qui tourne, où, et quelles variables le
 règlent. Il remplace le guide de mise en production du 9 août, dont tous les points
 bloquants sont résolus._
 
@@ -10,7 +10,7 @@ bloquants sont résolus._
 
 | | |
 |---|---|
-| **Site** | Render — https://mavilla-web.onrender.com |
+| **Site** | https://passetemps.sn — servi par Render (`mavilla-web.onrender.com`) |
 | **Interface applicative** | Railway — https://ma-villa-production.up.railway.app |
 | **Base de données** | PostgreSQL, sur Railway |
 | **Stockage des photos** | objet, hors du conteneur |
@@ -31,13 +31,40 @@ mentir sur les données ; c'est une contrainte à garder en tête pour toute év
 
 ---
 
+## Le nom de domaine
+
+`passetemps.sn`, acheté chez **Wanekoo** le 31 août 2026, serveurs de noms par défaut
+(`ns1.wanekoodns.net` / `ns2.wanekoodns.net`). **La zone se règle donc chez Wanekoo**,
+pas chez Render.
+
+| Nom | Type | Cible |
+|---|---|---|
+| `passetemps.sn` | `A` | l'IP affichée par Render dans *Settings → Custom Domains* |
+| `www` | `CNAME` | `mavilla-web.onrender.com` |
+
+**L'apex fait autorité, `www` redirige.** C'est Render qui pose la redirection, dès lors
+que les deux noms sont déclarés chez lui. Le certificat est émis par Render, sans rien à
+faire — mais seulement une fois la résolution effective.
+
+⚠️ **`mavilla-web.onrender.com` reste vivant et doit le rester** : il sert de repli, et il
+est encore inscrit dans `FRONTEND_URLS` ainsi que dans le repli en dur de
+`config/cors.php`. Le nouveau domaine le masque, il ne le remplace pas.
+
+⚠️ **L'interface applicative n'a pas été déplacée.** Elle reste sur
+`ma-villa-production.up.railway.app`. Un `api.passetemps.sn` est possible — `CNAME` vers
+cet hôte, Railway ne prenant pas l'apex — mais il obligerait à réinscrire l'URL de rappel
+chez PayDunya et à republier l'application mobile, dont `PROD_URL` est figé dans l'APK
+déjà distribué. À faire séparément, pas le jour de la bascule du site.
+
+---
+
 ## Variables — Railway (interface applicative)
 
 ### Celles qui cassent le site si elles manquent
 
 ```
-FRONTEND_URLS=https://mavilla-web.onrender.com
-FRONTEND_URL=https://mavilla-web.onrender.com
+FRONTEND_URLS=https://passetemps.sn,https://www.passetemps.sn,https://mavilla-web.onrender.com
+FRONTEND_URL=https://passetemps.sn
 APP_ENV=production
 APP_DEBUG=false
 APP_KEY=<défini>
@@ -129,7 +156,7 @@ AUTH_INDICATIF_LOCAL=221
 
 ```
 VITE_API_URL=https://ma-villa-production.up.railway.app/api
-VITE_SITE_URL=<le domaine, le jour où il existe>
+VITE_SITE_URL=https://passetemps.sn
 ```
 
 **Variables de build** : les changer exige un redéploiement, pas un redémarrage.

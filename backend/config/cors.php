@@ -5,7 +5,7 @@
  *
  * FRONTEND_URLS est une liste séparée par des virgules, définie par
  * environnement. Le repli couvre les ports de développement habituels (Vite web
- * et Expo mobile) ainsi que le domaine de production connu : sans lui, un
+ * et Expo mobile) ainsi que les domaines de production connus : sans lui, un
  * déploiement effectué avant d'avoir renseigné la variable couperait le site
  * de son API. Renseignez tout de même FRONTEND_URLS explicitement — le repli
  * est un garde-fou, pas la configuration.
@@ -14,6 +14,8 @@ $repli = implode(',', [
     'http://localhost:5173',
     'http://localhost:3000',
     'http://localhost:8081',
+    'https://passetemps.sn',
+    'https://www.passetemps.sn',
     'https://mavilla-web.onrender.com',
 ]);
 
