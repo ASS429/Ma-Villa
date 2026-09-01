@@ -92,6 +92,27 @@ class DiagnosticCourrielController extends Controller
             }
         }
 
+        /*
+         * Gmail n'expédie qu'au nom d'une adresse vérifiée dans le compte
+         * authentifié. Si les deux diffèrent sans que « Envoyer des e-mails
+         * en tant que » ait été configuré, **Gmail réécrit silencieusement
+         * l'expéditeur** : le message arrive au nom du compte, pas de
+         * l'adresse choisie.
+         *
+         * C'est un défaut qu'aucune sonde ne peut constater — la réécriture a
+         * lieu chez Google, après notre envoi, et notre configuration continue
+         * d'afficher l'adresse voulue. Seul le message reçu le dit.
+         */
+        $identifiant = (string) config("mail.mailers.{$transport}.username");
+        $hote = (string) config("mail.mailers.{$transport}.host");
+
+        if (str_contains($hote, 'gmail') && $identifiant !== '' && $identifiant !== $expediteur) {
+            $avertissements[] = [
+                'sujet'   => 'Compte et expéditeur',
+                'message' => "Le compte authentifié est {$identifiant}, mais les messages prétendent partir de {$expediteur}. Gmail n'accepte cela que si la seconde adresse est déclarée dans « Envoyer des e-mails en tant que » du premier compte ; sinon il réécrit l'expéditeur en silence, et vos utilisateurs reçoivent le message au nom de {$identifiant}. La sonde ne peut pas le voir : regardez l'expéditeur du message de test.",
+            ];
+        }
+
         // Gmail affiche ses mots de passe d'application par groupes de quatre.
         // Recopiés tels quels, les espaces partent dans l'authentification et
         // le serveur refuse — sans jamais dire que c'est à cause d'eux.
@@ -178,6 +199,20 @@ class DiagnosticCourrielController extends Controller
             ]);
         }
 
+        /*
+         * Le délai du transport est `null` par défaut : un serveur qui ne
+         * répond pas fait attendre indéfiniment. Sur une sonde, c'est le pire
+         * comportement possible — le navigateur abandonne au bout de vingt
+         * secondes et affiche « le serveur met trop de temps », qui accuse
+         * notre serveur alors que c'est le service de courrier qui se tait.
+         *
+         * Douze secondes laissent la marge pour rapporter le blocage plutôt
+         * que de le subir. `purge` force la reconstruction du transport, sans
+         * quoi le réglage arriverait après coup.
+         */
+        config(["mail.mailers.{$transport}.timeout" => 12]);
+        Mail::purge($transport);
+
         try {
             Mail::raw(
                 "Ce message vient de la sonde de courrier de PasseTemps.\n\n"
@@ -188,10 +223,21 @@ class DiagnosticCourrielController extends Controller
                 fn ($m) => $m->to($destinataire)->subject('PasseTemps — sonde de courrier')
             );
         } catch (\Throwable $e) {
+            $message = $e->getMessage();
+
+            // Un blocage réseau ne se lit pas comme un refus : le service ne
+            // dit rien du tout. Chez un hébergeur, c'est presque toujours le
+            // port qui est fermé en sortie.
+            $silence = str_contains($message, 'timed out')
+                || str_contains($message, 'timeout')
+                || str_contains($message, 'Connection could not be established');
+
             return response()->json($etat + [
                 'ok'      => false,
-                'verdict' => "Non. Le serveur a refusé l'envoi. C'est la réponse du service de courrier, telle quelle — elle nomme presque toujours la cause : identifiants, port, ou domaine d'expédition non vérifié.",
-                'envoi'   => ['tente' => true, 'ok' => false, 'erreur' => $e->getMessage()],
+                'verdict' => $silence
+                    ? "Non. {$transport} n'a pas répondu en douze secondes. Le service ne refuse pas : il se tait. Sur un hébergeur, c'est presque toujours le port sortant qui est fermé — le 587 vers smtp.gmail.com doit être ouvert depuis le conteneur."
+                    : "Non. Le serveur a refusé l'envoi. C'est la réponse du service de courrier, telle quelle — elle nomme presque toujours la cause : identifiants, port, ou domaine d'expédition non vérifié.",
+                'envoi'   => ['tente' => true, 'ok' => false, 'erreur' => $message],
             ]);
         }
 
