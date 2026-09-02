@@ -31,7 +31,7 @@
  * remplacer par un plan vide.
  */
 
-import { readFile, writeFile, mkdir, access } from 'node:fs/promises'
+import { readFile, writeFile, mkdir } from 'node:fs/promises'
 import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -40,33 +40,69 @@ const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..')
 const DIST = join(RACINE, 'dist')
 
 /**
- * Le domaine qui fait autorité, dans l'ordre où on le cherche.
- *
- * Ce script tourne dans node, pas dans Vite : `.env.production` ne lui arrive
- * pas tout seul. Sur Render la variable est dans l'environnement du processus
- * et tout allait bien ; en local elle manquait, et une même commande
- * produisait deux sites différents — canoniques, plan de site et image de
- * partage compris. Un pré-rendu qu'on ne peut pas reproduire hors du serveur
- * ne se vérifie jamais avant d'être en ligne.
- *
- * Le repli en dur reste l'hôte Render : il sert toujours, et il vaut mieux
- * qu'une adresse vide.
+ * Ce script tourne dans node, pas dans Vite : `.env.production` ne lui
+ * arrive pas tout seul. Sur Render les variables sont dans l'environnement
+ * du processus et tout allait bien ; en local elles manquaient, et une même
+ * commande produisait deux sites différents — canoniques, plan de site et
+ * image de partage compris. Un pré-rendu qu'on ne peut pas reproduire hors
+ * du serveur ne se vérifie jamais avant d'être en ligne. D'où cette lecture
+ * du fichier, faite une fois pour toutes.
  */
-function domaine() {
-  if (process.env.VITE_SITE_URL) return process.env.VITE_SITE_URL
-
+const ENV_PRODUCTION = (() => {
   try {
-    const fichier = readFileSync(join(RACINE, '.env.production'), 'utf8')
-    const ligne = fichier.match(/^\s*VITE_SITE_URL\s*=\s*(.+)$/m)
-    if (ligne) return ligne[1].trim().replace(/^["']|["']$/g, '')
+    return readFileSync(join(RACINE, '.env.production'), 'utf8')
   } catch {
-    // Pas de fichier : on retombe sur l'hôte connu.
+    return '' // Pas de fichier : chaque lecture retombera sur son défaut.
+  }
+})()
+
+/**
+ * L'environnement du processus d'abord, le fichier ensuite, la chaîne vide
+ * en dernier ressort.
+ *
+ * Découpage ligne à ligne, et non une expression régulière assemblée autour
+ * du nom : dans un littéral gabarit, une classe comme `\\s` réclame
+ * **deux** antislashs, et l'écrire avec un seul la réduit à la lettre « s »
+ * sans que rien ne proteste. Le repli sur le fichier aurait cessé de
+ * fonctionner en silence, et le site se serait pré-rendu sur le mauvais
+ * domaine.
+ */
+function variable(nom) {
+  if (process.env[nom]) return process.env[nom]
+
+  for (const ligne of ENV_PRODUCTION.split(/\r?\n/)) {
+    const separateur = ligne.indexOf('=')
+    if (separateur === -1) continue
+    // Les lignes de commentaire ne peuvent pas passer : « # VITE_x » n'est
+    // pas « VITE_x », la comparaison porte sur le nom entier.
+    if (ligne.slice(0, separateur).trim() !== nom) continue
+
+    return ligne.slice(separateur + 1).trim().replace(/^["']|["']$/g, '')
   }
 
-  return 'https://mavilla-web.onrender.com'
+  return ''
+}
+
+/**
+ * Le domaine qui fait autorité. Le repli en dur reste l'hôte Render : il
+ * sert toujours, et il vaut mieux qu'une adresse vide.
+ */
+function domaine() {
+  return variable('VITE_SITE_URL') || 'https://mavilla-web.onrender.com'
 }
 
 const SITE = domaine().replace(/\/$/, '')
+
+/**
+ * Jeton de propriété Google Search Console, optionnel.
+ *
+ * La méthode recommandée reste l'enregistrement DNS TXT : elle couvre l'apex,
+ * `www` et tout futur sous-domaine d'un coup, et ne demande aucun déploiement.
+ * Cette balise est le repli quand la main sur le DNS manque — elle n'est posée
+ * que si le jeton existe, sinon rien n'est écrit.
+ */
+const VERIFICATION_GOOGLE = variable('VITE_GOOGLE_VERIFICATION')
+
 const API = (process.env.VITE_API_URL || 'https://ma-villa-production.up.railway.app/api').replace(/\/$/, '')
 
 /** Le prix est en FCFA, sans décimales — convention du projet. */
@@ -128,6 +164,41 @@ async function toutesLesVillas() {
   return villas
 }
 
+/**
+ * Le catalogue de la boutique, ou `null` si la boutique est fermée.
+ *
+ * La distinction n'est pas cosmétique. `OeuvreController` répond **404** quand
+ * `boutique.actif` vaut false, et son commentaire dit pourquoi : tant que le
+ * métier n'est pas ouvert, ces adresses ne doivent pas exister du tout — un
+ * 503 inviterait les moteurs à garder l'URL sous le coude.
+ *
+ * On respecte cette décision : boutique fermée, ni `/boutique` ni aucune fiche
+ * n'entrent au plan de site. Toute autre erreur reste une panne d'API, et
+ * remonte pour que le plan de site précédent soit conservé.
+ */
+async function toutesLesOeuvres() {
+  const oeuvres = []
+
+  for (let page = 1; page <= 50; page++) {
+    const reponse = await fetch(`${API}/oeuvres?page=${page}`, {
+      headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(30_000),
+    })
+
+    if (reponse.status === 404) return null
+    if (!reponse.ok) throw new Error(`HTTP ${reponse.status} sur /oeuvres?page=${page}`)
+
+    const corps = await reponse.json()
+    const lot = Array.isArray(corps) ? corps : (corps.data ?? [])
+    oeuvres.push(...lot)
+
+    const derniere = Array.isArray(corps) ? 1 : (corps.last_page ?? 1)
+    if (page >= derniere) break
+  }
+
+  return oeuvres
+}
+
 /* ── Fabrique d'une page ──────────────────────────────────────── */
 
 function pageVilla(villa) {
@@ -177,6 +248,46 @@ function pageVilla(villa) {
   return { chemin: `hebergements/${villa.id}`, titre, description, image: photo, donnees }
 }
 
+/**
+ * Une fiche d'œuvre. Même défaut que les villas avant le 19 août : `/boutique/12`
+ * partagé sur WhatsApp s'affichait sans titre, sans photo et sans prix.
+ */
+function pageOeuvre(oeuvre) {
+  const titre = `${oeuvre.titre}${oeuvre.artiste ? ` — ${oeuvre.artiste}` : ''} — PasseTemps`
+
+  // Un article vendu reste visible — c'est la preuve que la galerie vend — mais
+  // il ne doit pas être annoncé disponible.
+  const achetable = oeuvre.statut === 'publiee' && Number(oeuvre.stock ?? 0) > 0
+
+  const detail = [oeuvre.technique, oeuvre.dimensions, oeuvre.annee].filter(Boolean).join(', ')
+  const description = resumer(
+    `${fcfa(oeuvre.prix)}. ${detail ? detail + '. ' : ''}${oeuvre.description || ''}`.trim()
+  )
+
+  const photo = oeuvre.photos?.[0]?.url
+
+  const donnees = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: oeuvre.titre,
+    description: resumer(oeuvre.description || titre, 300),
+    ...(photo ? { image: photo } : {}),
+    ...(oeuvre.artiste ? { brand: { '@type': 'Person', name: oeuvre.artiste } } : {}),
+    ...(oeuvre.categorie ? { category: oeuvre.categorie } : {}),
+    offers: {
+      '@type': 'Offer',
+      price: String(Math.round(Number(oeuvre.prix))),
+      priceCurrency: 'XOF',
+      availability: achetable
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/OutOfStock',
+      url: `${SITE}/boutique/${oeuvre.id}/`,
+    },
+  }
+
+  return { chemin: `boutique/${oeuvre.id}`, titre, description, image: photo, donnees }
+}
+
 const PAGES_FIXES = [
   {
     chemin: '',
@@ -201,6 +312,14 @@ const PAGES_FIXES = [
     titre: 'Tous les hébergements — PasseTemps',
     description: 'Parcourez les villas, résidences, appartements et chambres '
       + 'disponibles au Sénégal. Filtrez par ville, dates, budget et équipements.',
+  },
+  {
+    // Retirée du plan de site quand la boutique est fermée : voir toutesLesOeuvres().
+    siBoutiqueOuverte: true,
+    chemin: 'boutique',
+    titre: "Boutique d'art sénégalais — PasseTemps",
+    description: "Œuvres d'artistes sénégalais — peintures, sculptures et pièces uniques. "
+      + 'Livraison au Sénégal, paiement Wave ou Orange Money.',
   },
   // Les quatre pages légales portent une note d'attente depuis le 20 août 2026 :
   // la rédaction est confiée au juriste. Les descriptions le disent, sans quoi un
@@ -272,6 +391,19 @@ function injecter(gabarit, { chemin, titre, description, image, donnees }) {
     ? html.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/, baliseCanonique)
     : html.replace('</head>', `    ${baliseCanonique}\n  </head>`)
 
+  // Search Console : Google ne lit la balise que sur l'URL de la propriété,
+  // mais la poser partout ne coûte rien et survit à une propriété déclarée sur
+  // une autre page que l'accueil.
+  if (VERIFICATION_GOOGLE) remplacerMeta('name', 'google-site-verification', VERIFICATION_GOOGLE)
+
+  // Le gabarit est `dist/index.html`, que ce script réécrit aussi — c'est la
+  // page d'accueil. Relancé sans `vite build` avant lui (`npm run prerendu`),
+  // il relisait donc un gabarit déjà porteur du bloc de l'accueil, et chaque
+  // fiche héritait du `WebSite` de la page d'accueil **en plus** du sien.
+  // Constaté sur une fiche d'œuvre de test : deux blocs, le mauvais en premier.
+  // On repart donc toujours d’un en-tête sans données structurées.
+  html = html.replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>\s*/g, '')
+
   if (donnees) {
     // `</` échappé : une description contenant « </script> » interromprait le
     // bloc et injecterait du balisage dans la page.
@@ -283,6 +415,37 @@ function injecter(gabarit, { chemin, titre, description, image, donnees }) {
 }
 
 /* ── Plan de site ─────────────────────────────────────────────── */
+
+/**
+ * Le plan de site déjà publié, ou `null`.
+ *
+ * ⚠️ Le repli « on garde le plan précédent » ne gardait rien. `vite build`
+ * **vide `dist/`** avant que ce script ne tourne — vérifié le 2 septembre 2026
+ * avec un témoin déposé dans le dossier, qui n'a pas survécu. Le fichier
+ * cherché sur le disque n'existait donc jamais lors d'un vrai déploiement, et
+ * le plan amputé partait quand même : **un seul déploiement lancé pendant que
+ * Railway dormait suffisait à sortir toutes les fiches du plan de site.**
+ *
+ * On va donc le chercher là où il est : en ligne. Le déploiement précédent
+ * sert encore pendant la construction du suivant.
+ */
+async function planDeSitePublie() {
+  try {
+    const reponse = await fetch(`${SITE}/sitemap.xml`, {
+      headers: { Accept: 'application/xml' },
+      signal: AbortSignal.timeout(15_000),
+    })
+    if (!reponse.ok) return null
+
+    const corps = await reponse.text()
+
+    // Un hébergeur qui répond 200 avec la page d'accueil sur une adresse
+    // inconnue est la règle, pas l’exception : on exige la balise racine.
+    return corps.includes('<urlset') ? corps : null
+  } catch {
+    return null
+  }
+}
 
 function planDeSite(pages) {
   const entrees = pages.map(({ chemin, priorite = '0.7', frequence = 'weekly' }) => {
@@ -317,23 +480,39 @@ async function principal() {
   const gabarit = await readFile(join(DIST, 'index.html'), 'utf8')
 
   let villas = []
+  let oeuvres = []
+  // Optimiste à dessein : seul un 404 franc ferme la boutique. Une API
+  // endormie ne doit pas retirer une page fixe — c'est exactement ce que le
+  // repli promet de ne pas faire.
+  let boutiqueOuverte = true
   let apiJoignable = true
 
   try {
     villas = await toutesLesVillas()
     console.log(`  ${villas.length} villa(s) publiée(s) récupérée(s)`)
+
+    const catalogue = await toutesLesOeuvres()
+    boutiqueOuverte = catalogue !== null
+    oeuvres = catalogue ?? []
+
+    console.log(boutiqueOuverte
+      ? `  ${oeuvres.length} œuvre(s) en boutique récupérée(s)`
+      : '  boutique fermée : ses adresses restent hors du plan de site')
   } catch (e) {
     apiJoignable = false
     // Bruyant, mais pas fatal : un déploiement ne doit pas échouer parce que
     // l'API dormait. Les pages fixes suffisent à ne pas régresser.
     console.warn(`\n  ⚠️  API injoignable (${e.message}).`)
-    console.warn('      Les fiches villa ne seront pas pré-rendues, et le plan de site')
+    console.warn('      Les fiches ne seront pas pré-rendues, et le plan de site')
     console.warn('      précédent est conservé. Relancer le déploiement API réveillée.\n')
   }
 
   const pages = [
-    ...PAGES_FIXES.map((p) => ({ ...p, priorite: p.chemin === '' ? '1.0' : '0.8' })),
+    ...PAGES_FIXES
+      .filter((p) => !p.siBoutiqueOuverte || boutiqueOuverte)
+      .map((p) => ({ ...p, priorite: p.chemin === '' ? '1.0' : '0.8' })),
     ...villas.map(pageVilla).map((p) => ({ ...p, priorite: '0.6', frequence: 'daily' })),
+    ...oeuvres.map(pageOeuvre).map((p) => ({ ...p, priorite: '0.6', frequence: 'weekly' })),
   ]
 
   for (const page of pages) {
@@ -347,12 +526,14 @@ async function principal() {
   if (apiJoignable) {
     await writeFile(join(DIST, 'sitemap.xml'), planDeSite(pages), 'utf8')
   } else {
-    // On ne remplace pas un plan complet par un plan amputé.
-    try {
-      await access(join(DIST, 'sitemap.xml'))
-    } catch {
-      await writeFile(join(DIST, 'sitemap.xml'), planDeSite(pages), 'utf8')
-    }
+    // On ne remplace pas un plan complet par un plan amputé : celui qui sert
+    // déjà en ligne vaut mieux qu’un plan réduit aux pages fixes.
+    const publie = await planDeSitePublie()
+
+    await writeFile(join(DIST, 'sitemap.xml'), publie ?? planDeSite(pages), 'utf8')
+    console.warn(publie
+      ? '      Plan de site : celui déjà en ligne est conservé.'
+      : '      Plan de site : aucun plan en ligne à reprendre, écriture du plan réduit.')
   }
 
   console.log(`  ${pages.length} page(s) pré-rendue(s) · plan de site et robots.txt écrits`)
