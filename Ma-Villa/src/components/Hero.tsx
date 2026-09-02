@@ -26,16 +26,16 @@ export default function Hero() {
           </p>
         </FadeIn>
 
-        {/* Le titre se raccourcit en mobile : « réservée en trois gestes »
+        {/* Le titre se raccourcit en mobile : « réservé en trois gestes »
             occupe deux lignes de plus sur 375 px, au détriment de la recherche
             qui doit rester visible sans défiler. */}
         <h1
           className="mb-5 text-white"
           style={{ font: 'var(--t-display)', letterSpacing: 'var(--t-display-ls)' }}
         >
-          Votre villa au Sénégal
+          Votre séjour au Sénégal
           <span className="hidden md:inline">,</span>
-          <span className="hidden md:block">réservée en trois gestes</span>
+          <span className="hidden md:block">réservé en trois gestes</span>
         </h1>
 
         <FadeIn delay={200} duration={700}>

@@ -277,18 +277,18 @@ function AppelProprietaires() {
             Propriétaires
           </p>
           <h2 className="text-3xl md:text-4xl font-normal th-text-1 mb-4" style={{ letterSpacing: '-0.02em' }}>
-            Publiez votre villa gratuitement
+            Publiez votre hébergement gratuitement
           </h2>
           <p className="text-sm th-text-2 max-w-xl mx-auto mb-8 leading-relaxed">
             Créez votre annonce, fixez vos tarifs par formule — nuitée, journée,
             résidence — et gérez vos disponibilités depuis un tableau de bord simple.
           </p>
-          {/* Seul endroit où « Publier PasseTemps » prend l'accent : c'est la
+          {/* Seul endroit où « Publier mon hébergement » prend l'accent : c'est la
               section qui lui est consacrée, donc la conversion du parcours en
               cours. Ailleurs, elle reste secondaire pour ne pas détourner la
               couleur d'action vers une action qui ne concerne pas le client. */}
           <ButtonLink to="/register" variante="primaire" taille="md">
-            Publier PasseTemps
+            Publier mon hébergement
           </ButtonLink>
         </ScrollReveal>
       </div>

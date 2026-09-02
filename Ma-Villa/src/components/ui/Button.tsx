@@ -3,7 +3,7 @@ import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 
 /**
  * Emploi de l'accent, arrêté en revue de design : il signale la conversion du
- * parcours en cours — « Rechercher », « Réserver ». « Publier PasseTemps » reste
+ * parcours en cours — « Rechercher », « Réserver ». « Publier mon hébergement » reste
  * en `secondaire` partout sauf sur la page qui lui est dédiée, pour ne pas
  * pointer la couleur d'action vers une action qui ne concerne pas le visiteur.
  *

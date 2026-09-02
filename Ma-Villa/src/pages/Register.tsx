@@ -72,7 +72,7 @@ export default function Register() {
     >
       <Seo
         titre="Créer un compte"
-        description="Créez votre compte PasseTemps pour réserver un logement ou publier votre villa."
+        description="Créez votre compte PasseTemps pour réserver un logement ou publier le vôtre."
         chemin="/register"
       />
 
