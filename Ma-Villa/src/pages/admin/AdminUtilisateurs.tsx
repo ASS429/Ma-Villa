@@ -133,7 +133,7 @@ export default function AdminUtilisateurs() {
           <input
             type="search"
             className="champ-controle"
-            placeholder="Nom ou email…"
+            placeholder="Nom, téléphone ou email…"
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
             aria-label="Rechercher un compte"
@@ -169,7 +169,23 @@ export default function AdminUtilisateurs() {
                           <p style={{ margin: 0, fontWeight: 500, color: 'var(--text-1)' }}>
                             {u.name}{estMoi && <span style={{ color: 'var(--text-3)', fontWeight: 400 }}> · vous</span>}
                           </p>
-                          <p style={{ margin: 0, font: 'var(--t-caption)', color: 'var(--text-3)' }}>{u.email}</p>
+                          {/* Le numéro d'abord, l'adresse ensuite : c'est par
+                              téléphone qu'on joint un propriétaire ici, et
+                              c'est aussi le numéro qui sert à se connecter.
+                              Sans lui, il fallait ouvrir la fiche pour appeler. */}
+                          <p style={{ margin: 0, font: 'var(--t-caption)', color: 'var(--text-3)' }}>
+                            {u.phone
+                              ? <>
+                                  <a
+                                    href={`tel:${u.phone.replace(/[^\d+]/g, '')}`}
+                                    style={{ color: 'var(--text-2)', textDecoration: 'none' }}
+                                  >
+                                    {u.phone}
+                                  </a>
+                                  {u.email && <> · {u.email}</>}
+                                </>
+                              : u.email}
+                          </p>
                         </div>
                       </div>
                     </td>

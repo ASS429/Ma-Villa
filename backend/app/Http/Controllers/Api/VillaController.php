@@ -277,7 +277,7 @@ class VillaController extends Controller
             ], 422);
         }
 
-        $manques = $this->ceQuiManque($villa);
+        $manques = $villa->ceQuiManque();
 
         if ($manques !== []) {
             // 422 avec le détail : l'écran affiche l'étape à reprendre plutôt
@@ -291,40 +291,6 @@ class VillaController extends Controller
         $villa->update(['statut' => 'en_attente']);
 
         return response()->json($villa->fresh());
-    }
-
-    /**
-     * Ce qu'il manque au brouillon, dit par étape.
-     *
-     * Chaque entrée porte l'étape concernée : l'écran sait alors où renvoyer,
-     * ce qu'une liste de champs ne permettrait pas — « tarif_id manquant » ne
-     * dit pas quoi faire.
-     */
-    private function ceQuiManque(Villa $villa): array
-    {
-        $manques = [];
-
-        if (blank($villa->adresse)) {
-            $manques[] = ['etape' => 'adresse', 'message' => "L'adresse du logement n'est pas renseignée."];
-        }
-
-        if (blank($villa->telephone)) {
-            $manques[] = ['etape' => 'adresse', 'message' => 'Aucun numéro ne permet de vous joindre.'];
-        }
-
-        if (blank($villa->description)) {
-            $manques[] = ['etape' => 'description', 'message' => "L'annonce n'a pas de description."];
-        }
-
-        $logement = $villa->logements()->withCount('tarifs')->first();
-
-        if (! $logement) {
-            $manques[] = ['etape' => 'logement', 'message' => "Aucun logement n'a été décrit."];
-        } elseif ($logement->tarifs_count === 0) {
-            $manques[] = ['etape' => 'prix', 'message' => 'Aucun tarif n\'a été fixé.'];
-        }
-
-        return $manques;
     }
 
     /**

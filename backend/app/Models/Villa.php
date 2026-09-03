@@ -64,6 +64,45 @@ class Villa extends Model
         return $query->select(array_map(fn ($c) => "{$this->getTable()}.{$c}", $colonnes));
     }
 
+    /**
+     * Ce qu'il manque au brouillon, dit par étape.
+     *
+     * Chaque entrée porte l'étape concernée : l'écran sait alors où renvoyer,
+     * ce qu'une liste de champs ne permettrait pas — « tarif_id manquant » ne
+     * dit pas quoi faire.
+     *
+     * Vit sur le modèle et non dans le contrôleur de publication, parce que
+     * l'administration en a besoin aussi : un brouillon qui traîne est un
+     * propriétaire bloqué, et savoir **sur quoi** il bloque est la seule
+     * chose qui permette de le débloquer d'un appel.
+     */
+    public function ceQuiManque(): array
+    {
+        $manques = [];
+
+        if (blank($this->adresse)) {
+            $manques[] = ['etape' => 'adresse', 'message' => "L'adresse du logement n'est pas renseignée."];
+        }
+
+        if (blank($this->telephone)) {
+            $manques[] = ['etape' => 'adresse', 'message' => 'Aucun numéro ne permet de vous joindre.'];
+        }
+
+        if (blank($this->description)) {
+            $manques[] = ['etape' => 'description', 'message' => "L'annonce n'a pas de description."];
+        }
+
+        $logement = $this->logements()->withCount('tarifs')->first();
+
+        if (! $logement) {
+            $manques[] = ['etape' => 'logement', 'message' => "Aucun logement n'a été décrit."];
+        } elseif ($logement->tarifs_count === 0) {
+            $manques[] = ['etape' => 'prix', 'message' => 'Aucun tarif n\'a été fixé.'];
+        }
+
+        return $manques;
+    }
+
     public function proprietaire(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');

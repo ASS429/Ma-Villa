@@ -38,6 +38,9 @@ class AttentesController extends Controller
     /** Au-delà, une annonce en attente n'est plus un délai mais un oubli. */
     private const VILLA_VIEILLE_JOURS = 3;
 
+    /** Au-delà, un brouillon n'est plus une soirée inachevée mais un blocage. */
+    private const BROUILLON_VIEUX_JOURS = 2;
+
     /** Une note basse récente vaut examen : c'est le signalement du pauvre. */
     private const AVIS_FENETRE_JOURS = 14;
 
@@ -45,6 +48,7 @@ class AttentesController extends Controller
     {
         $lignes = array_values(array_filter([
             $this->annoncesAValider(),
+            $this->brouillonsBloques(),
             $this->annulationsDemandees(),
             $this->versementsDus(),
             $this->versementsEnPanne(),
@@ -92,6 +96,41 @@ class AttentesController extends Controller
                 : "Tant qu'elles ne sont pas validées, elles n'existent pour personne.",
             'lien'         => '/admin/villas',
             'libelle_lien' => 'Examiner',
+        ];
+    }
+
+    /**
+     * Les propriétaires restés en chemin.
+     *
+     * Une annonce naît en brouillon et n'existe pour personne tant que son
+     * propriétaire n'a pas franchi les six étapes. Celui qui bloque ne
+     * réclame pas : il croit avoir publié, ne voit rien venir, et s'en va.
+     *
+     * Le seuil est volontairement plus long que pour une validation : un
+     * brouillon de la veille est quelqu'un qui n'a pas fini sa soirée, pas
+     * quelqu'un en difficulté.
+     */
+    private function brouillonsBloques(): ?array
+    {
+        $vieux = Villa::where('statut', 'brouillon')
+            ->where('created_at', '<', now()->subDays(self::BROUILLON_VIEUX_JOURS))
+            ->count();
+
+        if ($vieux === 0) {
+            return null;
+        }
+
+        return [
+            'cle'          => 'brouillons',
+            'gravite'      => 'action',
+            'compte'       => $vieux,
+            'titre'        => $vieux === 1
+                ? 'Une annonce est restée en brouillon'
+                : "{$vieux} annonces sont restées en brouillon",
+            'detail'       => 'Leurs propriétaires ont commencé sans aller au bout. '
+                . "L'écran dit ce qu'il leur manque : un appel suffit souvent.",
+            'lien'         => '/admin/villas?statut=brouillon',
+            'libelle_lien' => 'Voir',
         ];
     }
 

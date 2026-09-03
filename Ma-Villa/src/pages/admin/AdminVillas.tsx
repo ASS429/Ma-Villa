@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Search, Star, ExternalLink, Building2, Check, X, EyeOff } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { Search, Star, ExternalLink, Building2, Check, X, EyeOff, AlertTriangle } from 'lucide-react'
 import api from '../../services/api'
 import { useRequete } from '../../lib/useRequete'
 import { useToast } from '../../context/ToastContext'
@@ -20,19 +20,37 @@ interface Villa {
   vedette: boolean
   description: string
   telephone: string
-  proprietaire: { name: string; email: string }
+  proprietaire: { name: string; email: string; phone: string | null }
   created_at: string
+  /** Servi seulement sur l'onglet Brouillons : l'étape où le propriétaire a calé. */
+  manques?: { etape: string; message: string }[]
 }
 
 const ONGLETS = [
   { valeur: 'en_attente', label: 'En attente' },
+  // Ajouté le 3 septembre 2026. Ces annonces n'apparaissaient nulle part :
+  // leurs propriétaires croyaient avoir publié, et l'écran affichait
+  // « tout est traité ».
+  { valeur: 'brouillon', label: 'Brouillons' },
   { valeur: 'validee', label: 'Validées' },
   { valeur: 'rejetee', label: 'Rejetées' },
 ]
 
 export default function AdminVillas() {
   const toast = useToast()
-  const [statut, setStatut] = useState('en_attente')
+  /*
+   * L'onglet se lit dans l'URL, pas seulement dans l'état.
+   *
+   * « Ce qui attend » renvoie ici avec `?statut=brouillon`. Sans cette
+   * lecture, le lien promettait des brouillons et ouvrait la file d'attente —
+   * une promesse cassée à l'endroit précis où l'on venait chercher quelque
+   * chose. L'onglet reste ensuite piloté par les clics, et l'URL suit.
+   */
+  const [parametres, setParametres] = useSearchParams()
+  const demande = parametres.get('statut')
+  const [statut, setStatut] = useState(
+    ONGLETS.some((o) => o.valeur === demande) ? (demande as string) : 'en_attente'
+  )
   // Le panneau de motif : ouvert sur une villa, il porte la raison du retrait.
   const [aRetirer, setARetirer] = useState<Villa | null>(null)
   const [motif, setMotif] = useState('')
@@ -94,7 +112,12 @@ export default function AdminVillas() {
     }
   }
 
-  const changerOnglet = (valeur: string) => { setStatut(valeur); setPage(1) }
+  const changerOnglet = (valeur: string) => {
+    setStatut(valeur)
+    setPage(1)
+    // L'URL suit l'onglet : la page se recharge et se partage telle qu'on la voit.
+    setParametres(valeur === 'en_attente' ? {} : { statut: valeur }, { replace: true })
+  }
 
   return (
     <div>
@@ -157,7 +180,9 @@ export default function AdminVillas() {
               ? <>Aucun hébergement ne correspond à <strong>{terme}</strong>.</>
               : statut === 'en_attente'
                 ? <>Aucune annonce en attente. <strong>Tout est traité.</strong></>
-                : 'Aucun hébergement dans cette catégorie.'}
+                : statut === 'brouillon'
+                  ? <>Aucun brouillon en cours. Personne n'est bloqué en chemin.</>
+                  : 'Aucun hébergement dans cette catégorie.'}
           </p>
         </div>
       ) : (
@@ -175,8 +200,39 @@ export default function AdminVillas() {
                     {villa.ville} · {villa.telephone}
                   </p>
                   <p style={{ margin: '2px 0 0', font: 'var(--t-caption)', color: 'var(--text-3)' }}>
-                    {villa.proprietaire?.name} · {villa.proprietaire?.email} · déposée {depuis(villa.created_at)}
+                    {villa.proprietaire?.name}
+                    {/* Le numéro d'abord sur un brouillon : c'est un appel
+                        qu'il faut passer, pas un courriel à écrire. */}
+                    {villa.proprietaire?.phone && <> · {villa.proprietaire.phone}</>}
+                    {villa.proprietaire?.email && <> · {villa.proprietaire.email}</>}
+                    {' · '}{statut === 'brouillon' ? 'commencée' : 'déposée'} {depuis(villa.created_at)}
                   </p>
+
+                  {/* Ce qui manque, dit à l'exploitant dans les mots qu'il
+                      pourra répéter au téléphone. Sans cette liste, voir le
+                      brouillon ne servirait qu'à constater. */}
+                  {statut === 'brouillon' && (
+                    <div className="console-note console-note-alerte" style={{ marginTop: 'var(--space-3)', marginBottom: 0 }}>
+                      <AlertTriangle size={16} aria-hidden="true" />
+                      <div>
+                        {(villa.manques ?? []).length === 0 ? (
+                          <p>
+                            <strong>Rien ne manque.</strong> Cette annonce est complète : il ne reste
+                            au propriétaire qu'à appuyer sur « Publier » depuis son espace.
+                          </p>
+                        ) : (
+                          <>
+                            <p><strong>Ce qu'il reste à faire au propriétaire :</strong></p>
+                            <ul style={{ margin: '4px 0 0', paddingLeft: '1.1em' }}>
+                              {villa.manques?.map((m) => (
+                                <li key={m.etape + m.message} style={{ font: 'var(--t-body-sm)' }}>{m.message}</li>
+                              ))}
+                            </ul>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {villa.description && (
                     <p className="line-clamp-2" style={{ margin: 'var(--space-2) 0 0', font: 'var(--t-body-sm)', color: 'var(--text-3)' }}>
@@ -187,6 +243,7 @@ export default function AdminVillas() {
                   {/* Ouvert dans un onglet : décider sans avoir vu l'annonce
                       telle que le public la verra n'a pas de sens, et revenir
                       en arrière ferait perdre la position dans la liste. */}
+                  {statut !== 'brouillon' && (
                   <Link
                     to={`/hebergements/${villa.id}/`}
                     target="_blank"
@@ -198,6 +255,7 @@ export default function AdminVillas() {
                   >
                     Voir l'annonce <ExternalLink size={13} />
                   </Link>
+                  )}
                 </div>
 
                 <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>

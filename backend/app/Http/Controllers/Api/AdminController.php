@@ -207,20 +207,45 @@ class AdminController extends Controller
      */
     public function villas(Request $request): JsonResponse
     {
+        /*
+         * `brouillon` a été ajouté le 3 septembre 2026, et c'est un correctif,
+         * pas une commodité.
+         *
+         * Une annonce naît en brouillon et n'atteint « en attente » que si le
+         * propriétaire va au bout des six étapes. Tant qu'il n'y arrive pas,
+         * **personne ne la voyait** : l'exploitant n'avait aucun onglet pour
+         * elle, et son écran affichait « tout est traité » pendant qu'un
+         * propriétaire restait bloqué sur un tarif manquant.
+         *
+         * C'est arrivé en vrai, sur l'un des premiers propriétaires inscrits.
+         */
         $request->validate([
-            'statut' => 'sometimes|in:en_attente,validee,rejetee',
+            'statut' => 'sometimes|in:brouillon,en_attente,validee,rejetee',
             'recherche' => 'sometimes|nullable|string|max:100',
             'par_page' => 'sometimes|integer|min:5|max:100',
         ]);
 
+        $statut = $request->input('statut', 'en_attente');
+
         $villas = Villa::with('proprietaire')
-            ->where('statut', $request->input('statut', 'en_attente'))
+            ->where('statut', $statut)
             ->when($request->filled('recherche'), function ($q) use ($request) {
                 $terme = '%'.$request->input('recherche').'%';
                 $q->where(fn ($s) => $s->where('nom', 'like', $terme)->orWhere('ville', 'like', $terme));
             })
             ->latest()
             ->paginate($request->integer('par_page', 20));
+
+        // Voir un brouillon ne sert à rien si on ne sait pas quoi dire au
+        // propriétaire. `manques` porte l'étape où il est resté, ce qui
+        // transforme un constat en coup de téléphone utile.
+        if ($statut === 'brouillon') {
+            $villas->getCollection()->transform(function (Villa $villa) {
+                $villa->manques = $villa->ceQuiManque();
+
+                return $villa;
+            });
+        }
 
         return response()->json($villas);
     }
@@ -236,8 +261,30 @@ class AdminController extends Controller
         $utilisateurs = User::query()
             ->when($request->filled('role'), fn ($q) => $q->where('role', $request->input('role')))
             ->when($request->filled('recherche'), function ($q) use ($request) {
-                $terme = '%'.$request->input('recherche').'%';
-                $q->where(fn ($s) => $s->where('name', 'like', $terme)->orWhere('email', 'like', $terme));
+                $brut = (string) $request->input('recherche');
+                $terme = '%'.$brut.'%';
+
+                /*
+                 * Chercher par numéro, et sur la forme canonique.
+                 *
+                 * On inscrit les propriétaires au téléphone : c'est le numéro
+                 * qu'on a sous les yeux, pas l'adresse. Or « 77 123 45 67 » ne
+                 * ressemble à rien de ce qui est stocké — d'où la comparaison
+                 * sur `phone_normalise`, la colonne qui sert déjà à se
+                 * connecter. Sans elle, la recherche ne rendrait rien et on
+                 * conclurait que le compte n'existe pas.
+                 */
+                $normalise = User::normaliserNumero($brut);
+
+                $q->where(function ($s) use ($terme, $normalise) {
+                    $s->where('name', 'like', $terme)
+                      ->orWhere('email', 'like', $terme)
+                      ->orWhere('phone', 'like', $terme);
+
+                    if ($normalise) {
+                        $s->orWhere('phone_normalise', 'like', '%'.$normalise.'%');
+                    }
+                });
             })
             ->withCount(['villas', 'reservations'])
             ->latest()

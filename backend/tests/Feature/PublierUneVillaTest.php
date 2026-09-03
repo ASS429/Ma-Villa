@@ -322,4 +322,112 @@ class PublierUneVillaTest extends TestCase
             ]);
         }
     }
+
+    /* ── Le brouillon vu par l'administration ────────────────────── */
+
+    /**
+     * Le trou trouvé le 3 septembre 2026, sur un vrai propriétaire.
+     *
+     * Une annonce naît en brouillon. L'administration ne pouvait filtrer que
+     * `en_attente`, `validee` ou `rejetee` : un propriétaire bloqué en chemin
+     * était **invisible**, et l'écran affichait « tout est traité ».
+     */
+    public function test_l_administration_voit_les_brouillons(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $proprietaire = User::factory()->proprietaire()->create();
+
+        Villa::factory()->create([
+            'user_id' => $proprietaire->id,
+            'nom'     => 'Villa restée en chemin',
+            'statut'  => 'brouillon',
+        ]);
+
+        $reponse = $this->actingAs($admin)
+            ->getJson('/api/admin/villas?statut=brouillon')
+            ->assertOk();
+
+        $this->assertCount(1, $reponse->json('data'));
+        $reponse->assertJsonPath('data.0.nom', 'Villa restée en chemin');
+    }
+
+    /** Voir le brouillon ne sert à rien sans savoir sur quoi il bloque. */
+    public function test_le_brouillon_dit_ce_qui_lui_manque(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        Villa::factory()->create([
+            'user_id'     => User::factory()->proprietaire()->create()->id,
+            'statut'      => 'brouillon',
+            'description' => null,
+        ]);
+
+        $manques = $this->actingAs($admin)
+            ->getJson('/api/admin/villas?statut=brouillon')
+            ->assertOk()
+            ->json('data.0.manques');
+
+        $this->assertNotEmpty($manques, 'Un brouillon incomplet doit dire ce qui manque.');
+        $this->assertContains('logement', array_column($manques, 'etape'));
+    }
+
+    /** Un brouillon qui traîne remonte dans la file de travail. */
+    public function test_un_brouillon_qui_traine_remonte_dans_ce_qui_attend(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        Villa::factory()->create([
+            'user_id'    => User::factory()->proprietaire()->create()->id,
+            'statut'     => 'brouillon',
+            'created_at' => now()->subDays(5),
+        ]);
+
+        $lignes = $this->actingAs($admin)->getJson('/api/admin/attentes')
+            ->assertOk()
+            ->json('lignes');
+
+        $this->assertContains('brouillons', array_column($lignes, 'cle'));
+    }
+
+    /** Un brouillon du jour n'est pas un blocage : il ne doit pas alerter. */
+    public function test_un_brouillon_tout_neuf_n_alerte_pas(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        Villa::factory()->create([
+            'user_id' => User::factory()->proprietaire()->create()->id,
+            'statut'  => 'brouillon',
+        ]);
+
+        $lignes = $this->actingAs($admin)->getJson('/api/admin/attentes')
+            ->assertOk()
+            ->json('lignes');
+
+        $this->assertNotContains('brouillons', array_column($lignes, 'cle'));
+    }
+
+    /* ── Retrouver un propriétaire par son numéro ─────────────────── */
+
+    /**
+     * On inscrit les propriétaires au téléphone : c'est le numéro qu'on a sous
+     * les yeux. La recherche doit porter sur la forme canonique, sans quoi
+     * « 77 123 45 67 » ne rend rien et on conclut que le compte n'existe pas.
+     */
+    public function test_on_retrouve_un_utilisateur_par_son_numero(): void
+    {
+        $admin = User::factory()->admin()->create();
+        User::factory()->proprietaire()->create([
+            'name'  => 'Awa Ndiaye',
+            'phone' => '+221 77 123 45 67',
+        ]);
+
+        foreach (['77 123 45 67', '771234567', '+221771234567'] as $ecriture) {
+            $reponse = $this->actingAs($admin)
+                ->getJson('/api/admin/utilisateurs?recherche='.urlencode($ecriture))
+                ->assertOk();
+
+            $noms = array_column($reponse->json('data'), 'name');
+            $this->assertContains('Awa Ndiaye', $noms, "Introuvable avec l'écriture « {$ecriture} ».");
+        }
+    }
 }
