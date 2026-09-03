@@ -321,17 +321,20 @@ const PAGES_FIXES = [
     description: "Œuvres d'artistes sénégalais — peintures, sculptures et pièces uniques. "
       + 'Livraison au Sénégal, paiement Wave ou Orange Money.',
   },
-  // Les quatre pages légales portent une note d'attente depuis le 20 août 2026 :
-  // la rédaction est confiée au juriste. Les descriptions le disent, sans quoi un
-  // moteur indexerait ces pages comme des textes en vigueur.
+  // Les cinq pages légales sont en vigueur depuis le 3 septembre 2026 : elles
+  // portaient jusque-là une note d'attente, et les descriptions le disaient.
+  // Elles décrivent maintenant des règles opposables — à tenir à jour avec
+  // `src/pages/legal/contenu.ts`, dont elles sont le résumé pour les moteurs.
   { chemin: 'conditions-generales', titre: "Conditions générales d'utilisation — PasseTemps",
-    description: "Conditions générales de PasseTemps — en cours de rédaction par notre conseil juridique. Cette page décrit en attendant le fonctionnement réel du service." },
+    description: "Conditions générales de PasseTemps : rôle de la plateforme, réservation, paiement, commission de 10 puis 20 %, et responsabilités de chacun." },
   { chemin: 'confidentialite', titre: 'Politique de confidentialité — PasseTemps',
-    description: "Politique de confidentialité de PasseTemps — en cours de rédaction. Cette page indique quelles données nous conservons et ce que nous n'en faisons pas." },
+    description: "Quelles données PasseTemps conserve, à quoi elles servent, combien de temps elles sont gardées, qui les reçoit, et comment exercer vos droits." },
   { chemin: 'annulation', titre: "Conditions d'annulation — PasseTemps",
-    description: "Conditions d'annulation de PasseTemps — en cours de rédaction. Cette page indique comment une demande de remboursement est traitée en attendant." },
+    description: "Ce qui vous est remboursé quand un séjour n'a pas lieu : remboursement intégral si l'annulation ne vient pas de vous, barème selon le délai sinon, sous 15 jours ouvrés." },
+  { chemin: 'conditions-vente', titre: 'Conditions générales de vente — PasseTemps',
+    description: "Conditions de vente de la boutique d'artisanat PasseTemps : commande, prix, zones de livraison, paiement en ligne ou à la livraison, retours et garanties." },
   { chemin: 'mentions-legales', titre: 'Mentions légales — PasseTemps',
-    description: 'Éditeur, hébergement et prestataire de paiement de PasseTemps. Mentions en cours de complétion par notre conseil juridique.' },
+    description: 'Éditeur, directeur de la publication, hébergement et prestataires techniques de PasseTemps.' },
 ]
 
 /* ── Injection dans le gabarit ────────────────────────────────── */

@@ -417,6 +417,10 @@ export default function App() {
       <Route path="/confidentialite" element={<PageLegale document="confidentialite" />} />
       <Route path="/annulation" element={<PageLegale document="annulation" />} />
       <Route path="/mentions-legales" element={<PageLegale document="mentions" />} />
+      {/* La boutique est une vente pour compte propre, pas une mise en
+          relation : elle ne relève pas des mêmes règles que la location,
+          d'où un document distinct plutôt qu'un article de plus. */}
+      <Route path="/conditions-vente" element={<PageLegale document="vente" />} />
 
       {/* Boutique. Les ecrans se gardent eux-memes : ferme, on redirige
           vers l'accueil plutot que d'afficher une page vide. */}

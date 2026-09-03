@@ -161,20 +161,39 @@ d'API ouverte dans un onglet répond toujours 401, le jeton vivant dans
 
 **Reste bloquant pour le lancement :**
 
-1. **Textes juridiques — rédaction en cours chez le juriste.** Les quatre pages
-   portaient des affirmations devenues fausses le 18 août (« la plateforme
-   n'encaisse aucun paiement »), présentées comme définitives.
+1. **Le statut de l'exploitant.** L'activité est exercée sans société déclarée
+   alors que la plateforme encaisse et détient les fonds de tiers. Aucune
+   rédaction ne corrige cela — c'est la question restée sans réponse chez le
+   juriste depuis le 22 août, et la seule qui expose vraiment.
 
-   **Corrigé le 20 août** : `src/pages/legal/contenu.ts` ne contient plus de
-   clauses mais une note d'attente — une description factuelle de ce que le
-   logiciel fait, vérifiable dans le code, et l'annonce que la rédaction est
-   confiée à un juriste. `TEXTES_PROVISOIRES` est repassé à `true`.
+### Textes légaux — publiés depuis le 3 septembre 2026
 
-   ⚠️ **Ne pas le remettre à `false` avant d'avoir intégré les textes
-   *validés*.** Le projet de CGU v2 dans `docs/juridique/v2-encaissement/` est
-   une proposition **soumise** au juriste, pas un texte validé par lui : le
-   publier serait refaire la même erreur. Les descriptions du pré-rendu vivent
-   dans `scripts/prerendu.mjs`, pas dans le module — les tenir à jour aussi.
+`src/pages/legal/contenu.ts` porte **cinq documents en vigueur** : conditions
+générales, confidentialité, annulation, **conditions de vente** (boutique) et
+mentions légales. `TEXTES_PROVISOIRES` est à `false` et le bandeau « ceci n'est
+pas un contrat » a disparu : le garder au-dessus de clauses complètes les aurait
+vidées de leur effet.
+
+Le juriste avait retourné le 3 septembre des textes repartis de la trame du
+10 août, portant encore « la plateforme n'encaisse aucun paiement ». L'exploitant
+a décidé de les reprendre à partir du comportement réel. Le relevé des écarts est
+dans `docs/juridique/v5-textes-a-reprendre/`.
+
+⚠️ **Ces textes sont opposables, et ils se démentent tout seuls.** Trois fois une
+page légale est devenue fausse sans que personne n'y touche : l'encaissement le
+18 août, la commission par tranches le 21, le barème d'annulation le
+1er septembre. Chaque affirmation du module est adossée à un réglage :
+
+| Ce que le texte annonce | D'où vient le chiffre |
+|---|---|
+| commission 10 % puis 20 % | `backend/config/paiement.php` |
+| barème 7 j / 2 j / 48 h | `backend/config/reservations.php` |
+| frais de livraison par zone | `backend/config/boutique.php` |
+| remboursement sous 15 jours ouvrés | engagement de l'exploitant, tenu à la main |
+
+**Toute modification de l'un de ces réglages oblige à relire `contenu.ts` dans le
+même mouvement.** Les descriptions du pré-rendu vivent dans `scripts/prerendu.mjs`
+et les résument — les tenir à jour aussi.
 
 **Chantiers restants, par valeur :**
 
@@ -182,8 +201,9 @@ d'API ouverte dans un onglet répond toujours 401, le jeton vivant dans
    2026). Tout le code du déboursement est écrit et testé ; il ne manque que
    l'autorisation du prestataire, et `REVERSEMENT_AUTOMATIQUE=true`.
 3. **Ouvrir la boutique** — elle est construite et déployée, mais invisible
-   tant que `BOUTIQUE_ACTIVE` n'est pas levée. Il faut d'abord y mettre des
-   œuvres, depuis `/admin/oeuvres`.
+   tant que `BOUTIQUE_ACTIVE` n'est pas levée. Ses conditions de vente sont
+   publiées depuis le 3 septembre ; il ne manque plus que de vrais articles,
+   à saisir depuis `/admin/oeuvres`.
 
 **Fait le 19 août 2026 :** journal d'audit lisible (`/admin/journal`) ·
 messagerie client ↔ propriétaire · coordonnées retirées des écrans publics ·

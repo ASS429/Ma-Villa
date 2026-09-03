@@ -120,7 +120,7 @@ d'autre à faire : tout le code est écrit et testé. Voir
 PUSH_ACTIF=true
 VAPID_CLE_PUBLIQUE=…
 VAPID_CLE_PRIVEE=…
-VAPID_SUJET=mailto:contactsmavilla@gmail.com
+VAPID_SUJET=mailto:contactptemps@gmail.com
 ```
 
 La sonde `/admin/notifications` signe un vrai jeton — c'est la seule preuve que l'envoi

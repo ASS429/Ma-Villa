@@ -80,6 +80,38 @@ Mode d'emploi complet : `docs/14-REMBOURSEMENTS.md`.
 
 ---
 
+## 1 ter. Les textes légaux sont publiés — 3 septembre
+
+Le juriste a rendu les quatre documents. Il a fait le renommage et rempli le bloc
+éditeur — **Abdou Ndour, directeur de la publication**, contact `contactptemps@gmail.com` —
+mais il est reparti de la trame du 10 août : ses textes affirmaient encore que
+**« aucun paiement n'est encaissé par la plateforme »**, ce qui est faux depuis le 18 août
+et qui est précisément la phrase retirée du site le 20.
+
+Plutôt que de refaire un aller-retour, nous les avons repris nous-mêmes, à partir de ce
+que le logiciel fait réellement. **Cinq documents sont en ligne**, et le bandeau « ceci
+n'est pas un contrat » a disparu — le garder au-dessus de vraies conditions les aurait
+vidées de leur effet.
+
+| Document | Ce qu'il dit maintenant |
+|---|---|
+| Conditions générales | vous encaissez, vous détenez les fonds, la commission est 10 puis 20 % avec un exemple chiffré |
+| Politique d'annulation | le barème complet, la demande d'annulation, **remboursement sous 15 jours ouvrés** |
+| Confidentialité | les cinq prestataires nommés, le transfert vers les États-Unis, et des durées de conservation |
+| **Conditions de vente** | nouveau — la boutique n'avait aucun texte, c'est ce qui l'empêchait d'ouvrir |
+| Mentions légales | éditeur, directeur de la publication, hébergement complet |
+
+⚠️ **Ce qui n'est pas réglé pour autant.** Ces textes sont justes, mais ils n'ont pas été
+validés par un juriste, et surtout : ils ne changent rien au fait que **vous encaissez
+l'argent de tiers sans société déclarée**. C'est la question posée le 22 août, toujours
+sans réponse, et aucune formulation ne la contourne. Gardez le juriste dessus.
+
+Le relevé des écarts entre ses textes et le logiciel est dans
+`docs/juridique/v5-textes-a-reprendre/` — utile pour lui expliquer pourquoi on a repris
+la main.
+
+---
+
 ## 2. Ce qui vous attend, vous
 
 ### Les mentions légales — elles attendent le juriste, finalement
@@ -93,7 +125,7 @@ je ne sais pas ce qu'il est obligatoire d'y faire figurer quand l'éditeur est u
 personne physique non déclarée, ni ce qu'il serait imprudent d'y mettre. La question part
 au juriste dans la note du 22 août.
 
-**La seule information disponible est l'adresse de contact** — `contactsmavilla@gmail.com` —
+**La seule information disponible est l'adresse de contact** — `contactptemps@gmail.com` —
 et elle est déjà en ligne sur les quatre pages.
 
 ---

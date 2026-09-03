@@ -9,6 +9,7 @@ const CHEMINS: Record<DocumentLegal['cle'], string> = {
   confidentialite: '/confidentialite',
   annulation: '/annulation',
   mentions: '/mentions-legales',
+  vente: '/conditions-vente',
 }
 
 export default function PageLegale({ document }: { document: DocumentLegal['cle'] }) {

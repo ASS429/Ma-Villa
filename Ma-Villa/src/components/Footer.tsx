@@ -36,6 +36,7 @@ export default function Footer() {
               <Link to="/conditions-generales" className="th-text-2 hover:th-text-1 transition-colors">Conditions générales</Link>
               <Link to="/confidentialite" className="th-text-2 hover:th-text-1 transition-colors">Confidentialité</Link>
               <Link to="/annulation" className="th-text-2 hover:th-text-1 transition-colors">Politique d'annulation</Link>
+              <Link to="/conditions-vente" className="th-text-2 hover:th-text-1 transition-colors">Conditions de vente</Link>
               <Link to="/mentions-legales" className="th-text-2 hover:th-text-1 transition-colors">Mentions légales</Link>
             </div>
           </nav>

@@ -140,7 +140,7 @@ return [
     |
     */
     'reply_to' => [
-        'address' => env('MAIL_REPLY_TO_ADDRESS', env('CONTACT_PUBLIC', 'contactsmavilla@gmail.com')),
+        'address' => env('MAIL_REPLY_TO_ADDRESS', env('CONTACT_PUBLIC', 'contactptemps@gmail.com')),
         'name' => env('MAIL_REPLY_TO_NAME', env('MAIL_FROM_NAME', env('APP_NAME'))),
     ],
 
@@ -161,6 +161,6 @@ return [
     | ensemble.
     |
     */
-    'contact_publie' => env('CONTACT_PUBLIC', 'contactsmavilla@gmail.com'),
+    'contact_publie' => env('CONTACT_PUBLIC', 'contactptemps@gmail.com'),
 
 ];
