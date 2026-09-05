@@ -183,6 +183,16 @@ Onglet **Actions** du dépôt → **Redéploiement si nécessaire** → **Run wo
 C'est le moyen le plus court de rafraîchir le site juste après une salve de
 publications, sans ouvrir Render.
 
+Une case **« Reconstruire même si rien ne semble avoir changé »** est proposée.
+Laissée décochée, le travail ne fait rien s'il n'y a rien de neuf — c'est le cas
+courant. Cochée, il reconstruit dans tous les cas : utile après une modification
+qui ne se voit pas dans le plan de site, par exemple un prix ou une photo changés
+sur une annonce déjà en ligne.
+
+> Le forçage passe outre la comparaison, **jamais le réveil de l'API**. Si Railway
+> ne répond pas, le travail s'arrête avant de demander quoi que ce soit à Render,
+> case cochée ou non.
+
 ---
 
 ## 5. Combien de temps
