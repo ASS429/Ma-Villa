@@ -1,0 +1,62 @@
+# Reconstruit le site quand des annonces ont été publiées depuis le dernier
+# déploiement — et seulement dans ce cas.
+#
+# Pourquoi : le pré-rendu est figé à la compilation. Une annonce publiée après
+# le dernier déploiement n'a ni page à elle, ni entrée au plan de site, et
+# déclare l'accueil comme adresse canonique — elle dit donc à Google de ne pas
+# l'indexer. Il fallait jusqu'ici y penser à la main dans Render.
+#
+# ⚠️ Ce workflow ne déploie pas à l'aveugle. Railway s'endort, et reconstruire
+# API endormie retirerait les fiches déjà en ligne. Le script réveille donc
+# l'API d'abord et échoue bruyamment s'il n'y parvient pas.
+
+name: Redéploiement si nécessaire
+
+on:
+  schedule:
+    # 03h00 UTC, soit 03h00 à Dakar — le Sénégal est à UTC+0 toute l'année.
+    - cron: '0 3 * * *'
+  # Permet de le lancer à la demande depuis l'onglet Actions, sans passer par
+  # Render : utile juste après une salve de publications.
+  workflow_dispatch:
+
+jobs:
+  verifier-et-deployer:
+    runs-on: ubuntu-latest
+    # Le réveil de Railway peut prendre plusieurs minutes ; au-delà, c'est une
+    # panne, et le travail doit s'arrêter plutôt que traîner.
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Le site est-il en retard sur ce qui est publié ?
+        id: fraicheur
+        working-directory: Ma-Villa
+        run: node scripts/fraicheur-du-plan-de-site.mjs
+
+      - name: Demander la reconstruction à Render
+        if: steps.fraicheur.outputs.redeployer == 'oui'
+        env:
+          CROCHET: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$CROCHET" ]; then
+            echo "Le secret RENDER_DEPLOY_HOOK est absent."
+            echo "Render → service mavilla-web → Settings → Deploy Hook,"
+            echo "puis GitHub → Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
+          # -f : un crochet invalide doit faire échouer l'étape, pas passer
+          # inaperçu derrière un corps d'erreur renvoyé en 200.
+          curl -fsS -X POST "$CROCHET"
+          echo ""
+          echo "Reconstruction demandée. Render met environ trois minutes."
+
+      - name: Rien à faire
+        if: steps.fraicheur.outputs.redeployer == 'non'
+        run: echo "Le plan de site est à jour, aucun déploiement lancé."

@@ -136,8 +136,52 @@ publiée cet après-midi est visible immédiatement pour un visiteur, mais son a
 n'entre au plan de site — et son aperçu WhatsApp n'existe — **qu'au déploiement
 suivant**.
 
-C'est un choix assumé, documenté dans `Ma-Villa/scripts/prerendu.mjs`. En pratique :
-**après une salve de publications, relancer un déploiement sur Render.**
+C'est un choix assumé, documenté dans `Ma-Villa/scripts/prerendu.mjs`. Le piège s'est
+produit le 5 septembre 2026 : trois annonces publiées, **une seule** au plan de site.
+Les deux autres servaient le gabarit de l'accueil et déclaraient l'accueil comme
+adresse canonique — elles disaient donc à Google de ne pas les indexer.
+
+**C'est maintenant automatique.** Voir la section suivante.
+
+---
+
+## 4 bis. Le redéploiement automatique
+
+`.github/workflows/redeploiement-si-necessaire.yml` s'exécute **chaque nuit à 3 h**
+(heure de Dakar) et fait ceci :
+
+1. il réveille l'API — Railway s'endort entre deux visites ;
+2. il compare les annonces publiées aux fiches présentes dans le plan de site en ligne ;
+3. **s'il n'y a rien de neuf, il ne fait rien** ;
+4. sinon il demande à Render de reconstruire le site.
+
+> ⚠️ **Il ne déploie jamais à l'aveugle, et c'est le point important.** Reconstruire
+> pendant que l'API dort écrirait les pages fixes **sans les fiches**, tout en gardant
+> le plan de site qui, lui, les annonce encore : on détruirait de bonnes pages en
+> silence. Si l'API ne répond pas après cinq tentatives, le travail **échoue
+> bruyamment** et aucun déploiement n'est demandé. GitHub vous envoie alors un
+> courriel.
+
+### Ce que vous devez faire une seule fois
+
+Sans ça, le travail nocturne échouera dès qu'il aura quelque chose à déployer.
+
+1. **Render** → service `mavilla-web` → **Settings** → section **Deploy Hook** →
+   copier l'adresse (elle ressemble à `https://api.render.com/deploy/srv-…?key=…`)
+2. **GitHub** → dépôt `ASS429/Ma-Villa` → **Settings** → **Secrets and variables** →
+   **Actions** → **New repository secret**
+   - Name : `RENDER_DEPLOY_HOOK`
+   - Secret : coller l'adresse
+   - **Add secret**
+
+Cette adresse est un mot de passe : quiconque l'a peut déclencher vos déploiements.
+Elle n'a sa place que dans les secrets GitHub, jamais dans le code.
+
+### Le lancer à la main
+
+Onglet **Actions** du dépôt → **Redéploiement si nécessaire** → **Run workflow**.
+C'est le moyen le plus court de rafraîchir le site juste après une salve de
+publications, sans ouvrir Render.
 
 ---
 
