@@ -19,6 +19,11 @@ on:
   # Permet de le lancer à la demande depuis l'onglet Actions, sans passer par
   # Render : utile juste après une salve de publications.
   workflow_dispatch:
+    inputs:
+      forcer:
+        description: 'Reconstruire même si rien ne semble avoir changé'
+        type: boolean
+        default: false
 
 jobs:
   verifier-et-deployer:
@@ -39,8 +44,11 @@ jobs:
         working-directory: Ma-Villa
         run: node scripts/fraicheur-du-plan-de-site.mjs
 
+      # `forcer` passe outre la comparaison, jamais le réveil de l'API : l'étape
+      # précédente s'arrête en échec si elle dort, et celle-ci ne part alors pas.
+      # Reconstruire API endormie retirerait les fiches déjà servies.
       - name: Demander la reconstruction à Render
-        if: steps.fraicheur.outputs.redeployer == 'oui'
+        if: steps.fraicheur.outputs.redeployer == 'oui' || inputs.forcer
         env:
           CROCHET: ${{ secrets.RENDER_DEPLOY_HOOK }}
         run: |
@@ -58,5 +66,5 @@ jobs:
           echo "Reconstruction demandée. Render met environ trois minutes."
 
       - name: Rien à faire
-        if: steps.fraicheur.outputs.redeployer == 'non'
+        if: steps.fraicheur.outputs.redeployer == 'non' && !inputs.forcer
         run: echo "Le plan de site est à jour, aucun déploiement lancé."
