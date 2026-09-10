@@ -77,17 +77,28 @@ return [
     | en villa. `CommissionTest` vérifie cette promesse ; porter le taux élevé
     | à 15 % ou au-delà la rompt — les CGU l'afficheraient tel quel.
     |
-    | ⚠️ Le seuil est une valeur par défaut, à confirmer. Il est exprimé en
-    | montant plutôt qu'en catégorie : une règle par catégorie devrait être
-    | rouverte à chaque nouvelle catégorie (« studio meublé » est déjà attendu),
-    | alors qu'un seuil en francs vaut pour toutes, y compris futures.
+    | **Le seuil de 50 000 est confirmé** — le 12 août 2026, puis de nouveau le
+    | 10 septembre après examen. Le relever ne rend que 4 points sur la tranche
+    | ajoutée : 2 000 FCFA au plus par réservation pour un seuil à 100 000. Il
+    | est gardé tant que deux inconnues demeurent : les frais PayDunya sur
+    | l'encaissement, qui sortent de la commission, et la répartition réelle des
+    | montants réservés. **À revoir après une trentaine de réservations payées** :
+    | si beaucoup de petites réservations tombent entre 50 000 et 100 000, le
+    | passer à 100 000. Il est publié dans les CGU ; le changer oblige à les
+    | reprendre et à l'annoncer avant.
+    |
+    | Il est exprimé en montant plutôt qu'en catégorie : une règle par catégorie
+    | devrait être rouverte à chaque nouvelle catégorie (« studio meublé » est
+    | déjà attendu), alors qu'un seuil en francs vaut pour toutes, y compris
+    | futures.
     |
     */
     'commission' => [
         'taux_eleve'  => (float) env('COMMISSION_TAUX_ELEVE', 0.14),
         'taux_reduit' => (float) env('COMMISSION_TAUX_REDUIT', 0.10),
 
-        // Au-dessus (inclus) : taux élevé. En dessous : taux réduit.
+        // Les francs jusqu'au seuil inclus : taux réduit. Ceux au-delà : taux
+        // élevé. À 50 000 pile, tout est encore à 10 % (`test_au_seuil_exact`).
         'seuil' => (int) env('COMMISSION_SEUIL', 50000),
     ],
 
