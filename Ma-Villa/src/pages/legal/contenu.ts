@@ -42,6 +42,15 @@ export interface DocumentLegal {
 }
 
 const MAJ = '3 septembre 2026'
+
+/**
+ * Le taux élevé est passé de 20 à 14 % le 10 septembre 2026, pour que le taux
+ * réel reste sous la moyenne de Booking (15 %) à tout montant.
+ *
+ * Seuls les deux textes qui citent un chiffre de commission changent de date.
+ * Redater les autres annoncerait une modification qui n'a pas eu lieu.
+ */
+const MAJ_COMMISSION = '10 septembre 2026'
 const EXPLOITANT = 'PasseTemps'
 const CONTACT = 'contactptemps@gmail.com'
 const DIRECTEUR = 'Abdou Ndour'
@@ -70,8 +79,8 @@ const ARGENT: Section = {
   ],
   liste: [
     'Commission de 10 % sur les 50 000 premiers francs de la réservation.',
-    'Commission de 20 % sur la part qui dépasse 50 000 francs.',
-    'Exemple : sur une réservation de 100 000 FCFA, la commission est de 15 000 FCFA — 5 000 sur la première tranche, 10 000 sur la seconde — et le propriétaire perçoit 85 000 FCFA.',
+    'Commission de 14 % sur la part qui dépasse 50 000 francs.',
+    'Exemple : sur une réservation de 100 000 FCFA, la commission est de 12 000 FCFA — 5 000 sur la première tranche, 7 000 sur la seconde — et le propriétaire perçoit 88 000 FCFA.',
     'Aucun autre frais n’est prélevé au client.',
   ],
 }
@@ -90,7 +99,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
     cle: 'cgu',
     titre: 'Conditions générales d\'utilisation',
     description: `Conditions générales d'utilisation de ${EXPLOITANT} : rôle de la plateforme, réservation, paiement, commission et responsabilités.`,
-    miseAJour: MAJ,
+    miseAJour: MAJ_COMMISSION,
     chapeau:
       `Les présentes conditions régissent l'utilisation de la plateforme ${EXPLOITANT}. En créant un compte, vous les acceptez.`,
     sections: [
@@ -275,7 +284,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
     cle: 'annulation',
     titre: 'Politique d\'annulation',
     description: `Conditions d'annulation et barème de remboursement de ${EXPLOITANT} : ce qui vous est rendu, selon la cause et le délai.`,
-    miseAJour: MAJ,
+    miseAJour: MAJ_COMMISSION,
     chapeau:
       `Cette page dit ce qui vous est remboursé quand un séjour n'a pas lieu, et sous quel délai. Elle fait partie intégrante des conditions générales.`,
     sections: [
@@ -303,7 +312,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
           'Sept jours ou plus avant l’arrivée : la totalité de la part propriétaire vous est rendue.',
           'Entre deux et six jours avant l’arrivée : la moitié de cette part vous est rendue.',
           'Moins de 48 heures avant l’arrivée, ou absence le jour dit : aucun remboursement. Les dates étaient bloquées à votre nom et le propriétaire a refusé d’autres clients.',
-          'Exemple : pour une réservation de 100 000 FCFA — dont 15 000 de commission et 85 000 pour le propriétaire — annulée par vos soins trois jours avant l’arrivée, la somme rendue est de 42 500 FCFA.',
+          'Exemple : pour une réservation de 100 000 FCFA — dont 12 000 de commission et 88 000 pour le propriétaire — annulée par vos soins trois jours avant l’arrivée, la somme rendue est de 44 000 FCFA.',
         ],
       },
       {

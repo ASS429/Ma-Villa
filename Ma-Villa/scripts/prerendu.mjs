@@ -326,7 +326,7 @@ const PAGES_FIXES = [
   // Elles décrivent maintenant des règles opposables — à tenir à jour avec
   // `src/pages/legal/contenu.ts`, dont elles sont le résumé pour les moteurs.
   { chemin: 'conditions-generales', titre: "Conditions générales d'utilisation — PasseTemps",
-    description: "Conditions générales de PasseTemps : rôle de la plateforme, réservation, paiement, commission de 10 puis 20 %, et responsabilités de chacun." },
+    description: "Conditions générales de PasseTemps : rôle de la plateforme, réservation, paiement, commission de 10 puis 14 %, et responsabilités de chacun." },
   { chemin: 'confidentialite', titre: 'Politique de confidentialité — PasseTemps',
     description: "Quelles données PasseTemps conserve, à quoi elles servent, combien de temps elles sont gardées, qui les reçoit, et comment exercer vos droits." },
   { chemin: 'annulation', titre: "Conditions d'annulation — PasseTemps",

@@ -95,7 +95,7 @@ vidées de leur effet.
 
 | Document | Ce qu'il dit maintenant |
 |---|---|
-| Conditions générales | vous encaissez, vous détenez les fonds, la commission est 10 puis 20 % avec un exemple chiffré |
+| Conditions générales | vous encaissez, vous détenez les fonds, la commission est 10 puis 14 % avec un exemple chiffré |
 | Politique d'annulation | le barème complet, la demande d'annulation, **remboursement sous 15 jours ouvrés** |
 | Confidentialité | les cinq prestataires nommés, le transfert vers les États-Unis, et des durées de conservation |
 | **Conditions de vente** | nouveau — la boutique n'avait aucun texte, c'est ce qui l'empêchait d'ouvrir |
