@@ -18,10 +18,13 @@ namespace App\Services;
  * de 2 000 lui coûtait 3 300 — un tarif qui punit celui qui monte en gamme finit
  * par être contourné hors plateforme.
  *
- * Ce que cela change pour la plateforme : **5 000 FCFA au maximum par
- * réservation**, soit le rabais de la première tranche. L'écart se dilue à
- * mesure que le montant grandit — 15 % de taux effectif à 100 000, 17,5 % à
- * 200 000, et la courbe tend vers 20 %.
+ * Ce que cela change pour la plateforme : **2 000 FCFA au maximum par
+ * réservation**, soit le rabais de la première tranche (50 000 × 4 points).
+ * L'écart se dilue à mesure que le montant grandit — 12 % de taux effectif à
+ * 100 000, 13 % à 200 000, et la courbe tend vers 14 % sans jamais l'atteindre.
+ *
+ * **Toujours sous Booking**, qui prend 15 % en moyenne : c'est la raison du
+ * taux élevé à 14 %, décidé le 10 septembre 2026. Voir `config/paiement.php`.
  *
  * Le seuil est en francs et non par catégorie : une règle par catégorie devrait
  * être rouverte à chaque nouvelle catégorie, alors qu'un seuil vaut pour toutes,
@@ -63,7 +66,7 @@ final class Commission
         return new self($client, $taux, $commission, $client - $commission);
     }
 
-    /** Pourcentage lisible, pour l'affichage et les journaux : « 20 % ». */
+    /** Pourcentage lisible, pour l'affichage et les journaux : « 12 % ». */
     public function tauxLisible(): string
     {
         return rtrim(rtrim(number_format($this->taux * 100, 1, ',', ' '), '0'), ',').' %';

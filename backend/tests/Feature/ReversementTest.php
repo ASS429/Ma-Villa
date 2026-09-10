@@ -88,7 +88,7 @@ class ReversementTest extends TestCase
 
         $reponse->assertOk();
         $this->assertSame(0.0, (float) $reponse->json('du'));
-        $this->assertSame(85000.0, (float) $reponse->json('a_venir'), '100 000 FCFA : 50 000 à 10 % puis 50 000 à 20 %, soit 15 000 de commission.');
+        $this->assertSame(88000.0, (float) $reponse->json('a_venir'), '100 000 FCFA : 50 000 à 10 % puis 50 000 à 14 %, soit 12 000 de commission.');
     }
 
     public function test_un_sejour_termine_devient_exigible(): void
@@ -97,9 +97,9 @@ class ReversementTest extends TestCase
 
         $reponse = $this->actingAs($this->proprietaire, 'sanctum')->getJson('/api/proprietaire/revenus');
 
-        $this->assertSame(85000.0, (float) $reponse->json('du'));
+        $this->assertSame(88000.0, (float) $reponse->json('du'));
         $this->assertSame(0.0, (float) $reponse->json('a_venir'));
-        $this->assertSame(15000.0, (float) $reponse->json('commission_retenue'));
+        $this->assertSame(12000.0, (float) $reponse->json('commission_retenue'));
     }
 
     /** Une réservation annulée ne doit rien : le remboursement est un autre sujet. */
@@ -124,7 +124,7 @@ class ReversementTest extends TestCase
         $this->assertSame(0.0, (float) $reponse->json('du'));
     }
 
-    /** Le taux réduit s'applique sous le seuil : 10 % au lieu de 20 %. */
+    /** Le taux réduit s'applique sous le seuil : 10 % au lieu de 14 %. */
     public function test_le_taux_reduit_s_applique_sous_le_seuil(): void
     {
         $this->sejourPaye(40000, termine: true);
@@ -173,7 +173,7 @@ class ReversementTest extends TestCase
         ]);
 
         $reponse->assertStatus(201);
-        $this->assertSame('85000.00', $reponse->json('montant'));
+        $this->assertSame('88000.00', $reponse->json('montant'));
 
         // Le paiement est rattaché, donc plus jamais exigible.
         $this->assertNotNull($paiement->refresh()->reversement_id);
@@ -198,7 +198,7 @@ class ReversementTest extends TestCase
             'montant' => 5_000_000,
         ]);
 
-        $this->assertSame('85000.00', $reponse->json('montant'));
+        $this->assertSame('88000.00', $reponse->json('montant'));
     }
 
     /** Deux enregistrements de suite ne doivent pas payer deux fois. */
@@ -216,7 +216,7 @@ class ReversementTest extends TestCase
         $requete()->assertStatus(422);
 
         $this->assertSame(1, Reversement::count());
-        $this->assertSame('85000.00', Reversement::first()->montant);
+        $this->assertSame('88000.00', Reversement::first()->montant);
     }
 
     /** Ce qui n'est pas encore exigible ne part pas avec le versement. */
@@ -232,7 +232,7 @@ class ReversementTest extends TestCase
 
         $this->assertNull($aVenir->refresh()->reversement_id);
         $this->assertSame(
-            165000.0,
+            174000.0,
             (float) $this->actingAs($this->proprietaire, 'sanctum')->getJson('/api/proprietaire/revenus')->json('a_venir')
         );
     }
@@ -280,9 +280,9 @@ class ReversementTest extends TestCase
         $reponse = $this->actingAs($admin, 'sanctum')->getJson('/api/admin/reversements');
 
         $reponse->assertOk();
-        $this->assertSame(85000.0, (float) $reponse->json('total_du'));
+        $this->assertSame(88000.0, (float) $reponse->json('total_du'));
         $this->assertSame($this->proprietaire->name, $reponse->json('proprietaires.0.nom'));
-        $this->assertSame(85000.0, (float) $reponse->json('proprietaires.0.du'));
+        $this->assertSame(88000.0, (float) $reponse->json('proprietaires.0.du'));
     }
 
     /** Un propriétaire sans un franc en jeu n'encombre pas la file. */
@@ -317,7 +317,7 @@ class ReversementTest extends TestCase
         $this->assertNotNull($reversement, 'Le versement ne doit pas partir avec son bénéficiaire.');
         $this->assertNull($reversement->user_id);
         $this->assertSame($nom, $reversement->beneficiaire_nom);
-        $this->assertSame('85000.00', $reversement->montant);
+        $this->assertSame('88000.00', $reversement->montant);
     }
 
     /** Un versement se retrouve dans le journal d'audit. */

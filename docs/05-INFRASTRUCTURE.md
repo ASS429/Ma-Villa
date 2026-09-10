@@ -140,9 +140,17 @@ répondent « page introuvable ».
 
 ### Les règles métier, réglables sans redéployer
 
+⚠️ **Le barème de commission est publié mot pour mot dans les CGU.** Changer une de
+ces trois variables sans changer `Ma-Villa/src/pages/legal/contenu.ts` fait mentir le
+contrat. Le barème réellement appliqué se lit sur `GET /api/configuration`, clé
+`paiement.commission` — c'est là qu'on vérifie, pas ici.
+
+Le taux élevé doit rester **sous 15 %** (décision du 10 septembre 2026 : toujours
+moins cher que Booking). `CommissionTest` échoue au-delà.
+
 ```
 COMMISSION_TAUX_REDUIT=0.10
-COMMISSION_TAUX_ELEVE=0.20
+COMMISSION_TAUX_ELEVE=0.14
 COMMISSION_SEUIL=50000
 ANNONCE_PHOTOS_MAX=5
 ANNONCE_REPERES_PRIX_MINIMUM=10

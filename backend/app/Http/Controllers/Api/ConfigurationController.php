@@ -31,6 +31,16 @@ class ConfigurationController extends Controller
                 // Le prestataire refuse en dessous : l'interface doit le savoir
                 // pour ne pas proposer un règlement voué à l'échec.
                 'montant_minimum' => (int) config('paiement.montant_minimum'),
+                // Le barème **réellement appliqué**. Il est déjà publié en toutes
+                // lettres dans les CGU ; l'exposer ici n'apprend rien à personne,
+                // mais c'est la seule façon de vérifier qu'une variable Railway ne
+                // le remplace pas. Les CGU ont déjà annoncé un barème qui n'était
+                // pas celui qu'appliquait le serveur — et c'était le contrat.
+                'commission' => [
+                    'taux_reduit' => (float) config('paiement.commission.taux_reduit'),
+                    'taux_eleve'  => (float) config('paiement.commission.taux_eleve'),
+                    'seuil'       => (int) config('paiement.commission.seuil'),
+                ],
             ],
             // Le plafond de photos vient du serveur : le téléverseur doit
             // pouvoir l'annoncer avant l'envoi plutôt que de le découvrir

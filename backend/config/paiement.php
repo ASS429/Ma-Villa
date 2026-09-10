@@ -69,6 +69,14 @@ return [
     | En taux pleins, le barème créait une marche : à 49 000 le propriétaire
     | touchait 44 100, à 51 000 il touchait 40 800. Il perdait à vendre plus cher.
     |
+    | **Le taux élevé est à 14 %, et c'est une règle, pas un réglage.** Décidé
+    | le 10 septembre 2026 : notre commission doit rester sous celle de Booking,
+    | qui prend 15 % en moyenne. Le taux réel étant une moyenne des deux taux,
+    | il reste sous le taux élevé à tout montant — donc sous 14 %, jamais au-delà.
+    | À 20 %, il dépassait Booking dès 100 000 FCFA, soit la plupart des séjours
+    | en villa. `CommissionTest` vérifie cette promesse ; porter le taux élevé
+    | à 15 % ou au-delà la rompt — les CGU l'afficheraient tel quel.
+    |
     | ⚠️ Le seuil est une valeur par défaut, à confirmer. Il est exprimé en
     | montant plutôt qu'en catégorie : une règle par catégorie devrait être
     | rouverte à chaque nouvelle catégorie (« studio meublé » est déjà attendu),
@@ -76,7 +84,7 @@ return [
     |
     */
     'commission' => [
-        'taux_eleve'  => (float) env('COMMISSION_TAUX_ELEVE', 0.20),
+        'taux_eleve'  => (float) env('COMMISSION_TAUX_ELEVE', 0.14),
         'taux_reduit' => (float) env('COMMISSION_TAUX_REDUIT', 0.10),
 
         // Au-dessus (inclus) : taux élevé. En dessous : taux réduit.

@@ -256,8 +256,8 @@ class PublierUneVillaTest extends TestCase
         $this->actingAs($this->proprietaire, 'sanctum')
             ->getJson('/api/reperes-de-prix?ville=Saly&prix=100000')
             ->assertOk()
-            ->assertJsonPath('net.proprietaire', 85000)
-            ->assertJsonPath('net.commission', 15000);
+            ->assertJsonPath('net.proprietaire', 88000)
+            ->assertJsonPath('net.commission', 12000);
     }
 
     /**

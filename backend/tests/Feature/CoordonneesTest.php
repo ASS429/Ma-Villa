@@ -13,7 +13,7 @@ use Tests\TestCase;
  * Deux raisons distinctes, et les deux comptent.
  *
  * **Le modèle économique.** Un numéro affiché sur une fiche permet d'appeler et
- * de convenir d'un séjour hors plateforme : la commission de 10–20 % s'évapore,
+ * de convenir d'un séjour hors plateforme : la commission de 10–14 % s'évapore,
  * la réservation n'est plus tracée — donc ni avis vérifié, ni recours en cas de
  * litige, ni preuve de paiement.
  *

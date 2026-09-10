@@ -165,7 +165,7 @@ class AttentesTest extends TestCase
 
         $this->assertSame('versements', $ligne['cle']);
         $this->assertSame(1, $ligne['compte']);
-        $this->assertSame(85000.0, (float) $ligne['montant']);
+        $this->assertSame(88000.0, (float) $ligne['montant']);
     }
 
     /**
@@ -190,8 +190,8 @@ class AttentesTest extends TestCase
 
         $fonds = $this->attentes()->json('fonds');
 
-        $this->assertSame(85000.0, (float) $fonds['exigible']);
-        $this->assertSame(85000.0, (float) $fonds['non_versable']);
+        $this->assertSame(88000.0, (float) $fonds['exigible']);
+        $this->assertSame(88000.0, (float) $fonds['non_versable']);
         $this->assertFalse($fonds['automatique']);
     }
 
@@ -202,7 +202,7 @@ class AttentesTest extends TestCase
 
         $fonds = $this->attentes()->json('fonds');
 
-        $this->assertSame(85000.0, (float) $fonds['exigible']);
+        $this->assertSame(88000.0, (float) $fonds['exigible']);
         $this->assertSame(0.0, (float) $fonds['non_versable']);
     }
 
@@ -214,9 +214,9 @@ class AttentesTest extends TestCase
 
         $fonds = $this->attentes()->json('fonds');
 
-        $this->assertSame(85000.0, (float) $fonds['exigible']);
-        $this->assertSame(85000.0, (float) $fonds['a_venir']);
-        $this->assertSame(170000.0, (float) $fonds['detenus']);
+        $this->assertSame(88000.0, (float) $fonds['exigible']);
+        $this->assertSame(88000.0, (float) $fonds['a_venir']);
+        $this->assertSame(176000.0, (float) $fonds['detenus']);
     }
 
     /* ── Les versements en panne ─────────────────────────────────── */

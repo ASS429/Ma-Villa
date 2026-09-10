@@ -27,7 +27,7 @@ class PaiementTest extends TestCase
             'paiement.paydunya.cle_privee'   => 'privee',
             'paiement.paydunya.cle_publique' => 'publique',
             'paiement.paydunya.token'        => 'jeton',
-            'paiement.commission.taux_eleve'  => 0.20,
+            'paiement.commission.taux_eleve'  => 0.14,
             'paiement.commission.taux_reduit' => 0.10,
             'paiement.commission.seuil'       => 50000,
         ]);
@@ -125,8 +125,8 @@ class PaiementTest extends TestCase
             'reservation_id' => $reservation->id,
             'token_paydunya' => 'JETON123',
             'statut' => 'en_attente',
-            'commission' => 35000,
-            'montant_proprietaire' => 165000,
+            'commission' => 26000,
+            'montant_proprietaire' => 174000,
         ]);
     }
 
@@ -384,8 +384,11 @@ class PaiementTest extends TestCase
                 'methode' => 'wave', 'telephone' => '+221 77 123 45 67',
             ])->assertOk();
 
-        Http::assertSent(fn ($r) => ! str_contains($r->url(), 'wave-senegal')
-            || $r['wave_senegal_phone'] === '771234567');
+        // `! url || …` était satisfait par n'importe quelle autre requête du
+        // parcours : le numéro envoyé à Wave n'était jamais lu. On exige la
+        // requête Wave elle-même.
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'wave-senegal')
+            && $r['wave_senegal_phone'] === '771234567');
     }
 
     public function test_des_cles_de_test_visent_le_bac_a_sable_et_evitent_softpay(): void
@@ -464,8 +467,10 @@ class PaiementTest extends TestCase
                 'methode' => 'wave', 'telephone' => '770000000',
             ])->assertOk();
 
-        Http::assertSent(fn ($r) => ! str_contains($r->url(), 'checkout-invoice')
-            || $r['actions']['return_url'] === "https://mavilla.test/reservation/{$reservation->id}/paiement");
+        // Même piège : exiger la requête de facture, sans quoi l'adresse de retour
+        // n'était jamais vérifiée.
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'checkout-invoice')
+            && $r['actions']['return_url'] === "https://mavilla.test/reservation/{$reservation->id}/paiement");
     }
 
     public function test_un_montant_sous_le_plancher_est_refuse_avant_tout_appel(): void
@@ -498,6 +503,28 @@ class PaiementTest extends TestCase
         $this->getJson('/api/configuration')
             ->assertOk()
             ->assertJsonPath('paiement.montant_minimum', 200);
+    }
+
+    /**
+     * Le barème exposé est celui qu'applique le serveur, pas une copie.
+     *
+     * C'est la seule façon de vérifier depuis l'extérieur qu'une variable
+     * d'environnement ne remplace pas le barème publié dans les CGU. Une valeur
+     * inhabituelle est posée exprès : une réponse écrite en dur la manquerait.
+     */
+    public function test_le_bareme_applique_est_expose(): void
+    {
+        config([
+            'paiement.commission.taux_reduit' => 0.07,
+            'paiement.commission.taux_eleve'  => 0.13,
+            'paiement.commission.seuil'       => 60000,
+        ]);
+
+        $this->getJson('/api/configuration')
+            ->assertOk()
+            ->assertJsonPath('paiement.commission.taux_reduit', 0.07)
+            ->assertJsonPath('paiement.commission.taux_eleve', 0.13)
+            ->assertJsonPath('paiement.commission.seuil', 60000);
     }
 
     public function test_un_tiers_ne_peut_pas_payer_la_reservation_d_un_autre(): void

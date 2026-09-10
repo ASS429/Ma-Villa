@@ -122,15 +122,15 @@ class DeboursementTest extends TestCase
 
         $this->verser();
 
-        Http::assertSent(function ($requete) {
-            if (! str_contains($requete->url(), 'get-invoice')) {
-                return true;
-            }
-
-            return $requete['account_alias'] === '771234567'
-                && $requete['amount'] === 85000
-                && $requete['withdraw_mode'] === 'wave-senegal';
-        });
+        // `assertSent` réussit dès qu'**une** requête satisfait le filtre. Le filtre
+        // répondait `true` à toutes les autres adresses : la soumission suffisait à
+        // le satisfaire, et le montant versé n'était jamais vérifié. Constaté le
+        // 10 septembre 2026 — le test passait en attendant 85 000 alors que le
+        // serveur envoyait 88 000. On exige maintenant la requête elle-même.
+        Http::assertSent(fn ($requete) => str_contains($requete->url(), 'get-invoice')
+            && $requete['account_alias'] === '771234567'
+            && $requete['amount'] === 88000
+            && $requete['withdraw_mode'] === 'wave-senegal');
     }
 
     /** Notre référence part avec la soumission : c'est elle qui interdit le doublon. */
@@ -147,8 +147,10 @@ class DeboursementTest extends TestCase
         $reversement = Reversement::first();
 
         $this->assertSame("MV-REV-{$reversement->id}", $reversement->disburse_id);
-        Http::assertSent(fn ($r) => ! str_contains($r->url(), 'submit-invoice')
-            || $r['disburse_id'] === "MV-REV-{$reversement->id}");
+        // Même piège que plus haut : `! submit || …` était satisfait par la requête
+        // `get-invoice`, et la référence envoyée n'était jamais lue.
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'submit-invoice')
+            && $r['disburse_id'] === "MV-REV-{$reversement->id}");
     }
 
     /* ── L'échec ─────────────────────────────────────────────────── */
@@ -174,7 +176,7 @@ class DeboursementTest extends TestCase
         $this->assertNull($paiement->refresh()->reversement_id, 'Le paiement doit redevenir exigible.');
 
         $this->assertSame(
-            85000.0,
+            88000.0,
             (float) $this->actingAs($this->proprietaire, 'sanctum')
                         ->getJson('/api/proprietaire/revenus')->json('du')
         );
