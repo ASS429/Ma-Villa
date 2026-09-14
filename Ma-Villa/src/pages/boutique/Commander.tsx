@@ -28,7 +28,7 @@ import { Champ, ChampZoneTexte } from '../../components/ui/Champ'
 export default function Commander() {
   const { id } = useParams<{ id: string }>()
   const { user } = useAuth()
-  const { boutique, chargee } = useConfig()
+  const { boutique, chargee, paiement } = useConfig()
   const toast = useToast()
   const navigate = useNavigate()
 
@@ -60,7 +60,22 @@ export default function Commander() {
   const frais = zoneChoisie?.frais ?? 0
   const total = (oeuvre?.prix ?? 0) + frais
 
-  const complet = zone && destinataire.trim() && telephone.trim() && adresse.trim() && ville.trim()
+  /*
+   * Chaque moyen suit sa propre bascule.
+   *
+   * Paiement en ligne fermé — le cas depuis le 14 septembre 2026, compte
+   * PayDunya bloqué —, proposer « Payer maintenant » créait une commande
+   * impossible à régler, et l'article quittait la vitrine pour rien. Le choix
+   * de l'utilisateur est gardé, mais retombe sur ce qui existe vraiment.
+   */
+  const enLigne = paiement.actif
+  const choix: 'en_ligne' | 'livraison' | null =
+    enLigne && mode === 'en_ligne' ? 'en_ligne'
+      : boutique.livraison ? 'livraison'
+        : enLigne ? 'en_ligne'
+          : null
+
+  const complet = choix && zone && destinataire.trim() && telephone.trim() && adresse.trim() && ville.trim()
 
   const commander = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -71,7 +86,7 @@ export default function Commander() {
       const { data } = await api.post('/commandes', {
         oeuvre_id: Number(id),
         zone_livraison: zone,
-        mode_paiement: mode,
+        mode_paiement: choix,
         destinataire: destinataire.trim(),
         telephone: telephone.trim(),
         adresse: adresse.trim(),
@@ -199,24 +214,26 @@ export default function Commander() {
 
               <fieldset className="choix-mode">
                 <legend className="sr-only">Comment payer</legend>
-                <label className={`choix${mode === 'en_ligne' ? ' est-actif' : ''}`}>
-                  <input
-                    type="radio" name="mode" value="en_ligne"
-                    checked={mode === 'en_ligne'} onChange={() => setMode('en_ligne')}
-                  />
-                  <span>
-                    <span className="choix-titre">
-                      <CreditCard size={14} aria-hidden="true" /> Payer maintenant
+                {enLigne && (
+                  <label className={`choix${choix === 'en_ligne' ? ' est-actif' : ''}`}>
+                    <input
+                      type="radio" name="mode" value="en_ligne"
+                      checked={choix === 'en_ligne'} onChange={() => setMode('en_ligne')}
+                    />
+                    <span>
+                      <span className="choix-titre">
+                        <CreditCard size={14} aria-hidden="true" /> Payer maintenant
+                      </span>
+                      <span className="choix-aide">Wave ou Orange Money, depuis votre téléphone.</span>
                     </span>
-                    <span className="choix-aide">Wave ou Orange Money, depuis votre téléphone.</span>
-                  </span>
-                </label>
+                  </label>
+                )}
 
                 {boutique.livraison && (
-                  <label className={`choix${mode === 'livraison' ? ' est-actif' : ''}`}>
+                  <label className={`choix${choix === 'livraison' ? ' est-actif' : ''}`}>
                     <input
                       type="radio" name="mode" value="livraison"
-                      checked={mode === 'livraison'} onChange={() => setMode('livraison')}
+                      checked={choix === 'livraison'} onChange={() => setMode('livraison')}
                     />
                     <span>
                       <span className="choix-titre">
@@ -227,6 +244,16 @@ export default function Commander() {
                   </label>
                 )}
               </fieldset>
+
+              {/* Dire pourquoi il n'y a qu'un choix, sinon on le cherche. */}
+              {!enLigne && boutique.livraison && (
+                <p className="achat-note">
+                  Le paiement en ligne est momentanément indisponible : vous réglez à la remise de l'article.
+                </p>
+              )}
+              {choix === null && (
+                <p className="achat-note">Aucun moyen de règlement n'est proposé pour le moment.</p>
+              )}
             </section>
 
             {/* Le total est visible au moment de valider, jamais après : des
@@ -251,7 +278,7 @@ export default function Commander() {
                 disabled={!complet || envoi}
                 chargement={envoi}
               >
-                {mode === 'en_ligne' ? 'Valider et payer' : 'Valider la commande'}
+                {choix === 'en_ligne' ? 'Valider et payer' : 'Valider la commande'}
               </Button>
 
               {!zone && <p className="achat-note">Choisissez une zone de livraison pour voir le total.</p>}

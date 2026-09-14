@@ -22,7 +22,13 @@ const TRIS = [
 ]
 
 export default function Boutique() {
-  const { boutique, chargee } = useConfig()
+  const { boutique, chargee, paiement } = useConfig()
+  // N'annoncer que ce qui est ouvert : le paiement en ligne est fermé depuis le
+  // 14 septembre 2026, et le promettre ici, c'est le voir manquer au moment de
+  // commander.
+  const reglement = paiement.actif
+    ? `règlement par Wave, Orange Money${boutique.livraison ? ' ou à la livraison' : ''}`
+    : boutique.livraison ? 'règlement à la livraison' : 'règlement bientôt disponible'
   const [recherche, setRecherche] = useState('')
   const [saisie, setSaisie] = useState('')
   const [categorie, setCategorie] = useState('')
@@ -96,7 +102,7 @@ export default function Boutique() {
           <p className="boutique-chapeau">
             Tableaux, sculptures, bijoux, tissus — tout est fait main, et deux
             pièces ne se ressemblent jamais tout à fait. Livraison à Dakar et dans
-            toutes les régions, règlement par Wave, Orange Money{boutique.livraison ? ' ou à la livraison' : ''}.
+            toutes les régions, {reglement}.
           </p>
         </header>
 

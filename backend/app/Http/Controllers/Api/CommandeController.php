@@ -78,12 +78,29 @@ class CommandeController extends Controller
 
         $zones = (array) config('boutique.livraison.zones');
 
-        $modes = config('boutique.paiement_a_la_livraison') ? 'en_ligne,livraison' : 'en_ligne';
+        /*
+         * Chaque moyen derrière sa propre bascule.
+         *
+         * `en_ligne` était accepté même paiement fermé — ce qui est le cas depuis
+         * le 14 septembre 2026, compte PayDunya bloqué. La commande se créait,
+         * l'article **quittait la vitrine**, puis le règlement était refusé :
+         * une pièce immobilisée pour un achat que personne ne pouvait payer.
+         */
+        $modes = array_keys(array_filter([
+            'en_ligne'  => (bool) config('paiement.actif'),
+            'livraison' => (bool) config('boutique.paiement_a_la_livraison'),
+        ]));
+
+        if ($modes === []) {
+            return response()->json([
+                'message' => "Aucun moyen de règlement n'est proposé pour le moment.",
+            ], 503);
+        }
 
         $donnees = $request->validate([
             'oeuvre_id'      => 'required|exists:oeuvres,id',
             'zone_livraison' => 'required|in:'.implode(',', array_keys($zones)),
-            'mode_paiement'  => 'required|in:'.$modes,
+            'mode_paiement'  => 'required|in:'.implode(',', $modes),
             'destinataire'   => 'required|string|max:120',
             'telephone'      => 'required|string|max:30',
             'adresse'        => 'required|string|max:500',

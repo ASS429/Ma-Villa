@@ -31,6 +31,10 @@ class BoutiqueTest extends TestCase
 
         config([
             'boutique.actif' => true,
+            // Les deux moyens ouverts par défaut : chaque test qui en ferme un
+            // le dit. Le paiement en ligne suit sa propre bascule depuis le
+            // 14 septembre 2026, et `en_ligne` n'est accepté que s'il est ouvert.
+            'paiement.actif' => true,
             'boutique.paiement_a_la_livraison' => true,
             'boutique.livraison.zones' => [
                 'dakar'   => ['nom' => 'Dakar', 'frais' => 2000, 'delai' => '24 h'],
@@ -421,6 +425,50 @@ class BoutiqueTest extends TestCase
              ->assertStatus(422);
 
         $this->assertSame(0, Commande::count());
+    }
+
+    /**
+     * Le trou du 14 septembre 2026 : paiement en ligne fermé (compte PayDunya
+     * bloqué), une commande « en ligne » passait quand même, l'article quittait
+     * la vitrine, puis personne ne pouvait la régler.
+     */
+    public function test_on_ne_commande_pas_en_ligne_quand_le_paiement_est_ferme(): void
+    {
+        config(['paiement.actif' => false]);
+        $oeuvre = $this->oeuvre();
+
+        $this->actingAs($this->client, 'sanctum')
+             ->postJson('/api/commandes', $this->commandeValide($oeuvre, ['mode_paiement' => 'en_ligne']))
+             ->assertStatus(422);
+
+        $this->assertSame(0, Commande::count());
+        $this->assertTrue($oeuvre->refresh()->estAchetable(), "L'article doit rester en vitrine.");
+    }
+
+    /** Paiement en ligne fermé, la livraison continue de vendre. */
+    public function test_la_livraison_reste_possible_quand_le_paiement_est_ferme(): void
+    {
+        config(['paiement.actif' => false]);
+        $oeuvre = $this->oeuvre();
+
+        $this->actingAs($this->client, 'sanctum')
+             ->postJson('/api/commandes', $this->commandeValide($oeuvre, ['mode_paiement' => 'livraison']))
+             ->assertStatus(201)
+             ->assertJsonPath('statut', 'confirmee');
+    }
+
+    /** Aucun moyen ouvert : un refus qui le dit, pas une erreur de formulaire. */
+    public function test_sans_aucun_moyen_de_reglement_la_commande_est_refusee(): void
+    {
+        config(['paiement.actif' => false, 'boutique.paiement_a_la_livraison' => false]);
+        $oeuvre = $this->oeuvre();
+
+        $this->actingAs($this->client, 'sanctum')
+             ->postJson('/api/commandes', $this->commandeValide($oeuvre))
+             ->assertStatus(503);
+
+        $this->assertSame(0, Commande::count());
+        $this->assertTrue($oeuvre->refresh()->estAchetable());
     }
 
     /* ── Catégories ──────────────────────────────────────────────── */

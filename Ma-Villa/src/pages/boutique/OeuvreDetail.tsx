@@ -17,7 +17,11 @@ import Badge from '../../components/ui/Badge'
 export default function OeuvreDetail() {
   const { id } = useParams<{ id: string }>()
   const { user } = useAuth()
-  const { boutique, chargee } = useConfig()
+  const { boutique, chargee, paiement } = useConfig()
+  // Même règle que la vitrine : seuls les moyens ouverts sont annoncés.
+  const moyens = paiement.actif
+    ? `Wave, Orange Money${boutique.livraison ? ' ou paiement à la livraison' : ''}`
+    : boutique.livraison ? 'Paiement à la livraison' : 'Paiement bientôt disponible'
   const [imageActive, setImageActive] = useState(0)
 
   const { donnees: oeuvre, chargement, erreur, reessayer } = useRequete<Oeuvre>(
@@ -185,7 +189,7 @@ export default function OeuvreDetail() {
                 <li><Truck size={16} aria-hidden="true" /> Livraison à Dakar et en régions</li>
                 <li>
                   <Wallet size={16} aria-hidden="true" />
-                  Wave, Orange Money{boutique.livraison ? ' ou paiement à la livraison' : ''}
+                  {moyens}
                 </li>
               </ul>
             </div>
