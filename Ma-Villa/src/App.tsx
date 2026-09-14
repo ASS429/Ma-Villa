@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect, useState } from 'react'
 import { Routes, Route, Navigate, Link, useParams } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import { useToast } from './context/ToastContext'
+import { useConfig } from './context/ConfigContext'
 import api from './services/api'
 import { messageErreur } from './lib/erreurs'
 import type { VillaResume } from './types'
@@ -178,11 +179,22 @@ function FeaturedVillas() {
 /* ─── Comment ça marche ──────────────────────────────────────── */
 
 function CommentCaMarche() {
-  const etapes = [
-    { n: '1', titre: 'Cherchez', texte: 'Filtrez par ville, dates et budget. Les prix sont affichés, sans surprise.' },
-    { n: '2', titre: 'Réservez', texte: 'Choisissez un logement et une formule : à la nuitée, à la journée ou à la demi-journée.' },
-    { n: '3', titre: 'Profitez', texte: 'Le propriétaire confirme, vous recevez ses coordonnées par email.' },
-  ]
+  const { reservations } = useConfig()
+  const cherchez = { n: '1', titre: 'Cherchez', texte: 'Filtrez par ville, dates et budget. Les prix sont affichés, sans surprise.' }
+
+  // Suspendue, la réservation en ligne ne peut pas être l'étape 2 : le parcours
+  // annoncé doit être celui qu'on peut réellement suivre aujourd'hui.
+  const etapes = reservations.ouvertes
+    ? [
+        cherchez,
+        { n: '2', titre: 'Réservez', texte: 'Choisissez un logement et une formule : à la nuitée, à la journée ou à la demi-journée.' },
+        { n: '3', titre: 'Profitez', texte: 'Le propriétaire confirme, vous recevez ses coordonnées par email.' },
+      ]
+    : [
+        cherchez,
+        { n: '2', titre: 'Contactez-nous', texte: `La réservation en ligne arrive bientôt. En attendant, ${reservations.contact.nom} prend vos demandes au ${reservations.contact.telephone}.` },
+        { n: '3', titre: 'Profitez', texte: 'Votre séjour est confirmé : il ne reste plus qu’à partir.' },
+      ]
 
   return (
     <section className="px-6 md:px-12 lg:px-16 py-20" style={{ borderTop: '1px solid var(--border)' }}>

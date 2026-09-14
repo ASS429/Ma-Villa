@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import api from '../../services/api'
 import { useConfig } from '../../context/ConfigContext'
+import ContactReservation from '../../components/ContactReservation'
 import { useRequete } from '../../lib/useRequete'
 import { messageErreur } from '../../lib/erreurs'
 import { fcfa, dateCourte } from '../../lib/format'
@@ -59,7 +60,7 @@ function raisonTechnique(err: unknown): string {
 export default function Paiement() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { paiement: config } = useConfig()
+  const { paiement: config, reservations } = useConfig()
 
   const [methode, setMethode] = useState<string>('')
   const [telephone, setTelephone] = useState('')
@@ -244,6 +245,22 @@ export default function Paiement() {
         </p>
         <Button variante="secondaire" taille="sm" onClick={() => navigate(`/reservation/${id}/confirmee`)}>
           Voir la confirmation
+        </Button>
+      </div>
+    )
+  }
+
+  // Suspendue, la réservation l'est jusqu'au règlement : le serveur refuserait
+  // de lancer le paiement. Un paiement **déjà lancé** reste en revanche
+  // vérifiable — l'écran ne doit pas cacher un débit qui attend sa confirmation.
+  if (!reservations.ouvertes && reservation.paiement?.statut !== 'en_attente') {
+    return (
+      <div className="tunnel">
+        <div className="mb-6">
+          <ContactReservation />
+        </div>
+        <Button variante="secondaire" taille="sm" onClick={() => navigate('/dashboard/reservations')}>
+          Mes réservations
         </Button>
       </div>
     )

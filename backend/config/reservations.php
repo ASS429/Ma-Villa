@@ -9,6 +9,42 @@
 return [
 
     /*
+    |--------------------------------------------------------------------------
+    | La réservation en ligne est-elle ouverte ?
+    |--------------------------------------------------------------------------
+    |
+    | Fermée le 14 septembre 2026 : le compte PayDunya est bloqué par une
+    | vérification d'identité (KYC). Encaisser sur un compte dont les fonds
+    | peuvent être gelés reviendrait à prendre l'argent d'un client sans savoir
+    | quand on pourra le lui rendre.
+    |
+    | **Fermée par défaut**, comme la boutique et le paiement : ouvrir un métier
+    | est une décision, pas un effet de bord de déploiement. Le jour où le
+    | compte est débloqué, `RESERVATIONS_OUVERTES=true` sur Railway suffit — le
+    | front lit la bascule sur `/api/configuration`, rien à redéployer.
+    |
+    | ⚠️ Avant de rouvrir, passer par la sonde `/admin/paiement` : rouvrir sur
+    | un compte encore bloqué recréerait exactement le problème.
+    |
+    | Voir `App\Services\ReservationsSuspendues` pour ce qui reste ouvert.
+    */
+    'ouvertes' => (bool) env('RESERVATIONS_OUVERTES', false),
+
+    /*
+    | Qui joindre tant qu'elle est fermée. Affiché sur chaque fiche à la place
+    | du formulaire, et renvoyé dans le message d'erreur de l'API — c'est tout
+    | ce que verra l'application mobile déjà distribuée.
+    |
+    | Ces informations sont publiées sur le site : les mettre ici n'expose
+    | rien de plus.
+    */
+    'contact' => [
+        'nom'       => env('RESERVATIONS_CONTACT_NOM', 'Abdou Ndour'),
+        'telephone' => env('RESERVATIONS_CONTACT_TELEPHONE', '+221 77 868 47 23'),
+        'email'     => env('RESERVATIONS_CONTACT_EMAIL', 'ndourabdou011@gmail.com'),
+    ],
+
+    /*
     | Délai laissé au propriétaire pour répondre à une demande.
     |
     | Passé ce délai, la demande est annulée automatiquement. Une demande qui

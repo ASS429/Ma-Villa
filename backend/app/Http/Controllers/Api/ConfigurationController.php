@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Categorie;
 use App\Services\Push;
+use App\Services\ReservationsSuspendues;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -41,6 +42,12 @@ class ConfigurationController extends Controller
                     'taux_eleve'  => (float) config('paiement.commission.taux_eleve'),
                     'seuil'       => (int) config('paiement.commission.seuil'),
                 ],
+            ],
+            // La réservation en ligne se suspend sans redéployer : fermée,
+            // chaque fiche affiche ce contact à la place du formulaire.
+            'reservations' => [
+                'ouvertes' => ! ReservationsSuspendues::enVigueur(),
+                'contact'  => ReservationsSuspendues::contact(),
             ],
             // Le plafond de photos vient du serveur : le téléverseur doit
             // pouvoir l'annoncer avant l'envoi plutôt que de le découvrir

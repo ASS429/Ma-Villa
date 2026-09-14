@@ -66,6 +66,12 @@ interface Configuration {
     /** Le paiement à la livraison est-il proposé ? */
     livraison: boolean
   }
+  reservations: {
+    /** Faux tant que RESERVATIONS_OUVERTES n'est pas levée : chaque fiche affiche le contact. */
+    ouvertes: boolean
+    /** Qui joindre pour réserver pendant la suspension. */
+    contact: { nom: string; telephone: string; email: string }
+  }
 }
 
 /**
@@ -93,6 +99,15 @@ const DEFAUT: Configuration = {
   // Boutique fermée par défaut : elle ne doit apparaître nulle part tant que
   // le serveur ne l'a pas confirmée ouverte.
   boutique: { actif: false, zones: {}, livraison: false },
+  // Repli fermé, contact compris. Si l'API ne répond pas — ou répond depuis
+  // une version antérieure qui ignore ce bloc, pendant la fenêtre où front et
+  // API ne sont pas déployés ensemble —, l'écran propose encore un moyen de
+  // réserver plutôt qu'un formulaire que le serveur refusera. Le contact fait
+  // foi côté serveur ; celui-ci n'est qu'un repli.
+  reservations: {
+    ouvertes: false,
+    contact: { nom: 'Abdou Ndour', telephone: '+221 77 868 47 23', email: 'ndourabdou011@gmail.com' },
+  },
 }
 
 const ConfigContext = createContext<Configuration>(DEFAUT)

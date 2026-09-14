@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Notifications\NouvelleReservation;
 use App\Notifications\ReservationMiseAJour;
 use App\Services\Push;
+use App\Services\ReservationsSuspendues;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -50,6 +51,12 @@ class ReservationController extends Controller
 
     public function store(ReservationRequest $request): JsonResponse
     {
+        // Avant toute lecture : une demande refusée pour suspension ne doit
+        // pas dépendre de la validité du logement ou des dates.
+        if ($refus = ReservationsSuspendues::refus()) {
+            return $refus;
+        }
+
         $logement = Logement::findOrFail($request->logement_id);
         $tarif = Tarif::findOrFail($request->tarif_id);
 

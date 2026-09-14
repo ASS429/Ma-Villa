@@ -166,6 +166,35 @@ d'API ouverte dans un onglet répond toujours 401, le jeton vivant dans
    rédaction ne corrige cela — c'est la question restée sans réponse chez le
    juriste depuis le 22 août, et la seule qui expose vraiment.
 
+### Réservation en ligne — suspendue depuis le 14 septembre 2026
+
+Le compte PayDunya est bloqué par une vérification d'identité (KYC). Encaisser
+dessus prendrait l'argent d'un client sans savoir quand on pourrait le lui
+rendre : l'exploitant a **fermé la réservation en ligne**, et un contact humain
+la remplace — son associé, Abdou Ndour.
+
+| Où | Ce qui se passe quand elle est fermée |
+|---|---|
+| `POST /reservations` | **503**, message portant le contact en toutes lettres |
+| `POST /reservations/{id}/paiement` | **503** aussi — sinon une demande antérieure se réglerait sur le compte bloqué |
+| `GET /configuration` | `reservations.ouvertes` et `reservations.contact` |
+| fiche, accueil, mes réservations, tunnel | `components/ContactReservation.tsx` à la place du formulaire et de « Régler » |
+
+⚠️ **Le refus est d'abord côté serveur.** L'application mobile déjà distribuée
+appelle la même API avec un code qu'on ne peut plus mettre à jour, et affiche
+`response.data.message` : c'est pour elle que le contact est dans le message.
+
+Reste ouvert, volontairement : consulter, annuler, demander un remboursement,
+écrire au propriétaire, et **vérifier un paiement déjà lancé**
+(`GET /reservations/{id}/paiement`) — le fermer laisserait un client débité
+sans confirmation.
+
+**Rouvrir** : `RESERVATIONS_OUVERTES=true` sur Railway, rien à redéployer. Fermée
+par défaut dans le code, comme la boutique et le paiement. Passer d'abord par la
+sonde `/admin/paiement`. Le contact se change par `RESERVATIONS_CONTACT_NOM`,
+`_TELEPHONE` et `_EMAIL`. `App\Services\ReservationsSuspendues`,
+`tests/Feature/ReservationsSuspenduesTest.php`.
+
 ### Textes légaux — publiés depuis le 3 septembre 2026
 
 `src/pages/legal/contenu.ts` porte **cinq documents en vigueur** : conditions

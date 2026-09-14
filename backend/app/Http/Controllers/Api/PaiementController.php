@@ -8,6 +8,7 @@ use App\Models\Reservation;
 use App\Services\Commission;
 use App\Services\PayDunya;
 use App\Services\Push;
+use App\Services\ReservationsSuspendues;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -32,6 +33,14 @@ class PaiementController extends Controller
     public function initier(Request $request, Reservation $reservation): JsonResponse
     {
         $this->authorize('view', $reservation);
+
+        // La suspension couvre le règlement : payer une demande déjà créée
+        // encaisserait sur le compte bloqué. Seule l'**initiation** est fermée
+        // — `statut` reste ouvert, pour qu'un paiement déjà lancé puisse encore
+        // être constaté.
+        if ($refus = ReservationsSuspendues::refus()) {
+            return $refus;
+        }
 
         if (! config('paiement.actif')) {
             return response()->json(['message' => 'Le paiement en ligne n\'est pas encore ouvert.'], 503);

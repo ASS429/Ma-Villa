@@ -1,6 +1,7 @@
 import FadeIn from './FadeIn'
 import BarreRecherche from './BarreRecherche'
 import { useConfig } from '../context/ConfigContext'
+import { lienAppel } from '../lib/contact'
 
 const DESTINATIONS = ['Saly', 'Mbour', 'Dakar', 'Ziguinchor']
 
@@ -10,7 +11,7 @@ const DESTINATIONS = ['Saly', 'Mbour', 'Dakar', 'Ziguinchor']
  * panneau de filtres.
  */
 export default function Hero() {
-  const { paiement } = useConfig()
+  const { paiement, reservations } = useConfig()
   const moyens = paiement.moyens.map((m) => m.nom).join(' ou ')
 
   return (
@@ -34,8 +35,14 @@ export default function Hero() {
           style={{ font: 'var(--t-display)', letterSpacing: 'var(--t-display-ls)' }}
         >
           Votre séjour au Sénégal
-          <span className="hidden md:inline">,</span>
-          <span className="hidden md:block">réservé en trois gestes</span>
+          {/* « Réservé en trois gestes » serait une promesse fausse tant que la
+              réservation en ligne est suspendue : le titre s'arrête alors là. */}
+          {reservations.ouvertes && (
+            <>
+              <span className="hidden md:inline">,</span>
+              <span className="hidden md:block">réservé en trois gestes</span>
+            </>
+          )}
         </h1>
 
         <FadeIn delay={200} duration={700}>
@@ -48,7 +55,15 @@ export default function Hero() {
             </span>
             {/* Le paiement est annoncé mais inactif : le dire au futur tant que
                 c'est le cas, plutôt que de laisser croire qu'on peut régler ici. */}
-            {paiement.actif
+            {!reservations.ouvertes ? (
+              <>
+                {' '}Réservation en ligne bientôt disponible. En attendant, contactez{' '}
+                {reservations.contact.nom} au{' '}
+                <a href={lienAppel(reservations.contact.telephone)} className="text-white underline underline-offset-4">
+                  {reservations.contact.telephone}
+                </a>.
+              </>
+            ) : paiement.actif
               ? ` Paiement ${moyens}.`
               : ` Paiement ${moyens} bientôt disponible.`}
           </p>

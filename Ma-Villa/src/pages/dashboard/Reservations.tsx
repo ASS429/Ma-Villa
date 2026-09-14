@@ -4,6 +4,7 @@ import { CalendarDays, Users, Check, X, CreditCard, Inbox, MessageSquare } from 
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import { useConfig } from '../../context/ConfigContext'
+import ContactReservation from '../../components/ContactReservation'
 import { useMessages } from '../../context/MessagesContext'
 import { useToast } from '../../context/ToastContext'
 import { useRequete } from '../../lib/useRequete'
@@ -78,7 +79,7 @@ function resteARegler(r: Reservation, minimum: number) {
 
 export default function Reservations() {
   const { user } = useAuth()
-  const { paiement } = useConfig()
+  const { paiement, reservations } = useConfig()
   const { parReservation } = useMessages()
   const toast = useToast()
   const [filtre, setFiltre] = useState('toutes')
@@ -177,7 +178,12 @@ export default function Reservations() {
         <div className="liste-console">
           {liste.map((r) => {
             const statut = STATUT[r.statut]
-            const payable = paiement.actif && resteARegler(r, paiement.montant_minimum)
+            const payable = paiement.actif && reservations.ouvertes && resteARegler(r, paiement.montant_minimum)
+            // Suspendue, la réservation l'est jusqu'au règlement : « Régler »
+            // disparaît, et le client apprend qui joindre à la place — sans quoi
+            // il croirait sa demande oubliée.
+            const reglementSuspendu = !reservations.ouvertes && !estProprietaire
+              && resteARegler(r, paiement.montant_minimum)
             const paye = r.paiement?.statut === 'reussi'
             // Sans argent encaissé, l'annulation est immédiate : il n'y a rien
             // à rendre, donc rien à décider, et faire attendre serait gratuit.
@@ -300,6 +306,8 @@ export default function Reservations() {
                       <span>{r.paiement?.statut === 'en_attente' ? 'Reprendre le paiement' : 'Régler'}</span>
                     </Link>
                   )}
+
+                  {reglementSuspendu && <ContactReservation compact />}
                 </div>
               </article>
             )

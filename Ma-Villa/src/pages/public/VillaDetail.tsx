@@ -9,6 +9,7 @@ import PageHeader from '../../components/PageHeader'
 import Footer from '../../components/Footer'
 import Seo from '../../components/Seo'
 import MoyensPaiement from '../../components/MoyensPaiement'
+import ContactReservation from '../../components/ContactReservation'
 import { GrilleTarifaire, ParcoursReservation } from '../../components/BlocTarifaire'
 import { useRequete } from '../../lib/useRequete'
 import { messageErreur } from '../../lib/erreurs'
@@ -195,7 +196,7 @@ export default function VillaDetail() {
   const { user } = useAuth()
   const { isDark } = useTheme()
   const toast = useToast()
-  const { paiement } = useConfig()
+  const { paiement, reservations } = useConfig()
   const navigate = useNavigate()
 
   const { donnees: villa, chargement, erreur, statut, reessayer } = useRequete<Villa>(
@@ -456,7 +457,7 @@ export default function VillaDetail() {
             className="px-6 py-3 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90"
             style={{ background: 'var(--accent)', color: 'var(--on-accent)', minHeight: 44 }}
           >
-            Réserver
+            {reservations.ouvertes ? 'Réserver' : 'Contacter'}
           </button>
         </div>
       )}
@@ -649,6 +650,11 @@ export default function VillaDetail() {
                     ? 'Aperçu de la fiche telle que la voient les clients.'
                     : 'Les réservations sont réservées aux clients.'}
                 </p>
+              ) : !reservations.ouvertes ? (
+                // Suspendue : un humain à joindre à la place du formulaire, que
+                // le serveur refuserait de toute façon. Les prix restent
+                // affichés au-dessus — ils servent toujours à choisir.
+                <ContactReservation hebergement={villa.nom} />
               ) : resaEnvoyee ? (
                 <div className="text-center py-6">
                   <p className="text-2xl mb-3" aria-hidden="true">✅</p>

@@ -126,6 +126,21 @@ VAPID_SUJET=mailto:contactptemps@gmail.com
 La sonde `/admin/notifications` signe un vrai jeton — c'est la seule preuve que l'envoi
 aboutit.
 
+### La réservation en ligne
+
+```
+RESERVATIONS_OUVERTES=false
+RESERVATIONS_CONTACT_NOM="Abdou Ndour"
+RESERVATIONS_CONTACT_TELEPHONE="+221 77 868 47 23"
+RESERVATIONS_CONTACT_EMAIL=ndourabdou011@gmail.com
+```
+
+**Fermée le 14 septembre 2026** — compte PayDunya bloqué par la vérification
+d'identité. Fermée par défaut dans le code : aucune variable n'est nécessaire
+pour qu'elle le reste. Le contact s'affiche sur chaque fiche et dans le refus
+de l'API. Pour rouvrir : `RESERVATIONS_OUVERTES=true`, après avoir vérifié la
+sonde `/admin/paiement`.
+
 ### La boutique
 
 ```
