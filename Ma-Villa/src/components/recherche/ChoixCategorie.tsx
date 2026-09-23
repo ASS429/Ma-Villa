@@ -41,8 +41,16 @@ export default function ChoixCategorie({ compact = false }: { compact?: boolean 
 
   if (categories.length === 0) return null
 
+  /*
+   | Vers `/hebergements`, la route réelle — et non `/villas`, l'ancienne.
+   |
+   | Celle-ci redirige, et la redirection **perdait la requête** : on cliquait
+   | « Auberge » et on arrivait sur la liste complète, sans filtre. Les sept
+   | pastilles semblaient ne rien faire. Relevé par l'exploitant le 23 septembre
+   | 2026 ; la redirection a été réparée aussi, pour les liens déjà partagés.
+   */
   const aller = (c: Categorie) =>
-    navigate({ pathname: '/villas', search: `?categorie=${encodeURIComponent(c.cle)}` })
+    navigate({ pathname: '/hebergements', search: `?categorie=${encodeURIComponent(c.cle)}` })
 
   return (
     <ul className={`choix-categorie${compact ? ' est-compact' : ''}`}>

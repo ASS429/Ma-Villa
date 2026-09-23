@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
-import { Routes, Route, Navigate, Link, useParams } from 'react-router-dom'
+import { Routes, Route, Navigate, Link, useParams, useLocation } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import { useToast } from './context/ToastContext'
 import { useConfig } from './context/ConfigContext'
@@ -382,6 +382,18 @@ function RedirectionHebergement() {
   return <Navigate to={`/hebergements/${id}/`} replace />
 }
 
+/**
+ * L'ancienne liste, **avec sa requête**.
+ *
+ * `<Navigate to="/hebergements">` la laissait tomber : un lien
+ * `/villas?ville=Saly` déjà partagé arrivait sur le catalogue entier, et les
+ * pastilles de catégorie — qui pointaient là — semblaient ne rien faire.
+ */
+function RedirectionHebergements() {
+  const { search } = useLocation()
+  return <Navigate to={{ pathname: '/hebergements', search }} replace />
+}
+
 /* ─── App ────────────────────────────────────────────────────── */
 
 export default function App() {
@@ -413,7 +425,7 @@ export default function App() {
           que la page de reprise a été écrite pour rattraper. La redirection
           remplace l'entrée d'historique, pour que le retour arrière ne
           reboucle pas sur elle. */}
-      <Route path="/villas" element={<Navigate to="/hebergements" replace />} />
+      <Route path="/villas" element={<RedirectionHebergements />} />
       <Route path="/villas/:id" element={<RedirectionHebergement />} />
 
       <Route path="/login" element={<Login />} />
