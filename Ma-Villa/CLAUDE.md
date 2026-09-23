@@ -117,9 +117,21 @@ composants : tout passe par les tokens, et le thème sombre suit partout. Les
 ## SEO — pré-rendu au build
 
 `scripts/prerendu.mjs` s'exécute après `vite build` : une page HTML par route,
-avec titre, description, Open Graph, canonique et JSON-LD. Six pages fixes et
-une par villa publiée. Le plan de site et `robots.txt` sont générés là aussi —
-ne pas les recréer dans `public/`.
+avec titre, description, Open Graph, canonique et JSON-LD. Huit pages fixes,
+une par hébergement publié et une par article de la boutique. Le plan de site
+et `robots.txt` sont générés là aussi — ne pas les recréer dans `public/`.
+
+**Le corps est pré-rendu aussi, depuis le 23 septembre 2026.** Le HTML livré
+n'avait aucun contenu ni aucun lien : Google avait détecté quinze adresses et
+n'en avait exploré **aucune** en trois semaines. Chaque page porte maintenant,
+dans `#root`, un titre, un texte, une image, un prix et surtout **des liens vers
+les autres pages** — `createRoot().render()` remplace tout cela au montage, donc
+il ne vit que pour les robots et pour le visiteur qui attend.
+
+⚠️ Deux marques `<!--corps-->` le bornent, et l'injection **vide avant
+d'écrire** : le gabarit est `dist/index.html`, que ce script produit aussi, et
+`npm run prerendu` relancé seul y retrouverait le corps de l'accueil. Même
+piège que le JSON-LD, même remède.
 
 ⚠️ **Barre oblique finale obligatoire** sur les URL de fiche. Render applique
 sa réécriture avant de résoudre l'index d'un dossier : `/villas/10` sert le
@@ -215,7 +227,7 @@ page légale est devenue fausse sans que personne n'y touche : l'encaissement le
 
 | Ce que le texte annonce | D'où vient le chiffre |
 |---|---|
-| commission 10 % puis 20 % | `backend/config/paiement.php` |
+| commission 10 % puis 14 % | `backend/config/paiement.php` |
 | barème 7 j / 2 j / 48 h | `backend/config/reservations.php` |
 | frais de livraison par zone | `backend/config/boutique.php` |
 | remboursement sous 15 jours ouvrés | engagement de l'exploitant, tenu à la main |

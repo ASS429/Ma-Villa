@@ -1,6 +1,7 @@
 # Être sur Google — état et marche à suivre
 
-_État au 2 septembre 2026, mesuré sur la production._
+_Écrit le 2 septembre 2026. **La section 8, du 23 septembre, dit l'état courant** —
+les sections 1 à 3 décrivent un site qui n'avait encore aucune annonce._
 
 ---
 
@@ -104,6 +105,9 @@ puis **Demander l'indexation**. C'est la seule page qui mérite qu'on force le p
 ---
 
 ## 3. Le vrai obstacle : il n'y a rien à indexer
+
+> _Dépassé._ Au 23 septembre, le plan de site compte **22 adresses**, dont dix
+> hébergements et quatre articles. Cette section garde la trace de l'état de départ.
 
 Le plan de site compte **7 adresses**. Sept.
 
@@ -256,3 +260,63 @@ d'artiste et un `<script>` dans une description ont été passés exprès : la p
 du HTML valide.
 
 Voir aussi `docs/05-INFRASTRUCTURE.md`, section « Le nom de domaine ».
+
+---
+
+## 8. Le 23 septembre : Google avait tout détecté, et rien lu
+
+Le rapport d'indexation exporté ce jour-là dit une chose, et une seule :
+
+| | |
+|---|---|
+| Pages dans l'index | **1** |
+| Pages « Détectée, actuellement non indexée » | **15** |
+| Impressions du 1er au 18 septembre | 29, entre 0 et 5 par jour |
+
+« Détectée, actuellement non indexée » signifie que Google **connaît** l'adresse — il l'a
+lue dans le plan de site — mais **ne l'a jamais explorée**. En trois semaines, pas une
+seule fiche n'a été visitée. Ce n'est ni une panne ni une sanction : c'est ce qui arrive
+à un site dont rien n'indique qu'il vaut le déplacement.
+
+### La cause, mesurée
+
+Le HTML livré ne contenait **rien**. Le corps d'une fiche faisait 151 caractères —
+`<div id="root">` vide et un `<noscript>` — et comptait **zéro lien**. Nos vingt-deux
+adresses n'étaient donc connues que par le plan de site, et **aucune page n'en désignait
+une autre**. Un moteur juge l'importance d'une page au nombre et à la qualité des liens
+qui pointent vers elle : toutes les nôtres valaient zéro.
+
+Googlebot exécute le JavaScript, mais dans une file d'attente séparée où les sites sans
+autre signal passent en dernier. Nous étions exactement dans ce cas.
+
+### Ce qui a été fait
+
+Chaque page pré-rendue porte maintenant, dans le corps, ce que l'application affiche une
+seconde plus tard : un titre, la ville ou l'artiste, la photo, le prix, la description —
+et **les liens**. L'accueil en compte 22, une fiche 15, un article 12.
+
+Vérifié au navigateur, scripts bloqués et service worker désinscrit : la page s'affiche
+proprement, aux couleurs du site. Vérifié aussi que `createRoot().render()` remplace bien
+ce corps au montage — il ne vit que pour les robots et pour le visiteur qui attend.
+
+Le plan de site porte en plus un `lastmod` **vrai**, pris sur la date de modification de
+chaque fiche. Les pages fixes n'en ont pas : un `lastmod` pris en défaut fait ignorer tous
+les autres.
+
+### Ce qu'il faut faire, et attendre
+
+1. Dans Search Console, **Inspecter l'URL** → `https://passetemps.sn/` → *Demander
+   l'indexation*. Puis la même chose pour `https://passetemps.sn/hebergements/`. Deux
+   suffisent : les liens internes mèneront Google au reste.
+2. Attendre. Un changement de ce type se lit en une à trois semaines, pas en deux jours.
+3. Réexporter le rapport d'indexation début octobre. Ce qu'il faut y voir : la colonne
+   « Dans l'index » qui monte, et « Détectée, actuellement non indexée » qui descend.
+
+### Ce qui reste, et qui n'est pas technique
+
+⚠️ **La ville est du texte libre, et Saly s'écrit de cinq façons** — « Saly », « Saly
+bambara », « Saly velingara », « Saly derrière rdc », « Mbour Saly ». Pour Google comme
+pour un visiteur qui filtre, ce sont cinq destinations différentes, et notre marché
+principal est donc éclaté en cinq. Le chantier qui range tout cela est écrit et testé
+depuis le 12 septembre, **mais pas déployé** : sa migration réécrit les annonces de vrais
+propriétaires et attend un accord explicite. C'est le préalable aux pages par ville.

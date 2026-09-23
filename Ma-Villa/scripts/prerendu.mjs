@@ -245,7 +245,20 @@ function pageVilla(villa) {
     } : {}),
   }
 
-  return { chemin: `hebergements/${villa.id}`, titre, description, image: photo, donnees }
+  return {
+    chemin: `hebergements/${villa.id}`,
+    titre,
+    description,
+    image: photo,
+    donnees,
+    // Pour le corps lisible sans JavaScript et pour `lastmod`.
+    nom: villa.nom,
+    lieu: ville,
+    // Le point final appartient à la description, pas à un élément de liste.
+    prix: prix.trim().replace(/\.$/, ''),
+    texte: villa.description,
+    maj: villa.updated_at ?? villa.created_at,
+  }
 }
 
 /**
@@ -285,7 +298,18 @@ function pageOeuvre(oeuvre) {
     },
   }
 
-  return { chemin: `boutique/${oeuvre.id}`, titre, description, image: photo, donnees }
+  return {
+    chemin: `boutique/${oeuvre.id}`,
+    titre,
+    description,
+    image: photo,
+    donnees,
+    nom: oeuvre.titre,
+    lieu: oeuvre.artiste ?? '',
+    prix: `${fcfa(oeuvre.prix)}${achetable ? '' : ' — vendu'}`,
+    texte: oeuvre.description,
+    maj: oeuvre.updated_at ?? oeuvre.created_at,
+  }
 }
 
 const PAGES_FIXES = [
@@ -317,9 +341,12 @@ const PAGES_FIXES = [
     // Retirée du plan de site quand la boutique est fermée : voir toutesLesOeuvres().
     siBoutiqueOuverte: true,
     chemin: 'boutique',
-    titre: "Boutique d'art sénégalais — PasseTemps",
-    description: "Œuvres d'artistes sénégalais — peintures, sculptures et pièces uniques. "
-      + 'Livraison au Sénégal, paiement Wave ou Orange Money.',
+    // « Boutique d'art » promettait des peintures et des sculptures ; le
+    // catalogue réel est fait de vêtements et de vannerie, et les CGV parlent
+    // déjà d'artisanat. Un visiteur venu par Google pour une toile repartait.
+    titre: 'Boutique — artisanat et créateurs sénégalais — PasseTemps',
+    description: "Vêtements, vannerie et pièces d'artisanat de créateurs sénégalais. "
+      + 'Livraison à Dakar et dans toutes les régions, paiement Wave ou Orange Money.',
   },
   // Les cinq pages légales sont en vigueur depuis le 3 septembre 2026 : elles
   // portaient jusque-là une note d'attente, et les descriptions le disaient.
@@ -336,6 +363,137 @@ const PAGES_FIXES = [
   { chemin: 'mentions-legales', titre: 'Mentions légales — PasseTemps',
     description: 'Éditeur, directeur de la publication, hébergement et prestataires techniques de PasseTemps.' },
 ]
+
+/* ── Corps lisible sans JavaScript ────────────────────────────── */
+
+/**
+ * Le HTML livré n'avait **aucun contenu et aucun lien**.
+ *
+ * Mesuré le 9 puis le 23 septembre 2026 : le corps d'une fiche faisait
+ * 151 caractères — `<div id="root">` vide et un `<noscript>` — et comptait
+ * **zéro `<a href>`**. Google n'avait donc découvert nos adresses que par le
+ * plan de site, sans qu'aucune page n'en désigne une autre. Son rapport le
+ * disait : « Détectée, actuellement non indexée », six pages sur sept, c'est-
+ * à-dire connues mais jamais explorées. C'est l'état normal d'un site dont
+ * rien n'indique qu'il vaut le déplacement.
+ *
+ * Googlebot exécute le JavaScript, mais dans une seconde file d'attente, et
+ * les sites sans autre signal y passent en dernier. On lui donne donc, dès le
+ * premier octet, ce que l'application affiche ensuite : un titre, un texte,
+ * une image, un prix, et **les liens vers les autres pages**.
+ *
+ * ── Pourquoi dans `#root`, et pas dans `<noscript>` ──────────────
+ * `main.tsx` monte l'application avec `createRoot(...).render()`, qui
+ * **remplace** le contenu du conteneur : ce corps disparaît au montage, sans
+ * rien casser. Le mettre dans `<noscript>` l'aurait réservé aux robots — or il
+ * sert aussi le visiteur, qui voit le nom, la photo et le prix pendant que
+ * l'application se charge, plutôt qu'un écran blanc. Sur une connexion mobile
+ * sénégalaise, c'est la différence entre attendre et partir.
+ *
+ * Ce n'est pas du camouflage : le contenu servi est celui que l'application
+ * rend une seconde plus tard.
+ */
+
+/** Six suffit à tisser le maillage sans transformer chaque fiche en annuaire. */
+const VOISINS = 6
+
+const STYLE = {
+  page: 'max-width:44rem;margin:0 auto;padding:2rem 1.25rem;color:var(--text-1)',
+  entete: 'font-weight:600;letter-spacing:.02em;color:var(--accent);text-decoration:none',
+  titre: 'font-size:1.6rem;line-height:1.2;margin:1.5rem 0 .5rem',
+  lieu: 'color:var(--text-2);margin:0 0 1rem',
+  prix: 'font-weight:600;margin:1rem 0',
+  texte: 'line-height:1.6;color:var(--text-2)',
+  image: 'width:100%;max-width:32rem;height:auto;border-radius:.75rem;margin:1rem 0',
+  sousTitre: 'font-size:1.1rem;margin:2rem 0 .5rem',
+  liste: 'line-height:1.9;padding-left:1.1rem',
+  lien: 'color:var(--accent)',
+  pied: 'margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--border);color:var(--text-2);line-height:1.9',
+}
+
+const lien = (href, texte) =>
+  `<a href="${echapperAttribut(href)}" style="${STYLE.lien}">${echapperTexte(texte)}</a>`
+
+/** Une page se désigne par son chemin, toujours avec la barre oblique finale. */
+const adresse = (chemin) => (chemin ? `/${chemin}/` : '/')
+
+function listeDeLiens(pages) {
+  if (!pages.length) return ''
+
+  const items = pages
+    .map((p) => `<li>${lien(adresse(p.chemin), p.nom ?? p.titre)}${p.prix ? ` — ${echapperTexte(p.prix)}` : ''}</li>`)
+    .join('')
+
+  return `<ul style="${STYLE.liste}">${items}</ul>`
+}
+
+const PIED = [
+  ['/hebergements/', 'Hébergements'],
+  ['/boutique/', 'Boutique'],
+  ['/conditions-generales/', "Conditions générales d'utilisation"],
+  ['/conditions-vente/', 'Conditions générales de vente'],
+  ['/annulation/', "Conditions d'annulation"],
+  ['/confidentialite/', 'Politique de confidentialité'],
+  ['/mentions-legales/', 'Mentions légales'],
+]
+
+function corps(page, repertoire) {
+  const { chemin, titre, description, image, nom, lieu, prix, texte } = page
+
+  // Le titre du document porte la marque, en tête ou en queue selon la page ;
+  // le titre visible, non — elle est déjà juste au-dessus, en lien vers l'accueil.
+  const enTete = nom || titre.replace(/\s+—\s+PasseTemps$/, '').replace(/^PasseTemps\s+—\s+/, '')
+
+  const morceaux = [
+    `<a href="/" style="${STYLE.entete}">PasseTemps</a>`,
+    `<h1 style="${STYLE.titre}">${echapperTexte(enTete)}</h1>`,
+  ]
+
+  if (lieu) morceaux.push(`<p style="${STYLE.lieu}">${echapperTexte(lieu)}</p>`)
+
+  if (image) {
+    const src = image.startsWith('http') ? image : SITE + image
+    // `lazy` : l'application remplace ce corps presque aussitôt, et une image
+    // téléchargée pour rien se paie en données sur un forfait mobile.
+    morceaux.push(`<img src="${echapperAttribut(src)}" alt="${echapperAttribut(enTete)}"`
+      + ` loading="lazy" style="${STYLE.image}" />`)
+  }
+
+  if (prix) morceaux.push(`<p style="${STYLE.prix}">${echapperTexte(prix)}</p>`)
+
+  morceaux.push(`<p style="${STYLE.texte}">${echapperTexte(texte || description)}</p>`)
+
+  // Les liens, la vraie raison d'être de ce corps.
+  const { hebergements = [], oeuvres = [] } = repertoire
+
+  if (chemin === '') {
+    morceaux.push(`<h2 style="${STYLE.sousTitre}">Nos hébergements</h2>`, listeDeLiens(hebergements))
+    if (oeuvres.length) {
+      morceaux.push(`<h2 style="${STYLE.sousTitre}">La boutique</h2>`, listeDeLiens(oeuvres))
+    }
+  } else if (chemin === 'hebergements') {
+    morceaux.push(listeDeLiens(hebergements))
+  } else if (chemin === 'boutique') {
+    morceaux.push(listeDeLiens(oeuvres))
+  } else if (chemin.startsWith('hebergements/') || chemin.startsWith('boutique/')) {
+    const fiche = chemin.startsWith('hebergements/')
+    const famille = (fiche ? hebergements : oeuvres).filter((p) => p.chemin !== chemin)
+
+    morceaux.push(
+      `<h2 style="${STYLE.sousTitre}">${fiche ? 'Autres hébergements' : 'Autres articles'}</h2>`,
+      listeDeLiens(famille.slice(0, VOISINS)),
+      `<p>${lien(fiche ? '/hebergements/' : '/boutique/', fiche ? 'Voir tous les hébergements' : 'Voir toute la boutique')}</p>`,
+    )
+  }
+
+  const pied = PIED.filter(([href]) => href !== adresse(chemin))
+    .map(([href, texte]) => lien(href, texte))
+    .join(' · ')
+
+  morceaux.push(`<footer style="${STYLE.pied}">${pied}</footer>`)
+
+  return `<div style="${STYLE.page}">${morceaux.join('')}</div>`
+}
 
 /* ── Injection dans le gabarit ────────────────────────────────── */
 
@@ -356,7 +514,8 @@ const PAGES_FIXES = [
  */
 const canonique = (chemin) => (chemin ? `${SITE}/${chemin}/` : `${SITE}/`)
 
-function injecter(gabarit, { chemin, titre, description, image, donnees }) {
+function injecter(gabarit, page, repertoire = {}) {
+  const { chemin, titre, description, image, donnees } = page
   const url = canonique(chemin)
   const imageAbsolue = image
     ? (image.startsWith('http') ? image : SITE + image)
@@ -414,6 +573,20 @@ function injecter(gabarit, { chemin, titre, description, image, donnees }) {
     html = html.replace('</head>', `    <script type="application/ld+json">${json}</script>\n  </head>`)
   }
 
+  // Le conteneur est vidé par `createRoot().render()` : ce corps ne vit que le
+  // temps du chargement, et pour les robots qui n'exécutent rien.
+  //
+  // Borné par deux marques, et vidé avant d'être réécrit. Le gabarit est
+  // `dist/index.html`, que ce script produit aussi : relancé sans `vite build`
+  // (`npm run prerendu`), il relisait un conteneur **déjà rempli** — la
+  // substitution ne trouvait plus rien, et chaque fiche héritait du corps de
+  // l'accueil. Même piège que le JSON-LD plus haut, même remède.
+  html = html.replace(/<!--corps-->[\s\S]*?<!--\/corps-->/g, '')
+  html = html.replace(
+    '<div id="root"></div>',
+    `<div id="root"><!--corps-->${corps(page, repertoire)}<!--/corps--></div>`,
+  )
+
   return html
 }
 
@@ -450,10 +623,25 @@ async function planDeSitePublie() {
   }
 }
 
+/**
+ * `lastmod` n'est porté que par les fiches, et il est **vrai** : c'est la date
+ * de dernière modification rendue par l'API. Les pages fixes n'en ont pas — on
+ * ne connaît pas la leur, et Google ignore un `lastmod` qu'il prend en défaut,
+ * pour tout le plan. Mieux vaut n'en donner aucun que d'en inventer un.
+ */
+const dateSeule = (maj) => {
+  const d = new Date(maj)
+  return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10)
+}
+
 function planDeSite(pages) {
-  const entrees = pages.map(({ chemin, priorite = '0.7', frequence = 'weekly' }) => {
+  const entrees = pages.map(({ chemin, priorite = '0.7', frequence = 'weekly', maj }) => {
     const url = canonique(chemin)
-    return `  <url>\n    <loc>${url}</loc>\n    <changefreq>${frequence}</changefreq>\n`
+    const jour = maj ? dateSeule(maj) : null
+
+    return `  <url>\n    <loc>${url}</loc>\n`
+      + (jour ? `    <lastmod>${jour}</lastmod>\n` : '')
+      + `    <changefreq>${frequence}</changefreq>\n`
       + `    <priority>${priorite}</priority>\n  </url>`
   })
 
@@ -518,10 +706,18 @@ async function principal() {
     ...oeuvres.map(pageOeuvre).map((p) => ({ ...p, priorite: '0.6', frequence: 'weekly' })),
   ]
 
+  // Le répertoire des fiches, pour que chaque page puisse pointer vers les
+  // autres. C'est ce maillage qui manquait : aucune de nos adresses n'était
+  // désignée par une autre page, et Google n'explorait donc presque rien.
+  const repertoire = {
+    hebergements: pages.filter((p) => p.chemin.startsWith('hebergements/')),
+    oeuvres: pages.filter((p) => p.chemin.startsWith('boutique/')),
+  }
+
   for (const page of pages) {
     const dossier = page.chemin ? join(DIST, page.chemin) : DIST
     await mkdir(dossier, { recursive: true })
-    await writeFile(join(dossier, 'index.html'), injecter(gabarit, page), 'utf8')
+    await writeFile(join(dossier, 'index.html'), injecter(gabarit, page, repertoire), 'utf8')
   }
 
   await writeFile(join(DIST, 'robots.txt'), ROBOTS, 'utf8')
