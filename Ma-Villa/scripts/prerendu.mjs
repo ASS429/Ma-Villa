@@ -35,6 +35,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises'
 import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { enSlug } from './villes.mjs'
 
 const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..')
 const DIST = join(RACINE, 'dist')
@@ -314,19 +315,6 @@ function pageOeuvre(oeuvre) {
 }
 
 /* ── Une page par destination ─────────────────────────────────── */
-
-/**
- * ⚠️ Doit rendre **exactement** la même chose que `src/lib/villes.ts`. Deux
- * calculs différents mettraient la page pré-rendue et la page de l'application
- * à deux adresses distinctes — l'une servant un fichier, l'autre le gabarit.
- */
-const enSlug = (ville) =>
-  String(ville)
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
 
 /**
  * « location villa Saly » est ce que les gens tapent, et `?ville=Saly` ne se

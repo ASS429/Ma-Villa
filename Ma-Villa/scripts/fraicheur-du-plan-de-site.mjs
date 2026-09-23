@@ -28,6 +28,7 @@
 import { readFileSync, appendFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { enSlug } from './villes.mjs'
 
 const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -113,7 +114,13 @@ async function fichesPubliees() {
   const villas = await collection('villas')
   const oeuvres = await collection('oeuvres')
 
+  // Les destinations comptent aussi. Sans elles, un propriétaire qui corrigerait
+  // la ville de son annonce ne déclencherait aucune reconstruction — le nombre de
+  // fiches n'ayant pas bougé — et l'ancienne ville garderait sa page.
+  const villes = [...new Set(villas.map((v) => v.ville).filter(Boolean))]
+
   return new Set([
+    ...villes.map((v) => `${SITE}/destinations/${enSlug(v)}/`),
     ...villas.map((v) => `${SITE}/hebergements/${v.id}/`),
     ...(oeuvres ?? []).map((o) => `${SITE}/boutique/${o.id}/`),
   ])
@@ -145,7 +152,8 @@ async function fichesDuPlanDeSite() {
 function estUneFiche(url) {
   const segments = url.replace(SITE, '').split('/').filter(Boolean)
 
-  return segments.length === 2 && (segments[0] === 'hebergements' || segments[0] === 'boutique')
+  return segments.length === 2
+    && (segments[0] === 'hebergements' || segments[0] === 'boutique' || segments[0] === 'destinations')
 }
 
 /* ── Exécution ────────────────────────────────────────────────── */
