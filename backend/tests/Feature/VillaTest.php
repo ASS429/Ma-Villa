@@ -187,6 +187,27 @@ class VillaTest extends TestCase
         $this->assertEquals(2, $data[array_search('Saly', $villes)]['nb']);
     }
 
+    /**
+     * « À partir de » porte sur la ville entière, pas sur l'annonce qui
+     * l'illustre.
+     *
+     * Le prix était lu sur la villa retenue pour la photo. Juste tant qu'une
+     * ville n'avait qu'une annonce ; le 23 septembre 2026, Saly en comptait
+     * cinq et l'accueil annonçait 160 000 FCFA quand la moins chère était à
+     * 17 000. C'est une promesse de prix, et elle faisait fuir.
+     */
+    public function test_le_prix_d_une_destination_est_le_plancher_de_la_ville(): void
+    {
+        // La plus chère en premier : c'est elle que retenait la vitrine.
+        $this->villaAvec('La chère', 160000)->update(['ville' => 'Saly']);
+        $this->villaAvec('La modeste', 17000)->update(['ville' => 'Saly']);
+
+        $data = $this->getJson('/api/destinations')->assertOk()->json();
+        $saly = $data[array_search('Saly', array_column($data, 'ville'))];
+
+        $this->assertEquals(17000, (int) $saly['prix_min']);
+    }
+
     // ── Filtre par note et tris ──────────────────────────────────
     //
     // Ces cas ne sont pas que fonctionnels : ils exercent le SQL de tri et de

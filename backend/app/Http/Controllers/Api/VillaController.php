@@ -171,11 +171,30 @@ class VillaController extends Controller
             ->limit(6)
             ->get();
 
-        $destinations = $villes->map(function ($ligne) {
+        /*
+         | « À partir de » porte sur **toute la ville**, et se calcule donc à part.
+         |
+         | Il était lu sur la villa retenue pour la photo. Tant qu'une ville n'avait
+         | qu'une annonce, c'était juste par hasard ; le 23 septembre 2026, Saly en
+         | comptait cinq et l'accueil annonçait « à partir de 160 000 FCFA » quand la
+         | moins chère était à 17 000. Une vitrine qui se trompe de prix dans ce
+         | sens-là fait partir le visiteur avant le premier clic.
+         */
+        $planchers = DB::table('tarifs')
+            ->join('logements', 'logements.id', '=', 'tarifs.logement_id')
+            ->join('villas', 'villas.id', '=', 'logements.villa_id')
+            ->where('villas.statut', 'validee')
+            ->whereIn('villas.ville', $villes->pluck('ville'))
+            ->groupBy('villas.ville')
+            ->selectRaw('villas.ville as ville, min(tarifs.prix) as prix_min')
+            ->pluck('prix_min', 'ville');
+
+        $destinations = $villes->map(function ($ligne) use ($planchers) {
+            // La vitrine ne sert plus qu'à la photo : une annonce sans photo ne
+            // peut pas illustrer une destination.
             $vitrine = Villa::where('statut', 'validee')
                 ->where('ville', $ligne->ville)
                 ->with('photos')
-                ->withMin('tarifs as prix_min', 'prix')
                 ->has('photos')
                 ->first()
                 ?? Villa::where('statut', 'validee')->where('ville', $ligne->ville)->with('photos')->first();
@@ -183,7 +202,7 @@ class VillaController extends Controller
             return [
                 'ville'    => $ligne->ville,
                 'nb'       => (int) $ligne->nb,
-                'prix_min' => $vitrine?->prix_min,
+                'prix_min' => $planchers[$ligne->ville] ?? null,
                 'photo'    => $vitrine?->photos->first()?->url,
             ];
         });

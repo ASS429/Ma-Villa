@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { enSlug } from '../lib/villes'
 import api from '../services/api'
 import { useRequete } from '../lib/useRequete'
 import { fcfa } from '../lib/format'
@@ -51,10 +52,12 @@ export default function Destinations() {
           </div>
         ) : (
           <ScrollReveal className="sr-stagger grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {/* Vers la page de la destination, pas vers un filtre : c'est elle
+                que Google indexe, et chaque lien interne la désigne. */}
             {destinations.map((d) => (
               <Link
                 key={d.ville}
-                to={`/hebergements?ville=${encodeURIComponent(d.ville)}`}
+                to={`/destinations/${enSlug(d.ville)}/`}
                 className="destination"
                 aria-label={`${d.ville}, ${d.nb} villa${d.nb > 1 ? 's' : ''}`}
               >

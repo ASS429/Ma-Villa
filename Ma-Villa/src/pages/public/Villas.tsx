@@ -179,10 +179,15 @@ export default function Villas() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text-1)' }}>
+      {/* `chemin` déclarait `/villas`, l'ancienne route, qui redirige :
+          l'application annonçait donc à Google une adresse de référence menant
+          ailleurs, et contredisait le HTML pré-rendu — c'est la version rendue
+          qui fait foi. Barre oblique finale comprise, voici la forme que
+          servent Render et le plan de site. */}
       <Seo
         titre={filtres.ville ? `Hébergements à ${filtres.ville}` : 'Tous les hébergements'}
         description={descriptionSeo}
-        chemin="/villas"
+        chemin="/hebergements/"
       />
       <PageHeader />
 

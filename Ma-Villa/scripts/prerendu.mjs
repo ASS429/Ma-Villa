@@ -256,6 +256,7 @@ function pageVilla(villa) {
     lieu: ville,
     // Le point final appartient à la description, pas à un élément de liste.
     prix: prix.trim().replace(/\.$/, ''),
+    prixNombre: villa.prix_min != null ? Number(villa.prix_min) : null,
     texte: villa.description,
     maj: villa.updated_at ?? villa.created_at,
   }
@@ -309,6 +310,66 @@ function pageOeuvre(oeuvre) {
     prix: `${fcfa(oeuvre.prix)}${achetable ? '' : ' — vendu'}`,
     texte: oeuvre.description,
     maj: oeuvre.updated_at ?? oeuvre.created_at,
+  }
+}
+
+/* ── Une page par destination ─────────────────────────────────── */
+
+/**
+ * ⚠️ Doit rendre **exactement** la même chose que `src/lib/villes.ts`. Deux
+ * calculs différents mettraient la page pré-rendue et la page de l'application
+ * à deux adresses distinctes — l'une servant un fichier, l'autre le gabarit.
+ */
+const enSlug = (ville) =>
+  String(ville)
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+/**
+ * « location villa Saly » est ce que les gens tapent, et `?ville=Saly` ne se
+ * pré-rend pas : l'hébergement est statique, un fichier par chemin. Chaque
+ * ville qui a au moins une annonce reçoit donc son adresse à elle.
+ *
+ * Les villes sont prises **sur les annonces publiées**, jamais sur la liste de
+ * référence : une page de destination vide n'a rien à faire dans Google.
+ */
+function pageDestination(ville, fiches) {
+  const plancher = fiches
+    .map((f) => f.prixNombre)
+    .filter((p) => p != null)
+    .sort((a, b) => a - b)[0]
+
+  const titre = `Hébergements à ${ville} — PasseTemps`
+  const description = resumer(
+    `${fiches.length} hébergement${fiches.length > 1 ? 's' : ''} à louer à ${ville}`
+    + `${plancher != null ? `, à partir de ${fcfa(plancher)}` : ''}`
+    + ' — villas, résidences, appartements et chambres, tarifs affichés en FCFA.',
+  )
+
+  return {
+    chemin: `destinations/${enSlug(ville)}`,
+    titre,
+    description,
+    image: fiches.find((f) => f.image)?.image,
+    nom: `Hébergements à ${ville}`,
+    // Dans une liste, le titre de la page se répéterait quatre fois : ce qui
+    // distingue une destination d'une autre, c'est la ville et son volume.
+    libelle: `${ville} — ${fiches.length} hébergement${fiches.length > 1 ? 's' : ''}`,
+    fiches,
+    donnees: {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: `Hébergements à ${ville}`,
+      description,
+      about: {
+        '@type': 'Place',
+        name: ville,
+        address: { '@type': 'PostalAddress', addressLocality: ville, addressCountry: 'SN' },
+      },
+    },
   }
 }
 
@@ -421,7 +482,7 @@ function listeDeLiens(pages) {
   if (!pages.length) return ''
 
   const items = pages
-    .map((p) => `<li>${lien(adresse(p.chemin), p.nom ?? p.titre)}${p.prix ? ` — ${echapperTexte(p.prix)}` : ''}</li>`)
+    .map((p) => `<li>${lien(adresse(p.chemin), p.libelle ?? p.nom ?? p.titre)}${p.prix ? ` — ${echapperTexte(p.prix)}` : ''}</li>`)
     .join('')
 
   return `<ul style="${STYLE.liste}">${items}</ul>`
@@ -464,17 +525,26 @@ function corps(page, repertoire) {
   morceaux.push(`<p style="${STYLE.texte}">${echapperTexte(texte || description)}</p>`)
 
   // Les liens, la vraie raison d'être de ce corps.
-  const { hebergements = [], oeuvres = [] } = repertoire
+  const { hebergements = [], oeuvres = [], destinations = [] } = repertoire
 
   if (chemin === '') {
+    if (destinations.length) {
+      morceaux.push(`<h2 style="${STYLE.sousTitre}">Nos destinations</h2>`, listeDeLiens(destinations))
+    }
     morceaux.push(`<h2 style="${STYLE.sousTitre}">Nos hébergements</h2>`, listeDeLiens(hebergements))
     if (oeuvres.length) {
       morceaux.push(`<h2 style="${STYLE.sousTitre}">La boutique</h2>`, listeDeLiens(oeuvres))
     }
   } else if (chemin === 'hebergements') {
-    morceaux.push(listeDeLiens(hebergements))
+    if (destinations.length) {
+      morceaux.push(`<h2 style="${STYLE.sousTitre}">Par destination</h2>`, listeDeLiens(destinations))
+    }
+    morceaux.push(`<h2 style="${STYLE.sousTitre}">Toutes les annonces</h2>`, listeDeLiens(hebergements))
   } else if (chemin === 'boutique') {
     morceaux.push(listeDeLiens(oeuvres))
+  } else if (chemin.startsWith('destinations/')) {
+    morceaux.push(listeDeLiens(page.fiches ?? []))
+    morceaux.push(`<p>${lien('/hebergements/', 'Voir tous les hébergements')}</p>`)
   } else if (chemin.startsWith('hebergements/') || chemin.startsWith('boutique/')) {
     const fiche = chemin.startsWith('hebergements/')
     const famille = (fiche ? hebergements : oeuvres).filter((p) => p.chemin !== chemin)
@@ -698,11 +768,29 @@ async function principal() {
     console.warn('      précédent est conservé. Relancer le déploiement API réveillée.\n')
   }
 
+  const fiches = villas.map(pageVilla)
+
+  // Une destination par ville réellement pourvue. Prises sur les annonces et
+  // non sur la liste de référence : une page de destination vide n'a rien à
+  // faire dans Google, et en ferait douter du reste.
+  const parVille = new Map()
+  for (let i = 0; i < villas.length; i++) {
+    const ville = villas[i].ville
+    if (!ville) continue
+    if (!parVille.has(ville)) parVille.set(ville, [])
+    parVille.get(ville).push(fiches[i])
+  }
+
+  const destinations = [...parVille.entries()]
+    .sort((a, b) => b[1].length - a[1].length)
+    .map(([ville, liste]) => pageDestination(ville, liste))
+
   const pages = [
     ...PAGES_FIXES
       .filter((p) => !p.siBoutiqueOuverte || boutiqueOuverte)
       .map((p) => ({ ...p, priorite: p.chemin === '' ? '1.0' : '0.8' })),
-    ...villas.map(pageVilla).map((p) => ({ ...p, priorite: '0.6', frequence: 'daily' })),
+    ...destinations.map((p) => ({ ...p, priorite: '0.7', frequence: 'weekly' })),
+    ...fiches.map((p) => ({ ...p, priorite: '0.6', frequence: 'daily' })),
     ...oeuvres.map(pageOeuvre).map((p) => ({ ...p, priorite: '0.6', frequence: 'weekly' })),
   ]
 
@@ -712,6 +800,7 @@ async function principal() {
   const repertoire = {
     hebergements: pages.filter((p) => p.chemin.startsWith('hebergements/')),
     oeuvres: pages.filter((p) => p.chemin.startsWith('boutique/')),
+    destinations: pages.filter((p) => p.chemin.startsWith('destinations/')),
   }
 
   for (const page of pages) {

@@ -29,6 +29,7 @@ import EmailVerifie from './pages/EmailVerifie'
 import NotFound from './pages/NotFound'
 import Villas from './pages/public/Villas'
 import VillaDetail from './pages/public/VillaDetail'
+import Destination from './pages/public/Destination'
 import PageLegale from './pages/legal/PageLegale'
 
 /* ─── Espaces privés : chargés à la demande ──────────────────────
@@ -400,6 +401,11 @@ export default function App() {
       <Route path="/" element={<Home />} />
       <Route path="/hebergements" element={<Villas />} />
       <Route path="/hebergements/:id" element={<VillaDetail />} />
+
+      {/* Une page par ville, parce qu'un `?ville=` ne se pré-rend pas et
+          n'entre pas au plan de site. C'est la porte d'entrée depuis Google
+          sur « location villa Saly ». */}
+      <Route path="/destinations/:ville" element={<Destination />} />
 
       {/* Les anciennes adresses continuent de répondre, et pour longtemps.
           La plupart des visiteurs arrivent par un lien WhatsApp vers
