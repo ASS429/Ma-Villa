@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import Button from '../ui/Button'
 import { aujourdhui } from '../../lib/format'
 
-const DESTINATIONS = ['Saly', 'Mbour', 'Dakar', 'Ziguinchor', 'Somone', 'Saint-Louis']
-
 export interface CriteresRecherche {
   ville: string
   date_debut: string
@@ -18,8 +16,10 @@ export interface CriteresRecherche {
  * barre segmentée donnait des cibles de 80 px de large. Ici chaque contrôle
  * fait au moins 44 px de haut, et le calendrier a la place d'exister.
  *
- * La destination est en pastilles et non en menu déroulant : quatre villes
- * forment une liste finie, et un menu coûte deux tapotements de plus pour rien.
+ * La destination est en pastilles et non en menu déroulant : une poignée de
+ * villes forme une liste finie, et un menu coûte deux tapotements de plus pour
+ * rien. Les villes viennent du serveur — celles sous lesquelles il range les
+ * annonces — et le champ libre juste en dessous ouvre le reste du pays.
  *
  * Les dates restent facultatives — beaucoup arrivent par un lien WhatsApp sans
  * dates arrêtées, et exiger un calendrier avant de voir la moindre villa ferait
@@ -27,15 +27,22 @@ export interface CriteresRecherche {
  */
 export default function FeuilleRecherche({
   initiaux,
+  villes,
   onValider,
   onFermer,
 }: {
   initiaux: CriteresRecherche
+  /** Les villes reconnues par le serveur ; les six premières font les pastilles. */
+  villes: string[]
   onValider: (criteres: CriteresRecherche) => void
   onFermer: () => void
 }) {
   const [criteres, setCriteres] = useState<CriteresRecherche>(initiaux)
   const panneau = useRef<HTMLDivElement>(null)
+
+  // Six au plus : au-delà, les pastilles deviennent un mur de boutons sur un
+  // écran de 375 px, et la liste complète tient déjà dans le champ libre.
+  const pastilles = villes.slice(0, 6)
 
   useEffect(() => {
     const surTouche = (e: KeyboardEvent) => { if (e.key === 'Escape') onFermer() }
@@ -80,7 +87,7 @@ export default function FeuilleRecherche({
         <section className="feuille-section">
           <h3 className="feuille-section-titre">Destination</h3>
           <div className="feuille-pastilles">
-            {DESTINATIONS.map((v) => (
+            {pastilles.map((v) => (
               <button
                 key={v}
                 type="button"
@@ -97,7 +104,7 @@ export default function FeuilleRecherche({
             className="champ-controle"
             placeholder="Ou saisissez une autre ville"
             aria-label="Autre destination"
-            value={DESTINATIONS.includes(criteres.ville) ? '' : criteres.ville}
+            value={pastilles.includes(criteres.ville) ? '' : criteres.ville}
             onChange={(e) => maj('ville', e.target.value)}
           />
         </section>

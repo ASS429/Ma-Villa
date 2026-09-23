@@ -57,6 +57,12 @@ interface Configuration {
   annonces: {
     /** Nombre de photos qu'une annonce peut détenir, au total. */
     photos_max: number
+    /**
+     * Les villes reconnues par le serveur, de la plus précise à la plus
+     * générale. C'est sous ces noms-là qu'il range les saisies : en proposer
+     * d'autres serait proposer des villes qui n'existeront jamais en base.
+     */
+    villes: string[]
   }
   boutique: {
     /** Faux tant que BOUTIQUE_ACTIVE n'est pas levée : la boutique n'existe alors nulle part. */
@@ -95,7 +101,12 @@ const DEFAUT: Configuration = {
   notifications: { actives: false, cle_publique: null },
   // Repli prudent : cinq, la valeur du serveur. Un plafond trop haut par
   // défaut laisserait envoyer des photos qui seraient refusées ensuite.
-  annonces: { photos_max: 5 },
+  // Les villes du repli sont celles où des annonces existent : si le serveur
+  // ne répond pas, mieux vaut en proposer six justes qu'aucune.
+  annonces: {
+    photos_max: 5,
+    villes: ['Saly', 'Somone', 'Mbour', 'Dakar', 'Saint-Louis', 'Cap Skirring'],
+  },
   // Boutique fermée par défaut : elle ne doit apparaître nulle part tant que
   // le serveur ne l'a pas confirmée ouverte.
   boutique: { actif: false, zones: {}, livraison: false },

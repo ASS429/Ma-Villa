@@ -503,7 +503,12 @@ export default function VillaDetail() {
             </div>
 
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-5">
-              <p className="th-text-2">{villa.adresse}, {villa.ville}</p>
+              {/* Le quartier s'intercale quand il existe : c'est la précision
+                  que le propriétaire avait écrite dans la ville, et qu'on lui
+                  a rendue en la rangeant ailleurs. */}
+              <p className="th-text-2">
+                {[villa.adresse, villa.quartier, villa.ville].filter(Boolean).join(', ')}
+              </p>
               {note && (
                 <span className="flex items-center gap-1.5 text-sm">
                   <span style={{ color: 'var(--accent-gold)' }}>★</span>

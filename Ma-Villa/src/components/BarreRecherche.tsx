@@ -4,8 +4,7 @@ import { Search } from 'lucide-react'
 import Button from './ui/Button'
 import FeuilleRecherche, { type CriteresRecherche } from './recherche/FeuilleRecherche'
 import { aujourdhui, dateCourte } from '../lib/format'
-
-const DESTINATIONS = ['Saly', 'Mbour', 'Dakar', 'Ziguinchor', 'Somone', 'Cap Skirring']
+import { useConfig } from '../context/ConfigContext'
 
 interface Props {
   /** `hero` : posé sur la photo. `page` : intégré dans une page claire. */
@@ -40,6 +39,10 @@ function resume(c: CriteresRecherche): { titre: string; detail: string } {
  */
 export default function BarreRecherche({ variante = 'hero', valeursInitiales, onRecherche }: Props) {
   const navigate = useNavigate()
+  // Les villes viennent du serveur : ce sont celles sous lesquelles il range
+  // les annonces. L'interface en tenait deux listes écrites à la main, qui ne
+  // disaient déjà plus la même chose — et proposaient des villes vides.
+  const { annonces } = useConfig()
   const [feuilleOuverte, setFeuilleOuverte] = useState(false)
   const [criteres, setCriteres] = useState<CriteresRecherche>({
     ville: valeursInitiales?.ville ?? '',
@@ -96,6 +99,7 @@ export default function BarreRecherche({ variante = 'hero', valeursInitiales, on
       {feuilleOuverte && (
         <FeuilleRecherche
           initiaux={criteres}
+          villes={annonces.villes}
           onValider={(v) => { setCriteres(v); setFeuilleOuverte(false); lancer(v) }}
           onFermer={() => setFeuilleOuverte(false)}
         />
@@ -131,7 +135,7 @@ export default function BarreRecherche({ variante = 'hero', valeursInitiales, on
               style={styleChamp}
             />
             <datalist id="destinations-senegal">
-              {DESTINATIONS.map((d) => <option key={d} value={d} />)}
+              {annonces.villes.map((d) => <option key={d} value={d} />)}
             </datalist>
           </div>
 

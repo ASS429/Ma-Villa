@@ -15,7 +15,7 @@ class Villa extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'user_id', 'nom', 'description', 'adresse', 'ville',
+        'user_id', 'nom', 'description', 'adresse', 'ville', 'quartier',
         'latitude', 'longitude', 'telephone', 'statut', 'vedette',
     ];
 

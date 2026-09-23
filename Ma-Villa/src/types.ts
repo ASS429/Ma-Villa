@@ -70,6 +70,12 @@ interface VillaBase {
   id: number
   nom: string
   ville: string
+  /**
+   * Ce que le propriétaire précise sous la ville — « Velingara », « derrière
+   * RDC ». Le serveur l'extrait de la ville quand elle en contenait trop, pour
+   * que « Saly velingara » et « Saly » ne fassent plus deux destinations.
+   */
+  quartier?: string | null
   description: string
   /**
    * Absent des réponses publiques : le numéro n'est servi qu'au propriétaire

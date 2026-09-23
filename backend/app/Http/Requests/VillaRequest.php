@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Villa;
+use App\Services\Ville;
 use Illuminate\Foundation\Http\FormRequest;
 
 class VillaRequest extends FormRequest
@@ -40,11 +41,42 @@ class VillaRequest extends FormRequest
         return [
             'nom'         => 'required|string|max:255',
             'ville'       => 'required|string|max:100',
+            'quartier'    => 'sometimes|nullable|string|max:100',
             'description' => 'sometimes|nullable|string',
             'adresse'     => 'sometimes|nullable|string|max:255',
             'latitude'    => 'nullable|numeric|between:-90,90',
             'longitude'   => 'nullable|numeric|between:-180,180',
             'telephone'   => 'sometimes|nullable|string|max:50',
         ];
+    }
+
+    /**
+     * La ville se range **ici**, à l'entrée.
+     *
+     * Elle était saisie librement, et six annonces ont suffi à produire six
+     * destinations pour deux lieux : « Saly », « Saly bambara », « Saly
+     * velingara », « Saly derrière rdc », « Mbour Saly », « Dakar ».
+     *
+     * Normaliser dans le formulaire n'aurait protégé que ce formulaire —
+     * l'application mobile écrit par la même API, et un futur client aussi.
+     *
+     * Ce qui dépasse la ville devient le quartier, et **un quartier déjà
+     * renseigné n'est jamais écrasé** : sans cette précaution, chaque
+     * enregistrement d'étape de la publication (qui renvoie le nom et la ville,
+     * jamais le quartier) effacerait la précision du propriétaire.
+     */
+    protected function prepareForValidation(): void
+    {
+        if (! $this->has('ville')) {
+            return;
+        }
+
+        ['ville' => $ville, 'quartier' => $quartier] = Ville::normaliser($this->input('ville'));
+
+        $this->merge(['ville' => $ville]);
+
+        if ($quartier !== null && blank($this->input('quartier'))) {
+            $this->merge(['quartier' => $quartier]);
+        }
     }
 }

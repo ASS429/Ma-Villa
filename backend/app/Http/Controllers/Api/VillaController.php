@@ -9,6 +9,7 @@ use App\Models\Reservation;
 use App\Models\Tarif;
 use App\Models\Villa;
 use App\Services\Commission;
+use App\Services\Ville;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -79,7 +80,12 @@ class VillaController extends Controller
             ]);
 
         if ($request->ville) {
-            $query->where('ville', 'like', "%{$request->ville}%");
+            // On filtre sur la ville **reconnue**, pas sur la saisie : un
+            // visiteur qui arrive par un lien « Saly Velingara » cherche Saly.
+            // Sans cela, la recherche ne rendrait rien alors que l'annonce
+            // existe, et l'orthographe du lien déciderait du résultat.
+            $ville = Ville::normaliser($request->ville)['ville'];
+            $query->where('ville', 'like', "%{$ville}%");
         }
 
         if ($request->filled('prix_min') || $request->filled('prix_max')) {
@@ -322,6 +328,11 @@ class VillaController extends Controller
 
         $seuil = (int) config('annonces.reperes_prix_minimum', 10);
 
+        // La comparaison porte sur la ville reconnue : un propriétaire qui
+        // écrit « Saly Velingara » doit voir ce qui se pratique à Saly, et non
+        // une fourchette bâtie sur sa seule annonce.
+        $ville = Ville::normaliser($donnees['ville'])['ville'];
+
         $prix = Tarif::query()
             ->when(filled($donnees['type_tarif'] ?? null),
                 fn (Builder $q) => $q->where('type_tarif', $donnees['type_tarif']))
@@ -330,7 +341,7 @@ class VillaController extends Controller
                     fn (Builder $l) => $l->where('type', $donnees['type_logement'])))
             ->whereHas('logement.villa', fn (Builder $q) => $q
                 ->where('statut', 'validee')
-                ->where('ville', 'like', $donnees['ville']))
+                ->where('ville', 'like', $ville))
             ->orderBy('prix')
             ->pluck('prix')
             ->map(fn ($p) => (int) $p)
@@ -348,7 +359,7 @@ class VillaController extends Controller
 
         if ($prix->count() < $seuil) {
             return response()->json([
-                'ville'      => $donnees['ville'],
+                'ville'      => $ville,
                 'comparable' => false,
                 'annonces'   => $prix->count(),
                 'seuil'      => $seuil,
@@ -370,7 +381,7 @@ class VillaController extends Controller
         };
 
         return response()->json([
-            'ville'      => $donnees['ville'],
+            'ville'      => $ville,
             'comparable' => true,
             'annonces'   => $prix->count(),
             'bas'        => $quartile(0.25),

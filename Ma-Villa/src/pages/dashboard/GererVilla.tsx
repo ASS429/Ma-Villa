@@ -6,12 +6,13 @@ import { messageErreur } from '../../lib/erreurs'
 import { fcfa } from '../../lib/format'
 import { LIBELLES_STATUT_VILLA, type StatutVilla } from '../../types'
 import ConfirmModal from '../../components/ConfirmModal'
+import { useConfig } from '../../context/ConfigContext'
 
 interface Photo { id: number; url: string; alt: string }
 interface Tarif { id: number; type_tarif: string; avec_clim: boolean; avec_buffet: boolean; prix: number }
 interface Logement { id: number; nom: string; type: string; capacite: number; disponible: boolean; tarifs: Tarif[] }
 interface Villa {
-  id: number; nom: string; description: string; adresse: string; ville: string;
+  id: number; nom: string; description: string; adresse: string; ville: string; quartier: string | null;
   telephone: string; latitude: string | null; longitude: string | null; statut: StatutVilla;
   photos: Photo[]; logements: Logement[]
 }
@@ -72,10 +73,13 @@ export default function GererVilla() {
   const { id } = useParams()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Les villes proposées viennent du serveur : ce sont celles sous lesquelles
+  // il range les annonces.
+  const { annonces } = useConfig()
   const [villa, setVilla] = useState<Villa | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [editingInfo, setEditingInfo] = useState(false)
-  const [infoForm, setInfoForm] = useState({ nom: '', description: '', adresse: '', ville: '', telephone: '', latitude: '', longitude: '' })
+  const [infoForm, setInfoForm] = useState({ nom: '', description: '', adresse: '', ville: '', quartier: '', telephone: '', latitude: '', longitude: '' })
   const [infoSaving, setInfoSaving] = useState(false)
   const [geoLoading, setGeoLoading] = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
@@ -99,7 +103,7 @@ export default function GererVilla() {
         setVilla(v)
         setInfoForm({
           nom: v.nom ?? '', description: v.description ?? '', adresse: v.adresse ?? '',
-          ville: v.ville ?? '', telephone: v.telephone ?? '',
+          ville: v.ville ?? '', quartier: v.quartier ?? '', telephone: v.telephone ?? '',
           latitude: v.latitude ?? '', longitude: v.longitude ?? '',
         })
       })
@@ -306,9 +310,19 @@ export default function GererVilla() {
                 <input required value={infoForm.nom} onChange={(e) => setInfoForm((f) => ({ ...f, nom: e.target.value }))} />
               </SmallField>
               <SmallField label="Ville">
-                <input required value={infoForm.ville} onChange={(e) => setInfoForm((f) => ({ ...f, ville: e.target.value }))} />
+                {/* Suggestions, pas menu fermé : une ville absente de la liste
+                    reste saisissable, et le serveur la range de toute façon. */}
+                <input required list="villes-senegal" value={infoForm.ville} onChange={(e) => setInfoForm((f) => ({ ...f, ville: e.target.value }))} />
               </SmallField>
             </div>
+            {/* La liste vit hors du champ : `SmallField` n'habille qu'un seul
+                enfant. Un `datalist` ne s'affiche pas, sa place importe peu. */}
+            <datalist id="villes-senegal">
+              {annonces.villes.map((v) => <option key={v} value={v} />)}
+            </datalist>
+            <SmallField label="Quartier — facultatif">
+              <input value={infoForm.quartier} onChange={(e) => setInfoForm((f) => ({ ...f, quartier: e.target.value }))} placeholder="Velingara" />
+            </SmallField>
             <SmallField label="Adresse">
               <input required value={infoForm.adresse} onChange={(e) => setInfoForm((f) => ({ ...f, adresse: e.target.value }))} />
             </SmallField>
@@ -368,7 +382,7 @@ export default function GererVilla() {
           </form>
         ) : (
           <div className="flex flex-col gap-2.5">
-            <InfoRow label="Adresse" value={`${villa.adresse}, ${villa.ville}`} />
+            <InfoRow label="Adresse" value={[villa.adresse, villa.quartier, villa.ville].filter(Boolean).join(', ')} />
             <InfoRow label="Téléphone" value={villa.telephone} />
             <InfoRow label="Description" value={villa.description} multiline />
             {(villa.latitude || villa.longitude) && (

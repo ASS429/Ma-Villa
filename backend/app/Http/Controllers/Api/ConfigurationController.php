@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Categorie;
 use App\Services\Push;
 use App\Services\ReservationsSuspendues;
+use App\Services\Ville;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -54,6 +55,12 @@ class ConfigurationController extends Controller
             // dans un refus, une fois la data dépensée.
             'annonces' => [
                 'photos_max' => (int) config('annonces.photos_max'),
+                // Les villes proposées à la recherche et à la publication.
+                // Elles viennent du serveur pour deux raisons : l'interface en
+                // tenait deux listes différentes — la barre proposait « Cap
+                // Skirring », la feuille mobile « Saint-Louis » — et c'est le
+                // serveur qui range les saisies sous ces noms-là.
+                'villes' => Ville::liste(),
             ],
             // Boutique d'articles. Les zones de livraison viennent d'ici : le
             // client doit connaître son total **avant** de payer, et relever

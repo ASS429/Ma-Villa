@@ -7,6 +7,7 @@ import { fcfa } from '../../lib/format'
 import TeleverseurPhotos from '../../components/console/TeleverseurPhotos'
 import Button from '../../components/ui/Button'
 import { useToast } from '../../context/ToastContext'
+import { useConfig } from '../../context/ConfigContext'
 import {
   LIBELLES_LOGEMENT, LIBELLES_TARIF, TYPES_LOGEMENT_PROPOSES,
   type Photo, type TypeLogement, type TypeTarif,
@@ -119,8 +120,12 @@ export default function NouvelleVilla() {
   const [manques, setManques] = useState<Manque[]>([])
   const [reperes, setReperes] = useState<Reperes | null>(null)
 
+  // Les villes proposées viennent du serveur : ce sont celles sous lesquelles
+  // il range les annonces. En proposer d'autres reviendrait à promettre une
+  // destination qui n'existera pas.
+  const { annonces } = useConfig()
   const [villa, setVilla] = useState({
-    nom: '', ville: '', adresse: '', telephone: '', description: '',
+    nom: '', ville: '', quartier: '', adresse: '', telephone: '', description: '',
     latitude: '', longitude: '',
   })
   const [logement, setLogement] = useState({
@@ -145,7 +150,8 @@ export default function NouvelleVilla() {
         if (!vivant) return
         const v = r.data
         setVilla({
-          nom: v.nom ?? '', ville: v.ville ?? '', adresse: v.adresse ?? '',
+          nom: v.nom ?? '', ville: v.ville ?? '', quartier: v.quartier ?? '',
+          adresse: v.adresse ?? '',
           telephone: v.telephone ?? '', description: v.description ?? '',
           latitude: v.latitude ?? '', longitude: v.longitude ?? '',
         })
@@ -226,6 +232,7 @@ export default function NouvelleVilla() {
       if (etape.cle === 'adresse' && villaId) {
         await api.put(`/villas/${villaId}`, {
           nom: villa.nom, ville: villa.ville,
+          quartier: villa.quartier || null,
           adresse: villa.adresse || null,
           telephone: villa.telephone || null,
           latitude: villa.latitude || null,
@@ -391,11 +398,18 @@ export default function NouvelleVilla() {
               </label>
               <label className="champ">
                 <span>Ville</span>
+                {/* Une liste de suggestions, pas un menu fermé : une ville qui
+                    manque à la liste reste saisissable, et le serveur range
+                    « Saly velingara » sous Saly en gardant « Velingara ». */}
                 <input
+                  list="villes-senegal"
                   value={villa.ville}
                   onChange={(e) => setVilla({ ...villa, ville: e.target.value })}
                   placeholder="Saly"
                 />
+                <datalist id="villes-senegal">
+                  {annonces.villes.map((v) => <option key={v} value={v} />)}
+                </datalist>
               </label>
             </div>
           )}
@@ -421,6 +435,14 @@ export default function NouvelleVilla() {
                   value={villa.adresse}
                   onChange={(e) => setVilla({ ...villa, adresse: e.target.value })}
                   placeholder="Route de Ngaparou"
+                />
+              </label>
+              <label className="champ">
+                <span>Quartier — facultatif</span>
+                <input
+                  value={villa.quartier}
+                  onChange={(e) => setVilla({ ...villa, quartier: e.target.value })}
+                  placeholder="Velingara"
                 />
               </label>
               <label className="champ">
