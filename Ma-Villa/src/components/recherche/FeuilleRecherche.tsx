@@ -28,21 +28,35 @@ export interface CriteresRecherche {
 export default function FeuilleRecherche({
   initiaux,
   villes,
+  pourvues,
   onValider,
   onFermer,
 }: {
   initiaux: CriteresRecherche
-  /** Les villes reconnues par le serveur ; les six premières font les pastilles. */
+  /** Toutes les villes reconnues : c'est le champ libre qui les propose. */
   villes: string[]
+  /** Celles qui ont des annonces — elles seules font les pastilles. */
+  pourvues: string[]
   onValider: (criteres: CriteresRecherche) => void
   onFermer: () => void
 }) {
   const [criteres, setCriteres] = useState<CriteresRecherche>(initiaux)
   const panneau = useRef<HTMLDivElement>(null)
 
-  // Six au plus : au-delà, les pastilles deviennent un mur de boutons sur un
-  // écran de 375 px, et la liste complète tient déjà dans le champ libre.
-  const pastilles = villes.slice(0, 6)
+  /*
+   | Six au plus : au-delà, les pastilles deviennent un mur de boutons sur un
+   | écran de 375 px, et la liste complète tient déjà dans le champ libre.
+   |
+   | ⚠️ Prises sur les villes **pourvues**, pas sur la liste complète. Celle-ci
+   | arrive dans l'ordre qui sert à ranger les saisies, du plus précis au plus
+   | général : les six premières étaient Saly puis cinq villages sans une seule
+   | annonce, et ni Dakar ni Thiès. Un raccourci qui ne mène nulle part se paie
+   | en confiance — même règle que les catégories de la boutique.
+   |
+   | Serveur muet, `pourvues` est vide : aucune pastille, et le champ libre
+   | reste. Mieux qu'un raccourci inventé.
+   */
+  const pastilles = pourvues.slice(0, 6)
 
   useEffect(() => {
     const surTouche = (e: KeyboardEvent) => { if (e.key === 'Escape') onFermer() }
@@ -99,14 +113,21 @@ export default function FeuilleRecherche({
               </button>
             ))}
           </div>
+          {/* La liste complète vit ici, pas en pastilles : elle ouvre le reste
+              du pays sans encombrer l'écran. Le `<datalist>` se place à côté du
+              champ, jamais dedans. */}
           <input
             type="text"
             className="champ-controle"
+            list="villes-connues"
             placeholder="Ou saisissez une autre ville"
             aria-label="Autre destination"
             value={pastilles.includes(criteres.ville) ? '' : criteres.ville}
             onChange={(e) => maj('ville', e.target.value)}
           />
+          <datalist id="villes-connues">
+            {villes.map((v) => <option key={v} value={v} />)}
+          </datalist>
         </section>
 
         <section className="feuille-section">

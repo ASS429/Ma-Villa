@@ -70,10 +70,37 @@ final class Ville
         return ['ville' => $brut, 'quartier' => null];
     }
 
-    /** Les villes proposées à la recherche et à la publication. */
-    public static function liste(): array
+    /**
+     * Les villes proposées à la recherche et à la publication.
+     *
+     * ⚠️ **Ce n'est pas l'ordre de `config('villes.liste')`, et ce ne doit pas
+     * l'être.** Celui-là va du plus précis au plus général parce que c'est lui
+     * qui range « Mbour Saly » sous Saly : c'est un ordre d'algorithme, lu par
+     * `formes()`, et le changer casserait le rangement.
+     *
+     * Servi tel quel à l'interface, il plaçait Dakar en douzième position
+     * derrière cinq villages, et faisait des six pastilles de la feuille mobile
+     * cinq destinations **sans une seule annonce** — un raccourci qui ne mène
+     * nulle part. Relevé par l'exploitant le 23 septembre 2026.
+     *
+     * Ici : les villes pourvues d'abord, de la mieux pourvue à la moins, puis
+     * le reste par ordre alphabétique. Même règle que les catégories de la
+     * boutique — un filtre qui ne rend rien use la confiance.
+     *
+     * @param  list<string>  $pourvues  Villes ayant au moins une annonce publiée,
+     *                                  de la mieux pourvue à la moins.
+     * @return list<string>
+     */
+    public static function liste(array $pourvues = []): array
     {
-        return array_values(config('villes.liste', []));
+        // Une ville pourvue peut manquer à la référence : elle a été saisie
+        // avant d'y être connue. Elle a des annonces, donc elle se propose.
+        $devant = array_values(array_unique(array_filter($pourvues)));
+
+        $reste = array_values(array_diff(config('villes.liste', []), $devant));
+        usort($reste, fn ($a, $b) => strcmp(self::comparable($a), self::comparable($b)));
+
+        return [...$devant, ...$reste];
     }
 
     /**

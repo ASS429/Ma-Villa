@@ -100,6 +100,7 @@ export default function BarreRecherche({ variante = 'hero', valeursInitiales, on
         <FeuilleRecherche
           initiaux={criteres}
           villes={annonces.villes}
+          pourvues={annonces.villes_pourvues}
           onValider={(v) => { setCriteres(v); setFeuilleOuverte(false); lancer(v) }}
           onFermer={() => setFeuilleOuverte(false)}
         />

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Categorie;
+use App\Models\Villa;
 use App\Services\Push;
 use App\Services\ReservationsSuspendues;
 use App\Services\Ville;
@@ -17,6 +18,17 @@ class ConfigurationController extends Controller
 {
     public function __invoke(Push $push): JsonResponse
     {
+        // Les villes réellement pourvues, de la mieux pourvue à la moins. Une
+        // seule requête, et elle décide de l'ordre proposé à la recherche.
+        $pourvues = Villa::query()
+            ->where('statut', 'validee')
+            ->whereNotNull('ville')
+            ->selectRaw('ville, count(*) as nb')
+            ->groupBy('ville')
+            ->orderByDesc('nb')
+            ->pluck('ville')
+            ->all();
+
         return response()->json([
             // Version déployée, en clair. Sans elle, « mon correctif est-il en
             // ligne ? » ne se répond qu'en devinant : on relit du code qui n'est
@@ -60,7 +72,16 @@ class ConfigurationController extends Controller
                 // tenait deux listes différentes — la barre proposait « Cap
                 // Skirring », la feuille mobile « Saint-Louis » — et c'est le
                 // serveur qui range les saisies sous ces noms-là.
-                'villes' => Ville::liste(),
+                'villes' => Ville::liste($pourvues),
+                /*
+                 | Celles qui ont au moins une annonce, de la mieux pourvue à la
+                 | moins. La feuille de recherche en fait ses pastilles : elle
+                 | prenait les six premières de la liste complète, donc cinq
+                 | villages vides, et un raccourci qui ne rend rien se paie en
+                 | confiance. Une liste à part plutôt qu'un compte : le front n'a
+                 | alors rien à déduire.
+                 */
+                'villes_pourvues' => $pourvues,
             ],
             // Boutique d'articles. Les zones de livraison viennent d'ici : le
             // client doit connaître son total **avant** de payer, et relever

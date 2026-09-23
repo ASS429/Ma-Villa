@@ -95,4 +95,30 @@ class VilleDesAnnoncesTest extends TestCase
         $this->assertContains('Saly', $villes);
         $this->assertContains('Dakar', $villes);
     }
+
+    /**
+     * Ce que la recherche propose en premier doit mener quelque part.
+     *
+     * La liste servie était celle de l'algorithme, du plus précis au plus
+     * général : les six pastilles de la feuille mobile étaient donc Saly puis
+     * cinq villages **sans une seule annonce**, et ni Dakar ni Thiès. Relevé par
+     * l'exploitant le 23 septembre 2026.
+     */
+    public function test_la_recherche_propose_d_abord_les_villes_pourvues(): void
+    {
+        Villa::factory()->count(3)->validee()->create(['ville' => 'Dakar']);
+        Villa::factory()->validee()->create(['ville' => 'Saly']);
+        // En attente de modération : la ville n'a rien à proposer.
+        Villa::factory()->create(['ville' => 'Kolda', 'statut' => 'en_attente']);
+
+        $annonces = $this->getJson('/api/configuration')->assertOk()->json('annonces');
+
+        $this->assertSame(['Dakar', 'Saly'], $annonces['villes_pourvues'], 'La mieux pourvue en tête');
+        $this->assertSame(['Dakar', 'Saly'], array_slice($annonces['villes'], 0, 2));
+
+        // Les villes sans annonce restent proposées — il faut pouvoir publier
+        // à Kolda — mais après, et par ordre alphabétique.
+        $this->assertContains('Kolda', $annonces['villes']);
+        $this->assertSame('Cap Skirring', $annonces['villes'][2]);
+    }
 }

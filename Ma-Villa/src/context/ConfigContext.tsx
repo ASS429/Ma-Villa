@@ -63,6 +63,14 @@ interface Configuration {
      * d'autres serait proposer des villes qui n'existeront jamais en base.
      */
     villes: string[]
+    /**
+     * Celles qui ont au moins une annonce, de la mieux pourvue à la moins.
+     *
+     * Séparées parce qu'elles ne servent pas à la même chose : on **propose**
+     * toutes les villes à la publication — il faut pouvoir publier à Kolda —
+     * mais on ne **raccourcit** que vers celles qui mènent quelque part.
+     */
+    villes_pourvues: string[]
   }
   boutique: {
     /** Faux tant que BOUTIQUE_ACTIVE n'est pas levée : la boutique n'existe alors nulle part. */
@@ -106,6 +114,9 @@ const DEFAUT: Configuration = {
   annonces: {
     photos_max: 5,
     villes: ['Saly', 'Somone', 'Mbour', 'Dakar', 'Saint-Louis', 'Cap Skirring'],
+    // Vide à dessein : sans réponse du serveur, on ne sait pas où il y a des
+    // annonces, et un raccourci inventé vaut moins que pas de raccourci.
+    villes_pourvues: [],
   },
   // Boutique fermée par défaut : elle ne doit apparaître nulle part tant que
   // le serveur ne l'a pas confirmée ouverte.
