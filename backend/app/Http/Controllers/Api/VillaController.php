@@ -26,7 +26,7 @@ class VillaController extends Controller
             'prix_max'       => 'nullable|numeric|min:0',
             // `type_logement` reste accepté le temps que les liens partagés
             // avec l'ancien paramètre cessent de circuler.
-            'type_logement'  => 'nullable|in:villa_entiere,appartement,residence,chambre,piscine',
+            'type_logement'  => 'nullable|in:villa_entiere,appartement,residence,studio,chambre,hotel,auberge,piscine',
             'categorie'      => 'nullable|string|exists:categories,cle',
             'meuble'         => 'nullable|boolean',
             'note_min'       => 'nullable|numeric|between:1,5',
@@ -342,7 +342,7 @@ class VillaController extends Controller
             // exact et la comparaison absurde — c'est précisément le défaut
             // que le designer signalait.
             'type_tarif'     => 'sometimes|nullable|in:journee,nuitee,demi_journee,pass',
-            'type_logement'  => 'sometimes|nullable|in:villa_entiere,appartement,residence,chambre,piscine',
+            'type_logement'  => 'sometimes|nullable|in:villa_entiere,appartement,residence,studio,chambre,hotel,auberge,piscine',
         ]);
 
         $seuil = (int) config('annonces.reperes_prix_minimum', 10);

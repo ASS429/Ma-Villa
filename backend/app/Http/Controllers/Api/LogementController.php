@@ -18,7 +18,7 @@ class LogementController extends Controller
     public function store(LogementRequest $request, Villa $villa): JsonResponse
     {
         $this->authorize('update', $villa);
-        $logement = $villa->logements()->create($request->validated());
+        $logement = $villa->logements()->create($request->donnees());
 
         return response()->json($logement, 201);
     }
@@ -31,7 +31,7 @@ class LogementController extends Controller
     public function update(LogementRequest $request, Villa $villa, Logement $logement): JsonResponse
     {
         $this->authorize('update', $villa);
-        $logement->update($request->validated());
+        $logement->update($request->donnees());
 
         return response()->json($logement);
     }

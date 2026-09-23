@@ -12,7 +12,11 @@ export type Role = 'client' | 'proprietaire' | 'admin'
  * des logements publiés le portent encore, et l'énumération en base ne se
  * réécrit pas sous eux. Voir `TYPES_LOGEMENT_PROPOSES`.
  */
-export type TypeLogement = 'villa_entiere' | 'appartement' | 'residence' | 'chambre' | 'piscine'
+export type TypeLogement =
+  | 'villa_entiere' | 'appartement' | 'residence' | 'studio'
+  | 'chambre' | 'hotel' | 'auberge'
+  /** Retirée du catalogue le 28 août 2026 ; des logements la portent encore. */
+  | 'piscine'
 
 export type TypeTarif = 'journee' | 'nuitee' | 'demi_journee' | 'pass'
 
@@ -200,7 +204,10 @@ export const LIBELLES_LOGEMENT: Record<TypeLogement, string> = {
   villa_entiere: 'Villa entière',
   appartement: 'Appartement',
   residence: 'Résidence',
+  studio: 'Studio',
   chambre: 'Chambre',
+  hotel: 'Hôtel',
+  auberge: 'Auberge',
   piscine: 'Piscine',
 }
 
@@ -215,7 +222,10 @@ export const TYPES_LOGEMENT_PROPOSES: TypeLogement[] = [
   'villa_entiere',
   'appartement',
   'residence',
+  'studio',
   'chambre',
+  'hotel',
+  'auberge',
 ]
 
 /** Unité affichée à côté du prix « à partir de ». */

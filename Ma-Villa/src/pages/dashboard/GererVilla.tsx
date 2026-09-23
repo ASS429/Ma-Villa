@@ -4,7 +4,10 @@ import api from '../../services/api'
 import { televerserFichier as uploadFile } from '../../services/televerser'
 import { messageErreur } from '../../lib/erreurs'
 import { fcfa } from '../../lib/format'
-import { LIBELLES_STATUT_VILLA, type StatutVilla } from '../../types'
+import {
+  LIBELLES_LOGEMENT, LIBELLES_STATUT_VILLA, TYPES_LOGEMENT_PROPOSES,
+  type StatutVilla, type TypeLogement,
+} from '../../types'
 import ConfirmModal from '../../components/ConfirmModal'
 import { useConfig } from '../../context/ConfigContext'
 
@@ -17,9 +20,10 @@ interface Villa {
   photos: Photo[]; logements: Logement[]
 }
 
-const typeLabels: Record<string, string> = {
-  villa_entiere: 'Villa entière', appartement: 'Appartement', chambre: 'Chambre', piscine: 'Piscine',
-}
+// Cet écran tenait sa propre copie des libellés. Elle avait déjà divergé :
+// pas de « Résidence », qui s'affichait donc `undefined`, et « Piscine »
+// toujours proposée alors qu'elle est sortie du catalogue le 28 août 2026.
+// Les libellés vivent dans `types.ts`, avec la liste de ce qu'on propose.
 const tarifLabels: Record<string, string> = {
   journee: 'Journée', nuitee: 'Nuitée', demi_journee: 'Demi-journée', pass: 'Pass',
 }
@@ -482,8 +486,8 @@ export default function GererVilla() {
             </SmallField>
             <SmallField label="Type">
               <select value={logementForm.type} onChange={(e) => setLogementForm({ ...logementForm, type: e.target.value })}>
-                {Object.entries(typeLabels).map(([v, l]) => (
-                  <option key={v} value={v} style={{ background: 'var(--bg)' }}>{l}</option>
+                {TYPES_LOGEMENT_PROPOSES.map((t) => (
+                  <option key={t} value={t} style={{ background: 'var(--bg)' }}>{LIBELLES_LOGEMENT[t]}</option>
                 ))}
               </select>
             </SmallField>
@@ -526,8 +530,8 @@ export default function GererVilla() {
                     <SmallField label="Type">
                       <select value={editLogementForm.type}
                         onChange={(e) => setEditLogementForm({ ...editLogementForm, type: e.target.value })}>
-                        {Object.entries(typeLabels).map(([v, l]) => (
-                          <option key={v} value={v} style={{ background: 'var(--bg)' }}>{l}</option>
+                        {TYPES_LOGEMENT_PROPOSES.map((t) => (
+                          <option key={t} value={t} style={{ background: 'var(--bg)' }}>{LIBELLES_LOGEMENT[t]}</option>
                         ))}
                       </select>
                     </SmallField>
@@ -559,7 +563,7 @@ export default function GererVilla() {
                       </span>
                     </div>
                     <p className="text-sm" style={{ color: 'var(--text-3)' }}>
-                      {typeLabels[logement.type]} · {logement.capacite} pers.
+                      {LIBELLES_LOGEMENT[logement.type as TypeLogement]} · {logement.capacite} pers.
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
