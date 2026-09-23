@@ -1,7 +1,7 @@
 # Être sur Google — état et marche à suivre
 
-_Écrit le 2 septembre 2026. **La section 8, du 23 septembre, dit l'état courant** —
-les sections 1 à 3 décrivent un site qui n'avait encore aucune annonce._
+_Écrit le 2 septembre 2026. **Les sections 8 et 9, du 23 septembre, disent l'état
+courant** — les sections 1 à 3 décrivent un site qui n'avait encore aucune annonce._
 
 ---
 
@@ -320,3 +320,48 @@ pour un visiteur qui filtre, ce sont cinq destinations différentes, et notre ma
 principal est donc éclaté en cinq. Le chantier qui range tout cela est écrit et testé
 depuis le 12 septembre, **mais pas déployé** : sa migration réécrit les annonces de vrais
 propriétaires et attend un accord explicite. C'est le préalable aux pages par ville.
+
+---
+
+## 9. Le 23 septembre, suite : une page par destination
+
+Les villes rangées (voir la section précédente), chaque ville réellement pourvue a
+désormais **son adresse à elle** :
+
+```
+https://passetemps.sn/destinations/saly/
+https://passetemps.sn/destinations/dakar/
+https://passetemps.sn/destinations/thies/
+https://passetemps.sn/destinations/ziguinchor/
+```
+
+Pourquoi un chemin et pas un filtre : la liste savait déjà afficher « Hébergements à
+Saly », mais à l'adresse `/hebergements?ville=Saly`. Un paramètre de requête **ne se
+pré-rend pas** — le site est statique, il sert un fichier par chemin — donc cette page
+n'entrait pas au plan de site et Google n'en voyait que le gabarit. Or « location villa
+Saly » est exactement ce que les gens tapent.
+
+Ces pages sont construites **sur les annonces publiées**, jamais sur la liste des villes
+connues : une destination sans annonce ferait douter du reste. Elles apparaissent et
+disparaissent donc toutes seules, au rythme des publications.
+
+Le plan de site compte maintenant **26 adresses**.
+
+### Trois défauts trouvés en les construisant
+
+| | |
+|---|---|
+| **Le prix d'une destination était faux** | Il était pris sur l'annonce choisie pour la photo, pas sur la ville. Juste tant qu'une ville n'avait qu'une annonce ; avec cinq à Saly, l'accueil annonçait « à partir de 160 000 FCFA » quand la moins chère est à **17 000**. C'est une promesse de prix, et elle faisait fuir. |
+| **La liste se déclarait à la mauvaise adresse** | L'application annonçait `/villas` comme adresse de référence — l'ancienne route, qui redirige — et contredisait le HTML pré-rendu. C'est la version rendue que Google retient. |
+| **Une destination sans réponse s'affichait vide** | Tant que la configuration n'était pas arrivée, la page montrait « Hébergements à » sans ville, en se déclarant indexable. Trouvé au navigateur, pas autrement. |
+
+### Ce que vous pouvez faire
+
+Ces quatre adresses sont les meilleures candidates à une demande d'indexation, après
+l'accueil. Dans Search Console, **Inspecter l'URL** puis *Demander l'indexation* :
+
+```
+https://passetemps.sn/destinations/saly/
+```
+
+C'est la page qui porte le plus d'annonces, et « Saly » la requête la plus disputée.
