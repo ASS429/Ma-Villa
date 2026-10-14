@@ -10,6 +10,7 @@ import {
 } from '../../types'
 import ConfirmModal from '../../components/ConfirmModal'
 import { useConfig } from '../../context/ConfigContext'
+import { lieu } from '../../lib/lieu'
 
 interface Photo { id: number; url: string; alt: string }
 interface Tarif { id: number; type_tarif: string; avec_clim: boolean; avec_buffet: boolean; prix: number }
@@ -386,7 +387,7 @@ export default function GererVilla() {
           </form>
         ) : (
           <div className="flex flex-col gap-2.5">
-            <InfoRow label="Adresse" value={[villa.adresse, villa.quartier, villa.ville].filter(Boolean).join(', ')} />
+            <InfoRow label="Adresse" value={lieu(villa.adresse, villa.quartier, villa.ville)} />
             <InfoRow label="Téléphone" value={villa.telephone} />
             <InfoRow label="Description" value={villa.description} multiline />
             {(villa.latitude || villa.longitude) && (

@@ -16,6 +16,7 @@ import { messageErreur } from '../../lib/erreurs'
 import NotFound from '../NotFound'
 import { fcfa, dateCourte, noteLisible, nuits, aujourdhui } from '../../lib/format'
 import { type Occupation, type VillaDetail as Villa } from '../../types'
+import { lieu } from '../../lib/lieu'
 
 /* ─── Utilitaires ────────────────────────────────────────────── */
 
@@ -505,9 +506,13 @@ export default function VillaDetail() {
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-5">
               {/* Le quartier s'intercale quand il existe : c'est la précision
                   que le propriétaire avait écrite dans la ville, et qu'on lui
-                  a rendue en la rangeant ailleurs. */}
+                  a rendue en la rangeant ailleurs.
+
+                  `lieu()` et non une concaténation : les propriétaires écrivent
+                  la même chose dans plusieurs champs, et la ligne donnait
+                  « Thies, Thies, Thiès ». */}
               <p className="th-text-2">
-                {[villa.adresse, villa.quartier, villa.ville].filter(Boolean).join(', ')}
+                {lieu(villa.adresse, villa.quartier, villa.ville)}
               </p>
               {note && (
                 <span className="flex items-center gap-1.5 text-sm">
