@@ -212,7 +212,7 @@ export default function Boutique() {
 
             <div className="boutique-grille">
               {oeuvres.map((oeuvre) => (
-                <Link key={oeuvre.id} to={`/boutique/${oeuvre.id}`} className="boutique-lien">
+                <Link key={oeuvre.id} to={`/boutique/${oeuvre.id}/`} className="boutique-lien">
                   <CarteOeuvre oeuvre={oeuvre} />
                 </Link>
               ))}

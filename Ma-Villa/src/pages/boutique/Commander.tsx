@@ -112,7 +112,7 @@ export default function Commander() {
       <Navbar />
 
       <main className="achat">
-        <Link to={`/boutique/${id}`} className="oeuvre-retour">
+        <Link to={`/boutique/${id}/`} className="oeuvre-retour">
           <ArrowLeft size={16} aria-hidden="true" />
           Retour à l'article
         </Link>

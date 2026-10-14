@@ -717,6 +717,13 @@ Disallow: /admin
 Disallow: /reinitialiser-mot-de-passe
 Disallow: /email-verifie
 
+# Formulaires d'accès : aucun contenu, et ils coûtaient de l'exploration sur un
+# site qui en manque — Google avait déjà crawlé /login pour le ranger en
+# doublon de l'accueil, pendant que quatorze vraies pages attendaient.
+Disallow: /login
+Disallow: /register
+Disallow: /mot-de-passe-oublie
+
 # Le tunnel de paiement n'a aucune raison d'être exploré.
 Disallow: /reservation
 

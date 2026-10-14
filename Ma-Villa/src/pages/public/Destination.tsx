@@ -88,7 +88,7 @@ export default function Destination() {
           <p className="mb-6" style={{ color: 'var(--text-2)' }}>
             Nous n'avons pas encore d'annonce à cette adresse. Regardez les hébergements disponibles.
           </p>
-          <Link to="/hebergements"><Button>Voir tous les hébergements</Button></Link>
+          <Link to="/hebergements/"><Button>Voir tous les hébergements</Button></Link>
         </div>
         <Footer />
       </div>
@@ -161,7 +161,7 @@ export default function Destination() {
           <Link to={`/hebergements?ville=${encodeURIComponent(nom)}`}>
             <Button variante="secondaire">Affiner la recherche à {nom}</Button>
           </Link>
-          <Link to="/hebergements">
+          <Link to="/hebergements/">
             <Button variante="secondaire">Toutes les destinations</Button>
           </Link>
         </div>

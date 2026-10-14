@@ -380,7 +380,7 @@ export default function VillaDetail() {
             <button onClick={reessayer} className="px-5 py-2.5 rounded-xl text-sm font-medium transition-opacity hover:opacity-90" style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}>
               Réessayer
             </button>
-            <Link to="/hebergements" className="px-5 py-2.5 rounded-xl text-sm font-medium th-text-1" style={{ border: '1px solid var(--border-2)', textDecoration: 'none' }}>
+            <Link to="/hebergements/" className="px-5 py-2.5 rounded-xl text-sm font-medium th-text-1" style={{ border: '1px solid var(--border-2)', textDecoration: 'none' }}>
               Voir les villas
             </Link>
           </div>
@@ -804,7 +804,7 @@ export default function VillaDetail() {
 
                   <p className="text-xs th-text-3 text-center leading-relaxed">
                     Vous ne payez rien maintenant. Voir la{' '}
-                    <Link to="/annulation" className="underline underline-offset-2">politique d'annulation</Link>.
+                    <Link to="/annulation/" className="underline underline-offset-2">politique d'annulation</Link>.
                   </p>
                 </form>
               )}

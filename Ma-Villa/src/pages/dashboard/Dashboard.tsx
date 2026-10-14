@@ -254,7 +254,7 @@ export default function Dashboard() {
           </>
         ) : (
           <>
-            <Raccourci to="/hebergements" Icone={Compass} titre="Explorer" detail="Villas, appartements, piscines à la journée" />
+            <Raccourci to="/hebergements/" Icone={Compass} titre="Explorer" detail="Villas, appartements, piscines à la journée" />
             <Raccourci to="/dashboard/favoris" Icone={Heart} titre="Mes favoris" detail="Les logements que vous avez enregistrés" />
           </>
         )}

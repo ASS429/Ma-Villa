@@ -157,7 +157,7 @@ export default function Reservations() {
             : <>Aucune réservation pour l'instant. Le séjour se réserve depuis la fiche d'une villa.</>
           : 'Aucune réservation dans cette catégorie.'}
         videAction={filtre === 'toutes' && !estProprietaire
-          ? <ButtonLink to="/hebergements" variante="primaire" taille="sm">Parcourir les villas</ButtonLink>
+          ? <ButtonLink to="/hebergements/" variante="primaire" taille="sm">Parcourir les villas</ButtonLink>
           : undefined}
         outils={<div className="console-filtres">
         <div className="console-onglets" role="tablist">

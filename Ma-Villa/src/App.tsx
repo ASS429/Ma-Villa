@@ -151,7 +151,7 @@ function FeaturedVillas() {
               Villas en vedette
             </h2>
           </div>
-          <Link to="/hebergements" className="text-sm transition-colors th-text-2 hover:th-text-1">
+          <Link to="/hebergements/" className="text-sm transition-colors th-text-2 hover:th-text-1">
             Voir toutes →
           </Link>
         </ScrollReveal>
@@ -385,7 +385,7 @@ function RedirectionHebergement() {
 /**
  * L'ancienne liste, **avec sa requête**.
  *
- * `<Navigate to="/hebergements">` la laissait tomber : un lien
+ * `<Navigate to="/hebergements/">` la laissait tomber : un lien
  * `/villas?ville=Saly` déjà partagé arrivait sur le catalogue entier, et les
  * pastilles de catégorie — qui pointaient là — semblaient ne rien faire.
  */

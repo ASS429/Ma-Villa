@@ -58,7 +58,7 @@ export default function OeuvreDetail() {
       <Navbar />
 
       <main className="oeuvre">
-        <Link to="/boutique" className="oeuvre-retour">
+        <Link to="/boutique/" className="oeuvre-retour">
           <ArrowLeft size={16} aria-hidden="true" />
           Toutes les articles
         </Link>

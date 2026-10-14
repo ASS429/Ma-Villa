@@ -44,7 +44,7 @@ export default function MesCommandes() {
       <Navbar />
 
       <main className="boutique">
-        <Link to="/boutique" className="oeuvre-retour">
+        <Link to="/boutique/" className="oeuvre-retour">
           <ArrowLeft size={16} aria-hidden="true" />
           Retour à la boutique
         </Link>
@@ -66,7 +66,7 @@ export default function MesCommandes() {
           <div className="console-vide">
             <span className="console-vide-icone"><Inbox size={22} /></span>
             <p>Vous n'avez pas encore commandé d'article.</p>
-            <ButtonLink to="/boutique" variante="primaire" taille="sm">Voir la boutique</ButtonLink>
+            <ButtonLink to="/boutique/" variante="primaire" taille="sm">Voir la boutique</ButtonLink>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
