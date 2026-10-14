@@ -4,12 +4,19 @@ import Seo from '../../components/Seo'
 import Footer from '../../components/Footer'
 import { DOCUMENTS, TEXTES_PROVISOIRES, type DocumentLegal } from './contenu'
 
+/*
+ | ⚠️ **La barre oblique finale fait partie de l'adresse.** Sans elle, Render
+ | sert le gabarit de l'accueil : ces chemins alimentent la canonique, et les
+ | cinq pages légales déclaraient donc à Google que leur adresse de référence
+ | était une page qui n'est pas la leur. Google l'a suivie et les a rangées en
+ | « autre page avec balise canonique correcte » — relevé le 14 octobre 2026.
+ */
 const CHEMINS: Record<DocumentLegal['cle'], string> = {
-  cgu: '/conditions-generales',
-  confidentialite: '/confidentialite',
-  annulation: '/annulation',
-  mentions: '/mentions-legales',
-  vente: '/conditions-vente',
+  cgu: '/conditions-generales/',
+  confidentialite: '/confidentialite/',
+  annulation: '/annulation/',
+  mentions: '/mentions-legales/',
+  vente: '/conditions-vente/',
 }
 
 export default function PageLegale({ document }: { document: DocumentLegal['cle'] }) {

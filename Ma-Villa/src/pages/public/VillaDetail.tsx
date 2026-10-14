@@ -402,11 +402,15 @@ export default function VillaDetail() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text-1)' }}>
+      {/* `chemin` déclarait `/villas/${villa.id}/`, l'ancienne route : elle
+          **redirige**. La fiche annonçait donc à Google une adresse de
+          référence qui n'existe que pour mener ailleurs, en écrasant au rendu
+          la bonne canonique écrite par le pré-rendu. */}
       <Seo
         titre={`${villa.nom} — ${villa.ville}`}
         description={descriptionSeo}
         image={photoPartage}
-        chemin={`/villas/${villa.id}/`}
+        chemin={`/hebergements/${villa.id}/`}
         donneesStructurees={{
           '@context': 'https://schema.org',
           '@type': 'LodgingBusiness',

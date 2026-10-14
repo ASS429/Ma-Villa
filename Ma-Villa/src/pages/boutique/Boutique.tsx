@@ -86,9 +86,13 @@ export default function Boutique() {
 
   return (
     <>
+      {/* Mêmes mots que le pré-rendu — c'est la version rendue que Google
+          retient, et deux titres pour une page finissent par diverger. La
+          boutique vend des vêtements et de la vannerie, pas des tableaux. */}
       <Seo
-        titre="Boutique d'art"
-        description="Artisanat d'art sénégalais fait main — tableaux, sculptures, bijoux, tissus. Livraison à Dakar et dans toutes les régions, paiement Wave, Orange Money ou à la livraison."
+        titre="Boutique — artisanat et créateurs sénégalais"
+        description="Vêtements, vannerie et pièces d'artisanat de créateurs sénégalais. Livraison à Dakar et dans toutes les régions, paiement Wave, Orange Money ou à la livraison."
+        chemin="/boutique/"
       />
       <Navbar />
 

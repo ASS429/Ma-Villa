@@ -54,6 +54,7 @@ export default function OeuvreDetail() {
             : 'Un article de la boutique PasseTemps.'
         }
         image={photos[0]?.url}
+        chemin={`/boutique/${id}/`}
       />
       <Navbar />
 
