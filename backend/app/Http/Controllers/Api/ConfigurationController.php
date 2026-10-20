@@ -91,6 +91,12 @@ class ConfigurationController extends Controller
                 'zones'     => config('boutique.livraison.zones'),
                 'livraison' => (bool) config('boutique.paiement_a_la_livraison'),
             ],
+            // Les services aux voyageurs, famille par famille, et la vitrine
+            // des JOJ : chacun s'ouvre par sa variable, sans redéployer. Fermés,
+            // le front ne les montre qu'à l'administration, en aperçu.
+            'services' => collect(config('prestations.familles'))
+                ->map(fn (array $f) => (bool) ($f['actif'] ?? false)),
+            'joj' => ['actif' => (bool) config('joj.actif')],
             // La clé publique VAPID est faite pour être publiée : c'est elle
             // que le navigateur passe à `pushManager.subscribe`. Absente, le
             // front n'affiche simplement pas la proposition d'activer les

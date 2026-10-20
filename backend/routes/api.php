@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AttentesController;
 use App\Http\Controllers\Api\AvisController;
 use App\Http\Controllers\Api\ConfigurationController;
+use App\Http\Controllers\Api\DemandeServiceController;
 use App\Http\Controllers\Api\DiagnosticCourrielController;
 use App\Http\Controllers\Api\DiagnosticNotificationsController;
 use App\Http\Controllers\Api\DiagnosticReversementController;
@@ -64,6 +65,13 @@ Route::get('/villas/{villa}/logements', [LogementController::class, 'index']);
 Route::get('/villas/{villa}/logements/{logement}', [LogementController::class, 'show']);
 Route::get('/logements/{logement}/tarifs', [TarifController::class, 'index']);
 Route::get('/logements/{logement}/disponibilites', [DisponibiliteController::class, 'index']);
+
+// Services aux voyageurs (transport, repas), chacun ouvert par sa variable.
+// La demande est publique — une famille venue de l'étranger ne se crée pas de
+// compte pour un chauffeur —, d'où un débit plus serré que les écritures
+// authentifiées.
+Route::get('/prestations', [DemandeServiceController::class, 'catalogue']);
+Route::post('/demandes-service', [DemandeServiceController::class, 'store'])->middleware('throttle:5,1');
 
 // Protégées
 //
@@ -191,6 +199,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/oeuvres/{oeuvre}/photos/{photo}', [PhotoController::class, 'destroyForOeuvre']);
         Route::get('/commandes', [CommandeController::class, 'indexAdmin']);
         Route::patch('/commandes/{commande}/statut', [CommandeController::class, 'avancer']);
+
+        // Demandes de service des voyageurs : la réponse se fait sur
+        // WhatsApp, l'écran trace seulement qu'elle a été faite.
+        Route::get('/demandes-service', [DemandeServiceController::class, 'indexAdmin']);
+        Route::patch('/demandes-service/{demande}', [DemandeServiceController::class, 'traiter']);
 
         // Rendre l'argent au client. Comme les reversements, on enregistre
         // ce qui a ete fait chez le prestataire -- rien ne part d'ici.

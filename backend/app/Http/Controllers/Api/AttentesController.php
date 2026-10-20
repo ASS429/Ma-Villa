@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Avis;
 use App\Models\Commande;
+use App\Models\DemandeService;
 use App\Models\Paiement;
 use App\Models\Reservation;
 use App\Models\Reversement;
@@ -47,6 +48,7 @@ class AttentesController extends Controller
     public function __invoke(): JsonResponse
     {
         $lignes = array_values(array_filter([
+            $this->demandesDeService(),
             $this->annoncesAValider(),
             $this->brouillonsBloques(),
             $this->annulationsDemandees(),
@@ -71,6 +73,43 @@ class AttentesController extends Controller
     }
 
     /* ══ Les lignes ═══════════════════════════════════════════════ */
+
+    /**
+     * Les voyageurs qui attendent une réponse sur un transport ou un repas.
+     *
+     * Les pages des services promettent une réponse sous deux heures : passé ce
+     * délai, la ligne monte en urgence, parce que c'est une promesse publiée.
+     * Et c'est la seule trace d'une demande dont le message WhatsApp n'est
+     * jamais parti.
+     */
+    private function demandesDeService(): ?array
+    {
+        $nouvelles = DemandeService::where('statut', 'nouvelle');
+        $compte = (clone $nouvelles)->count();
+
+        if ($compte === 0) {
+            return null;
+        }
+
+        $delai = (int) config('prestations.delai_reponse_heures', 2);
+        $plusAncienne = (clone $nouvelles)->min('created_at');
+        $heures = $plusAncienne ? (int) Carbon::parse($plusAncienne)->diffInHours(now()) : 0;
+        $enRetard = $heures >= $delai;
+
+        return [
+            'cle'          => 'demandes_service',
+            'gravite'      => $enRetard ? 'urgent' : 'action',
+            'compte'       => $compte,
+            'titre'        => $compte === 1
+                ? 'Une demande de service attend une réponse'
+                : "{$compte} demandes de service attendent une réponse",
+            'detail'       => $enRetard
+                ? "La plus ancienne attend depuis {$heures} h, alors que la page promet une réponse sous {$delai} h."
+                : "La page promet une réponse sous {$delai} h, sur WhatsApp.",
+            'lien'         => '/admin/demandes',
+            'libelle_lien' => 'Répondre',
+        ];
+    }
 
     private function annoncesAValider(): ?array
     {
