@@ -1,5 +1,7 @@
-import { LIBELLES_LOGEMENT, type TypeLogement } from '../types'
+import type { Langue, TypeLogement } from '../types'
 import { fcfa, dateCourte } from './format'
+import { METIER } from '../i18n/metier'
+import { TEXTES_RECHERCHE } from '../i18n/recherche'
 
 export type CleFiltre =
   | 'categorie' | 'ville' | 'date_debut' | 'date_fin' | 'capacite'
@@ -15,18 +17,20 @@ export type CleFiltre =
 export function libelleFiltre(
   cle: CleFiltre,
   valeur: string,
-  nomsCategories: Record<string, string> = {}
+  nomsCategories: Record<string, string> = {},
+  langue: Langue = 'fr',
 ): string {
+  const t = TEXTES_RECHERCHE[langue].pastille
   switch (cle) {
     case 'categorie':     return nomsCategories[valeur] ?? valeur
     case 'ville':         return valeur
-    case 'date_debut':    return `dès le ${dateCourte(valeur)}`
-    case 'date_fin':      return `jusqu'au ${dateCourte(valeur)}`
-    case 'capacite':      return `${valeur} voyageur${Number(valeur) > 1 ? 's' : ''}`
-    case 'prix_min':      return `dès ${fcfa(valeur)}`
-    case 'prix_max':      return `jusqu'à ${fcfa(valeur)}`
-    case 'type_logement': return LIBELLES_LOGEMENT[valeur as TypeLogement] ?? valeur
-    case 'note_min':      return `${valeur} étoiles et plus`
-    case 'meuble':        return valeur === '0' ? 'non meublé' : 'meublé'
+    case 'date_debut':    return t.desLe(dateCourte(valeur, langue))
+    case 'date_fin':      return t.jusquAu(dateCourte(valeur, langue))
+    case 'capacite':      return t.voyageurs(Number(valeur))
+    case 'prix_min':      return t.des(fcfa(valeur))
+    case 'prix_max':      return t.jusquA(fcfa(valeur))
+    case 'type_logement': return METIER[langue].logement[valeur as TypeLogement] ?? valeur
+    case 'note_min':      return t.etoiles(valeur)
+    case 'meuble':        return valeur === '0' ? t.nonMeuble : t.meuble
   }
 }

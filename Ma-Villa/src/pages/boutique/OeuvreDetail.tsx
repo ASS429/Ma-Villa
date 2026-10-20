@@ -13,21 +13,25 @@ import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import Button, { ButtonLink } from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
+import { useLangue } from '../../i18n/langue'
+import { TEXTES_BOUTIQUE } from '../../i18n/boutique'
 
 export default function OeuvreDetail() {
   const { id } = useParams<{ id: string }>()
   const { user } = useAuth()
   const { boutique, chargee, paiement } = useConfig()
+  const { langue, lien } = useLangue()
+  const t = TEXTES_BOUTIQUE[langue].article
   // Même règle que la vitrine : seuls les moyens ouverts sont annoncés.
   const moyens = paiement.actif
-    ? `Wave, Orange Money${boutique.livraison ? ' ou paiement à la livraison' : ''}`
-    : boutique.livraison ? 'Paiement à la livraison' : 'Paiement bientôt disponible'
+    ? t.moyensEnLigne(boutique.livraison)
+    : boutique.livraison ? t.moyensLivraison : t.moyensBientot
   const [imageActive, setImageActive] = useState(0)
 
   const { donnees: oeuvre, chargement, erreur, reessayer } = useRequete<Oeuvre>(
     async (signal) => (await api.get(`/oeuvres/${id}`, { signal })).data,
     `oeuvre-${id}`,
-    { messageErreurParDefaut: 'Cet article est introuvable.' }
+    { messageErreurParDefaut: t.introuvable }
   )
 
   // On attend de **savoir** avant de trancher : au premier rendu la
@@ -35,7 +39,7 @@ export default function OeuvreDetail() {
   // renvoyait à l'accueil alors que la boutique était ouverte.
   if (!chargee) return <ChargementPage />
   // Fermée, elle n'existe pas : ni page, ni URL à garder en mémoire.
-  if (!boutique.actif) return <Navigate to="/" replace />
+  if (!boutique.actif) return <Navigate to={lien('/')} replace />
 
   const photos = oeuvre?.photos ?? []
   const photo = photos[imageActive] ?? photos[0]
@@ -47,27 +51,27 @@ export default function OeuvreDetail() {
   return (
     <>
       <Seo
-        titre={oeuvre ? `${oeuvre.titre} — ${oeuvre.artiste}` : 'Article'}
+        titre={oeuvre ? `${oeuvre.titre} — ${oeuvre.artiste}` : t.seoArticle}
         description={
           oeuvre
-            ? `${oeuvre.titre} par ${oeuvre.artiste}. ${[oeuvre.technique, oeuvre.dimensions].filter(Boolean).join(', ')}. ${fcfa(oeuvre.prix)}.`
-            : 'Un article de la boutique PasseTemps.'
+            ? `${t.seoPar(oeuvre.titre, oeuvre.artiste)} ${[oeuvre.technique, oeuvre.dimensions].filter(Boolean).join(', ')}. ${fcfa(oeuvre.prix)}.`
+            : t.seoDefaut
         }
         image={photos[0]?.url}
-        chemin={`/boutique/${id}/`}
+        chemin={lien(`/boutique/${id}/`)}
       />
       <Navbar />
 
       <main className="oeuvre">
-        <Link to="/boutique/" className="oeuvre-retour">
+        <Link to={lien('/boutique/')} className="oeuvre-retour">
           <ArrowLeft size={16} aria-hidden="true" />
-          Toutes les articles
+          {t.tous}
         </Link>
 
         {erreur && !chargement && (
           <div className="console-erreur" role="alert">
             {erreur}
-            <Button variante="secondaire" taille="sm" onClick={reessayer}>Réessayer</Button>
+            <Button variante="secondaire" taille="sm" onClick={reessayer}>{t.reessayer}</Button>
           </div>
         )}
 
@@ -100,7 +104,7 @@ export default function OeuvreDetail() {
                       type="button"
                       className={`oeuvre-vignette${i === imageActive ? ' est-active' : ''}`}
                       onClick={() => setImageActive(i)}
-                      aria-label={`Voir la photo ${i + 1}`}
+                      aria-label={t.voirPhoto(i + 1)}
                       aria-current={i === imageActive}
                     >
                       <img src={p.url} alt="" loading="lazy" />
@@ -111,31 +115,31 @@ export default function OeuvreDetail() {
             </div>
 
             <div className="oeuvre-fiche">
-              {vendue && <Badge ton="neutre">Vendue</Badge>}
+              {vendue && <Badge ton="neutre">{t.vendue}</Badge>}
               <h1 className="oeuvre-titre">{oeuvre.titre}</h1>
               <p className="oeuvre-artiste">{oeuvre.artiste}</p>
 
               {/* Le cartel, comme en galerie : ce qu'on lit sous un article. */}
               <dl className="oeuvre-cartel">
                 {oeuvre.technique && (
-                  <div><dt>Technique</dt><dd>{oeuvre.technique}</dd></div>
+                  <div><dt>{t.technique}</dt><dd>{oeuvre.technique}</dd></div>
                 )}
                 {oeuvre.dimensions && (
-                  <div><dt>Dimensions</dt><dd>{oeuvre.dimensions}</dd></div>
+                  <div><dt>{t.dimensions}</dt><dd>{oeuvre.dimensions}</dd></div>
                 )}
                 {oeuvre.annee && (
-                  <div><dt>Année</dt><dd>{oeuvre.annee}</dd></div>
+                  <div><dt>{t.annee}</dt><dd>{oeuvre.annee}</dd></div>
                 )}
                 {/* La disponibilité se lit dans le cartel, pas dans un bandeau :
                     pour un article fait main, la quantité fait partie de sa
                     description au même titre que ses dimensions. */}
                 {!vendue && (
                   <div>
-                    <dt>Disponibilité</dt>
+                    <dt>{t.disponibilite}</dt>
                     <dd>
                       {oeuvre.stock === 1
-                        ? 'Pièce unique'
-                        : `${oeuvre.stock} exemplaires disponibles`}
+                        ? t.pieceUnique
+                        : t.exemplaires(oeuvre.stock)}
                     </dd>
                   </div>
                 )}
@@ -147,31 +151,31 @@ export default function OeuvreDetail() {
                 <p className="oeuvre-prix">{fcfa(oeuvre.prix)}</p>
                 <p className="oeuvre-prix-note">
                   {fraisMini === 0
-                    ? 'Livraison en sus, ou retrait sur place gratuit.'
-                    : 'Frais de livraison en sus, annoncés avant le paiement.'}
+                    ? t.livraisonRetrait
+                    : t.livraisonEnSus}
                 </p>
 
                 {vendue ? (
                   <p className="oeuvre-indisponible">
                     {oeuvre.stock === 0 && oeuvre.categorie === 'tableaux'
-                      ? "Cette pièce a trouvé preneur. Écrivez-nous si vous cherchez un article du même artiste."
-                      : "Cet article est épuisé pour le moment. Écrivez-nous : l'artisan en refait régulièrement."}
+                      ? t.preneur
+                      : t.epuise}
                   </p>
                 ) : user ? (
-                  <ButtonLink to={`/boutique/${oeuvre.id}/commander`} variante="primaire" bloc>
-                    Commander cet article
+                  <ButtonLink to={lien(`/boutique/${oeuvre.id}/commander`)} variante="primaire" bloc>
+                    {t.commander}
                   </ButtonLink>
                 ) : (
                   <>
                     <ButtonLink
-                      to={`/login?retour=/boutique/${oeuvre.id}/commander`}
+                      to={`${lien('/login')}?retour=${lien(`/boutique/${oeuvre.id}/commander`)}`}
                       variante="primaire"
                       bloc
                     >
-                      Se connecter pour commander
+                      {t.seConnecter}
                     </ButtonLink>
                     <p className="oeuvre-prix-note">
-                      Un compte permet de suivre votre commande jusqu'à la livraison.
+                      {t.compte}
                     </p>
                   </>
                 )}
@@ -184,10 +188,10 @@ export default function OeuvreDetail() {
                 <li>
                   <ShieldCheck size={16} aria-hidden="true" />
                   {oeuvre.stock === 1
-                    ? 'Pièce unique, vendue une seule fois'
-                    : 'Fait main — deux exemplaires ne sont jamais identiques'}
+                    ? t.garantieUnique
+                    : t.garantieMain}
                 </li>
-                <li><Truck size={16} aria-hidden="true" /> Livraison à Dakar et en régions</li>
+                <li><Truck size={16} aria-hidden="true" /> {t.garantieLivraison}</li>
                 <li>
                   <Wallet size={16} aria-hidden="true" />
                   {moyens}

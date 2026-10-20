@@ -4,6 +4,8 @@ import api from '../services/api'
 import { useRequete } from '../lib/useRequete'
 import { fcfa } from '../lib/format'
 import ScrollReveal from './ScrollReveal'
+import { useLangue } from '../i18n/langue'
+import { TEXTES_ACCUEIL } from '../i18n/accueil'
 
 interface Destination {
   ville: string
@@ -26,6 +28,8 @@ export default function Destinations() {
   )
 
   const destinations = donnees ?? []
+  const { langue, lien } = useLangue()
+  const t = TEXTES_ACCUEIL[langue].destinations
 
   if (!chargement && destinations.length === 0) return null
 
@@ -37,10 +41,10 @@ export default function Destinations() {
             className="mb-2"
             style={{ font: 'var(--t-eyebrow)', letterSpacing: 'var(--t-eyebrow-ls)', textTransform: 'uppercase', color: 'var(--accent)' }}
           >
-            Destinations
+            {t.eyebrow}
           </p>
           <h2 className="th-text-1" style={{ font: 'var(--t-h2)', letterSpacing: 'var(--t-h2-ls)' }}>
-            Où allez-vous ?
+            {t.titre}
           </h2>
         </ScrollReveal>
 
@@ -57,9 +61,9 @@ export default function Destinations() {
             {destinations.map((d) => (
               <Link
                 key={d.ville}
-                to={`/destinations/${enSlug(d.ville)}/`}
+                to={lien(`/destinations/${enSlug(d.ville)}/`)}
                 className="destination"
-                aria-label={`${d.ville}, ${d.nb} villa${d.nb > 1 ? 's' : ''}`}
+                aria-label={`${d.ville}, ${t.nb(d.nb)}`}
               >
                 {d.photo ? (
                   <img src={d.photo} alt="" aria-hidden="true" loading="lazy" decoding="async" />
@@ -70,8 +74,8 @@ export default function Destinations() {
                 <div className="destination-texte">
                   <p className="destination-ville">{d.ville}</p>
                   <p className="destination-detail">
-                    {d.nb} villa{d.nb > 1 ? 's' : ''}
-                    {d.prix_min != null && <> · dès {fcfa(d.prix_min)}</>}
+                    {t.nb(d.nb)}
+                    {d.prix_min != null && t.des(fcfa(d.prix_min))}
                   </p>
                 </div>
               </Link>

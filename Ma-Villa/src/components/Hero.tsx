@@ -2,6 +2,8 @@ import FadeIn from './FadeIn'
 import BarreRecherche from './BarreRecherche'
 import { useConfig } from '../context/ConfigContext'
 import { lienAppel } from '../lib/contact'
+import { useLangue } from '../i18n/langue'
+import { TEXTES_ACCUEIL } from '../i18n/accueil'
 
 const DESTINATIONS = ['Saly', 'Mbour', 'Dakar', 'Ziguinchor']
 
@@ -12,7 +14,8 @@ const DESTINATIONS = ['Saly', 'Mbour', 'Dakar', 'Ziguinchor']
  */
 export default function Hero() {
   const { paiement, reservations } = useConfig()
-  const moyens = paiement.moyens.map((m) => m.nom).join(' ou ')
+  const t = TEXTES_ACCUEIL[useLangue().langue].hero
+  const moyens = paiement.moyens.map((m) => m.nom).join(t.ou)
 
   return (
     <div className="flex-1 flex flex-col justify-end px-6 md:px-12 lg:px-16 pb-14 lg:pb-20">
@@ -34,13 +37,13 @@ export default function Hero() {
           className="mb-5 text-white"
           style={{ font: 'var(--t-display)', letterSpacing: 'var(--t-display-ls)' }}
         >
-          Votre séjour au Sénégal
+          {t.titre}
           {/* « Réservé en trois gestes » serait une promesse fausse tant que la
               réservation en ligne est suspendue : le titre s'arrête alors là. */}
           {reservations.ouvertes && (
             <>
               <span className="hidden md:inline">,</span>
-              <span className="hidden md:block">réservé en trois gestes</span>
+              <span className="hidden md:block">{t.suite}</span>
             </>
           )}
         </h1>
@@ -48,24 +51,23 @@ export default function Hero() {
         <FadeIn delay={200} duration={700}>
           <p className="mb-8 text-white/85 max-w-2xl" style={{ font: 'var(--t-body-lg)' }}>
             <span className="hidden md:inline">
-              Villas, résidences, appartements, chambres — à la nuitée comme à la journée.
+              {t.accroche}
             </span>
             <span className="md:hidden">
-              Villas, résidences, appartements ou chambres.
+              {t.accrocheCourte}
             </span>
             {/* Le paiement est annoncé mais inactif : le dire au futur tant que
                 c'est le cas, plutôt que de laisser croire qu'on peut régler ici. */}
             {!reservations.ouvertes ? (
               <>
-                {' '}Réservation en ligne bientôt disponible. En attendant, contactez{' '}
-                {reservations.contact.nom} au{' '}
+                {t.bientot(reservations.contact.nom)}
                 <a href={lienAppel(reservations.contact.telephone)} className="text-white underline underline-offset-4">
                   {reservations.contact.telephone}
                 </a>.
               </>
             ) : paiement.actif
-              ? ` Paiement ${moyens}.`
-              : ` Paiement ${moyens} bientôt disponible.`}
+              ? t.paiement(moyens)
+              : t.paiementBientot(moyens)}
           </p>
         </FadeIn>
       </div>

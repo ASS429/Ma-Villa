@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom'
+import { useLangue } from '../i18n/langue'
+import { COMMUN } from '../i18n/commun'
 
 type Taille = 'sm' | 'md' | 'lg'
 
@@ -31,6 +33,7 @@ export default function Marque({
   className?: string
   onClick?: () => void
 }) {
+  const { langue, lien } = useLangue()
   const classes = [
     'marque',
     `marque-${taille}`,
@@ -40,7 +43,7 @@ export default function Marque({
   ].filter(Boolean).join(' ')
 
   return (
-    <Link to="/" className={classes} aria-label="PasseTemps — retour à l'accueil" onClick={onClick}>
+    <Link to={lien('/')} className={classes} aria-label={COMMUN[langue].nav.accueil} onClick={onClick}>
       <img
         src="/logo.webp"
         alt=""

@@ -3,6 +3,10 @@ import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import Marque from './Marque'
+import { useLiensServices } from '../prestations/useLiensServices'
+import { useLangue } from '../i18n/langue'
+import { COMMUN } from '../i18n/commun'
+import ChoixLangue from '../i18n/ChoixLangue'
 
 function IconMenu() {
   return (
@@ -38,8 +42,11 @@ export default function PageHeader() {
   const { user, logout } = useAuth()
   const { isDark, toggleTheme } = useTheme()
   const [open, setOpen] = useState(false)
+  const services = useLiensServices()
   const dashLink = user?.role === 'admin' ? '/admin' : '/dashboard'
-  const dashLabel = user?.role === 'admin' ? 'Admin' : 'Mon espace'
+  const { langue, lien } = useLangue()
+  const t = COMMUN[langue].nav
+  const dashLabel = user?.role === 'admin' ? t.admin : t.monEspace
 
   return (
     <>
@@ -53,11 +60,18 @@ export default function PageHeader() {
         <Marque taille="md" />
 
         <nav className="hidden md:flex items-center gap-6">
-          <NavLink to="/hebergements/" className={({ isActive }) =>
+          <NavLink to={lien('/hebergements/')} className={({ isActive }) =>
             `text-sm transition-colors ${isActive ? 'th-text-1 font-medium' : 'th-text-2 hover:th-text-1'}`
           }>
-            Hébergements
+            {t.hebergements}
           </NavLink>
+          {services.map((l) => (
+            <NavLink key={l.cle} to={l.to} className={({ isActive }) =>
+              `text-sm transition-colors ${isActive ? 'th-text-1 font-medium' : 'th-text-2 hover:th-text-1'}`
+            }>
+              {l.label}
+            </NavLink>
+          ))}
           {user && (
             <NavLink to={dashLink} className={({ isActive }) =>
               `text-sm transition-colors ${isActive ? 'th-text-1 font-medium' : 'th-text-2 hover:th-text-1'}`
@@ -68,9 +82,10 @@ export default function PageHeader() {
         </nav>
 
         <div className="hidden md:flex items-center gap-4">
+          <ChoixLangue compact className="commande-entete text-xs font-semibold th-text-2 hover:th-text-1" />
           <button
             onClick={toggleTheme}
-            aria-label={isDark ? 'Passer au thème clair' : 'Passer au thème sombre'}
+            aria-label={isDark ? t.themeClair : t.themeSombre}
             className="commande-entete th-text-2 hover:th-text-1 transition-all hover:scale-110"
           >
             {isDark ? <IconSun /> : <IconMoon />}
@@ -79,31 +94,32 @@ export default function PageHeader() {
             <>
               <span className="text-sm th-text-2">{user.name}</span>
               <button onClick={logout} className="text-sm th-text-3 hover:th-text-1 transition-colors">
-                Déconnexion
+                {t.deconnexion}
               </button>
             </>
           ) : (
             <>
-              <Link to="/login" className="text-sm th-text-2 hover:th-text-1 transition-colors">Connexion</Link>
+              <Link to={lien('/login')} className="text-sm th-text-2 hover:th-text-1 transition-colors">{t.connexion}</Link>
               <Link
-                to="/register"
+                to={lien('/register')}
                 className="px-4 py-1.5 rounded-xl text-sm font-medium transition-all hover:scale-[1.03]"
                 style={{ background: 'var(--text-1)', color: 'var(--bg)' }}
               >
-                S'inscrire
+                {t.inscrire}
               </Link>
             </>
           )}
         </div>
 
         <div className="md:hidden flex items-center gap-2">
-          <button onClick={toggleTheme} aria-label={isDark ? 'Passer au thème clair' : 'Passer au thème sombre'} className="commande-entete th-text-2">
+          <ChoixLangue compact className="commande-entete text-xs font-semibold th-text-2" />
+          <button onClick={toggleTheme} aria-label={isDark ? t.themeClair : t.themeSombre} className="commande-entete th-text-2">
             {isDark ? <IconSun /> : <IconMoon />}
           </button>
           <button
             className="commande-entete th-text-1 transition-colors hover:th-elevated"
             onClick={() => setOpen((v) => !v)}
-            aria-label="Menu"
+            aria-label={t.menu}
             aria-expanded={open}
           >
             {open ? <IconX /> : <IconMenu />}
@@ -121,20 +137,32 @@ export default function PageHeader() {
           >
             <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: '1px solid var(--border)' }}>
               <Marque taille="sm" onClick={() => setOpen(false)} />
-              <button onClick={() => setOpen(false)} className="th-text-2 hover:th-text-1 transition-colors">
+              <button onClick={() => setOpen(false)} className="th-text-2 hover:th-text-1 transition-colors" aria-label={t.fermerMenu}>
                 <IconX />
               </button>
             </div>
             <nav className="flex-1 flex flex-col px-4 py-4 gap-1">
               <NavLink
-                to="/hebergements/"
+                to={lien('/hebergements/')}
                 onClick={() => setOpen(false)}
                 className={({ isActive }) =>
                   `px-4 py-3 rounded-xl text-sm font-medium transition-colors ${isActive ? 'th-elevated th-text-1' : 'th-text-2 hover:th-elevated'}`
                 }
               >
-                Hébergements
+                {t.hebergements}
               </NavLink>
+              {services.map((l) => (
+                <NavLink
+                  key={l.cle}
+                  to={l.to}
+                  onClick={() => setOpen(false)}
+                  className={({ isActive }) =>
+                    `px-4 py-3 rounded-xl text-sm font-medium transition-colors ${isActive ? 'th-elevated th-text-1' : 'th-text-2 hover:th-elevated'}`
+                  }
+                >
+                  {l.label}
+                </NavLink>
+              ))}
               {user && (
                 <NavLink
                   to={dashLink}
@@ -156,26 +184,26 @@ export default function PageHeader() {
                     className="w-full px-4 py-3 rounded-xl text-sm text-left th-text-2 transition-colors"
                     style={{ border: '1px solid var(--border)' }}
                   >
-                    Déconnexion
+                    {t.deconnexion}
                   </button>
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
                   <Link
-                    to="/login"
+                    to={lien('/login')}
                     onClick={() => setOpen(false)}
                     className="w-full px-4 py-3 rounded-xl text-sm text-center th-text-1 transition-colors"
                     style={{ border: '1px solid var(--border)' }}
                   >
-                    Connexion
+                    {t.connexion}
                   </Link>
                   <Link
-                    to="/register"
+                    to={lien('/register')}
                     onClick={() => setOpen(false)}
                     className="w-full px-4 py-3 rounded-xl text-sm font-medium text-center transition-colors"
                     style={{ background: 'var(--text-1)', color: 'var(--bg)' }}
                   >
-                    S'inscrire
+                    {t.inscrire}
                   </Link>
                 </div>
               )}

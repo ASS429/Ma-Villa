@@ -1,6 +1,9 @@
 import { useNavigate } from 'react-router-dom'
 import { Home, Building2, DoorOpen, Waves, BedDouble, Hotel, Tent } from 'lucide-react'
 import { useConfig, type Categorie } from '../../context/ConfigContext'
+import { useLangue } from '../../i18n/langue'
+import { nomCategorie } from '../../i18n/metier'
+import { TEXTES_RECHERCHE } from '../../i18n/recherche'
 
 /**
  * « Que cherchez-vous ? » avant « Où ? » — planche 10.
@@ -24,20 +27,14 @@ const ICONES: Record<string, typeof Home> = {
   auberge: Tent,
 }
 
-/** Ce que la catégorie promet, en une ligne — pas une définition, un usage. */
-const PROMESSES: Record<string, string> = {
-  villa: 'Toute la maison pour vous',
-  appartement: 'Un logement indépendant',
-  studio: 'Pour un séjour au long cours',
-  chambre: 'Une chambre chez l\'habitant',
-  piscine: 'À la journée, sans dormir sur place',
-  hotel: 'Service et réception',
-  auberge: 'Simple et économique',
-}
+/* Ce que la catégorie promet, en une ligne — pas une définition, un usage.
+   Les promesses vivent dans `i18n/recherche.ts`, dans les deux langues. */
 
 export default function ChoixCategorie({ compact = false }: { compact?: boolean }) {
   const { categories } = useConfig()
   const navigate = useNavigate()
+  const { langue, lien } = useLangue()
+  const promesses = TEXTES_RECHERCHE[langue].categories
 
   if (categories.length === 0) return null
 
@@ -50,7 +47,7 @@ export default function ChoixCategorie({ compact = false }: { compact?: boolean 
    | 2026 ; la redirection a été réparée aussi, pour les liens déjà partagés.
    */
   const aller = (c: Categorie) =>
-    navigate({ pathname: '/hebergements', search: `?categorie=${encodeURIComponent(c.cle)}` })
+    navigate({ pathname: lien('/hebergements'), search: `?categorie=${encodeURIComponent(c.cle)}` })
 
   return (
     <ul className={`choix-categorie${compact ? ' est-compact' : ''}`}>
@@ -63,9 +60,9 @@ export default function ChoixCategorie({ compact = false }: { compact?: boolean 
                 <Icone size={22} strokeWidth={1.8} />
               </span>
               <span className="categorie-texte">
-                <span className="categorie-nom">{c.nom}</span>
-                {PROMESSES[c.cle] && (
-                  <span className="categorie-promesse">{PROMESSES[c.cle]}</span>
+                <span className="categorie-nom">{nomCategorie(c, langue)}</span>
+                {promesses[c.cle] && (
+                  <span className="categorie-promesse">{promesses[c.cle]}</span>
                 )}
               </span>
               <span className="categorie-fleche" aria-hidden="true">›</span>

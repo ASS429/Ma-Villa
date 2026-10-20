@@ -86,6 +86,13 @@ interface Configuration {
     /** Qui joindre pour réserver pendant la suspension. */
     contact: { nom: string; telephone: string; email: string }
   }
+  /**
+   * Les services aux voyageurs, famille par famille (`TRANSPORT_ACTIF`,
+   * `RESTAURATION_ACTIVE`). Fermés, seul l'administrateur les voit, en aperçu.
+   */
+  services: { transport: boolean; restauration: boolean }
+  /** La vitrine temporaire des JOJ Dakar 2026 (`JOJ_ACTIF`). */
+  joj: { actif: boolean }
 }
 
 /**
@@ -130,6 +137,10 @@ const DEFAUT: Configuration = {
     ouvertes: false,
     contact: { nom: 'Abdou Ndour', telephone: '+221 77 868 47 23', email: 'ndourabdou011@gmail.com' },
   },
+  // Fermés par défaut, comme la boutique : une API qui ne répond pas — ou qui
+  // ne connaît pas encore ces clés — ne doit rien ouvrir.
+  services: { transport: false, restauration: false },
+  joj: { actif: false },
 }
 
 const ConfigContext = createContext<Configuration>(DEFAUT)

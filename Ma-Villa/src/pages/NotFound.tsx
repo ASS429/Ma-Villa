@@ -7,6 +7,8 @@ import Seo from '../components/Seo'
 import VillaCard from '../components/VillaCard'
 import api from '../services/api'
 import { versPage } from '../lib/page'
+import { useLangue } from '../i18n/langue'
+import { TEXTES_COMPTES } from '../i18n/comptes'
 import type { VillaResume } from '../types'
 
 interface Destination { ville: string; nb: number }
@@ -57,6 +59,8 @@ export default function NotFound() {
   const [recherche, setRecherche] = useState('')
   const [destinations, setDestinations] = useState<Destination[]>([])
   const [semblables, setSemblables] = useState<VillaResume[]>([])
+  const { langue, lien } = useLangue()
+  const t = TEXTES_COMPTES[langue].introuvable
 
   const adresse = emplacement.pathname + emplacement.search
 
@@ -98,7 +102,7 @@ export default function NotFound() {
   function chercher(evenement: React.FormEvent) {
     evenement.preventDefault()
     const terme = recherche.trim()
-    naviguer(terme ? `/villas?ville=${encodeURIComponent(terme)}` : '/villas')
+    naviguer(terme ? `${lien('/hebergements')}?ville=${encodeURIComponent(terme)}` : lien('/hebergements'))
   }
 
   return (
@@ -106,8 +110,8 @@ export default function NotFound() {
       {/* `noindex` : une 404 indexée fait remonter une adresse morte dans les
           résultats de recherche, et le visiteur y revient indéfiniment. */}
       <Seo
-        titre="Page introuvable"
-        description="Cette page n'existe plus. Retrouvez un hébergement au Sénégal — Saly, Mbour, Dakar."
+        titre={t.seoTitre}
+        description={t.seoDescription}
         chemin={emplacement.pathname}
         indexable={false}
       />
@@ -123,20 +127,18 @@ export default function NotFound() {
             color: 'var(--text-3)',
           }}
         >
-          Page introuvable
+          {t.eyebrow}
         </p>
 
         <h1
           className="th-text-1 mb-4"
           style={{ font: 'var(--t-h1)', letterSpacing: 'var(--t-h1-ls)' }}
         >
-          Cette annonce n'est plus en ligne
+          {t.titre}
         </h1>
 
         <p className="th-text-2 mb-8" style={{ font: 'var(--t-body)', maxWidth: '52ch' }}>
-          Le propriétaire l'a retirée, ou le lien est incomplet. Si quelqu'un vous
-          l'a envoyée, demandez-lui de le renvoyer — nous gardons les annonces en
-          ligne tant qu'elles existent.
+          {t.texte}
         </p>
 
         {/* La recherche prend la place qu'occupait le « 404 » décoratif. */}
@@ -146,19 +148,19 @@ export default function NotFound() {
             type="search"
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
-            placeholder="Chercher à Saly, Mbour, Dakar…"
-            aria-label="Chercher un hébergement par ville"
+            placeholder={t.placeholder}
+            aria-label={t.chercherParVille}
             autoComplete="off"
           />
-          <button type="submit">Chercher</button>
+          <button type="submit">{t.chercher}</button>
         </form>
 
         {destinations.length > 0 && (
           <ul className="villes-404">
             {destinations.slice(0, 3).map((d) => (
               <li key={d.ville}>
-                <Link to={`/hebergements?ville=${encodeURIComponent(d.ville)}`}>
-                  <strong>{d.nb}</strong> hébergement{d.nb > 1 ? 's' : ''} à {d.ville}
+                <Link to={`${lien('/hebergements')}?ville=${encodeURIComponent(d.ville)}`}>
+                  <strong>{d.nb}</strong>{t.aVille(d.nb, d.ville).texte}
                 </Link>
               </li>
             ))}
@@ -172,7 +174,7 @@ export default function NotFound() {
           style={{ borderTop: '1px solid var(--border)', paddingTop: 'var(--space-7)' }}
         >
           <h2 className="th-text-1 mb-6" style={{ font: 'var(--t-h3)' }}>
-            {ville ? `Des hébergements semblables, à ${ville}` : 'Nos hébergements en vedette'}
+            {ville ? t.semblables(ville) : t.vedette}
           </h2>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

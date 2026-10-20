@@ -2,11 +2,12 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutGrid, Building2, Users, MessageSquare, CreditCard,
-  Menu, X, Sun, Moon, LogOut, ArrowLeft, BellRing, ScrollText, Banknote, Undo2, Send, Palette, ShoppingBag, Inbox, Mail,
+  Menu, X, Sun, Moon, LogOut, ArrowLeft, BellRing, ScrollText, Banknote, Undo2, Send, Palette, ShoppingBag, Inbox, Mail, ConciergeBell,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
 import api from '../../services/api'
+import { EVENEMENT_ATTENTES } from '../../lib/attentes'
 import Button from '../../components/ui/Button'
 import Marque from '../../components/Marque'
 
@@ -16,13 +17,15 @@ interface Entree {
   Icone: typeof LayoutGrid
   end?: boolean
   /** Clé du compteur d'attente, s'il y en a un. */
-  attente?: 'villas' | 'total'
+  attente?: 'villas' | 'demandes' | 'total'
 }
 
 const ENTREES: Entree[] = [
   { to: '/admin',              label: 'Ce qui attend',   Icone: Inbox,          end: true, attente: 'total' },
   { to: '/admin/tableau-de-bord', label: 'Tableau de bord', Icone: LayoutGrid },
   { to: '/admin/villas',       label: 'Hébergements',    Icone: Building2,      attente: 'villas' },
+  // Transport et repas demandés par les voyageurs : une réponse promise sous deux heures.
+  { to: '/admin/demandes',     label: 'Demandes',        Icone: ConciergeBell,  attente: 'demandes' },
   { to: '/admin/utilisateurs', label: 'Utilisateurs',    Icone: Users },
   { to: '/admin/avis',         label: 'Avis',            Icone: MessageSquare },
   // « Articles » et non « Œuvres » : le catalogue est de l'artisanat, et un
@@ -52,7 +55,7 @@ function initiales(nom: string) {
  * jours et que leurs propriétaires, eux, attendent aussi.
  */
 function useAttentes() {
-  const [attentes, setAttentes] = useState<{ villas: number; total: number }>({ villas: 0, total: 0 })
+  const [attentes, setAttentes] = useState<Compteurs>({ villas: 0, demandes: 0, total: 0 })
   const emplacement = useLocation()
 
   const relire = useCallback(() => {
@@ -65,6 +68,7 @@ function useAttentes() {
         const lignes: { cle: string; compte: number | null }[] = r.data?.lignes ?? []
         setAttentes({
           villas: lignes.find((l) => l.cle === 'villas')?.compte ?? 0,
+          demandes: lignes.find((l) => l.cle === 'demandes_service')?.compte ?? 0,
           total: r.data?.total ?? 0,
         })
       })
@@ -76,10 +80,17 @@ function useAttentes() {
   // finit jamais.
   useEffect(relire, [relire, emplacement.pathname])
 
+  // Et quand un écran le demande : traiter sans changer de page doit aussi
+  // faire descendre le compteur.
+  useEffect(() => {
+    window.addEventListener(EVENEMENT_ATTENTES, relire)
+    return () => window.removeEventListener(EVENEMENT_ATTENTES, relire)
+  }, [relire])
+
   return attentes
 }
 
-interface Compteurs { villas: number; total: number }
+interface Compteurs { villas: number; demandes: number; total: number }
 
 function Navigation({ attentes, onNaviguer }: { attentes: Compteurs; onNaviguer?: () => void }) {
   return (

@@ -11,6 +11,8 @@ import { useConfig } from '../../context/ConfigContext'
 import { enSlug } from '../../lib/villes'
 import { fcfa } from '../../lib/format'
 import type { PageResult, VillaResume } from '../../types'
+import { useLangue } from '../../i18n/langue'
+import { TEXTES_RECHERCHE } from '../../i18n/recherche'
 
 /**
  * Une page par destination : « Hébergements à Saly ».
@@ -34,6 +36,8 @@ import type { PageResult, VillaResume } from '../../types'
 export default function Destination() {
   const { ville: slug } = useParams()
   const { annonces, chargee } = useConfig()
+  const { langue, lien } = useLangue()
+  const t = TEXTES_RECHERCHE[langue].destination
 
   // La ville canonique, retrouvée depuis l'adresse. On ne fait jamais confiance
   // au slug pour l'affichage : « saly » doit redevenir « Saly ».
@@ -78,17 +82,17 @@ export default function Destination() {
     return (
       <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text-1)' }}>
         <Seo
-          titre="Destination inconnue"
-          description="Cette destination n'existe pas encore sur PasseTemps."
+          titre={t.inconnueSeo}
+          description={t.inconnueSeoDescription}
           indexable={false}
         />
         <PageHeader />
         <div className="max-w-2xl mx-auto px-6 py-20 text-center">
-          <h1 className="text-2xl font-normal mb-3 th-text-1">Cette destination n'existe pas encore</h1>
+          <h1 className="text-2xl font-normal mb-3 th-text-1">{t.inconnue}</h1>
           <p className="mb-6" style={{ color: 'var(--text-2)' }}>
-            Nous n'avons pas encore d'annonce à cette adresse. Regardez les hébergements disponibles.
+            {t.pasEncore}
           </p>
-          <Link to="/hebergements/"><Button>Voir tous les hébergements</Button></Link>
+          <Link to={lien('/hebergements/')}><Button>{t.voirTous}</Button></Link>
         </div>
         <Footer />
       </div>
@@ -101,22 +105,20 @@ export default function Destination() {
   }, null)
 
   const description = villas.length
-    ? `${villas.length} hébergement${villas.length > 1 ? 's' : ''} à louer à ${nom}`
-      + `${plancher != null ? `, à partir de ${fcfa(plancher)}` : ''}`
-      + ' — villas, résidences, appartements et chambres, tarifs affichés en FCFA.'
-    : `Villas, résidences, appartements et chambres à louer à ${nom}, au Sénégal.`
+    ? t.description(villas.length, nom, plancher != null ? fcfa(plancher) : null)
+    : t.descriptionVide(nom)
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text-1)' }}>
       <Seo
-        titre={`Hébergements à ${nom}`}
+        titre={t.titre(nom)}
         description={description}
-        chemin={`/destinations/${slug}/`}
+        chemin={lien(`/destinations/${slug}/`)}
         image={villas[0]?.photos?.[0]?.url}
         donneesStructurees={{
           '@context': 'https://schema.org',
           '@type': 'CollectionPage',
-          name: `Hébergements à ${nom}`,
+          name: t.titre(nom),
           description,
           about: { '@type': 'Place', name: nom, address: { '@type': 'PostalAddress', addressLocality: nom, addressCountry: 'SN' } },
         }}
@@ -125,17 +127,17 @@ export default function Destination() {
 
       <div className="max-w-6xl mx-auto px-6 py-10 md:py-14">
         <p className="text-xs uppercase tracking-widest font-semibold mb-1" style={{ color: 'var(--accent)' }}>
-          Destination
+          {t.eyebrow}
         </p>
         <h1 className="text-2xl md:text-3xl font-normal th-text-1 mb-2" style={{ letterSpacing: '-0.02em' }}>
-          Hébergements à {nom}
+          {t.titre(nom)}
         </h1>
         <p className="mb-8" style={{ color: 'var(--text-2)' }}>{description}</p>
 
         {erreur && (
           <div className="mb-8">
             <p className="mb-3" style={{ color: 'var(--danger)' }}>{erreur}</p>
-            <Button variante="secondaire" onClick={reessayer}>Réessayer</Button>
+            <Button variante="secondaire" onClick={reessayer}>{t.reessayer}</Button>
           </div>
         )}
 
@@ -152,17 +154,17 @@ export default function Destination() {
         ) : (
           !erreur && (
             <p style={{ color: 'var(--text-2)' }}>
-              Aucune annonce à {nom} pour le moment.
+              {t.aucune(nom)}
             </p>
           )
         )}
 
         <div className="mt-10 flex flex-wrap gap-3">
-          <Link to={`/hebergements?ville=${encodeURIComponent(nom)}`}>
-            <Button variante="secondaire">Affiner la recherche à {nom}</Button>
+          <Link to={`${lien('/hebergements')}?ville=${encodeURIComponent(nom)}`}>
+            <Button variante="secondaire">{t.affiner(nom)}</Button>
           </Link>
-          <Link to="/hebergements/">
-            <Button variante="secondaire">Toutes les destinations</Button>
+          <Link to={lien('/hebergements/')}>
+            <Button variante="secondaire">{t.toutes}</Button>
           </Link>
         </div>
       </div>

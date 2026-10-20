@@ -1,8 +1,11 @@
 import { Link } from 'react-router-dom'
 import Badge from './ui/Badge'
 import Inclinable from './ui/Inclinable'
-import { UNITE_TARIF, type VillaResume } from '../types'
+import type { VillaResume } from '../types'
 import { fcfa, noteLisible } from '../lib/format'
+import { useLangue } from '../i18n/langue'
+import { TEXTES_HEBERGEMENT } from '../i18n/hebergement'
+import { METIER } from '../i18n/metier'
 
 interface VillaCardProps {
   villa: VillaResume
@@ -33,16 +36,19 @@ function IconeLieu() {
  * compare — et c'est la comparaison qui fait défiler.
  */
 export default function VillaCard({ villa, isFavori, onToggleFavori, prioritaire }: VillaCardProps) {
+  const { langue, lien } = useLangue()
+  const t = TEXTES_HEBERGEMENT[langue].carte
+  const metier = METIER[langue]
   const note = noteLisible(villa.note_moyenne)
   const nbAvis = villa.avis_count ?? 0
   const photos = villa.photos ?? []
   const photo = photos[0]
-  const unite = villa.prix_min_unite ? UNITE_TARIF[villa.prix_min_unite] : null
+  const unite = villa.prix_min_unite ? metier.unite[villa.prix_min_unite] : null
 
   const equipements = [
-    villa.a_piscine ? 'Piscine' : null,
-    villa.capacite_max ? `${villa.capacite_max} personnes` : null,
-    villa.a_climatisation ? 'Climatisation' : null,
+    villa.a_piscine ? t.piscine : null,
+    villa.capacite_max ? metier.personnes(villa.capacite_max) : null,
+    villa.a_climatisation ? t.climatisation : null,
   ].filter(Boolean) as string[]
 
   // Barre oblique finale : c'est la seule forme que l'hébergeur sert
@@ -50,7 +56,7 @@ export default function VillaCard({ villa, isFavori, onToggleFavori, prioritaire
   // titre générique du site, au lieu du nom et du prix de la villa.
   // Voir `scripts/prerendu.mjs`.
   return (
-    <Link to={`/hebergements/${villa.id}/`} className="carte-villa" aria-label={`${villa.nom}, ${villa.ville}`}>
+    <Link to={lien(`/hebergements/${villa.id}/`)} className="carte-villa" aria-label={`${villa.nom}, ${villa.ville}`}>
       {/* L'inclinaison ne s'applique qu'au curseur : au doigt, elle n'aurait
           aucune direction à suivre et coûterait une couche de rendu par carte.
           Le filtre est en CSS, pas ici. */}
@@ -74,14 +80,14 @@ export default function VillaCard({ villa, isFavori, onToggleFavori, prioritaire
           {/* Boolean() explicite : un entier 0 venant de SQL serait rendu tel quel
               par JSX — c'est ainsi qu'un « 0 » s'affichait sur chaque carte. */}
           {Boolean(villa.vedette) && (
-            <Badge ton="vedette" className="absolute top-3 left-3">Vedette</Badge>
+            <Badge ton="vedette" className="absolute top-3 left-3">{t.vedette}</Badge>
           )}
 
           {onToggleFavori && (
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavori(e) }}
               className="carte-villa-favori"
-              aria-label={isFavori ? `Retirer ${villa.nom} des favoris` : `Ajouter ${villa.nom} aux favoris`}
+              aria-label={isFavori ? t.retirerFavori(villa.nom) : t.ajouterFavori(villa.nom)}
               aria-pressed={isFavori}
             >
               <svg viewBox="0 0 24 24" className="w-4 h-4" fill={isFavori ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -91,7 +97,7 @@ export default function VillaCard({ villa, isFavori, onToggleFavori, prioritaire
           )}
 
           {photos.length > 1 && (
-            <span className="carte-villa-compteur">{photos.length} photos</span>
+            <span className="carte-villa-compteur">{t.photos(photos.length)}</span>
           )}
         </div>
 
@@ -128,12 +134,12 @@ export default function VillaCard({ villa, isFavori, onToggleFavori, prioritaire
           <div className="carte-villa-prix">
             {villa.prix_min != null ? (
               <p>
-                <span className="th-text-3 text-xs">à partir de </span>
+                <span className="th-text-3 text-xs">{t.aPartirDe}</span>
                 <span className="carte-villa-montant">{fcfa(villa.prix_min)}</span>
                 {unite && <span className="th-text-3 text-xs"> / {unite}</span>}
               </p>
             ) : (
-              <p className="text-sm th-text-3">Tarif sur demande</p>
+              <p className="text-sm th-text-3">{t.surDemande}</p>
             )}
           </div>
         </div>

@@ -14,6 +14,8 @@ import Seo from '../../components/Seo'
 import Navbar from '../../components/Navbar'
 import Button from '../../components/ui/Button'
 import { Champ, ChampZoneTexte } from '../../components/ui/Champ'
+import { useLangue } from '../../i18n/langue'
+import { TEXTES_BOUTIQUE } from '../../i18n/boutique'
 
 /**
  * Tunnel de commande.
@@ -31,6 +33,9 @@ export default function Commander() {
   const { boutique, chargee, paiement } = useConfig()
   const toast = useToast()
   const navigate = useNavigate()
+  const { langue, lien } = useLangue()
+  const t = TEXTES_BOUTIQUE[langue].commande
+  const zonesEn = TEXTES_BOUTIQUE[langue].zones
 
   const [zone, setZone] = useState('')
   const [mode, setMode] = useState<'en_ligne' | 'livraison'>('en_ligne')
@@ -44,7 +49,7 @@ export default function Commander() {
   const { donnees: oeuvre, chargement, erreur } = useRequete<Oeuvre>(
     async (signal) => (await api.get(`/oeuvres/${id}`, { signal })).data,
     `oeuvre-${id}`,
-    { messageErreurParDefaut: 'Cet article est introuvable.' }
+    { messageErreurParDefaut: t.introuvable }
   )
 
   // On attend de **savoir** avant de trancher : au premier rendu la
@@ -52,8 +57,8 @@ export default function Commander() {
   // renvoyait à l'accueil alors que la boutique était ouverte.
   if (!chargee) return <ChargementPage />
   // Fermée, elle n'existe pas : ni page, ni URL à garder en mémoire.
-  if (!boutique.actif) return <Navigate to="/" replace />
-  if (!user) return <Navigate to={`/login?retour=/boutique/${id}/commander`} replace />
+  if (!boutique.actif) return <Navigate to={lien('/')} replace />
+  if (!user) return <Navigate to={`${lien('/login')}?retour=${lien(`/boutique/${id}/commander`)}`} replace />
 
   const zones = Object.entries(boutique.zones)
   const zoneChoisie = zone ? boutique.zones[zone] : null
@@ -94,10 +99,10 @@ export default function Commander() {
         note: note.trim() || null,
       })
 
-      toast.succes('Commande enregistrée.')
-      navigate(`/boutique/commandes/${data.id}`, { replace: true })
+      toast.succes(t.enregistree)
+      navigate(lien(`/boutique/commandes/${data.id}`), { replace: true })
     } catch (err) {
-      toast.erreur(messageErreur(err, "La commande n'a pas pu être enregistrée."))
+      toast.erreur(messageErreur(err, t.echec))
       setEnvoi(false)
     }
   }
@@ -108,20 +113,20 @@ export default function Commander() {
 
   return (
     <>
-      <Seo titre="Commander un article" description="Finalisez votre commande." />
+      <Seo titre={t.seoTitre} description={t.seoDescription} />
       <Navbar />
 
       <main className="achat">
-        <Link to={`/boutique/${id}/`} className="oeuvre-retour">
+        <Link to={lien(`/boutique/${id}/`)} className="oeuvre-retour">
           <ArrowLeft size={16} aria-hidden="true" />
-          Retour à l'article
+          {t.retour}
         </Link>
 
         {erreur && <div className="console-erreur" role="alert">{erreur}</div>}
 
         {indisponible && (
           <div className="console-erreur" role="alert">
-            Cet article vient d'être vendue. Elle n'est plus disponible.
+            {t.vendu}
           </div>
         )}
 
@@ -130,7 +135,7 @@ export default function Commander() {
         ) : oeuvre && !indisponible ? (
           <form className="achat-corps" onSubmit={commander}>
             <section className="panneau">
-              <h1 className="panneau-titre">Votre commande</h1>
+              <h1 className="panneau-titre">{t.votreCommande}</h1>
 
               <div className="commande-resume">
                 {oeuvre.photos?.[0] && (
@@ -145,10 +150,10 @@ export default function Commander() {
             </section>
 
             <section className="panneau">
-              <h2 className="panneau-titre"><Truck size={17} aria-hidden="true" /> Livraison</h2>
+              <h2 className="panneau-titre"><Truck size={17} aria-hidden="true" /> {t.livraison}</h2>
 
               <fieldset className="choix-mode">
-                <legend className="champ-label">Où livrer</legend>
+                <legend className="champ-label">{t.ouLivrer}</legend>
                 {zones.map(([cle, z]) => (
                   <label key={cle} className={`choix${zone === cle ? ' est-actif' : ''}`}>
                     <input
@@ -159,8 +164,8 @@ export default function Commander() {
                       onChange={() => setZone(cle)}
                     />
                     <span>
-                      <span className="choix-titre">{z.nom} · {z.frais === 0 ? 'gratuit' : fcfa(z.frais)}</span>
-                      <span className="choix-aide">{z.delai}</span>
+                      <span className="choix-titre">{zonesEn[cle]?.nom ?? z.nom} · {z.frais === 0 ? t.gratuit : fcfa(z.frais)}</span>
+                      <span className="choix-aide">{zonesEn[cle]?.delai ?? z.delai}</span>
                     </span>
                   </label>
                 ))}
@@ -168,31 +173,31 @@ export default function Commander() {
 
               <div className="achat-champs">
                 <Champ
-                  label="Destinataire"
+                  label={t.destinataire}
                   value={destinataire}
                   onChange={(e) => setDestinataire(e.target.value)}
                   maxLength={120}
                   required
                 />
                 <Champ
-                  label="Téléphone"
+                  label={t.telephone}
                   type="tel"
-                  aide="Pour vous joindre le jour de la livraison."
+                  aide={t.telephoneAide}
                   value={telephone}
                   onChange={(e) => setTelephone(e.target.value)}
                   maxLength={30}
                   required
                 />
                 <Champ
-                  label="Ville"
+                  label={t.ville}
                   value={ville}
                   onChange={(e) => setVille(e.target.value)}
                   maxLength={120}
                   required
                 />
                 <ChampZoneTexte
-                  label="Adresse"
-                  aide="Quartier, rue, point de repère."
+                  label={t.adresse}
+                  aide={t.adresseAide}
                   rows={2}
                   value={adresse}
                   onChange={(e) => setAdresse(e.target.value)}
@@ -200,7 +205,7 @@ export default function Commander() {
                   required
                 />
                 <ChampZoneTexte
-                  label="Précision (facultatif)"
+                  label={t.precision}
                   rows={2}
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
@@ -210,10 +215,10 @@ export default function Commander() {
             </section>
 
             <section className="panneau">
-              <h2 className="panneau-titre">Règlement</h2>
+              <h2 className="panneau-titre">{t.reglement}</h2>
 
               <fieldset className="choix-mode">
-                <legend className="sr-only">Comment payer</legend>
+                <legend className="sr-only">{t.commentPayer}</legend>
                 {enLigne && (
                   <label className={`choix${choix === 'en_ligne' ? ' est-actif' : ''}`}>
                     <input
@@ -222,9 +227,9 @@ export default function Commander() {
                     />
                     <span>
                       <span className="choix-titre">
-                        <CreditCard size={14} aria-hidden="true" /> Payer maintenant
+                        <CreditCard size={14} aria-hidden="true" /> {t.payerMaintenant}
                       </span>
-                      <span className="choix-aide">Wave ou Orange Money, depuis votre téléphone.</span>
+                      <span className="choix-aide">{t.payerMaintenantAide}</span>
                     </span>
                   </label>
                 )}
@@ -237,9 +242,9 @@ export default function Commander() {
                     />
                     <span>
                       <span className="choix-titre">
-                        <HandCoins size={14} aria-hidden="true" /> Payer à la livraison
+                        <HandCoins size={14} aria-hidden="true" /> {t.payerLivraison}
                       </span>
-                      <span className="choix-aide">Vous réglez en main propre à la remise de l'article.</span>
+                      <span className="choix-aide">{t.payerLivraisonAide}</span>
                     </span>
                   </label>
                 )}
@@ -248,11 +253,11 @@ export default function Commander() {
               {/* Dire pourquoi il n'y a qu'un choix, sinon on le cherche. */}
               {!enLigne && boutique.livraison && (
                 <p className="achat-note">
-                  Le paiement en ligne est momentanément indisponible : vous réglez à la remise de l'article.
+                  {t.enLigneIndisponible}
                 </p>
               )}
               {choix === null && (
-                <p className="achat-note">Aucun moyen de règlement n'est proposé pour le moment.</p>
+                <p className="achat-note">{t.aucunMoyen}</p>
               )}
             </section>
 
@@ -260,13 +265,13 @@ export default function Commander() {
                 frais découverts ensuite sont la première cause d'abandon. */}
             <div className="achat-total">
               <dl>
-                <div><dt>Article</dt><dd>{fcfa(oeuvre.prix)}</dd></div>
+                <div><dt>{t.article}</dt><dd>{fcfa(oeuvre.prix)}</dd></div>
                 <div>
-                  <dt>Livraison</dt>
-                  <dd>{zone ? (frais === 0 ? 'Gratuite' : fcfa(frais)) : '—'}</dd>
+                  <dt>{t.livraison}</dt>
+                  <dd>{zone ? (frais === 0 ? t.gratuite : fcfa(frais)) : '—'}</dd>
                 </div>
                 <div className="achat-total-ligne">
-                  <dt>Total</dt>
+                  <dt>{t.total}</dt>
                   <dd>{zone ? fcfa(total) : '—'}</dd>
                 </div>
               </dl>
@@ -278,10 +283,10 @@ export default function Commander() {
                 disabled={!complet || envoi}
                 chargement={envoi}
               >
-                {choix === 'en_ligne' ? 'Valider et payer' : 'Valider la commande'}
+                {choix === 'en_ligne' ? t.validerPayer : t.valider}
               </Button>
 
-              {!zone && <p className="achat-note">Choisissez une zone de livraison pour voir le total.</p>}
+              {!zone && <p className="achat-note">{t.choisirZone}</p>}
             </div>
           </form>
         ) : null}

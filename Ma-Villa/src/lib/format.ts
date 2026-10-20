@@ -1,5 +1,15 @@
 /** Formatage partagé — le franc CFA n'a pas de décimales. */
 
+import type { Langue } from '../types'
+
+/**
+ * La locale des dates, selon la langue de la page. Chaque fonction de date
+ * prend la langue en dernier paramètre, **français par défaut** : les écrans
+ * des propriétaires et de la console, qui ne sont pas traduits, n'ont rien à
+ * changer.
+ */
+const LOCALE: Record<Langue, string> = { fr: 'fr-FR', en: 'en-GB' }
+
 export function fcfa(montant: number | string | null | undefined): string {
   const n = typeof montant === 'string' ? parseFloat(montant) : montant
   if (n === null || n === undefined || Number.isNaN(n)) return '—'
@@ -15,16 +25,16 @@ export function fcfaCourt(montant: number | string | null | undefined): string {
   return Math.round(n).toLocaleString('fr-FR')
 }
 
-export function dateCourte(iso: string): string {
-  return new Date(iso).toLocaleDateString('fr-FR', {
+export function dateCourte(iso: string, langue: Langue = 'fr'): string {
+  return new Date(iso).toLocaleDateString(LOCALE[langue], {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
   })
 }
 
-export function dateNumerique(iso: string): string {
-  return new Date(iso).toLocaleDateString('fr-FR', {
+export function dateNumerique(iso: string, langue: Langue = 'fr'): string {
+  return new Date(iso).toLocaleDateString(LOCALE[langue], {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -49,8 +59,9 @@ export function nuits(debut: string, fin: string): number {
   return Math.max(diff, 0)
 }
 
-export function libelleDuree(debut: string, fin: string): string {
+export function libelleDuree(debut: string, fin: string, langue: Langue = 'fr'): string {
   const n = nuits(debut, fin)
+  if (langue === 'en') return n === 0 ? '1 day' : `${n} night${n > 1 ? 's' : ''}`
   if (n === 0) return '1 jour'
   return `${n} nuit${n > 1 ? 's' : ''}`
 }
@@ -62,22 +73,22 @@ export function libelleDuree(debut: string, fin: string): string {
  * l'essentiel — les deux quantièmes — se noie dedans. « 13 – 17 août 2026 »
  * se lit d'un coup. Un séjour à cheval sur deux mois garde les deux.
  */
-export function periode(debut: string, fin: string): string {
+export function periode(debut: string, fin: string, langue: Langue = 'fr'): string {
   const d = new Date(debut)
   const f = new Date(fin)
 
   const memeMois = d.getMonth() === f.getMonth() && d.getFullYear() === f.getFullYear()
 
   if (memeMois) {
-    return `${d.getDate()} – ${dateCourte(fin)}`
+    return `${d.getDate()} – ${dateCourte(fin, langue)}`
   }
 
   const memeAnnee = d.getFullYear() === f.getFullYear()
   const debutLisible = memeAnnee
-    ? d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
-    : dateCourte(debut)
+    ? d.toLocaleDateString(LOCALE[langue], { day: 'numeric', month: 'short' })
+    : dateCourte(debut, langue)
 
-  return `${debutLisible} – ${dateCourte(fin)}`
+  return `${debutLisible} – ${dateCourte(fin, langue)}`
 }
 
 /** Date du jour au format attendu par `<input type="date">`. */
@@ -93,16 +104,17 @@ export function aujourdhui(): string {
  * au-delà d'une semaine, en revanche, l'écart cesse de parler et c'est la date
  * qui redevient l'information utile.
  */
-export function depuis(iso: string): string {
+export function depuis(iso: string, langue: Langue = 'fr'): string {
   const secondes = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
+  const en = langue === 'en'
 
-  if (secondes < 60) return "à l'instant"
+  if (secondes < 60) return en ? 'just now' : "à l'instant"
   if (secondes < 3600) return `${Math.floor(secondes / 60)} min`
   if (secondes < 86_400) return `${Math.floor(secondes / 3600)} h`
 
   const jours = Math.floor(secondes / 86_400)
-  if (jours === 1) return 'hier'
-  if (jours < 7) return `${jours} j`
+  if (jours === 1) return en ? 'yesterday' : 'hier'
+  if (jours < 7) return en ? `${jours} d` : `${jours} j`
 
-  return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+  return new Date(iso).toLocaleDateString(LOCALE[langue], { day: 'numeric', month: 'short' })
 }

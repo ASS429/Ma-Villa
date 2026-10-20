@@ -5,6 +5,8 @@ import Seo from '../components/Seo'
 import Button from '../components/ui/Button'
 import api from '../services/api'
 import { messageErreur } from '../lib/erreurs'
+import { useLangue } from '../i18n/langue'
+import { TEXTES_COMPTES } from '../i18n/comptes'
 
 /**
  * Ce qu'on dit selon l'issue.
@@ -14,28 +16,16 @@ import { messageErreur } from '../lib/erreurs'
  * courant, et de loin — d'où le texte, qui suppose l'expiration plutôt que
  * la fraude.
  */
-const MESSAGES = {
-  ok: {
-    titre: 'Adresse confirmée',
-    alerte: 'succes' as const,
-    texte: 'Votre adresse est confirmée. Votre compte est prêt.',
-  },
-  deja: {
-    titre: 'Déjà confirmée',
-    alerte: 'succes' as const,
-    texte: 'Cette adresse était déjà confirmée. Rien de plus à faire.',
-  },
-  invalide: {
-    titre: 'Ce lien a expiré',
-    alerte: 'erreur' as const,
-    texte: "Les liens de confirmation ne restent valables qu'un temps. Demandez-en un nouveau : il arrivera dans la minute.",
-  },
-}
+const ALERTES = { ok: 'succes', deja: 'succes', invalide: 'erreur' } as const
 
 export default function EmailVerifie() {
   const [params] = useSearchParams()
-  const statut = (params.get('statut') ?? 'invalide') as keyof typeof MESSAGES
-  const { titre, alerte, texte } = MESSAGES[statut] ?? MESSAGES.invalide
+  const { langue, lien } = useLangue()
+  const t = TEXTES_COMPTES[langue].verifie
+  const brut = params.get('statut') ?? 'invalide'
+  const statut: keyof typeof ALERTES = brut in ALERTES ? brut as keyof typeof ALERTES : 'invalide'
+  const { titre, texte } = t[statut]
+  const alerte = ALERTES[statut]
 
   const [envoi, setEnvoi] = useState(false)
   const [renvoye, setRenvoye] = useState(false)
@@ -55,7 +45,7 @@ export default function EmailVerifie() {
       await api.post('/auth/email/resend')
       setRenvoye(true)
     } catch (e) {
-      setErreur(messageErreur(e, "Le lien n'a pas pu être renvoyé."))
+      setErreur(messageErreur(e, t.echec))
     } finally {
       setEnvoi(false)
     }
@@ -63,14 +53,14 @@ export default function EmailVerifie() {
 
   return (
     <>
-      <Seo titre={titre} description="Confirmation de votre adresse PasseTemps." indexable={false} />
+      <Seo titre={titre} description={t.seoDescription} indexable={false} />
 
       <CoquilleAuth
         titre={titre}
         pied={
           expire
-            ? <Link to="/login" className="th-text-1 font-medium hover:underline underline-offset-4">Se connecter</Link>
-            : <Link to="/hebergements/" className="th-text-1 font-medium hover:underline underline-offset-4">Découvrir les villas</Link>
+            ? <Link to={lien('/login')} className="th-text-1 font-medium hover:underline underline-offset-4">{t.seConnecter}</Link>
+            : <Link to={lien('/hebergements/')} className="th-text-1 font-medium hover:underline underline-offset-4">{t.decouvrir}</Link>
         }
       >
         {/* Un lien expiré occupe l'écran entier avec une sortie, plutôt que
@@ -81,17 +71,16 @@ export default function EmailVerifie() {
         {expire ? (
           renvoye ? (
             <AlerteAuth type="succes">
-              Un nouveau lien vient de partir. Vérifiez votre boîte, et les indésirables.
+              {t.renvoye}
             </AlerteAuth>
           ) : (
             <>
               {erreur && <AlerteAuth type="erreur">{erreur}</AlerteAuth>}
               <Button variante="primaire" taille="md" bloc chargement={envoi} onClick={redemander}>
-                {envoi ? 'Envoi…' : 'Demander un nouveau lien'}
+                {envoi ? t.envoi : t.nouveauLien}
               </Button>
               <p className="text-xs th-text-3 text-center mt-3">
-                Si vous n'êtes pas connecté, connectez-vous d'abord : nous saurons alors
-                à quelle adresse l'envoyer.
+                {t.connectezVous}
               </p>
             </>
           )
@@ -101,7 +90,7 @@ export default function EmailVerifie() {
             className="block w-full text-center py-3 rounded-xl font-semibold transition-opacity hover:opacity-90"
             style={{ background: 'var(--accent)', color: 'var(--on-accent)', textDecoration: 'none' }}
           >
-            Aller à mon espace
+            {t.monEspace}
           </Link>
         )}
       </CoquilleAuth>

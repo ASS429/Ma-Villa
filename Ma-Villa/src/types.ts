@@ -327,3 +327,67 @@ export const LIBELLES_STATUT_OEUVRE: Record<StatutOeuvre, string> = {
   publiee: 'En vente',
   vendue: 'Vendue',
 }
+
+/* ─── Services aux voyageurs — transport et repas ──────────────────
+   Le catalogue vient du serveur (`config/prestations.php`), dans les deux
+   langues : c'est lui qui valide la prestation demandée et la nomme dans la
+   console. Une seconde liste ici finirait par diverger. */
+
+export type Langue = 'fr' | 'en'
+export type Traduit = Record<Langue, string>
+export type FamillePrestation = 'transport' | 'restauration'
+
+export interface Prestation {
+  cle: string
+  famille: FamillePrestation
+  /** Prix de départ indicatif, en FCFA : rien n'est encaissé dessus. */
+  prix_a_partir_de: number
+  /** La prestation part de l'aéroport : on demande le numéro du vol. */
+  vol: boolean
+  libelle: Traduit
+  unite: Traduit
+  description: Traduit
+}
+
+export interface CataloguePrestations {
+  /** Les familles visibles par l'appelant — fermées comprises pour l'administration. */
+  familles: Partial<Record<FamillePrestation, Traduit>>
+  catalogue: Prestation[]
+  delai_reponse_heures: number
+  /** Celles que seul l'administrateur voit, en aperçu. */
+  en_apercu?: FamillePrestation[]
+}
+
+/** D'où part une demande : la page d'un service, ou la vitrine des JOJ. */
+export type OrigineDemande = FamillePrestation | 'joj'
+
+export type StatutDemandeService = 'nouvelle' | 'traitee' | 'abandonnee'
+
+export interface DemandeService {
+  id: number
+  reference: string
+  prestation: string
+  libelle_prestation: string
+  date_service: string
+  heure: string | null
+  personnes: number
+  lieu: string
+  vol: string | null
+  delegation: string | null
+  nom: string
+  telephone: string
+  email: string | null
+  message: string | null
+  langue: Langue
+  origine: OrigineDemande | null
+  statut: StatutDemandeService
+  traitee_le: string | null
+  traitee_par?: { id: number; name: string } | null
+  created_at: string
+}
+
+export const LIBELLES_STATUT_DEMANDE: Record<StatutDemandeService, string> = {
+  nouvelle: 'À traiter',
+  traitee: 'Traitée',
+  abandonnee: 'Abandonnée',
+}

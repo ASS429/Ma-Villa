@@ -1,4 +1,6 @@
 import { useConfig } from '../context/ConfigContext'
+import { useLangue } from '../i18n/langue'
+import { TEXTES_HEBERGEMENT } from '../i18n/hebergement'
 
 /**
  * Logos des moyens de paiement — on les reconnaît d'un coup d'œil, là où un
@@ -37,13 +39,14 @@ function Logos({ moyens }: { moyens: { cle: string; nom: string }[] }) {
  */
 export default function MoyensPaiement({ compact = false }: { compact?: boolean }) {
   const { paiement } = useConfig()
-  const noms = paiement.moyens.map((m) => m.nom).join(' et ')
+  const t = TEXTES_HEBERGEMENT[useLangue().langue].paiement
+  const noms = paiement.moyens.map((m) => m.nom).join(t.et)
 
   if (paiement.actif) {
     return (
       <p className="text-xs th-text-2 leading-relaxed flex items-center gap-2">
         <Logos moyens={paiement.moyens} />
-        Paiement sécurisé par {noms}.
+        {t.securise(noms)}
       </p>
     )
   }
@@ -51,8 +54,8 @@ export default function MoyensPaiement({ compact = false }: { compact?: boolean 
   if (compact) {
     return (
       <p className="text-xs th-text-3 leading-relaxed">
-        Règlement directement avec le propriétaire.{' '}
-        <span className="th-text-2">Paiement en ligne ({noms}) bientôt disponible.</span>
+        {t.directCompact}{' '}
+        <span className="th-text-2">{t.bientotCompact(noms)}</span>
       </p>
     )
   }
@@ -65,11 +68,10 @@ export default function MoyensPaiement({ compact = false }: { compact?: boolean 
       <Logos moyens={paiement.moyens} />
       <div className="text-xs leading-relaxed flex-1">
         <p className="th-text-1 font-medium mb-0.5">
-          Paiement en ligne bientôt disponible
+          {t.bientotTitre}
         </p>
         <p className="th-text-2">
-          {noms} arrivent prochainement. Pour l'instant, le règlement se fait
-          directement avec le propriétaire, qui vous contactera après confirmation.
+          {t.bientotTexte(noms)}
         </p>
       </div>
     </div>

@@ -1,4 +1,6 @@
 import { libelleFiltre, type CleFiltre } from '../../lib/filtres'
+import { useLangue } from '../../i18n/langue'
+import { TEXTES_RECHERCHE } from '../../i18n/recherche'
 
 /**
  * Filtres actifs en pastilles retirables — planche 06.
@@ -18,19 +20,21 @@ export default function FiltresActifs({
   onRetirer: (cle: CleFiltre) => void
   onToutEffacer: () => void
 }) {
+  const { langue } = useLangue()
+  const t = TEXTES_RECHERCHE[langue].filtres
   if (actifs.length === 0) return null
 
   return (
-    <ul className="filtres-actifs" aria-label="Filtres appliqués">
+    <ul className="filtres-actifs" aria-label={t.appliques}>
       {actifs.map(([cle, valeur]) => (
         <li key={cle}>
           <button
             type="button"
             className="pastille-filtre"
             onClick={() => onRetirer(cle)}
-            aria-label={`Retirer le filtre ${libelleFiltre(cle, valeur, nomsCategories)}`}
+            aria-label={t.retirer(libelleFiltre(cle, valeur, nomsCategories, langue))}
           >
-            {libelleFiltre(cle, valeur, nomsCategories)}
+            {libelleFiltre(cle, valeur, nomsCategories, langue)}
             <span aria-hidden="true">✕</span>
           </button>
         </li>
@@ -39,7 +43,7 @@ export default function FiltresActifs({
       {actifs.length > 1 && (
         <li>
           <button type="button" className="filtres-effacer" onClick={onToutEffacer}>
-            Tout effacer
+            {t.toutEffacer}
           </button>
         </li>
       )}

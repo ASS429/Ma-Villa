@@ -5,6 +5,9 @@ import Button from './ui/Button'
 import FeuilleRecherche, { type CriteresRecherche } from './recherche/FeuilleRecherche'
 import { aujourdhui, dateCourte } from '../lib/format'
 import { useConfig } from '../context/ConfigContext'
+import { useLangue } from '../i18n/langue'
+import { TEXTES_RECHERCHE } from '../i18n/recherche'
+import type { Langue } from '../types'
 
 interface Props {
   /** `hero` : posé sur la photo. `page` : intégré dans une page claire. */
@@ -15,18 +18,19 @@ interface Props {
 }
 
 /** Résumé affiché sur le champ unique en mobile. */
-function resume(c: CriteresRecherche): { titre: string; detail: string } {
+function resume(c: CriteresRecherche, langue: Langue): { titre: string; detail: string } {
+  const t = TEXTES_RECHERCHE[langue].barre
   const morceaux: string[] = []
   if (c.date_debut && c.date_fin) {
-    morceaux.push(`${dateCourte(c.date_debut)} → ${dateCourte(c.date_fin)}`)
+    morceaux.push(`${dateCourte(c.date_debut, langue)} → ${dateCourte(c.date_fin, langue)}`)
   } else if (c.date_debut) {
-    morceaux.push(`dès le ${dateCourte(c.date_debut)}`)
+    morceaux.push(t.desLe(dateCourte(c.date_debut, langue)))
   }
-  if (c.capacite) morceaux.push(`${c.capacite} voyageur${Number(c.capacite) > 1 ? 's' : ''}`)
+  if (c.capacite) morceaux.push(t.voyageurs(Number(c.capacite)))
 
   return {
-    titre: c.ville || 'Où allez-vous ?',
-    detail: morceaux.join(' · ') || 'Dates · voyageurs',
+    titre: c.ville || t.ouAllezVous,
+    detail: morceaux.join(' · ') || t.datesVoyageurs,
   }
 }
 
@@ -39,6 +43,8 @@ function resume(c: CriteresRecherche): { titre: string; detail: string } {
  */
 export default function BarreRecherche({ variante = 'hero', valeursInitiales, onRecherche }: Props) {
   const navigate = useNavigate()
+  const { langue, lien } = useLangue()
+  const t = TEXTES_RECHERCHE[langue].barre
   // Les villes viennent du serveur : ce sont celles sous lesquelles il range
   // les annonces. L'interface en tenait deux listes écrites à la main, qui ne
   // disaient déjà plus la même chose — et proposaient des villes vides.
@@ -70,7 +76,7 @@ export default function BarreRecherche({ variante = 'hero', valeursInitiales, on
     ) as Record<string, string>
 
     if (onRecherche) onRecherche(remplis)
-    else navigate({ pathname: '/villas', search: new URLSearchParams(remplis).toString() })
+    else navigate({ pathname: lien('/hebergements'), search: new URLSearchParams(remplis).toString() })
   }
 
   const styleChamp: React.CSSProperties = surHero
@@ -78,7 +84,7 @@ export default function BarreRecherche({ variante = 'hero', valeursInitiales, on
     : { background: 'var(--bg-input)', border: '1px solid var(--border)', color: 'var(--text-1)', minHeight: 44 }
 
   const classeLabel = surHero ? 'text-xs mb-1.5 block text-white/75' : 'text-xs mb-1.5 block th-text-2'
-  const { titre, detail } = resume(criteres)
+  const { titre, detail } = resume(criteres, langue)
 
   return (
     <>
@@ -121,17 +127,17 @@ export default function BarreRecherche({ variante = 'hero', valeursInitiales, on
             : { background: 'var(--bg-surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }
         }
         role="search"
-        aria-label="Rechercher une villa"
+        aria-label={t.rechercherUne}
       >
         <div className="grid grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_0.8fr_auto] gap-3 items-end">
           <div className="col-span-2 lg:col-span-1">
-            <label htmlFor="rech-ville" className={classeLabel}>Destination</label>
+            <label htmlFor="rech-ville" className={classeLabel}>{t.destination}</label>
             <input
               id="rech-ville"
               list="destinations-senegal"
               value={criteres.ville}
               onChange={(e) => majCritere('ville', e.target.value)}
-              placeholder="Saly, Mbour, Dakar…"
+              placeholder={t.exempleVilles}
               className="w-full rounded-xl px-4 py-2.5 text-sm outline-none placeholder:opacity-60"
               style={styleChamp}
             />
@@ -141,7 +147,7 @@ export default function BarreRecherche({ variante = 'hero', valeursInitiales, on
           </div>
 
           <div>
-            <label htmlFor="rech-debut" className={classeLabel}>Arrivée</label>
+            <label htmlFor="rech-debut" className={classeLabel}>{t.arrivee}</label>
             <input
               id="rech-debut" type="date" min={aujourdhui()}
               value={criteres.date_debut}
@@ -152,7 +158,7 @@ export default function BarreRecherche({ variante = 'hero', valeursInitiales, on
           </div>
 
           <div>
-            <label htmlFor="rech-fin" className={classeLabel}>Départ</label>
+            <label htmlFor="rech-fin" className={classeLabel}>{t.depart}</label>
             <input
               id="rech-fin" type="date" min={criteres.date_debut || aujourdhui()}
               value={criteres.date_fin}
@@ -163,7 +169,7 @@ export default function BarreRecherche({ variante = 'hero', valeursInitiales, on
           </div>
 
           <div>
-            <label htmlFor="rech-capacite" className={classeLabel}>Voyageurs</label>
+            <label htmlFor="rech-capacite" className={classeLabel}>{t.voyageursLibelle}</label>
             <input
               id="rech-capacite" type="number" min={1} max={50}
               value={criteres.capacite}
@@ -181,7 +187,7 @@ export default function BarreRecherche({ variante = 'hero', valeursInitiales, on
             className="col-span-2 lg:col-span-1"
             iconeAvant={<Search size={16} aria-hidden="true" />}
           >
-            Rechercher
+            {t.rechercher}
           </Button>
         </div>
       </form>

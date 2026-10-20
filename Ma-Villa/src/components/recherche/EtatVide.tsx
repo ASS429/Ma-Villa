@@ -1,5 +1,7 @@
 import Button from '../ui/Button'
 import { libelleFiltre, type CleFiltre } from '../../lib/filtres'
+import { useLangue } from '../../i18n/langue'
+import { TEXTES_RECHERCHE } from '../../i18n/recherche'
 import type { Suggestion } from './useSuggestionsFiltres'
 
 /**
@@ -26,6 +28,8 @@ export default function EtatVide({
   onRetirer: (cle: CleFiltre) => void
   onToutEffacer: () => void
 }) {
+  const { langue } = useLangue()
+  const t = TEXTES_RECHERCHE[langue].vide
   const meilleure = suggestions[0]
   const valeur = meilleure ? actifs.find(([c]) => c === meilleure.cle)?.[1] : undefined
 
@@ -39,19 +43,18 @@ export default function EtatVide({
       </div>
 
       <h2 className="etat-vide-titre">
-        {actifs.length > 0 ? 'Aucune villa avec ces filtres' : 'Aucune villa disponible'}
+        {actifs.length > 0 ? t.avecFiltres : t.aucun}
       </h2>
 
       {recherche && (
-        <p className="etat-vide-texte">Recherche d'alternatives…</p>
+        <p className="etat-vide-texte">{t.alternatives}</p>
       )}
 
       {!recherche && meilleure && valeur !== undefined && (
         <>
           <p className="etat-vide-texte">
-            En retirant <strong>{libelleFiltre(meilleure.cle, valeur, nomsCategories)}</strong>,{' '}
-            <strong>{meilleure.resultats}</strong> villa{meilleure.resultats > 1 ? 's' : ''}{' '}
-            correspond{meilleure.resultats > 1 ? 'ent' : ''}.
+            {t.enRetirant} <strong>{libelleFiltre(meilleure.cle, valeur, nomsCategories, langue)}</strong>,{' '}
+            <strong>{meilleure.resultats}</strong> {t.correspondent(meilleure.resultats)}
           </p>
           <div className="etat-vide-actions">
             <Button
@@ -59,10 +62,10 @@ export default function EtatVide({
               taille="sm"
               onClick={() => onRetirer(meilleure.cle)}
             >
-              Retirer « {libelleFiltre(meilleure.cle, valeur, nomsCategories)} »
+              {t.retirer(libelleFiltre(meilleure.cle, valeur, nomsCategories, langue))}
             </Button>
             <Button variante="discret" taille="sm" onClick={onToutEffacer}>
-              Tout effacer
+              {t.toutEffacer}
             </Button>
           </div>
         </>
@@ -71,14 +74,12 @@ export default function EtatVide({
       {!recherche && !meilleure && (
         <>
           <p className="etat-vide-texte">
-            {avecDates
-              ? 'Essayez d\'autres dates, ou élargissez votre budget.'
-              : 'Essayez d\'autres critères de recherche.'}
+            {avecDates ? t.autresDates : t.autresCriteres}
           </p>
           {actifs.length > 0 && (
             <div className="etat-vide-actions">
               <Button variante="primaire" taille="sm" onClick={onToutEffacer}>
-                Voir toutes les villas
+                {t.voirTout}
               </Button>
             </div>
           )}

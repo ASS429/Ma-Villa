@@ -3,6 +3,8 @@ import PageHeader from '../../components/PageHeader'
 import Seo from '../../components/Seo'
 import Footer from '../../components/Footer'
 import { DOCUMENTS, TEXTES_PROVISOIRES, type DocumentLegal } from './contenu'
+import { useLangue } from '../../i18n/langue'
+import { TEXTES_DIVERS } from '../../i18n/divers'
 
 /*
  | ⚠️ **La barre oblique finale fait partie de l'adresse.** Sans elle, Render
@@ -22,20 +24,36 @@ const CHEMINS: Record<DocumentLegal['cle'], string> = {
 export default function PageLegale({ document }: { document: DocumentLegal['cle'] }) {
   const doc = DOCUMENTS[document]
   const autres = (Object.keys(DOCUMENTS) as DocumentLegal['cle'][]).filter((c) => c !== document)
+  const { langue, lien } = useLangue()
+  const t = TEXTES_DIVERS[langue].legal
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text-1)' }}>
-      <Seo titre={doc.titre} description={doc.description} chemin={CHEMINS[doc.cle]} />
+      {/* La canonique reste française, et sans alternative : la page anglaise
+          sert le même texte, en attendant sa traduction. Annoncer deux langues
+          pour un seul texte serait une fausse promesse faite à Google. */}
+      <Seo titre={doc.titre} description={doc.description} chemin={CHEMINS[doc.cle]} alternatives={false} />
       <PageHeader />
 
-      <article className="max-w-3xl mx-auto px-6 py-12 md:py-16">
+      {langue === 'en' && (
+        <div className="max-w-3xl mx-auto px-6 pt-10" lang="en">
+          <div className="rounded-xl px-5 py-4 th-card" role="note">
+            <p className="th-text-1 font-medium mb-1">{t.noteTitre}</p>
+            <p className="text-sm th-text-2 leading-relaxed">{t.note}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Le texte lui-même est en français : `lang` le dit au lecteur d'écran,
+          qui le prononcerait sinon avec l'accent anglais de la page. */}
+      <article className="max-w-3xl mx-auto px-6 py-12 md:py-16" lang="fr">
         <h1
           className="text-3xl md:text-4xl font-normal th-text-1 mb-3"
           style={{ letterSpacing: '-0.02em', fontFamily: "'Cormorant Garamond', Georgia, serif" }}
         >
           {doc.titre}
         </h1>
-        <p className="text-sm th-text-3 mb-8">Dernière mise à jour : {doc.miseAJour}</p>
+        <p className="text-sm th-text-3 mb-8">{TEXTES_DIVERS.fr.legal.miseAJour} {doc.miseAJour}</p>
 
         {TEXTES_PROVISOIRES && (
           <div
@@ -93,10 +111,10 @@ export default function PageLegale({ document }: { document: DocumentLegal['cle'
         <nav
           className="mt-16 pt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm"
           style={{ borderTop: '1px solid var(--border)' }}
-          aria-label="Autres documents légaux"
+          aria-label={t.autres}
         >
           {autres.map((cle) => (
-            <Link key={cle} to={CHEMINS[cle]} className="th-text-2 hover:th-text-1 transition-colors">
+            <Link key={cle} to={lien(CHEMINS[cle])} className="th-text-2 hover:th-text-1 transition-colors">
               {DOCUMENTS[cle].titre}
             </Link>
           ))}

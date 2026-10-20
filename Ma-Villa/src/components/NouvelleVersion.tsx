@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { useLangue } from '../i18n/langue'
+import { TEXTES_DIVERS } from '../i18n/divers'
 
 /** Toutes les cinq minutes, plus à chaque retour sur l'onglet. */
 const INTERVALLE = 5 * 60 * 1000
@@ -36,6 +38,7 @@ async function scriptPublie(): Promise<string | null> {
  */
 export default function NouvelleVersion() {
   const [disponible, setDisponible] = useState(false)
+  const t = TEXTES_DIVERS[useLangue().langue].version
 
   useEffect(() => {
     const charge = scriptCharge()
@@ -70,9 +73,9 @@ export default function NouvelleVersion() {
 
   return (
     <div className="bandeau-version" role="status">
-      <span>Une version plus récente de PasseTemps est disponible.</span>
+      <span>{t.texte}</span>
       <button type="button" onClick={() => window.location.reload()}>
-        Recharger
+        {t.recharger}
       </button>
     </div>
   )

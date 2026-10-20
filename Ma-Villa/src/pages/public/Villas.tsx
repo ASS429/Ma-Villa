@@ -24,14 +24,17 @@ import { messageErreur } from '../../lib/erreurs'
 import { useRequete } from '../../lib/useRequete'
 import { useConfig } from '../../context/ConfigContext'
 import ChoixCategorie from '../../components/recherche/ChoixCategorie'
-import { UNITE_TARIF, type PageResult, type VillaResume } from '../../types'
+import type { PageResult, VillaResume } from '../../types'
+import { useLangue } from '../../i18n/langue'
+import { METIER, nomCategorie } from '../../i18n/metier'
+import { TEXTES_RECHERCHE } from '../../i18n/recherche'
 
 const TRIS = [
-  { value: '', label: 'Plus récentes' },
-  { value: 'prix_asc', label: 'Prix croissant' },
-  { value: 'prix_desc', label: 'Prix décroissant' },
-  { value: 'note', label: 'Mieux notées' },
-]
+  { value: '', cle: 'recentes' },
+  { value: 'prix_asc', cle: 'prixAsc' },
+  { value: 'prix_desc', cle: 'prixDesc' },
+  { value: 'note', cle: 'note' },
+] as const
 
 /** Critères pilotés par l'URL : une recherche reste partageable et rechargeable. */
 const CLES_FILTRES = [
@@ -64,6 +67,8 @@ export default function Villas() {
   const toast = useToast()
   const { categories } = useConfig()
   const [params, setParams] = useSearchParams()
+  const { langue, lien } = useLangue()
+  const t = TEXTES_RECHERCHE[langue].liste
 
   const [panneauOuvert, setPanneauOuvert] = useState(false)
   const [vueCarte, setVueCarte] = useState(false)
@@ -88,7 +93,8 @@ export default function Villas() {
   // filtres ont un sens : « nombre de chambres » sur une piscine seule n'en a
   // aucun. Le reste de l'écran — carte, grille, tri — ne bouge pas.
   const categorieActive = categories.find((c) => c.cle === filtres.categorie) ?? null
-  const nomsCategories = Object.fromEntries(categories.map((c) => [c.cle, c.nom]))
+  const nomsCategories = Object.fromEntries(categories.map((c) => [c.cle, nomCategorie(c, langue)]))
+  const pluriel = categorieActive ? nomCategorie(categorieActive, langue, true) : null
 
   const { donnees, chargement, erreur, reessayer } = useRequete<PageResult<VillaResume>>(
     async (signal) => {
@@ -99,7 +105,7 @@ export default function Villas() {
       return data
     },
     requete,
-    { messageErreurParDefaut: 'Impossible de charger les villas.' }
+    { messageErreurParDefaut: t.chargementImpossible }
   )
 
   const villas = donnees?.data ?? []
@@ -169,13 +175,11 @@ export default function Villas() {
       else await api.post(`/villas/${villaId}/favoris`, {})
     } catch (err) {
       basculer(etait) // l'appel a échoué : on revient à l'état réel
-      toast.erreur(messageErreur(err, 'Impossible de mettre à jour vos favoris.'))
+      toast.erreur(messageErreur(err, t.favorisImpossible))
     }
   }
 
-  const descriptionSeo = filtres.ville
-    ? `Villas et logements à louer à ${filtres.ville} — tarifs en FCFA, disponibilités en temps réel.`
-    : 'Villas, résidences, appartements et chambres à louer au Sénégal. Filtrez par ville, dates, budget et type de logement.'
+  const descriptionSeo = filtres.ville ? t.seoVille(filtres.ville) : t.seoTout
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text-1)' }}>
@@ -185,21 +189,21 @@ export default function Villas() {
           qui fait foi. Barre oblique finale comprise, voici la forme que
           servent Render et le plan de site. */}
       <Seo
-        titre={filtres.ville ? `Hébergements à ${filtres.ville}` : 'Tous les hébergements'}
+        titre={filtres.ville ? t.titreVille(filtres.ville) : t.titreTout}
         description={descriptionSeo}
-        chemin="/hebergements/"
+        chemin={lien('/hebergements/')}
       />
       <PageHeader />
 
       <div className="max-w-6xl mx-auto px-6 py-10 md:py-14">
         <div className="mb-6">
           <p className="text-xs uppercase tracking-widest font-semibold mb-1" style={{ color: 'var(--accent)' }}>
-            {categorieActive ? categorieActive.nom_pluriel : 'Toutes les annonces'}
+            {pluriel ?? t.toutesAnnonces}
           </p>
           <h1 className="text-2xl md:text-3xl font-normal th-text-1" style={{ letterSpacing: '-0.02em' }}>
-            {categorieActive
-              ? `${categorieActive.nom_pluriel}${filtres.ville ? ` à ${filtres.ville}` : ' au Sénégal'}`
-              : 'Hébergements disponibles'}
+            {pluriel
+              ? (filtres.ville ? t.categorieA(pluriel, filtres.ville) : t.categorieSenegal(pluriel))
+              : t.disponibles}
           </h1>
         </div>
 
@@ -227,7 +231,7 @@ export default function Villas() {
             aria-expanded={panneauOuvert}
           >
             <IconFilter />
-            Filtres
+            {t.filtres}
             {nbFiltresActifs > 0 && (
               <span
                 className="text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center"
@@ -242,14 +246,14 @@ export default function Villas() {
             {/* Bascule liste / carte : la carte n'est pas décorative — à Saly,
                 « à 300 m de la plage » et « à 3 km » sont deux produits
                 différents au même prix. */}
-            <div className="bascule-vue" role="group" aria-label="Affichage des résultats">
+            <div className="bascule-vue" role="group" aria-label={t.affichage}>
               <button
                 type="button"
                 onClick={() => setVueCarte(false)}
                 aria-pressed={!vueCarte}
                 className={vueCarte ? undefined : 'est-actif'}
               >
-                Liste
+                {t.liste}
               </button>
               <button
                 type="button"
@@ -257,11 +261,11 @@ export default function Villas() {
                 aria-pressed={vueCarte}
                 className={vueCarte ? 'est-actif' : undefined}
               >
-                Carte
+                {t.carte}
               </button>
             </div>
 
-            <label htmlFor="tri" className="text-sm th-text-2">Trier par</label>
+            <label htmlFor="tri" className="text-sm th-text-2">{t.trierPar}</label>
             <select
               id="tri"
               value={filtres.tri}
@@ -269,7 +273,7 @@ export default function Villas() {
               className="rounded-xl px-3 text-sm th-input-field"
               style={{ minHeight: 44 }}
             >
-              {TRIS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+              {TRIS.map((tri) => <option key={tri.value} value={tri.value}>{t.tris[tri.cle]}</option>)}
             </select>
           </div>
         </div>
@@ -306,9 +310,9 @@ export default function Villas() {
           </div>
         ) : erreur ? (
           <div className="text-center py-24">
-            <p className="text-lg font-medium th-text-1 mb-2">Chargement impossible</p>
+            <p className="text-lg font-medium th-text-1 mb-2">{t.chargementImpossibleTitre}</p>
             <p className="text-sm th-text-2 mb-6">{erreur}</p>
-            <Button onClick={reessayer} variante="primaire" taille="sm">Réessayer</Button>
+            <Button onClick={reessayer} variante="primaire" taille="sm">{t.reessayer}</Button>
           </div>
         ) : villas.length === 0 ? (
           <EtatVide
@@ -323,15 +327,17 @@ export default function Villas() {
         ) : (
           <>
             <p className="text-sm mb-6 th-text-2">
-              {pagination.total} {categorieActive
-                ? (pagination.total > 1 ? categorieActive.nom_pluriel.toLowerCase() : categorieActive.nom.toLowerCase())
-                : `villa${pagination.total > 1 ? 's' : ''}`}{' '}
-              trouvée{pagination.total > 1 ? 's' : ''}
+              {t.trouves(
+                pagination.total,
+                categorieActive
+                  ? nomCategorie(categorieActive, langue, pagination.total > 1).toLowerCase()
+                  : null,
+              )}
               {categorieActive && (
-                <span className="th-text-3"> · prix en FCFA / {UNITE_TARIF[categorieActive.unite_prix]}</span>
+                <span className="th-text-3">{t.prixPar(METIER[langue].unite[categorieActive.unite_prix])}</span>
               )}
               {pagination.dernierePage > 1 && (
-                <span className="th-text-3"> · page {pagination.page}/{pagination.dernierePage}</span>
+                <span className="th-text-3">{t.page(pagination.page, pagination.dernierePage)}</span>
               )}
             </p>
 
@@ -355,7 +361,7 @@ export default function Villas() {
                   ))}
                 </div>
                 <div className="vue-carte-plan">
-                  <Suspense fallback={<div className="carte-villas-vide"><p className="th-text-3 text-sm">Chargement de la carte…</p></div>}>
+                  <Suspense fallback={<div className="carte-villas-vide"><p className="th-text-3 text-sm">{t.chargementCarte}</p></div>}>
                     <CarteVillas villas={villas} villaSurvolee={villaSurvolee} />
                   </Suspense>
                 </div>
@@ -375,13 +381,13 @@ export default function Villas() {
             )}
 
             {pagination.dernierePage > 1 && (
-              <nav className="flex items-center justify-center gap-1.5 mt-10 flex-wrap" aria-label="Pagination">
+              <nav className="flex items-center justify-center gap-1.5 mt-10 flex-wrap" aria-label={t.pagination}>
                 <button
                   onClick={() => allerPage(pagination.page - 1)}
                   disabled={pagination.page === 1}
                   className="px-3.5 py-2 rounded-xl text-sm transition-all disabled:opacity-30 th-text-1"
                   style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', minHeight: 44 }}
-                  aria-label="Page précédente"
+                  aria-label={t.precedente}
                 >
                   ←
                 </button>
@@ -409,7 +415,7 @@ export default function Villas() {
                   disabled={pagination.page === pagination.dernierePage}
                   className="px-3.5 py-2 rounded-xl text-sm transition-all disabled:opacity-30 th-text-1"
                   style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', minHeight: 44 }}
-                  aria-label="Page suivante"
+                  aria-label={t.suivante}
                 >
                   →
                 </button>
@@ -428,7 +434,7 @@ export default function Villas() {
           onClick={() => setVueCarte((v) => !v)}
           aria-pressed={vueCarte}
         >
-          {vueCarte ? '☰ Voir la liste' : '⌖ Voir sur la carte'}
+          {vueCarte ? t.voirListe : t.voirCarte}
         </button>
       )}
 

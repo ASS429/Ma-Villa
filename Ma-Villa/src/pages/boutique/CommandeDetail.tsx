@@ -7,13 +7,16 @@ import { useToast } from '../../context/ToastContext'
 import { useRequete } from '../../lib/useRequete'
 import { messageErreur } from '../../lib/erreurs'
 import { fcfa, dateCourte } from '../../lib/format'
-import { LIBELLES_STATUT_COMMANDE, type Commande } from '../../types'
+import type { Commande } from '../../types'
+import { METIER } from '../../i18n/metier'
 import ChargementPage from '../../components/ChargementPage'
 import Seo from '../../components/Seo'
 import Navbar from '../../components/Navbar'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import { Champ, ChampSelection } from '../../components/ui/Champ'
+import { useLangue } from '../../i18n/langue'
+import { TEXTES_BOUTIQUE } from '../../i18n/boutique'
 
 const TON: Record<Commande['statut'], 'success' | 'warning' | 'danger' | 'neutre'> = {
   en_attente: 'warning',
@@ -25,15 +28,17 @@ const TON: Record<Commande['statut'], 'success' | 'warning' | 'danger' | 'neutre
 
 /** Les quatre étapes visibles par l'acheteur, dans l'ordre. */
 const ETAPES = [
-  { cle: 'confirmee', label: 'Confirmée', Icone: CheckCircle2 },
-  { cle: 'expediee', label: 'Expédiée', Icone: Truck },
-  { cle: 'livree', label: 'Livrée', Icone: PackageCheck },
+  { cle: 'confirmee', Icone: CheckCircle2 },
+  { cle: 'expediee', Icone: Truck },
+  { cle: 'livree', Icone: PackageCheck },
 ] as const
 
 export default function CommandeDetail() {
   const { id } = useParams<{ id: string }>()
   const { boutique, paiement, chargee } = useConfig()
   const toast = useToast()
+  const { langue, lien: chemin } = useLangue()
+  const t = TEXTES_BOUTIQUE[langue].suivi
 
   const [methode, setMethode] = useState('wave')
   const [telephone, setTelephone] = useState('')
@@ -44,7 +49,7 @@ export default function CommandeDetail() {
   const { donnees: commande, chargement, erreur, reessayer } = useRequete<Commande>(
     async (signal) => (await api.get(`/commandes/${id}`, { signal })).data,
     `commande-${id}`,
-    { messageErreurParDefaut: 'Cette commande est introuvable.' }
+    { messageErreurParDefaut: t.introuvable }
   )
 
   // Tant qu'un règlement est en vol, on interroge le serveur : le retour depuis
@@ -57,12 +62,12 @@ export default function CommandeDetail() {
         const { data } = await api.get(`/commandes/${id}/paiement/statut`)
         if (data.statut_paiement === 'reussi') {
           clearInterval(minuteur)
-          toast.succes('Paiement reçu. Merci !')
+          toast.succes(t.paiementRecu)
           setLien(null)
           reessayer()
         } else if (data.statut_paiement === 'echoue') {
           clearInterval(minuteur)
-          toast.erreur("Le paiement n'a pas abouti.")
+          toast.erreur(t.paiementEchoue)
           setLien(null)
           reessayer()
         }
@@ -72,14 +77,14 @@ export default function CommandeDetail() {
     }, 4000)
 
     return () => clearInterval(minuteur)
-  }, [lien, id, toast, reessayer])
+  }, [lien, id, toast, reessayer, t])
 
   // On attend de **savoir** avant de trancher : au premier rendu la
   // configuration n'est pas encore arrivée, et rediriger à ce moment-là
   // renvoyait à l'accueil alors que la boutique était ouverte.
   if (!chargee) return <ChargementPage />
   // Fermée, elle n'existe pas : ni page, ni URL à garder en mémoire.
-  if (!boutique.actif) return <Navigate to="/" replace />
+  if (!boutique.actif) return <Navigate to={chemin('/')} replace />
 
   const payer = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -92,13 +97,13 @@ export default function CommandeDetail() {
         telephone: telephone.trim(),
       })
       const cible = data.url_application || data.url || data.url_page
-      if (!cible) throw new Error('Aucun lien de paiement reçu.')
+      if (!cible) throw new Error(t.aucunLien)
       setLien(cible)
       // Sur téléphone, ouvrir l'application vaut mieux que demander un clic
       // de plus — le lien reste affiché pour ceux que la redirection rate.
       window.location.href = cible
     } catch (err) {
-      toast.erreur(messageErreur(err, "Le paiement n'a pas pu être lancé."))
+      toast.erreur(messageErreur(err, t.lancementEchoue))
     } finally {
       setEnvoi(false)
     }
@@ -108,10 +113,10 @@ export default function CommandeDetail() {
     setAnnulation(true)
     try {
       await api.patch(`/commandes/${id}/annuler`)
-      toast.succes('Commande annulée.')
+      toast.succes(t.annulee)
       reessayer()
     } catch (err) {
-      toast.erreur(messageErreur(err, "La commande n'a pas pu être annulée."))
+      toast.erreur(messageErreur(err, t.annulationEchouee))
     } finally {
       setAnnulation(false)
     }
@@ -133,19 +138,19 @@ export default function CommandeDetail() {
 
   return (
     <>
-      <Seo titre="Ma commande" description="Suivi de votre commande." />
+      <Seo titre={t.seoTitre} description={t.seoDescription} />
       <Navbar />
 
       <main className="achat">
-        <Link to="/boutique/commandes" className="oeuvre-retour">
+        <Link to={chemin('/boutique/commandes')} className="oeuvre-retour">
           <ArrowLeft size={16} aria-hidden="true" />
-          Mes commandes
+          {t.mesCommandes}
         </Link>
 
         {erreur && !chargement && (
           <div className="console-erreur" role="alert">
             {erreur}
-            <Button variante="secondaire" taille="sm" onClick={reessayer}>Réessayer</Button>
+            <Button variante="secondaire" taille="sm" onClick={reessayer}>{t.reessayer}</Button>
           </div>
         )}
 
@@ -159,41 +164,41 @@ export default function CommandeDetail() {
                   <h1 className="panneau-titre" style={{ margin: 0 }}>{commande.oeuvre_titre}</h1>
                   <p className="tableau-second">{commande.oeuvre_artiste}</p>
                 </div>
-                <Badge ton={TON[commande.statut]}>{LIBELLES_STATUT_COMMANDE[commande.statut]}</Badge>
+                <Badge ton={TON[commande.statut]}>{METIER[langue].statutCommande[commande.statut]}</Badge>
               </div>
 
               {commande.reference && (
-                <p className="commande-reference">Référence {commande.reference}</p>
+                <p className="commande-reference">{t.reference(commande.reference)}</p>
               )}
 
               {/* Le fil des étapes : où en est mon colis, sans avoir à lire. */}
               {commande.statut !== 'annulee' ? (
                 <ol className="commande-etapes">
-                  {ETAPES.map(({ cle, label, Icone }) => (
+                  {ETAPES.map(({ cle, Icone }) => (
                     <li key={cle} className={etapeAtteinte(cle) ? 'est-atteinte' : ''}>
                       <span className="commande-etape-puce"><Icone size={14} aria-hidden="true" /></span>
-                      <span>{label}</span>
+                      <span>{t.etapes[cle]}</span>
                     </li>
                   ))}
                 </ol>
               ) : (
                 <p className="commande-annulee">
                   <XCircle size={16} aria-hidden="true" />
-                  Commande annulée. L'article est de nouveau en vente.
+                  {t.annuleeTexte}
                 </p>
               )}
             </section>
 
             <section className="panneau">
-              <h2 className="panneau-titre">Détail</h2>
+              <h2 className="panneau-titre">{t.detail}</h2>
               <dl className="commande-detail">
-                <div><dt>Article</dt><dd>{fcfa(commande.montant_oeuvre)}</dd></div>
+                <div><dt>{t.article}</dt><dd>{fcfa(commande.montant_oeuvre)}</dd></div>
                 <div>
-                  <dt>Livraison</dt>
-                  <dd>{commande.frais_livraison === 0 ? 'Gratuite' : fcfa(commande.frais_livraison)}</dd>
+                  <dt>{t.livraison}</dt>
+                  <dd>{commande.frais_livraison === 0 ? t.gratuite : fcfa(commande.frais_livraison)}</dd>
                 </div>
                 <div className="commande-detail-total">
-                  <dt>Total</dt><dd>{fcfa(commande.montant_total)}</dd>
+                  <dt>{t.total}</dt><dd>{fcfa(commande.montant_total)}</dd>
                 </div>
               </dl>
 
@@ -203,9 +208,9 @@ export default function CommandeDetail() {
               </p>
 
               <p className="tableau-second">
-                Commandée le {dateCourte(commande.created_at)}
-                {commande.mode_paiement === 'livraison' && ' · règlement à la livraison'}
-                {commande.paye_le && ` · payée le ${dateCourte(commande.paye_le)}`}
+                {t.commandeeLe(dateCourte(commande.created_at, langue))}
+                {commande.mode_paiement === 'livraison' && t.aLaLivraison}
+                {commande.paye_le && t.payeeLe(dateCourte(commande.paye_le, langue))}
               </p>
             </section>
 
@@ -213,29 +218,28 @@ export default function CommandeDetail() {
               <div className="console-note">
                 <HandCoins size={16} aria-hidden="true" />
                 <p>
-                  Vous réglez <strong>{fcfa(commande.montant_total)}</strong> en main
-                  propre à la remise de l'article. Préparez l'appoint si possible.
+                  {t.reglezAvant} <strong>{fcfa(commande.montant_total)}</strong> {t.reglezApres}
                 </p>
               </div>
             )}
 
             {aRegler && paiement.actif && (
               <section className="panneau">
-                <h2 className="panneau-titre">Régler {fcfa(commande.montant_total)}</h2>
+                <h2 className="panneau-titre">{t.regler(fcfa(commande.montant_total))}</h2>
 
                 {lien ? (
                   <>
                     <p className="tableau-second" style={{ marginBottom: 'var(--space-3)' }}>
-                      Validez le paiement sur votre téléphone. Cette page se met à jour toute seule.
+                      {t.validez}
                     </p>
                     <a href={lien} className="btn btn-primaire btn-md" style={{ width: '100%', justifyContent: 'center' }}>
-                      Rouvrir l'application de paiement
+                      {t.rouvrir}
                     </a>
                   </>
                 ) : (
                   <form onSubmit={payer} className="achat-champs">
                     <ChampSelection
-                      label="Moyen de paiement"
+                      label={t.moyen}
                       value={methode}
                       onChange={(e) => setMethode(e.target.value)}
                     >
@@ -245,7 +249,7 @@ export default function CommandeDetail() {
                     </ChampSelection>
 
                     <Champ
-                      label="Numéro à débiter"
+                      label={t.numero}
                       type="tel"
                       value={telephone}
                       onChange={(e) => setTelephone(e.target.value)}
@@ -260,7 +264,7 @@ export default function CommandeDetail() {
                       disabled={!telephone.trim() || envoi}
                       chargement={envoi}
                     >
-                      Payer {fcfa(commande.montant_total)}
+                      {t.payer(fcfa(commande.montant_total))}
                     </Button>
                   </form>
                 )}
@@ -275,7 +279,7 @@ export default function CommandeDetail() {
                 disabled={annulation}
                 chargement={annulation}
               >
-                Annuler la commande
+                {t.annuler}
               </Button>
             )}
           </div>

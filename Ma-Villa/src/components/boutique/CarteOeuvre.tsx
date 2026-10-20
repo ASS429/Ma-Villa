@@ -3,6 +3,8 @@ import { fcfa } from '../../lib/format'
 import Badge from '../ui/Badge'
 import Inclinable from '../ui/Inclinable'
 import type { Oeuvre } from '../../types'
+import { useLangue } from '../../i18n/langue'
+import { TEXTES_BOUTIQUE } from '../../i18n/boutique'
 
 /**
  * Carte d'article.
@@ -19,6 +21,7 @@ import type { Oeuvre } from '../../types'
 export default function CarteOeuvre({ oeuvre, prioritaire }: { oeuvre: Oeuvre; prioritaire?: boolean }) {
   const photo = oeuvre.photos?.[0]
   const vendue = oeuvre.statut === 'vendue'
+  const t = TEXTES_BOUTIQUE[useLangue().langue].carte
 
   return (
     <Inclinable className={`carte-oeuvre${vendue ? ' est-vendue' : ''}`}>
@@ -38,19 +41,19 @@ export default function CarteOeuvre({ oeuvre, prioritaire }: { oeuvre: Oeuvre; p
 
         {vendue && (
           <span className="carte-oeuvre-marque">
-            <Badge ton="neutre">{oeuvre.stock === 0 ? 'Épuisé' : 'Vendue'}</Badge>
+            <Badge ton="neutre">{oeuvre.stock === 0 ? t.epuise : t.vendue}</Badge>
           </span>
         )}
         {/* Le dernier exemplaire se signale : c'est ce qui décide d'acheter
             aujourd'hui plutôt que d'y repenser. */}
         {!vendue && oeuvre.stock === 1 && (
           <span className="carte-oeuvre-marque carte-oeuvre-marque-bas">
-            <Badge ton="warning">Dernière pièce</Badge>
+            <Badge ton="warning">{t.derniere}</Badge>
           </span>
         )}
         {!vendue && oeuvre.vedette && (
           <span className="carte-oeuvre-marque">
-            <Badge ton="vedette">Coup de cœur</Badge>
+            <Badge ton="vedette">{t.coupDeCoeur}</Badge>
           </span>
         )}
       </div>

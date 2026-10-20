@@ -1,5 +1,7 @@
 import { useTheme } from '../context/ThemeContext'
 import Marque from './Marque'
+import { useLangue } from '../i18n/langue'
+import { TEXTES_COMPTES } from '../i18n/comptes'
 
 function IconSun() {
   return (
@@ -33,6 +35,7 @@ export default function CoquilleAuth({
   pied?: React.ReactNode
 }) {
   const { isDark, toggleTheme } = useTheme()
+  const t = TEXTES_COMPTES[useLangue().langue].coquille
 
   return (
     <div
@@ -53,7 +56,7 @@ export default function CoquilleAuth({
         onClick={toggleTheme}
         className="bouton-icone absolute top-6 right-6 p-2.5 rounded-xl transition-all hover:scale-110"
         style={{ border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-2)' }}
-        aria-label={isDark ? 'Passer au thème clair' : 'Passer au thème sombre'}
+        aria-label={isDark ? t.themeClair : t.themeSombre}
       >
         {isDark ? <IconSun /> : <IconMoon />}
       </button>

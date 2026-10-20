@@ -6,6 +6,8 @@ import FloatingInput from '../components/FloatingInput'
 import Seo from '../components/Seo'
 import Button from '../components/ui/Button'
 import { erreursParChamp, messageErreur } from '../lib/erreurs'
+import { useLangue } from '../i18n/langue'
+import { TEXTES_COMPTES } from '../i18n/comptes'
 
 function IconEye({ show }: { show: boolean }) {
   return show ? (
@@ -31,6 +33,8 @@ export default function Register() {
   const [erreursChamp, setErreursChamp] = useState<Record<string, string>>({})
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  const { langue, lien } = useLangue()
+  const t = TEXTES_COMPTES[langue].inscription
 
   if (user) return <Navigate to="/dashboard" replace />
 
@@ -40,7 +44,7 @@ export default function Register() {
     e.preventDefault()
     setError('')
     if (form.password !== form.password_confirmation) {
-      setError('Les mots de passe ne correspondent pas.')
+      setError(t.differents)
       return
     }
     setErreursChamp({})
@@ -59,28 +63,28 @@ export default function Register() {
 
   return (
     <CoquilleAuth
-      titre="Créer un compte"
-      sousTitre="Rejoignez PasseTemps dès aujourd'hui"
+      titre={t.titre}
+      sousTitre={t.sousTitre}
       pied={
         <>
-          Déjà un compte ?{' '}
-          <Link to="/login" className="th-text-1 font-medium hover:underline underline-offset-4">
-            Se connecter
+          {t.dejaUnCompte}{' '}
+          <Link to={lien('/login')} className="th-text-1 font-medium hover:underline underline-offset-4">
+            {t.seConnecter}
           </Link>
         </>
       }
     >
       <Seo
-        titre="Créer un compte"
-        description="Créez votre compte PasseTemps pour réserver un logement ou publier le vôtre."
-        chemin="/register"
+        titre={t.titre}
+        description={t.seoDescription}
+        chemin={lien('/register')}
       />
 
       {error && <AlerteAuth type="erreur">{error}</AlerteAuth>}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <FloatingInput
-          label="Nom complet"
+          label={t.nom}
           type="text"
           required
           value={form.name}
@@ -89,7 +93,7 @@ export default function Register() {
         />
 
         <FloatingInput
-          label="Email"
+          label={t.email}
           type="email"
           required
           value={form.email}
@@ -104,7 +108,7 @@ export default function Register() {
             une adresse électronique qu'ils ne consultent jamais, et se
             reconnectent bien plus facilement par leur téléphone. */}
         <FloatingInput
-          label="Téléphone (facultatif)"
+          label={t.telephone}
           type="tel"
           inputMode="tel"
           value={form.phone}
@@ -113,7 +117,7 @@ export default function Register() {
           error={erreursChamp.phone}
         />
         <p className="text-xs -mt-3" style={{ color: 'var(--text-3)' }}>
-          Il vous permettra de vous connecter sans retenir votre adresse.
+          {t.telephoneAide}
         </p>
 
         {/* Le rôle décide de tout l'espace personnel qui suivra : un groupe de
@@ -124,9 +128,9 @@ export default function Register() {
             className="text-xs uppercase tracking-widest font-semibold mb-2"
             style={{ color: 'var(--text-3)' }}
           >
-            Je suis
+            {t.jeSuis}
           </legend>
-          <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Type de compte">
+          <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label={t.typeCompte}>
             {(['client', 'proprietaire'] as const).map((r) => (
               <button
                 key={r}
@@ -136,14 +140,14 @@ export default function Register() {
                 onClick={() => setForm({ ...form, role: r })}
                 className={`pastille-choix${form.role === r ? ' est-choisi' : ''}`}
               >
-                {r === 'client' ? 'Client' : 'Propriétaire'}
+                {r === 'client' ? t.client : t.proprietaire}
               </button>
             ))}
           </div>
         </fieldset>
 
         <FloatingInput
-          label="Mot de passe"
+          label={t.motDePasse}
           type={showPassword ? 'text' : 'password'}
           required
           minLength={8}
@@ -156,7 +160,7 @@ export default function Register() {
               onClick={() => setShowPassword((v) => !v)}
               className="bouton-icone p-1 transition-colors"
               style={{ color: 'var(--text-3)' }}
-              aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+              aria-label={showPassword ? t.masquer : t.afficher}
               aria-pressed={showPassword}
             >
               <IconEye show={showPassword} />
@@ -165,20 +169,20 @@ export default function Register() {
         />
 
         <FloatingInput
-          label="Confirmer le mot de passe"
+          label={t.confirmer}
           type={showConfirm ? 'text' : 'password'}
           required
           value={form.password_confirmation}
           onChange={(e) => setForm({ ...form, password_confirmation: e.target.value })}
           autoComplete="new-password"
-          error={!passwordMatch && form.password_confirmation ? 'Les mots de passe ne correspondent pas.' : undefined}
+          error={!passwordMatch && form.password_confirmation ? t.differents : undefined}
           rightElement={
             <button
               type="button"
               onClick={() => setShowConfirm((v) => !v)}
               className="bouton-icone p-1 transition-colors"
               style={{ color: 'var(--text-3)' }}
-              aria-label={showConfirm ? 'Masquer la confirmation' : 'Afficher la confirmation'}
+              aria-label={showConfirm ? t.masquerConfirmation : t.afficherConfirmation}
               aria-pressed={showConfirm}
             >
               <IconEye show={showConfirm} />
@@ -200,7 +204,7 @@ export default function Register() {
           chargement={isLoading}
           className="mt-1"
         >
-          {isLoading ? 'Création…' : 'Créer mon compte'}
+          {isLoading ? t.creation : t.creer}
         </Button>
       </form>
     </CoquilleAuth>

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import Button from '../ui/Button'
 import { aujourdhui } from '../../lib/format'
+import { useLangue } from '../../i18n/langue'
+import { TEXTES_RECHERCHE } from '../../i18n/recherche'
 
 export interface CriteresRecherche {
   ville: string
@@ -40,6 +42,8 @@ export default function FeuilleRecherche({
   onValider: (criteres: CriteresRecherche) => void
   onFermer: () => void
 }) {
+  const { langue } = useLangue()
+  const t = TEXTES_RECHERCHE[langue]
   const [criteres, setCriteres] = useState<CriteresRecherche>(initiaux)
   const panneau = useRef<HTMLDivElement>(null)
 
@@ -87,19 +91,19 @@ export default function FeuilleRecherche({
       className="feuille-recherche"
       role="dialog"
       aria-modal="true"
-      aria-label="Rechercher une villa"
+      aria-label={t.barre.rechercherUne}
       tabIndex={-1}
     >
       <header className="feuille-entete">
-        <h2 className="feuille-titre">Où allez-vous ?</h2>
-        <button type="button" onClick={onFermer} className="feuille-fermer" aria-label="Fermer la recherche">
+        <h2 className="feuille-titre">{t.barre.ouAllezVous}</h2>
+        <button type="button" onClick={onFermer} className="feuille-fermer" aria-label={t.feuille.fermer}>
           ✕
         </button>
       </header>
 
       <div className="feuille-corps">
         <section className="feuille-section">
-          <h3 className="feuille-section-titre">Destination</h3>
+          <h3 className="feuille-section-titre">{t.barre.destination}</h3>
           <div className="feuille-pastilles">
             {pastilles.map((v) => (
               <button
@@ -120,8 +124,8 @@ export default function FeuilleRecherche({
             type="text"
             className="champ-controle"
             list="villes-connues"
-            placeholder="Ou saisissez une autre ville"
-            aria-label="Autre destination"
+            placeholder={t.feuille.autreVille}
+            aria-label={t.feuille.autreDestination}
             value={pastilles.includes(criteres.ville) ? '' : criteres.ville}
             onChange={(e) => maj('ville', e.target.value)}
           />
@@ -132,11 +136,11 @@ export default function FeuilleRecherche({
 
         <section className="feuille-section">
           <h3 className="feuille-section-titre">
-            Dates <span className="champ-aide">— facultatives</span>
+            {t.feuille.dates} <span className="champ-aide">{t.feuille.facultatives}</span>
           </h3>
           <div className="feuille-budget">
             <label>
-              <span className="champ-label">Arrivée</span>
+              <span className="champ-label">{t.barre.arrivee}</span>
               <input
                 type="date" className="champ-controle"
                 min={aujourdhui()}
@@ -145,7 +149,7 @@ export default function FeuilleRecherche({
               />
             </label>
             <label>
-              <span className="champ-label">Départ</span>
+              <span className="champ-label">{t.barre.depart}</span>
               <input
                 type="date" className="champ-controle"
                 min={criteres.date_debut || aujourdhui()}
@@ -157,7 +161,7 @@ export default function FeuilleRecherche({
         </section>
 
         <section className="feuille-section">
-          <h3 className="feuille-section-titre">Voyageurs</h3>
+          <h3 className="feuille-section-titre">{t.barre.voyageursLibelle}</h3>
           {/* Incrémenteur plutôt qu'un champ numérique : au doigt, deux cibles
               de 44 px valent mieux qu'un clavier qui recouvre l'écran. */}
           <div className="compteur">
@@ -165,17 +169,17 @@ export default function FeuilleRecherche({
               type="button"
               onClick={() => maj('capacite', String(Math.max(0, voyageurs - 1) || ''))}
               disabled={voyageurs === 0}
-              aria-label="Un voyageur de moins"
+              aria-label={t.feuille.unDeMoins}
             >
               −
             </button>
             <span aria-live="polite">
-              {voyageurs > 0 ? `${voyageurs} voyageur${voyageurs > 1 ? 's' : ''}` : 'Peu importe'}
+              {voyageurs > 0 ? t.barre.voyageurs(voyageurs) : t.feuille.peuImporte}
             </span>
             <button
               type="button"
               onClick={() => maj('capacite', String(Math.min(50, voyageurs + 1)))}
-              aria-label="Un voyageur de plus"
+              aria-label={t.feuille.unDePlus}
             >
               +
             </button>
@@ -189,11 +193,11 @@ export default function FeuilleRecherche({
           taille="sm"
           onClick={() => setCriteres({ ville: '', date_debut: '', date_fin: '', capacite: '' })}
         >
-          Effacer
+          {t.feuille.effacer}
         </Button>
         {/* Reste actif même sans dates : la destination seule suffit. */}
         <Button variante="primaire" taille="md" onClick={() => onValider(criteres)}>
-          Rechercher
+          {t.barre.rechercher}
         </Button>
       </footer>
     </div>

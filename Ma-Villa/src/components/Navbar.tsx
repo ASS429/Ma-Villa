@@ -3,6 +3,10 @@ import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { useConfig } from '../context/ConfigContext'
+import { useLiensServices } from '../prestations/useLiensServices'
+import { cheminSansLangue, useLangue } from '../i18n/langue'
+import { COMMUN } from '../i18n/commun'
+import ChoixLangue from '../i18n/ChoixLangue'
 import Marque from './Marque'
 
 function IconMenu() {
@@ -38,13 +42,16 @@ function IconMoon() {
 export default function Navbar() {
   const { user, logout } = useAuth()
   const { boutique } = useConfig()
+  const services = useLiensServices()
   const { isDark, toggleTheme } = useTheme()
   const location = useLocation()
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const close = () => setOpen(false)
 
-  const isHome = location.pathname === '/'
+  const { langue, lien } = useLangue()
+  const t = COMMUN[langue].nav
+  const isHome = cheminSansLangue(location.pathname) === '/'
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60)
@@ -55,7 +62,7 @@ export default function Navbar() {
   // Transparent on home hero, solid elsewhere
   const transparent = isHome && !scrolled
   const dashLink = user?.role === 'admin' ? '/admin' : '/dashboard'
-  const dashLabel = user?.role === 'admin' ? 'Admin' : 'Mon espace'
+  const dashLabel = user?.role === 'admin' ? t.admin : t.monEspace
 
   // Hors photo, la couleur suit les tokens : les deux branches Tailwind
   // qu'il y avait ici redisaient `--text-2` en la figeant, et ne suivaient
@@ -85,12 +92,17 @@ export default function Navbar() {
 
           {/* Desktop links */}
           <div className="hidden md:flex items-center gap-7">
-            <NavLink to="/hebergements/" className={`text-sm transition-colors ${navTextClass}`}>
-              Hébergements
+            <NavLink to={lien('/hebergements/')} className={`text-sm transition-colors ${navTextClass}`}>
+              {t.hebergements}
             </NavLink>
+            {services.map((l) => (
+              <NavLink key={l.cle} to={l.to} className={`text-sm transition-colors ${navTextClass}`}>
+                {l.label}
+              </NavLink>
+            ))}
             {boutique.actif && (
-              <NavLink to="/boutique/" className={`text-sm transition-colors ${navTextClass}`}>
-                Boutique
+              <NavLink to={lien('/boutique/')} className={`text-sm transition-colors ${navTextClass}`}>
+                {t.boutique}
               </NavLink>
             )}
             {user && (
@@ -102,12 +114,13 @@ export default function Navbar() {
 
           {/* Desktop right */}
           <div className="hidden md:flex items-center gap-3">
+            <ChoixLangue compact style={{ color: transparent ? 'rgba(255,255,255,0.85)' : 'var(--text-2)' }} />
             {/* Theme toggle */}
             <button
               onClick={toggleTheme}
               // `title` seul ne suffit pas : il ne s'affiche pas au doigt, et
               // certains lecteurs d'écran le rétrogradent derrière tout le reste.
-              aria-label={isDark ? 'Passer au thème clair' : 'Passer au thème sombre'}
+              aria-label={isDark ? t.themeClair : t.themeSombre}
               className="commande-entete transition-all hover:scale-110"
               style={{ color: transparent ? 'rgba(255,255,255,0.8)' : 'var(--text-2)' }}
             >
@@ -128,27 +141,27 @@ export default function Navbar() {
                     background: transparent ? 'rgba(255,255,255,0.1)' : 'var(--bg-input)',
                   }}
                 >
-                  Déconnexion
+                  {t.deconnexion}
                 </button>
               </>
             ) : (
               <>
                 <Link
-                  to="/login"
+                  to={lien('/login')}
                   className="text-sm px-3 py-1.5 transition-colors"
                   style={{ color: transparent ? 'rgba(255,255,255,0.85)' : 'var(--text-2)' }}
                 >
-                  Connexion
+                  {t.connexion}
                 </Link>
                 <Link
-                  to="/register"
+                  to={lien('/register')}
                   className="text-sm px-5 py-2 rounded-xl font-medium transition-all hover:scale-[1.03] hover:shadow-md"
                   style={{
                     background: transparent ? '#fff' : 'var(--text-1)',
                     color: transparent ? '#1C1917' : 'var(--bg)',
                   }}
                 >
-                  S'inscrire
+                  {t.inscrire}
                 </Link>
               </>
             )}
@@ -156,9 +169,10 @@ export default function Navbar() {
 
           {/* Mobile: theme toggle + hamburger */}
           <div className="md:hidden flex items-center gap-2">
+            <ChoixLangue compact style={{ color: transparent ? 'rgba(255,255,255,0.85)' : 'var(--text-2)' }} />
             <button
               onClick={toggleTheme}
-              aria-label={isDark ? 'Passer au thème clair' : 'Passer au thème sombre'}
+              aria-label={isDark ? t.themeClair : t.themeSombre}
               className="commande-entete transition-colors"
               style={{ color: transparent ? 'rgba(255,255,255,0.8)' : 'var(--text-2)' }}
             >
@@ -168,7 +182,8 @@ export default function Navbar() {
               className="commande-entete transition-colors"
               style={{ color: transparent ? '#fff' : 'var(--text-1)' }}
               onClick={() => setOpen((v) => !v)}
-              aria-label="Menu"
+              aria-label={t.menu}
+              aria-expanded={open}
             >
               {open ? <IconX /> : <IconMenu />}
             </button>
@@ -187,16 +202,17 @@ export default function Navbar() {
           >
             <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: '1px solid var(--border)' }}>
               <Marque taille="sm" onClick={close} />
-              <button onClick={close} className="th-text-2 hover:th-text-1 transition-colors">
+              <button onClick={close} className="th-text-2 hover:th-text-1 transition-colors" aria-label={t.fermerMenu}>
                 <IconX />
               </button>
             </div>
 
             <nav className="flex-1 flex flex-col px-4 py-4 gap-1">
-              <MobileLink to="/hebergements/" onClick={close}>Hébergements</MobileLink>
-              {boutique.actif && <MobileLink to="/boutique/" onClick={close}>Boutique</MobileLink>}
+              <MobileLink to={lien('/hebergements/')} onClick={close}>{t.hebergements}</MobileLink>
+              {services.map((l) => <MobileLink key={l.cle} to={l.to} onClick={close}>{l.label}</MobileLink>)}
+              {boutique.actif && <MobileLink to={lien('/boutique/')} onClick={close}>{t.boutique}</MobileLink>}
               {boutique.actif && user && (
-                <MobileLink to="/boutique/commandes" onClick={close}>Mes commandes</MobileLink>
+                <MobileLink to={lien('/boutique/commandes')} onClick={close}>{t.mesCommandes}</MobileLink>
               )}
               {user && <MobileLink to={dashLink} onClick={close}>{dashLabel}</MobileLink>}
             </nav>
@@ -210,19 +226,19 @@ export default function Navbar() {
                     className="w-full px-4 py-3 rounded-xl text-sm font-medium text-left transition-colors th-text-2 hover:th-text-1"
                     style={{ border: '1px solid var(--border)' }}
                   >
-                    Déconnexion
+                    {t.deconnexion}
                   </button>
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
-                  <MobileLink to="/login" onClick={close}>Connexion</MobileLink>
+                  <MobileLink to={lien('/login')} onClick={close}>{t.connexion}</MobileLink>
                   <Link
-                    to="/register"
+                    to={lien('/register')}
                     onClick={close}
                     className="w-full px-4 py-3 rounded-xl text-sm font-medium text-center transition-colors"
                     style={{ background: 'var(--text-1)', color: 'var(--bg)' }}
                   >
-                    S'inscrire
+                    {t.inscrire}
                   </Link>
                 </div>
               )}

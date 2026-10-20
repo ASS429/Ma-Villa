@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../services/api'
 import { messageErreur } from '../lib/erreurs'
+import { useLangue } from '../i18n/langue'
+import { TEXTES_COMPTES } from '../i18n/comptes'
 import CoquilleAuth, { AlerteAuth } from '../components/CoquilleAuth'
 import FloatingInput from '../components/FloatingInput'
 import Seo from '../components/Seo'
@@ -11,6 +13,8 @@ export default function MotDePasseOublie() {
   const [envoi, setEnvoi] = useState(false)
   const [envoye, setEnvoye] = useState(false)
   const [erreur, setErreur] = useState('')
+  const { langue, lien } = useLangue()
+  const t = TEXTES_COMPTES[langue].oublie
 
   const soumettre = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -20,7 +24,7 @@ export default function MotDePasseOublie() {
       await api.post('/auth/forgot-password', { email })
       setEnvoye(true)
     } catch (err) {
-      setErreur(messageErreur(err, "L'envoi a échoué. Réessayez dans un instant."))
+      setErreur(messageErreur(err, t.echec))
     } finally {
       setEnvoi(false)
     }
@@ -29,24 +33,23 @@ export default function MotDePasseOublie() {
   return (
     <>
       <Seo
-        titre="Mot de passe oublié"
-        description="Réinitialisez le mot de passe de votre compte PasseTemps."
+        titre={t.titre}
+        description={t.seoDescription}
         indexable={false}
       />
 
       <CoquilleAuth
-        titre="Mot de passe oublié"
-        sousTitre={envoye ? undefined : "Par adresse électronique — c'est le seul chemin de récupération."}
-        pied={<Link to="/login" className="th-text-1 font-medium hover:underline underline-offset-4">Retour à la connexion</Link>}
+        titre={t.titre}
+        sousTitre={envoye ? undefined : t.sousTitre}
+        pied={<Link to={lien('/login')} className="th-text-1 font-medium hover:underline underline-offset-4">{t.retour}</Link>}
       >
         {envoye ? (
           <>
             <AlerteAuth type="succes">
-              Si un compte existe avec l'adresse <strong>{email}</strong>, un lien de
-              réinitialisation vient d'être envoyé.
+              {t.envoyeAvant} <strong>{email}</strong>{t.envoyeApres}
             </AlerteAuth>
             <p className="text-sm th-text-2 leading-relaxed">
-              Le lien est valable une heure. Pensez à vérifier vos courriers indésirables.
+              {t.valable}
             </p>
           </>
         ) : (
@@ -54,7 +57,7 @@ export default function MotDePasseOublie() {
             {erreur && <AlerteAuth type="erreur">{erreur}</AlerteAuth>}
 
             <FloatingInput
-              label="Email"
+              label={t.email}
               type="email"
               required
               value={email}
@@ -71,7 +74,7 @@ export default function MotDePasseOublie() {
               className="py-3 rounded-xl font-semibold transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50 disabled:translate-y-0 mt-1"
               style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
             >
-              {envoi ? 'Envoi…' : 'Envoyer le lien'}
+              {envoi ? t.envoi : t.envoyer}
             </button>
           </form>
         )}

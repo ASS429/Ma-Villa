@@ -8,6 +8,8 @@ import {
   installationPossible,
   surChangementInstallation,
 } from '../../lib/pwa'
+import { useLangue } from '../../i18n/langue'
+import { TEXTES_DIVERS } from '../../i18n/divers'
 
 const CLE_REFUS = 'installation-refusee-le'
 
@@ -65,6 +67,7 @@ export default function InvitationInstallation() {
   // Sur iOS aucune invitation n'est programmable : la seule chose utile est
   // d'expliquer le geste, et seulement dans Safari où il existe.
   const [ios] = useState(safariIOS)
+  const t = TEXTES_DIVERS[useLangue().langue].installation
 
   useEffect(() => {
     // Chrome émet `beforeinstallprompt` souvent après le premier rendu :
@@ -103,18 +106,18 @@ export default function InvitationInstallation() {
 
       <div className="invite-install-texte">
         <p id="invite-install-titre" className="invite-install-titre">
-          Garder PasseTemps sur votre écran
+          {t.titre}
         </p>
         <p className="invite-install-detail">
           {ios ? (
             <>
-              Touchez <Share size={13} aria-label="Partager" style={{ verticalAlign: '-2px' }} /> puis
-              « Sur l'écran d'accueil » <Plus size={13} style={{ verticalAlign: '-2px' }} />
+              {t.touchez} <Share size={13} aria-label={t.partager} style={{ verticalAlign: '-2px' }} /> {t.puis}
+              {' '}{t.surEcran} <Plus size={13} style={{ verticalAlign: '-2px' }} />
             </>
           ) : (
             // Un argument vérifiable plutôt qu'une promesse : le client vient
             // de réserver, il sait ce qu'il y a à retrouver.
-            'Vos réservations consultables sans connexion.'
+            t.horsLigne
           )}
         </p>
       </div>
@@ -122,11 +125,11 @@ export default function InvitationInstallation() {
       {!ios && (
         <button type="button" className="btn btn-primaire btn-sm invite-install-action" onClick={installer}>
           <Download size={15} aria-hidden="true" />
-          Ajouter
+          {t.ajouter}
         </button>
       )}
 
-      <button type="button" className="invite-install-fermer" onClick={refuser} aria-label="Ne pas installer">
+      <button type="button" className="invite-install-fermer" onClick={refuser} aria-label={t.refuser}>
         <X size={18} aria-hidden="true" />
       </button>
     </aside>

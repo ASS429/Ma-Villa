@@ -6,6 +6,8 @@ import FloatingInput from '../components/FloatingInput'
 import Seo from '../components/Seo'
 import Button from '../components/ui/Button'
 import { erreursParChamp, messageErreur } from '../lib/erreurs'
+import { useLangue } from '../i18n/langue'
+import { TEXTES_COMPTES } from '../i18n/comptes'
 
 function IconEye({ show }: { show: boolean }) {
   return show ? (
@@ -32,6 +34,8 @@ export default function Login() {
   // panne de réseau, un serveur qui ne répond pas.
   const [erreursChamp, setErreursChamp] = useState<Record<string, string>>({})
   const [showPassword, setShowPassword] = useState(false)
+  const { langue, lien } = useLangue()
+  const t = TEXTES_COMPTES[langue].connexion
 
   // Après une session expirée, on ramène l'utilisateur là où il était.
   const retour = params.get('retour')
@@ -53,25 +57,25 @@ export default function Login() {
       if (Object.keys(champs).length > 0) {
         setErreursChamp(champs)
       } else {
-        setError(messageErreur(err, 'La connexion a échoué.'))
+        setError(messageErreur(err, t.echec))
       }
     }
   }
 
   return (
     <CoquilleAuth
-      titre="Connexion"
-      sousTitre="Accédez à votre espace PasseTemps"
+      titre={t.titre}
+      sousTitre={t.sousTitre}
       pied={
         <>
-          Pas encore de compte ?{' '}
-          <Link to="/register" className="th-text-1 font-medium hover:underline underline-offset-4">
-            S'inscrire
+          {t.pasDeCompte}{' '}
+          <Link to={lien('/register')} className="th-text-1 font-medium hover:underline underline-offset-4">
+            {t.inscrire}
           </Link>
         </>
       }
     >
-      <Seo titre="Connexion" description="Connectez-vous à votre espace PasseTemps." chemin="/login" />
+      <Seo titre={t.titre} description={t.seoDescription} chemin={lien('/login')} />
 
       {error && <AlerteAuth type="erreur">{error}</AlerteAuth>}
 
@@ -84,7 +88,7 @@ export default function Login() {
             `type="text"` et non `email` : une validation de navigateur sur
             un numéro refuserait la saisie avant tout envoi. */}
         <FloatingInput
-          label="Téléphone ou e-mail"
+          label={t.identifiant}
           type="text"
           inputMode="email"
           required
@@ -95,7 +99,7 @@ export default function Login() {
         />
 
         <FloatingInput
-          label="Mot de passe"
+          label={t.motDePasse}
           type={showPassword ? 'text' : 'password'}
           required
           value={form.password}
@@ -111,7 +115,7 @@ export default function Login() {
               onClick={() => setShowPassword((v) => !v)}
               className="bouton-icone p-1 transition-colors"
               style={{ color: 'var(--text-3)' }}
-              aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+              aria-label={showPassword ? t.masquer : t.afficher}
               aria-pressed={showPassword}
             >
               <IconEye show={showPassword} />
@@ -121,10 +125,10 @@ export default function Login() {
 
         <div className="-mt-2 text-right">
           <Link
-            to="/mot-de-passe-oublie"
+            to={lien('/mot-de-passe-oublie')}
             className="text-sm th-text-2 hover:th-text-1 underline underline-offset-4"
           >
-            Mot de passe oublié ?
+            {t.oublie}
           </Link>
         </div>
 
@@ -141,7 +145,7 @@ export default function Login() {
           disabled={!form.identifiant.trim() || !form.password}
           className="mt-1"
         >
-          {isLoading ? 'Vérification…' : 'Se connecter'}
+          {isLoading ? t.verification : t.seConnecter}
         </Button>
       </form>
     </CoquilleAuth>

@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useState } from 'react'
+import { Fragment, Suspense, lazy, useEffect, useState } from 'react'
 import { Routes, Route, Navigate, Link, useParams, useLocation } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import { useToast } from './context/ToastContext'
@@ -31,6 +31,11 @@ import Villas from './pages/public/Villas'
 import VillaDetail from './pages/public/VillaDetail'
 import Destination from './pages/public/Destination'
 import PageLegale from './pages/legal/PageLegale'
+import BandeauJoj from './joj/BandeauJoj'
+import LangueDocument from './i18n/LangueDocument'
+import { prefixes, useLangue } from './i18n/langue'
+import { COMMUN } from './i18n/commun'
+import { TEXTES_ACCUEIL } from './i18n/accueil'
 
 /* ─── Espaces privés : chargés à la demande ──────────────────────
    Le tableau de bord et l'administration représentent l'essentiel du code
@@ -54,6 +59,10 @@ const Commander       = lazy(() => import('./pages/boutique/Commander'))
 const MesCommandes    = lazy(() => import('./pages/boutique/MesCommandes'))
 const CommandeDetail  = lazy(() => import('./pages/boutique/CommandeDetail'))
 const Revenus         = lazy(() => import('./pages/dashboard/Revenus'))
+// Les services aux voyageurs et la vitrine des JOJ portent deux langues de
+// textes : hors du paquet initial, que la plupart des visiteurs chargent sans eux.
+const PageService     = lazy(() => import('./prestations/PageService'))
+const PageJoj         = lazy(() => import('./joj/PageJoj'))
 
 // Le tunnel de paiement ne concerne qu'un client qui réserve : hors du
 // paquet initial, comme les espaces privés.
@@ -75,6 +84,7 @@ const AdminRemboursements = lazy(() => import('./pages/admin/AdminRemboursements
 const AdminDeboursement = lazy(() => import('./pages/admin/AdminDeboursement'))
 const AdminOeuvres      = lazy(() => import('./pages/admin/AdminOeuvres'))
 const AdminCommandes    = lazy(() => import('./pages/admin/AdminCommandes'))
+const AdminDemandes     = lazy(() => import('./pages/admin/AdminDemandes'))
 
 /* ─── Route guards ───────────────────────────────────────────── */
 
@@ -101,6 +111,8 @@ function ProprietaireRoute({ children }: { children: React.ReactNode }) {
 function FeaturedVillas() {
   const { user } = useAuth()
   const toast = useToast()
+  const { langue, lien } = useLangue()
+  const t = TEXTES_ACCUEIL[langue].vedette
   const [villas, setVillas] = useState<VillaResume[]>([])
   const [chargement, setChargement] = useState(true)
   const [favorisIds, setFavorisIds] = useState<Set<number>>(new Set())
@@ -133,7 +145,7 @@ function FeaturedVillas() {
         setFavorisIds((p) => new Set(p).add(villaId))
       }
     } catch (err) {
-      toast.erreur(messageErreur(err, 'Impossible de mettre à jour vos favoris.'))
+      toast.erreur(messageErreur(err, t.favorisImpossible))
     }
   }
 
@@ -145,14 +157,14 @@ function FeaturedVillas() {
         <ScrollReveal className="flex items-end justify-between mb-10">
           <div>
             <p className="text-xs mb-2 uppercase tracking-widest font-semibold" style={{ color: 'var(--accent)' }}>
-              Sélection
+              {t.eyebrow}
             </p>
             <h2 className="text-3xl md:text-4xl font-normal th-text-1" style={{ letterSpacing: '-0.02em' }}>
-              Villas en vedette
+              {t.titre}
             </h2>
           </div>
-          <Link to="/hebergements/" className="text-sm transition-colors th-text-2 hover:th-text-1">
-            Voir toutes →
+          <Link to={lien('/hebergements/')} className="text-sm transition-colors th-text-2 hover:th-text-1">
+            {t.voirTout}
           </Link>
         </ScrollReveal>
 
@@ -181,20 +193,21 @@ function FeaturedVillas() {
 
 function CommentCaMarche() {
   const { reservations } = useConfig()
-  const cherchez = { n: '1', titre: 'Cherchez', texte: 'Filtrez par ville, dates et budget. Les prix sont affichés, sans surprise.' }
+  const t = TEXTES_ACCUEIL[useLangue().langue].etapes
+  const cherchez = { n: '1', ...t.cherchez }
 
   // Suspendue, la réservation en ligne ne peut pas être l'étape 2 : le parcours
   // annoncé doit être celui qu'on peut réellement suivre aujourd'hui.
   const etapes = reservations.ouvertes
     ? [
         cherchez,
-        { n: '2', titre: 'Réservez', texte: 'Choisissez un logement et une formule : à la nuitée, à la journée ou à la demi-journée.' },
-        { n: '3', titre: 'Profitez', texte: 'Le propriétaire confirme, vous recevez ses coordonnées par email.' },
+        { n: '2', ...t.reservez },
+        { n: '3', ...t.profitezOuvert },
       ]
     : [
         cherchez,
-        { n: '2', titre: 'Contactez-nous', texte: `La réservation en ligne arrive bientôt. En attendant, ${reservations.contact.nom} prend vos demandes au ${reservations.contact.telephone}.` },
-        { n: '3', titre: 'Profitez', texte: 'Votre séjour est confirmé : il ne reste plus qu’à partir.' },
+        { n: '2', ...t.contactez(reservations.contact.nom, reservations.contact.telephone) },
+        { n: '3', ...t.profitezFerme },
       ]
 
   return (
@@ -202,10 +215,10 @@ function CommentCaMarche() {
       <div className="max-w-6xl mx-auto">
         <ScrollReveal>
           <p className="text-xs mb-2 uppercase tracking-widest font-semibold" style={{ color: 'var(--accent)' }}>
-            Comment ça marche
+            {t.eyebrow}
           </p>
           <h2 className="text-3xl md:text-4xl font-normal th-text-1 mb-10" style={{ letterSpacing: '-0.02em' }}>
-            Réserver en trois étapes
+            {t.titre}
           </h2>
         </ScrollReveal>
 
@@ -235,23 +248,19 @@ function CommentCaMarche() {
 /* ─── Arguments ──────────────────────────────────────────────── */
 
 function Features() {
-  const features = [
+  const textes = TEXTES_ACCUEIL[useLangue().langue].arguments
+  const icones = [
     {
       svg: <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3c-4.97 0-9 4.03-9 9 0 2.39.94 4.57 2.46 6.18M12 3c4.97 0 9 4.03 9 9 0 2.39-.94 4.57-2.46 6.18M12 3v18M3 12h18" /></svg>,
-      label: 'Partout au Sénégal',
-      sub: 'Saly, Mbour, Dakar, Ziguinchor et plus encore',
     },
     {
       svg: <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>,
-      label: 'Annonces vérifiées',
-      sub: 'Chaque villa est contrôlée par notre équipe avant publication',
     },
     {
       svg: <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 8v-.5A2.5 2.5 0 0013.5 5h-3A2.5 2.5 0 008 7.5v9a2.5 2.5 0 002.5 2.5h3a2.5 2.5 0 002.5-2.5V16M12 12h9m0 0l-2.5-2.5M21 12l-2.5 2.5" /></svg>,
-      label: 'Avis de vrais séjours',
-      sub: 'Seuls les clients ayant séjourné peuvent laisser une note',
     },
   ]
+  const features = icones.map(({ svg }, i) => ({ svg, ...textes[i] }))
 
   return (
     <section className="px-6 md:px-12 lg:px-16 py-20" style={{ borderTop: '1px solid var(--border)' }}>
@@ -282,26 +291,27 @@ function Features() {
 /* ─── Appel aux propriétaires ────────────────────────────────── */
 
 function AppelProprietaires() {
+  const { langue, lien } = useLangue()
+  const t = TEXTES_ACCUEIL[langue].proprietaires
   return (
     <section className="px-6 md:px-12 lg:px-16 py-20" style={{ borderTop: '1px solid var(--border)' }}>
       <div className="max-w-6xl mx-auto">
         <ScrollReveal className="rounded-2xl px-6 py-12 md:px-12 text-center th-card">
           <p className="text-xs mb-3 uppercase tracking-widest font-semibold" style={{ color: 'var(--accent)' }}>
-            Propriétaires
+            {t.eyebrow}
           </p>
           <h2 className="text-3xl md:text-4xl font-normal th-text-1 mb-4" style={{ letterSpacing: '-0.02em' }}>
-            Publiez votre hébergement gratuitement
+            {t.titre}
           </h2>
           <p className="text-sm th-text-2 max-w-xl mx-auto mb-8 leading-relaxed">
-            Créez votre annonce, fixez vos tarifs par formule — nuitée, journée,
-            résidence — et gérez vos disponibilités depuis un tableau de bord simple.
+            {t.texte}
           </p>
           {/* Seul endroit où « Publier mon hébergement » prend l'accent : c'est la
               section qui lui est consacrée, donc la conversion du parcours en
               cours. Ailleurs, elle reste secondaire pour ne pas détourner la
               couleur d'action vers une action qui ne concerne pas le client. */}
-          <ButtonLink to="/register" variante="primaire" taille="md">
-            Publier mon hébergement
+          <ButtonLink to={lien('/register')} variante="primaire" taille="md">
+            {t.bouton}
           </ButtonLink>
         </ScrollReveal>
       </div>
@@ -312,21 +322,23 @@ function AppelProprietaires() {
 /* ─── Accueil ────────────────────────────────────────────────── */
 
 function Home() {
+  const { langue, lien } = useLangue()
+  const t = TEXTES_ACCUEIL[langue]
   return (
     <div style={{ background: 'var(--bg)', color: 'var(--text-1)' }}>
       <Seo
         titre="PasseTemps"
-        description="Louez une villa, une résidence, un appartement ou une chambre au Sénégal — Saly, Mbour, Dakar. Tarifs affichés, disponibilités en temps réel, réservation directe auprès des propriétaires."
-        chemin="/"
+        description={t.seo.description}
+        chemin={lien('/')}
         donneesStructurees={{
           '@context': 'https://schema.org',
           '@type': 'WebSite',
           name: 'PasseTemps',
-          description: 'Villas, résidences, appartements et chambres à louer au Sénégal',
-          inLanguage: 'fr',
+          description: t.seo.site,
+          inLanguage: langue,
           potentialAction: {
             '@type': 'SearchAction',
-            target: `${window.location.origin}/hebergements?ville={search_term_string}`,
+            target: `${window.location.origin}${lien('/hebergements')}?ville={search_term_string}`,
             'query-input': 'required name=search_term_string',
           },
         }}
@@ -340,6 +352,8 @@ function Home() {
         </div>
       </div>
 
+      <BandeauJoj />
+
       {/* « Que cherchez-vous ? » avant « Où ? » : chercher un lieu sans
           savoir ce qu'on loue oblige à filtrer ensuite dans un catalogue
           mélangé, où une chambre à la nuitée côtoie un studio au mois. */}
@@ -350,10 +364,10 @@ function Home() {
               className="mb-2"
               style={{ font: 'var(--t-eyebrow)', letterSpacing: 'var(--t-eyebrow-ls)', textTransform: 'uppercase', color: 'var(--accent)' }}
             >
-              Par catégorie
+              {t.categories.eyebrow}
             </p>
             <h2 className="th-text-1" style={{ font: 'var(--t-h2)', letterSpacing: 'var(--t-h2-ls)' }}>
-              Que cherchez-vous ?
+              {t.categories.titre}
             </h2>
           </ScrollReveal>
           <ChoixCategorie />
@@ -394,30 +408,92 @@ function RedirectionHebergements() {
   return <Navigate to={{ pathname: '/hebergements', search }} replace />
 }
 
+/** Le lien d'évitement, dans la langue de la page. */
+function LienEvitement() {
+  const { langue } = useLangue()
+  return <a href="#contenu" className="lien-evitement">{COMMUN[langue].nav.allerAuContenu}</a>
+}
+
+/* ─── Les routes client, dans chaque langue ──────────────────────
+   Les pages que voit un client existent en français (à la racine) et en
+   anglais (sous `/en`). Celles des propriétaires et de la console restent
+   en français seulement : voir `src/i18n/langue.ts`. Une page pas encore
+   traduite répond déjà sous `/en/…`, en français : un lien d'une page
+   anglaise ne doit jamais mener à une page introuvable. */
+
+function routesClient(p: string) {
+  return (
+    <Fragment key={p || 'fr'}>
+      <Route path={p || '/'} element={<Home />} />
+      <Route path={`${p}/hebergements`} element={<Villas />} />
+      <Route path={`${p}/hebergements/:id`} element={<VillaDetail />} />
+
+      {/* Une page par ville, parce qu'un `?ville=` ne se pré-rend pas et
+          n'entre pas au plan de site. C'est la porte d'entrée depuis Google
+          sur « location villa Saly ». */}
+      <Route path={`${p}/destinations/:ville`} element={<Destination />} />
+
+      {/* Les services aux voyageurs, chacun sa page — permanents. */}
+      <Route path={`${p}/transport`} element={<Suspense fallback={<ChargementPage />}><PageService famille="transport" /></Suspense>} />
+      <Route path={`${p}/restauration`} element={<Suspense fallback={<ChargementPage />}><PageService famille="restauration" /></Suspense>} />
+
+      {/* La vitrine temporaire des JOJ Dakar 2026 : à retirer après les Jeux
+          avec tout `src/joj/` — voir docs/16-RETRAIT-JOJ.md. */}
+      <Route path={`${p}/joj-dakar-2026`} element={<Suspense fallback={<ChargementPage />}><PageJoj /></Suspense>} />
+
+      <Route path={`${p}/login`} element={<Login />} />
+      <Route path={`${p}/register`} element={<Register />} />
+      <Route path={`${p}/mot-de-passe-oublie`} element={<MotDePasseOublie />} />
+      <Route path={`${p}/reinitialiser-mot-de-passe`} element={<ReinitialiserMotDePasse />} />
+      <Route path={`${p}/email-verifie`} element={<EmailVerifie />} />
+
+        <Route
+          path={`${p}/reservation/:id/paiement`}
+          element={<PrivateRoute><Suspense fallback={<ChargementPage />}><Paiement /></Suspense></PrivateRoute>}
+        />
+        <Route
+          path={`${p}/reservation/:id/confirmee`}
+          element={<PrivateRoute><Suspense fallback={<ChargementPage />}><Confirmee /></Suspense></PrivateRoute>}
+        />
+
+      <Route path={`${p}/conditions-generales`} element={<PageLegale document="cgu" />} />
+      <Route path={`${p}/confidentialite`} element={<PageLegale document="confidentialite" />} />
+      <Route path={`${p}/annulation`} element={<PageLegale document="annulation" />} />
+      <Route path={`${p}/mentions-legales`} element={<PageLegale document="mentions" />} />
+      {/* La boutique est une vente pour compte propre, pas une mise en
+          relation : elle ne relève pas des mêmes règles que la location,
+          d'où un document distinct plutôt qu'un article de plus. */}
+      <Route path={`${p}/conditions-vente`} element={<PageLegale document="vente" />} />
+
+      {/* Boutique. Les ecrans se gardent eux-memes : ferme, on redirige
+          vers l'accueil plutot que d'afficher une page vide. */}
+      <Route path={`${p}/boutique`} element={<Suspense fallback={<ChargementPage />}><Boutique /></Suspense>} />
+      <Route path={`${p}/boutique/commandes`} element={<PrivateRoute><Suspense fallback={<ChargementPage />}><MesCommandes /></Suspense></PrivateRoute>} />
+      <Route path={`${p}/boutique/commandes/:id`} element={<PrivateRoute><Suspense fallback={<ChargementPage />}><CommandeDetail /></Suspense></PrivateRoute>} />
+      <Route path={`${p}/boutique/:id`} element={<Suspense fallback={<ChargementPage />}><OeuvreDetail /></Suspense>} />
+      <Route path={`${p}/boutique/:id/commander`} element={<PrivateRoute><Suspense fallback={<ChargementPage />}><Commander /></Suspense></PrivateRoute>} />
+    </Fragment>
+  )
+}
+
 /* ─── App ────────────────────────────────────────────────────── */
 
 export default function App() {
   return (
     <>
       <NouvelleVersion />
+      <LangueDocument />
 
       {/* Lien d'évitement : au clavier, atteindre le contenu demandait de
           traverser toute la navigation à chaque changement de page. Il n'est
           visible qu'une fois au focus — c'est sa seule raison d'exister. */}
-      <a href="#contenu" className="lien-evitement">Aller au contenu</a>
+      <LienEvitement />
 
       {/* Point de repère principal : sans lui, un lecteur d'écran n'offre
           aucun raccourci vers le contenu et il faut tout parcourir. */}
       <main id="contenu">
       <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/hebergements" element={<Villas />} />
-      <Route path="/hebergements/:id" element={<VillaDetail />} />
-
-      {/* Une page par ville, parce qu'un `?ville=` ne se pré-rend pas et
-          n'entre pas au plan de site. C'est la porte d'entrée depuis Google
-          sur « location villa Saly ». */}
-      <Route path="/destinations/:ville" element={<Destination />} />
+      {prefixes().map(routesClient)}
 
       {/* Les anciennes adresses continuent de répondre, et pour longtemps.
           La plupart des visiteurs arrivent par un lien WhatsApp vers
@@ -427,38 +503,6 @@ export default function App() {
           reboucle pas sur elle. */}
       <Route path="/villas" element={<RedirectionHebergements />} />
       <Route path="/villas/:id" element={<RedirectionHebergement />} />
-
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/mot-de-passe-oublie" element={<MotDePasseOublie />} />
-      <Route path="/reinitialiser-mot-de-passe" element={<ReinitialiserMotDePasse />} />
-      <Route path="/email-verifie" element={<EmailVerifie />} />
-
-        <Route
-          path="/reservation/:id/paiement"
-          element={<PrivateRoute><Suspense fallback={<ChargementPage />}><Paiement /></Suspense></PrivateRoute>}
-        />
-        <Route
-          path="/reservation/:id/confirmee"
-          element={<PrivateRoute><Suspense fallback={<ChargementPage />}><Confirmee /></Suspense></PrivateRoute>}
-        />
-
-      <Route path="/conditions-generales" element={<PageLegale document="cgu" />} />
-      <Route path="/confidentialite" element={<PageLegale document="confidentialite" />} />
-      <Route path="/annulation" element={<PageLegale document="annulation" />} />
-      <Route path="/mentions-legales" element={<PageLegale document="mentions" />} />
-      {/* La boutique est une vente pour compte propre, pas une mise en
-          relation : elle ne relève pas des mêmes règles que la location,
-          d'où un document distinct plutôt qu'un article de plus. */}
-      <Route path="/conditions-vente" element={<PageLegale document="vente" />} />
-
-      {/* Boutique. Les ecrans se gardent eux-memes : ferme, on redirige
-          vers l'accueil plutot que d'afficher une page vide. */}
-      <Route path="/boutique" element={<Suspense fallback={<ChargementPage />}><Boutique /></Suspense>} />
-      <Route path="/boutique/commandes" element={<PrivateRoute><Suspense fallback={<ChargementPage />}><MesCommandes /></Suspense></PrivateRoute>} />
-      <Route path="/boutique/commandes/:id" element={<PrivateRoute><Suspense fallback={<ChargementPage />}><CommandeDetail /></Suspense></PrivateRoute>} />
-      <Route path="/boutique/:id" element={<Suspense fallback={<ChargementPage />}><OeuvreDetail /></Suspense>} />
-      <Route path="/boutique/:id/commander" element={<PrivateRoute><Suspense fallback={<ChargementPage />}><Commander /></Suspense></PrivateRoute>} />
 
       <Route
         path="/dashboard"
@@ -508,6 +552,7 @@ export default function App() {
         <Route path="deboursement" element={<AdminDeboursement />} />
         <Route path="oeuvres" element={<AdminOeuvres />} />
         <Route path="commandes" element={<AdminCommandes />} />
+        <Route path="demandes" element={<AdminDemandes />} />
       </Route>
 
         <Route path="*" element={<NotFound />} />

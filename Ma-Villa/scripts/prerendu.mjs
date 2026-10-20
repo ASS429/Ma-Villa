@@ -113,6 +113,10 @@ const UNITE = {
   nuitee: 'nuitée', journee: 'journée', demi_journee: 'demi-journée', pass: 'pass',
 }
 
+const UNITE_EN = {
+  nuitee: 'night', journee: 'day', demi_journee: 'half-day', pass: 'pass',
+}
+
 /**
  * Les noms et descriptions viennent des propriétaires : sans échappement, un
  * guillemet dans « Villa "Les Palmiers" » fermerait l'attribut et tout ce qui
@@ -177,6 +181,29 @@ async function toutesLesVillas() {
  * n'entrent au plan de site. Toute autre erreur reste une panne d'API, et
  * remonte pour que le plan de site précédent soit conservé.
  */
+/**
+ * Ce qui est ouvert : services aux voyageurs et vitrine des JOJ.
+ *
+ * Une page fermée n'est ni pré-rendue ni annoncée au plan de site : Google
+ * garderait sinon une adresse qui renvoie à l'accueil. ⚠️ Le pré-rendu se
+ * fait au déploiement du front : ouvrir un module sur Railway ne l'ajoute au
+ * plan de site qu'au déploiement suivant — relancer Render après une ouverture.
+ */
+async function ouvertures() {
+  const reponse = await fetch(`${API}/configuration`, {
+    headers: { Accept: 'application/json' },
+    signal: AbortSignal.timeout(30_000),
+  })
+  if (!reponse.ok) throw new Error(`HTTP ${reponse.status} sur /configuration`)
+
+  const corps = await reponse.json()
+  return {
+    transport: Boolean(corps.services?.transport),
+    restauration: Boolean(corps.services?.restauration),
+    joj: Boolean(corps.joj?.actif),
+  }
+}
+
 async function toutesLesOeuvres() {
   const oeuvres = []
 
@@ -314,6 +341,132 @@ function pageOeuvre(oeuvre) {
   }
 }
 
+/* ── Les jumelles anglaises ───────────────────────────────────── */
+
+/**
+ * Chaque page publique a une jumelle à `/en/…`, dans la même structure.
+ *
+ * Ce qu'ont écrit les propriétaires — nom, description — reste dans leur
+ * langue : seuls changent les mots de l'interface autour, le titre de la
+ * collection et la description générée. Les pages légales n'en ont pas : leur
+ * texte n'existe qu'en français, et une jumelle annoncerait une traduction
+ * qui n'existe pas.
+ */
+const enAnglais = (chemin) => (chemin ? `en/${chemin}` : 'en')
+
+function jumelleVilla(villa, fr) {
+  const ville = villa.ville ?? ''
+  const prix = villa.prix_min != null
+    ? `From ${fcfa(villa.prix_min)}${villa.prix_min_unite ? ` / ${UNITE_EN[villa.prix_min_unite] ?? villa.prix_min_unite}` : ''}. `
+    : ''
+
+  return {
+    ...fr,
+    langue: 'en',
+    chemin: enAnglais(fr.chemin),
+    jumelle: fr.chemin,
+    description: resumer(prix + (villa.description || `To rent in ${ville}, Senegal.`)),
+    prix: prix.trim().replace(/\.$/, ''),
+    donnees: fr.donnees.offers
+      ? { ...fr.donnees, offers: { ...fr.donnees.offers, url: `${SITE}/${enAnglais(fr.chemin)}/` } }
+      : fr.donnees,
+  }
+}
+
+function jumelleOeuvre(oeuvre, fr) {
+  const achetable = oeuvre.statut === 'publiee' && Number(oeuvre.stock ?? 0) > 0
+  return {
+    ...fr,
+    langue: 'en',
+    chemin: enAnglais(fr.chemin),
+    jumelle: fr.chemin,
+    prix: `${fcfa(oeuvre.prix)}${achetable ? '' : ' — sold'}`,
+    donnees: { ...fr.donnees, offers: { ...fr.donnees.offers, url: `${SITE}/${enAnglais(fr.chemin)}/` } },
+  }
+}
+
+function jumelleDestination(ville, fichesEn, fr) {
+  const plancher = fichesEn.map((f) => f.prixNombre).filter((x) => x != null).sort((a, b) => a - b)[0]
+  const n = fichesEn.length
+  const description = resumer(
+    `${n} place${n > 1 ? 's' : ''} to rent in ${ville}`
+    + `${plancher != null ? `, from ${fcfa(plancher)}` : ''}`
+    + ' — villas, residences, apartments and rooms, prices shown in FCFA.',
+  )
+  return {
+    ...fr,
+    langue: 'en',
+    chemin: enAnglais(fr.chemin),
+    jumelle: fr.chemin,
+    titre: `Places to stay in ${ville} — PasseTemps`,
+    description,
+    nom: `Places to stay in ${ville}`,
+    libelle: `${ville} — ${n} place${n > 1 ? 's' : ''}`,
+    fiches: fichesEn,
+    donnees: { ...fr.donnees, name: `Places to stay in ${ville}`, description, inLanguage: 'en' },
+  }
+}
+
+/** Les pages fixes en anglais, par chemin français. Les légales n'y sont pas. */
+const FIXES_EN = {
+  '': {
+    titre: 'PasseTemps — Villas, residences and rooms in Senegal',
+    description: 'Rent a villa, a residence, an apartment or a room in Senegal — Saly, Mbour, Dakar. '
+      + 'Prices shown, live availability, pay with Wave or Orange Money.',
+  },
+  hebergements: {
+    titre: 'All places to stay — PasseTemps',
+    description: 'Browse the villas, residences, apartments and rooms available in Senegal. '
+      + 'Filter by town, dates, budget and amenities.',
+  },
+  boutique: {
+    titre: 'Shop — Senegalese crafts and makers — PasseTemps',
+    description: 'Clothing, basketry and crafts by Senegalese makers. Delivery in Dakar and every region, '
+      + 'pay with Wave or Orange Money.',
+  },
+  transport: {
+    titre: 'Transport in Senegal: AIBD airport transfer and private driver — PasseTemps',
+    description: 'AIBD airport transfers, daily rides and a car with driver in Dakar, Saly and on the Petite Côte. '
+      + 'Price confirmed on WhatsApp.',
+  },
+  restauration: {
+    titre: 'Meals in Senegal: breakfast, packed meals and restaurants — PasseTemps',
+    description: 'Breakfast served at your accommodation, packed meals and tables at partner restaurants in Dakar '
+      + 'and on the Petite Côte. Price confirmed on WhatsApp.',
+  },
+  'joj-dakar-2026': {
+    titre: 'Dakar 2026: a stay for athletes’ families — PasseTemps',
+    description: 'Supporting an athlete at the Dakar 2026 Youth Olympic Games? Places to stay in Dakar and Saly, '
+      + 'airport transfers, rides to the venues and meals, confirmed on WhatsApp.',
+    texte: 'Your athlete stays in the Olympic village; you stay in Dakar or on the Petite Côte. PasseTemps finds you '
+      + 'a place to stay near the venues in Dakar, Diamniadio and Saly, a driver from the airport and meals. '
+      + 'Nothing is paid online: the price is confirmed on WhatsApp. PasseTemps is neither a partner nor an '
+      + 'official supplier of the Games.',
+  },
+}
+
+function jumelleFixe(fr) {
+  const en = FIXES_EN[fr.chemin]
+  if (!en) return null
+  return {
+    ...fr,
+    ...en,
+    texte: en.texte,
+    langue: 'en',
+    chemin: enAnglais(fr.chemin),
+    jumelle: fr.chemin,
+    donnees: fr.donnees
+      ? {
+          ...fr.donnees,
+          inLanguage: 'en',
+          ...(fr.donnees.potentialAction
+            ? { potentialAction: { ...fr.donnees.potentialAction, target: `${SITE}/en/hebergements?ville={search_term_string}` } }
+            : {}),
+        }
+      : undefined,
+  }
+}
+
 /* ── Une page par destination ─────────────────────────────────── */
 
 /**
@@ -411,6 +564,34 @@ const PAGES_FIXES = [
     description: "Conditions de vente de la boutique d'artisanat PasseTemps : commande, prix, zones de livraison, paiement en ligne ou à la livraison, retours et garanties." },
   { chemin: 'mentions-legales', titre: 'Mentions légales — PasseTemps',
     description: 'Éditeur, directeur de la publication, hébergement et prestataires techniques de PasseTemps.' },
+  // Les services aux voyageurs, chacun sa page, chacun sa variable.
+  {
+    si: 'transport',
+    chemin: 'transport',
+    titre: 'Transport au Sénégal : transfert aéroport AIBD et chauffeur — PasseTemps',
+    description: 'Transfert depuis l’aéroport AIBD, trajets quotidiens et voiture avec chauffeur à Dakar, Saly et sur '
+      + 'la Petite Côte. Prix confirmé sur WhatsApp.',
+  },
+  {
+    si: 'restauration',
+    chemin: 'restauration',
+    titre: 'Repas au Sénégal : petit-déjeuner, panier repas et restaurants — PasseTemps',
+    description: 'Petit-déjeuner servi au logement, panier repas et tables dans des restaurants partenaires à Dakar '
+      + 'et sur la Petite Côte. Prix confirmé sur WhatsApp.',
+  },
+  // La vitrine temporaire des JOJ Dakar 2026 — à retirer avec `src/joj/`
+  // (docs/16-RETRAIT-JOJ.md). Fermée, elle sort d'elle-même du plan de site.
+  {
+    si: 'joj',
+    chemin: 'joj-dakar-2026',
+    titre: 'JOJ Dakar 2026 : le séjour des familles d’athlètes — PasseTemps',
+    description: 'Vous accompagnez un athlète aux JOJ Dakar 2026 ? Logements à Dakar et à Saly, transfert depuis '
+      + 'l’aéroport AIBD, trajets vers les sites et repas, confirmés sur WhatsApp. Page en français et en anglais.',
+    texte: 'Votre athlète loge au village olympique ; vous, à Dakar ou sur la Petite Côte. PasseTemps vous trouve '
+      + 'un logement près des sites de Dakar, Diamniadio et Saly, un chauffeur depuis l’aéroport et des repas. '
+      + 'Rien ne se paie en ligne : le prix est confirmé sur WhatsApp. PasseTemps n’est ni partenaire ni '
+      + 'fournisseur officiel des Jeux.',
+  },
 ]
 
 /* ── Corps lisible sans JavaScript ────────────────────────────── */
@@ -476,6 +657,36 @@ function listeDeLiens(pages) {
   return `<ul style="${STYLE.liste}">${items}</ul>`
 }
 
+/** Les mots du corps pré-rendu, dans chaque langue. */
+const MOTS = {
+  fr: {
+    destinations: 'Nos destinations', hebergements: 'Nos hébergements', boutique: 'La boutique',
+    parDestination: 'Par destination', toutes: 'Toutes les annonces', voirTous: 'Voir tous les hébergements',
+    autresHebergements: 'Autres hébergements', autresArticles: 'Autres articles', voirBoutique: 'Voir toute la boutique',
+    ouLoger: 'Où loger', autreLangue: ['In English', 'en'],
+  },
+  en: {
+    destinations: 'Our destinations', hebergements: 'Our places to stay', boutique: 'The shop',
+    parDestination: 'By destination', toutes: 'All listings', voirTous: 'See all places to stay',
+    autresHebergements: 'Other places to stay', autresArticles: 'Other items', voirBoutique: 'See the whole shop',
+    ouLoger: 'Where to stay', autreLangue: ['Version française', 'fr'],
+  },
+}
+
+/**
+ * Le pied en anglais pointe vers les pages légales **françaises** : leur seule
+ * version, et la seule pré-rendue.
+ */
+const PIED_EN = [
+  ['/en/hebergements/', 'Places to stay'],
+  ['/en/boutique/', 'Shop'],
+  ['/conditions-generales/', 'Terms of use'],
+  ['/conditions-vente/', 'Terms of sale'],
+  ['/annulation/', 'Cancellation policy'],
+  ['/confidentialite/', 'Privacy'],
+  ['/mentions-legales/', 'Legal notice'],
+]
+
 const PIED = [
   ['/hebergements/', 'Hébergements'],
   ['/boutique/', 'Boutique'],
@@ -487,7 +698,12 @@ const PIED = [
 ]
 
 function corps(page, repertoire) {
-  const { chemin, titre, description, image, nom, lieu, prix, texte } = page
+  const { titre, description, image, nom, lieu, prix, texte } = page
+  const langue = page.langue ?? 'fr'
+  const m = MOTS[langue]
+  // Les branches se lisent sur le chemin sans sa langue : `en/boutique` est
+  // une boutique comme `boutique`.
+  const chemin = langue === 'en' ? page.chemin.replace(/^en\/?/, '') : page.chemin
 
   // Le titre du document porte la marque, en tête ou en queue selon la page ;
   // le titre visible, non — elle est déjà juste au-dessus, en lien vers l'accueil.
@@ -517,34 +733,46 @@ function corps(page, repertoire) {
 
   if (chemin === '') {
     if (destinations.length) {
-      morceaux.push(`<h2 style="${STYLE.sousTitre}">Nos destinations</h2>`, listeDeLiens(destinations))
+      morceaux.push(`<h2 style="${STYLE.sousTitre}">${m.destinations}</h2>`, listeDeLiens(destinations))
     }
-    morceaux.push(`<h2 style="${STYLE.sousTitre}">Nos hébergements</h2>`, listeDeLiens(hebergements))
+    morceaux.push(`<h2 style="${STYLE.sousTitre}">${m.hebergements}</h2>`, listeDeLiens(hebergements))
     if (oeuvres.length) {
-      morceaux.push(`<h2 style="${STYLE.sousTitre}">La boutique</h2>`, listeDeLiens(oeuvres))
+      morceaux.push(`<h2 style="${STYLE.sousTitre}">${m.boutique}</h2>`, listeDeLiens(oeuvres))
     }
   } else if (chemin === 'hebergements') {
     if (destinations.length) {
-      morceaux.push(`<h2 style="${STYLE.sousTitre}">Par destination</h2>`, listeDeLiens(destinations))
+      morceaux.push(`<h2 style="${STYLE.sousTitre}">${m.parDestination}</h2>`, listeDeLiens(destinations))
     }
-    morceaux.push(`<h2 style="${STYLE.sousTitre}">Toutes les annonces</h2>`, listeDeLiens(hebergements))
+    morceaux.push(`<h2 style="${STYLE.sousTitre}">${m.toutes}</h2>`, listeDeLiens(hebergements))
   } else if (chemin === 'boutique') {
     morceaux.push(listeDeLiens(oeuvres))
+  } else if (chemin === 'joj-dakar-2026') {
+    const villesDesJeux = destinations.filter((p) => /(^|\/)destinations\/(dakar|saly)$/.test(p.chemin))
+    if (villesDesJeux.length) {
+      morceaux.push(`<h2 style="${STYLE.sousTitre}">${m.ouLoger}</h2>`, listeDeLiens(villesDesJeux))
+    }
   } else if (chemin.startsWith('destinations/')) {
     morceaux.push(listeDeLiens(page.fiches ?? []))
-    morceaux.push(`<p>${lien('/hebergements/', 'Voir tous les hébergements')}</p>`)
+    morceaux.push(`<p>${lien(langue === 'en' ? '/en/hebergements/' : '/hebergements/', m.voirTous)}</p>`)
   } else if (chemin.startsWith('hebergements/') || chemin.startsWith('boutique/')) {
     const fiche = chemin.startsWith('hebergements/')
-    const famille = (fiche ? hebergements : oeuvres).filter((p) => p.chemin !== chemin)
+    const famille = (fiche ? hebergements : oeuvres).filter((p) => p.chemin !== page.chemin)
+    const prefixe = langue === 'en' ? '/en' : ''
 
     morceaux.push(
-      `<h2 style="${STYLE.sousTitre}">${fiche ? 'Autres hébergements' : 'Autres articles'}</h2>`,
+      `<h2 style="${STYLE.sousTitre}">${fiche ? m.autresHebergements : m.autresArticles}</h2>`,
       listeDeLiens(famille.slice(0, VOISINS)),
-      `<p>${lien(fiche ? '/hebergements/' : '/boutique/', fiche ? 'Voir tous les hébergements' : 'Voir toute la boutique')}</p>`,
+      `<p>${lien(fiche ? `${prefixe}/hebergements/` : `${prefixe}/boutique/`, fiche ? m.voirTous : m.voirBoutique)}</p>`,
     )
   }
 
-  const pied = PIED.filter(([href]) => href !== adresse(chemin))
+  // L'autre langue de la même page, quand elle existe.
+  if (page.jumelle !== undefined) {
+    const [texteLien, code] = m.autreLangue
+    morceaux.push(`<p lang="${code}">${lien(adresse(page.jumelle), texteLien)}</p>`)
+  }
+
+  const pied = (langue === 'en' ? PIED_EN : PIED).filter(([href]) => href !== adresse(page.chemin))
     .map(([href, texte]) => lien(href, texte))
     .join(' · ')
 
@@ -599,6 +827,23 @@ function injecter(gabarit, page, repertoire = {}) {
   remplacerMeta('name', 'twitter:title', titre)
   remplacerMeta('name', 'twitter:description', description)
   remplacerMeta('name', 'twitter:image', imageAbsolue)
+
+  // La langue du document, et la locale de l'aperçu de partage.
+  const langue = page.langue ?? 'fr'
+  html = html.replace(/<html lang="[^"]*">/, `<html lang="${langue}">`)
+  remplacerMeta('property', 'og:locale', langue === 'en' ? 'en_GB' : 'fr_SN')
+
+  // Les versions dans chaque langue. Vidées d'abord : le gabarit est la page
+  // d'accueil, que ce script réécrit aussi.
+  html = html.replace(/\s*<link rel="alternate" hreflang="[^"]*" href="[^"]*" \/>/g, '')
+  if (page.jumelle !== undefined) {
+    const fr = langue === 'fr' ? page.chemin : page.jumelle
+    const en = langue === 'en' ? page.chemin : page.jumelle
+    const alternatives = [['fr', fr], ['en', en], ['x-default', fr]]
+      .map(([code, c]) => `<link rel="alternate" hreflang="${code}" href="${canonique(c)}" />`)
+      .join('\n    ')
+    html = html.replace('</head>', `    ${alternatives}\n  </head>`)
+  }
 
   // Canonique : sans elle, une même fiche atteinte avec des paramètres de
   // suivi (`?source=whatsapp`) compte comme autant de pages distinctes.
@@ -742,10 +987,16 @@ async function principal() {
   // repli promet de ne pas faire.
   let boutiqueOuverte = true
   let apiJoignable = true
+  // Prudent à dessein, à l'inverse de la boutique : ces pages sont neuves, et
+  // une API muette ne doit pas en annoncer une qui serait fermée.
+  let ouvert = { transport: false, restauration: false, joj: false }
 
   try {
     villas = await toutesLesVillas()
     console.log(`  ${villas.length} villa(s) publiée(s) récupérée(s)`)
+
+    ouvert = await ouvertures()
+    console.log(`  ouverts : ${Object.entries(ouvert).filter(([, v]) => v).map(([k]) => k).join(', ') || 'aucun service'}`)
 
     const catalogue = await toutesLesOeuvres()
     boutiqueOuverte = catalogue !== null
@@ -764,6 +1015,9 @@ async function principal() {
   }
 
   const fiches = villas.map(pageVilla)
+  const fichesEn = villas.map((v, i) => jumelleVilla(v, fiches[i]))
+  // Chaque fiche française connaît sa jumelle.
+  for (const f of fiches) f.jumelle = enAnglais(f.chemin)
 
   // Une destination par ville réellement pourvue. Prises sur les annonces et
   // non sur la liste de référence : une page de destination vide n'a rien à
@@ -776,38 +1030,63 @@ async function principal() {
     parVille.get(ville).push(fiches[i])
   }
 
-  const destinations = [...parVille.entries()]
-    .sort((a, b) => b[1].length - a[1].length)
-    .map(([ville, liste]) => pageDestination(ville, liste))
+  const villesTriees = [...parVille.entries()].sort((a, b) => b[1].length - a[1].length)
+  const destinations = villesTriees.map(([ville, liste]) => pageDestination(ville, liste))
+  const destinationsEn = villesTriees.map(([ville, liste], i) =>
+    jumelleDestination(ville, liste.map((f) => fichesEn[fiches.indexOf(f)]), destinations[i]))
+  for (const d of destinations) d.jumelle = enAnglais(d.chemin)
+
+  const fixes = PAGES_FIXES
+    .filter((p) => !p.siBoutiqueOuverte || boutiqueOuverte)
+    .filter((p) => !p.si || ouvert[p.si])
+    .map((p) => ({ ...p, priorite: p.chemin === '' ? '1.0' : '0.8' }))
+  const fixesEn = fixes.map(jumelleFixe).filter(Boolean)
+  for (const f of fixes) if (FIXES_EN[f.chemin]) f.jumelle = enAnglais(f.chemin)
+
+  const fichesOeuvres = oeuvres.map(pageOeuvre)
+  const fichesOeuvresEn = oeuvres.map((o, i) => jumelleOeuvre(o, fichesOeuvres[i]))
+  for (const o of fichesOeuvres) o.jumelle = enAnglais(o.chemin)
 
   const pages = [
-    ...PAGES_FIXES
-      .filter((p) => !p.siBoutiqueOuverte || boutiqueOuverte)
-      .map((p) => ({ ...p, priorite: p.chemin === '' ? '1.0' : '0.8' })),
+    ...fixes,
     ...destinations.map((p) => ({ ...p, priorite: '0.7', frequence: 'weekly' })),
     ...fiches.map((p) => ({ ...p, priorite: '0.6', frequence: 'daily' })),
-    ...oeuvres.map(pageOeuvre).map((p) => ({ ...p, priorite: '0.6', frequence: 'weekly' })),
+    ...fichesOeuvres.map((p) => ({ ...p, priorite: '0.6', frequence: 'weekly' })),
+  ]
+
+  // Les mêmes pages en anglais, une marche plus bas au plan de site : le
+  // français reste la langue du marché.
+  const pagesEn = [
+    ...fixesEn.map((p) => ({ ...p, priorite: p.chemin === 'en' ? '0.9' : '0.7' })),
+    ...destinationsEn.map((p) => ({ ...p, priorite: '0.6', frequence: 'weekly' })),
+    ...fichesEn.map((p) => ({ ...p, priorite: '0.5', frequence: 'daily' })),
+    ...fichesOeuvresEn.map((p) => ({ ...p, priorite: '0.5', frequence: 'weekly' })),
   ]
 
   // Le répertoire des fiches, pour que chaque page puisse pointer vers les
   // autres. C'est ce maillage qui manquait : aucune de nos adresses n'était
   // désignée par une autre page, et Google n'explorait donc presque rien.
-  const repertoire = {
-    hebergements: pages.filter((p) => p.chemin.startsWith('hebergements/')),
-    oeuvres: pages.filter((p) => p.chemin.startsWith('boutique/')),
-    destinations: pages.filter((p) => p.chemin.startsWith('destinations/')),
-  }
+  // Un répertoire par langue : une page anglaise désigne des pages anglaises.
+  const repertoirePour = (liste, prefixe) => ({
+    hebergements: liste.filter((p) => p.chemin.startsWith(`${prefixe}hebergements/`)),
+    oeuvres: liste.filter((p) => p.chemin.startsWith(`${prefixe}boutique/`)),
+    destinations: liste.filter((p) => p.chemin.startsWith(`${prefixe}destinations/`)),
+  })
+  const repertoire = repertoirePour(pages, '')
+  const repertoireEn = repertoirePour(pagesEn, 'en/')
 
-  for (const page of pages) {
-    const dossier = page.chemin ? join(DIST, page.chemin) : DIST
-    await mkdir(dossier, { recursive: true })
-    await writeFile(join(dossier, 'index.html'), injecter(gabarit, page, repertoire), 'utf8')
+  for (const [liste, rep] of [[pages, repertoire], [pagesEn, repertoireEn]]) {
+    for (const page of liste) {
+      const dossier = page.chemin ? join(DIST, page.chemin) : DIST
+      await mkdir(dossier, { recursive: true })
+      await writeFile(join(dossier, 'index.html'), injecter(gabarit, page, rep), 'utf8')
+    }
   }
 
   await writeFile(join(DIST, 'robots.txt'), ROBOTS, 'utf8')
 
   if (apiJoignable) {
-    await writeFile(join(DIST, 'sitemap.xml'), planDeSite(pages), 'utf8')
+    await writeFile(join(DIST, 'sitemap.xml'), planDeSite([...pages, ...pagesEn]), 'utf8')
   } else {
     // On ne remplace pas un plan complet par un plan amputé : celui qui sert
     // déjà en ligne vaut mieux qu’un plan réduit aux pages fixes.
@@ -819,7 +1098,7 @@ async function principal() {
       : '      Plan de site : aucun plan en ligne à reprendre, écriture du plan réduit.')
   }
 
-  console.log(`  ${pages.length} page(s) pré-rendue(s) · plan de site et robots.txt écrits`)
+  console.log(`  ${pages.length} page(s) pré-rendue(s) en français, ${pagesEn.length} en anglais · plan de site et robots.txt écrits`)
   console.log(`  site : ${SITE}`)
 }
 

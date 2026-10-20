@@ -1,14 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import Button from '../ui/Button'
 import { fcfa } from '../../lib/format'
-import { LIBELLES_LOGEMENT, TYPES_LOGEMENT_PROPOSES } from '../../types'
+import { TYPES_LOGEMENT_PROPOSES } from '../../types'
+import { useLangue } from '../../i18n/langue'
+import { METIER } from '../../i18n/metier'
+import { TEXTES_RECHERCHE } from '../../i18n/recherche'
 
-
-const NOTES = [
-  { valeur: '', libelle: 'Toutes' },
-  { valeur: '3', libelle: '3★ et +' },
-  { valeur: '4', libelle: '4★ et +' },
-]
+const NOTES = ['', '3', '4']
 
 export interface Brouillon {
   prix_min: string
@@ -40,6 +38,9 @@ export default function FeuilleFiltres({
   onEffacer: () => void
   onFermer: () => void
 }) {
+  const { langue } = useLangue()
+  const t = TEXTES_RECHERCHE[langue].filtres
+  const metier = METIER[langue]
   const [brouillon, setBrouillon] = useState<Brouillon>(initiaux)
   const panneau = useRef<HTMLDivElement>(null)
 
@@ -69,23 +70,23 @@ export default function FeuilleFiltres({
         className="feuille"
         role="dialog"
         aria-modal="true"
-        aria-label="Filtres de recherche"
+        aria-label={t.dialogue}
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
       >
         <header className="feuille-entete">
-          <h2 className="feuille-titre">Filtres</h2>
-          <button type="button" onClick={onFermer} className="feuille-fermer" aria-label="Fermer les filtres">
+          <h2 className="feuille-titre">{t.titre}</h2>
+          <button type="button" onClick={onFermer} className="feuille-fermer" aria-label={t.fermer}>
             ✕
           </button>
         </header>
 
         <div className="feuille-corps">
           <section className="feuille-section">
-            <h3 className="feuille-section-titre">Budget</h3>
+            <h3 className="feuille-section-titre">{t.budget}</h3>
             <div className="feuille-budget">
               <label>
-                <span className="champ-label">Minimum</span>
+                <span className="champ-label">{t.minimum}</span>
                 <input
                   type="number" min={0} inputMode="numeric" placeholder="0"
                   className="champ-controle"
@@ -94,7 +95,7 @@ export default function FeuilleFiltres({
                 />
               </label>
               <label>
-                <span className="champ-label">Maximum</span>
+                <span className="champ-label">{t.maximum}</span>
                 <input
                   type="number" min={0} inputMode="numeric" placeholder="500 000"
                   className="champ-controle"
@@ -106,43 +107,43 @@ export default function FeuilleFiltres({
             {(brouillon.prix_min || brouillon.prix_max) && (
               <p className="champ-aide">
                 {brouillon.prix_min && brouillon.prix_max
-                  ? `De ${fcfa(brouillon.prix_min)} à ${fcfa(brouillon.prix_max)}`
+                  ? t.deA(fcfa(brouillon.prix_min), fcfa(brouillon.prix_max))
                   : brouillon.prix_min
-                    ? `À partir de ${fcfa(brouillon.prix_min)}`
-                    : `Jusqu'à ${fcfa(brouillon.prix_max)}`}
+                    ? t.aPartirDe(fcfa(brouillon.prix_min))
+                    : t.jusquA(fcfa(brouillon.prix_max))}
               </p>
             )}
           </section>
 
           <section className="feuille-section">
-            <h3 className="feuille-section-titre">Type de logement</h3>
+            <h3 className="feuille-section-titre">{t.typeLogement}</h3>
             <div className="feuille-pastilles">
-              {TYPES_LOGEMENT_PROPOSES.map((t) => (
+              {TYPES_LOGEMENT_PROPOSES.map((type) => (
                 <button
-                  key={t}
+                  key={type}
                   type="button"
-                  className={`pastille-choix${brouillon.type_logement === t ? ' est-choisi' : ''}`}
-                  onClick={() => maj('type_logement', t)}
-                  aria-pressed={brouillon.type_logement === t}
+                  className={`pastille-choix${brouillon.type_logement === type ? ' est-choisi' : ''}`}
+                  onClick={() => maj('type_logement', type)}
+                  aria-pressed={brouillon.type_logement === type}
                 >
-                  {LIBELLES_LOGEMENT[t]}
+                  {metier.logement[type]}
                 </button>
               ))}
             </div>
           </section>
 
           <section className="feuille-section">
-            <h3 className="feuille-section-titre">Note minimale</h3>
+            <h3 className="feuille-section-titre">{t.noteMin}</h3>
             <div className="feuille-pastilles">
               {NOTES.map((n) => (
                 <button
-                  key={n.valeur || 'toutes'}
+                  key={n || 'toutes'}
                   type="button"
-                  className={`pastille-choix${brouillon.note_min === n.valeur ? ' est-choisi' : ''}`}
-                  onClick={() => setBrouillon({ ...brouillon, note_min: n.valeur })}
-                  aria-pressed={brouillon.note_min === n.valeur}
+                  className={`pastille-choix${brouillon.note_min === n ? ' est-choisi' : ''}`}
+                  onClick={() => setBrouillon({ ...brouillon, note_min: n })}
+                  aria-pressed={brouillon.note_min === n}
                 >
-                  {n.libelle}
+                  {n ? t.etPlus(Number(n)) : t.toutes}
                 </button>
               ))}
             </div>
@@ -150,10 +151,10 @@ export default function FeuilleFiltres({
         </div>
 
         <footer className="feuille-pied">
-          <Button variante="discret" taille="sm" onClick={onEffacer}>Effacer</Button>
+          <Button variante="discret" taille="sm" onClick={onEffacer}>{t.effacer}</Button>
           {/* Annoncer le résultat attendu évite d'appliquer à l'aveugle. */}
           <Button variante="primaire" taille="sm" onClick={() => onAppliquer(brouillon)}>
-            {nbResultats > 0 ? `Voir les ${nbResultats} villas` : 'Appliquer'}
+            {nbResultats > 0 ? t.voirLes(nbResultats) : t.appliquer}
           </Button>
         </footer>
       </div>

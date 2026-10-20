@@ -4,6 +4,8 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { VillaResume } from '../types'
 import { fcfaCourt } from '../lib/format'
+import { cheminEn, useLangue } from '../i18n/langue'
+import { TEXTES_RECHERCHE } from '../i18n/recherche'
 
 /**
  * Carte des résultats de recherche — planche 05.
@@ -31,6 +33,9 @@ export default function CarteVillas({
   const carte = useRef<L.Map | null>(null)
   const couche = useRef<L.LayerGroup | null>(null)
   const navigate = useNavigate()
+  // La langue, et non `lien` : une fonction recréée à chaque rendu relancerait
+  // le tracé de tous les marqueurs à chaque survol.
+  const { langue } = useLangue()
 
   // Seules les villas géolocalisées peuvent être placées.
   const situees = useMemo(
@@ -92,20 +97,20 @@ export default function CarteVillas({
         `<strong>${v.nom}</strong><br>${v.ville}`,
         { closeButton: false }
       )
-      marqueur.on('click', () => navigate(`/villas/${v.id}/`))
+      marqueur.on('click', () => navigate(cheminEn(langue, `/hebergements/${v.id}/`)))
       marqueur.addTo(g)
     }
 
     // Recadrer sur les résultats : une carte centrée sur Dakar alors que les
     // résultats sont à Ziguinchor ne sert à rien.
     c.fitBounds(L.latLngBounds(points), { padding: [40, 40], maxZoom: 14 })
-  }, [situees, villaSurvolee, navigate])
+  }, [situees, villaSurvolee, navigate, langue])
 
   if (situees.length === 0) {
     return (
       <div className="carte-villas-vide">
         <p className="th-text-3 text-sm">
-          Aucune des villas trouvées n'est encore localisée sur la carte.
+          {TEXTES_RECHERCHE[langue].liste.aucuneLocalisee}
         </p>
       </div>
     )

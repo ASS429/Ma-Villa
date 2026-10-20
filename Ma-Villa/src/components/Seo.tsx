@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { cheminEn, useLangue } from '../i18n/langue'
 
 interface SeoProps {
   titre: string
@@ -10,6 +11,11 @@ interface SeoProps {
   indexable?: boolean
   /** Donnée structurée schema.org, sérialisée en JSON-LD. */
   donneesStructurees?: Record<string, unknown>
+  /**
+   * Annoncer la version dans l'autre langue (`hreflang`). Vrai par défaut :
+   * à refuser pour une page dont l'autre langue servirait le même texte.
+   */
+  alternatives?: boolean
 }
 
 const SITE = 'PasseTemps'
@@ -37,7 +43,10 @@ export default function Seo({
   chemin,
   indexable = true,
   donneesStructurees,
+  alternatives = true,
 }: SeoProps) {
+  const { langue } = useLangue()
+
   useEffect(() => {
     const titreComplet = titre === SITE ? titre : `${titre} — ${SITE}`
     document.title = titreComplet
@@ -55,7 +64,7 @@ export default function Seo({
     baliseMeta('property', 'og:description', description)
     baliseMeta('property', 'og:image', imageAbsolue)
     baliseMeta('property', 'og:url', url)
-    baliseMeta('property', 'og:locale', 'fr_SN')
+    baliseMeta('property', 'og:locale', langue === 'en' ? 'en_GB' : 'fr_SN')
 
     baliseMeta('name', 'twitter:card', 'summary_large_image')
     baliseMeta('name', 'twitter:title', titreComplet)
@@ -69,7 +78,26 @@ export default function Seo({
       document.head.appendChild(canonique)
     }
     canonique.href = url
-  }, [titre, description, image, chemin, indexable])
+
+    // Les versions dans chaque langue, pour que Google serve la bonne à chacun.
+    // Seules les pages publiques indexables en ont : un espace privé n'a rien
+    // à annoncer, et une page sans `chemin` ne sait pas où vit sa jumelle.
+    document.head.querySelectorAll('link[rel="alternate"][hreflang]').forEach((l) => l.remove())
+    if (indexable && alternatives && chemin) {
+      const versions: [string, string][] = [
+        ['fr', cheminEn('fr', chemin)],
+        ['en', cheminEn('en', chemin)],
+        ['x-default', cheminEn('fr', chemin)],
+      ]
+      for (const [code, cheminVersion] of versions) {
+        const lienAlt = document.createElement('link')
+        lienAlt.rel = 'alternate'
+        lienAlt.hreflang = code
+        lienAlt.href = origine + cheminVersion
+        document.head.appendChild(lienAlt)
+      }
+    }
+  }, [titre, description, image, chemin, indexable, alternatives, langue])
 
   useEffect(() => {
     if (!donneesStructurees) return

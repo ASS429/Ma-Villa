@@ -29,9 +29,51 @@ export function erreursParChamp(erreur: unknown): Record<string, string> {
   )
 }
 
-export function messageErreur(erreur: unknown, repli = 'Une erreur est survenue.'): string {
+/**
+ * Les messages génériques, dans les deux langues des pages client.
+ *
+ * La langue se lit sur `<html lang>`, que `LangueDocument` tient à jour : la
+ * fonction est appelée de partout, souvent hors d'un composant, et lui faire
+ * passer la langue aurait touché chaque appel. Les messages de validation du
+ * serveur restent en français — ils viennent tels quels de l'API.
+ */
+const MESSAGES = {
+  fr: {
+    defaut: 'Une erreur est survenue.',
+    horsLigne: 'Vous semblez hors ligne. Vérifiez votre connexion et réessayez.',
+    lent: 'Le serveur met trop de temps à répondre. Réessayez dans un instant.',
+    injoignable: 'Le serveur est injoignable. Réessayez dans un instant.',
+    401: 'Vous devez être connecté pour effectuer cette action.',
+    403: "Vous n'avez pas les droits nécessaires.",
+    404: 'Élément introuvable.',
+    409: 'Cette action entre en conflit avec une donnée existante.',
+    429: 'Trop de tentatives. Patientez un instant.',
+    5: 'Le service est momentanément indisponible. Réessayez dans quelques instants.',
+  },
+  en: {
+    defaut: 'Something went wrong.',
+    horsLigne: 'You seem to be offline. Check your connection and try again.',
+    lent: 'The server is taking too long to answer. Try again in a moment.',
+    injoignable: 'The server cannot be reached. Try again in a moment.',
+    401: 'You need to be logged in to do this.',
+    403: 'You are not allowed to do this.',
+    404: 'Not found.',
+    409: 'This conflicts with existing data.',
+    429: 'Too many attempts. Please wait a moment.',
+    5: 'The service is temporarily unavailable. Try again in a few moments.',
+  },
+}
+
+function messages() {
+  return typeof document !== 'undefined' && document.documentElement.lang === 'en' ? MESSAGES.en : MESSAGES.fr
+}
+
+export function messageErreur(erreur: unknown, repli?: string): string {
+  const m = messages()
+  const parDefaut = repli ?? m.defaut
+
   if (!(erreur instanceof AxiosError)) {
-    return erreur instanceof Error ? erreur.message : repli
+    return erreur instanceof Error ? erreur.message : parDefaut
   }
 
   // Aucune réponse reçue. Trois pannes très différentes se cachaient derrière
@@ -40,14 +82,14 @@ export function messageErreur(erreur: unknown, repli = 'Une erreur est survenue.
   // qu'il voit, et « vérifiez votre réseau » envoyait chercher au mauvais endroit.
   if (!erreur.response) {
     if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-      return 'Vous semblez hors ligne. Vérifiez votre connexion et réessayez.'
+      return m.horsLigne
     }
 
     if (erreur.code === 'ECONNABORTED' || erreur.code === 'ETIMEDOUT') {
-      return 'Le serveur met trop de temps à répondre. Réessayez dans un instant.'
+      return m.lent
     }
 
-    return 'Le serveur est injoignable. Réessayez dans un instant.'
+    return m.injoignable
   }
 
   const { status, data } = erreur.response
@@ -63,15 +105,15 @@ export function messageErreur(erreur: unknown, repli = 'Une erreur est survenue.
   if (message && message !== 'Server Error') return message
 
   switch (status) {
-    case 401: return 'Vous devez être connecté pour effectuer cette action.'
-    case 403: return "Vous n'avez pas les droits nécessaires."
-    case 404: return 'Élément introuvable.'
-    case 409: return 'Cette action entre en conflit avec une donnée existante.'
-    case 429: return 'Trop de tentatives. Patientez un instant.'
+    case 401: return m[401]
+    case 403: return m[403]
+    case 404: return m[404]
+    case 409: return m[409]
+    case 429: return m[429]
     case 500:
     case 502:
-    case 503: return 'Le service est momentanément indisponible. Réessayez dans quelques instants.'
-    default: return repli
+    case 503: return m[5]
+    default: return parDefaut
   }
 }
 

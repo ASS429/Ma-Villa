@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import { erreursParChamp, messageErreur } from '../lib/erreurs'
+import { useLangue } from '../i18n/langue'
+import { TEXTES_COMPTES } from '../i18n/comptes'
 import CoquilleAuth, { AlerteAuth } from '../components/CoquilleAuth'
 import FloatingInput from '../components/FloatingInput'
 import Seo from '../components/Seo'
@@ -22,6 +24,8 @@ export default function ReinitialiserMotDePasse() {
   // devenus inutiles.
   const [lienMort, setLienMort] = useState(false)
   const [fait, setFait] = useState(false)
+  const { langue, lien } = useLangue()
+  const t = TEXTES_COMPTES[langue].reinitialiser
 
   const lienIncomplet = !token || !email
 
@@ -31,7 +35,7 @@ export default function ReinitialiserMotDePasse() {
     setErreursChamp({})
 
     if (form.password !== form.password_confirmation) {
-      setErreursChamp({ password_confirmation: 'Les deux mots de passe ne correspondent pas.' })
+      setErreursChamp({ password_confirmation: t.differents })
       return
     }
 
@@ -39,7 +43,7 @@ export default function ReinitialiserMotDePasse() {
     try {
       await api.post('/auth/reset-password', { token, email, ...form })
       setFait(true)
-      setTimeout(() => navigate('/login'), 2500)
+      setTimeout(() => navigate(lien('/login')), 2500)
     } catch (err) {
       const champs = erreursParChamp(err)
 
@@ -51,7 +55,7 @@ export default function ReinitialiserMotDePasse() {
       } else if (Object.keys(champs).length > 0) {
         setErreursChamp(champs)
       } else {
-        setErreur(messageErreur(err, "Le mot de passe n'a pas pu être changé."))
+        setErreur(messageErreur(err, t.echec))
       }
     } finally {
       setEnvoi(false)
@@ -60,39 +64,39 @@ export default function ReinitialiserMotDePasse() {
 
   return (
     <>
-      <Seo titre="Nouveau mot de passe" description="Choisissez un nouveau mot de passe." indexable={false} />
+      <Seo titre={t.titre} description={t.seoDescription} indexable={false} />
 
       <CoquilleAuth
-        titre="Nouveau mot de passe"
-        sousTitre={lienIncomplet || fait ? undefined : `Pour le compte ${email}`}
-        pied={<Link to="/login" className="th-text-1 font-medium hover:underline underline-offset-4">Retour à la connexion</Link>}
+        titre={t.titre}
+        sousTitre={lienIncomplet || fait ? undefined : t.pourLeCompte(email)}
+        pied={<Link to={lien('/login')} className="th-text-1 font-medium hover:underline underline-offset-4">{t.retour}</Link>}
       >
         {lienIncomplet || lienMort ? (
           <>
             <AlerteAuth type="erreur">
               {lienIncomplet
-                ? "Ce lien est incomplet — il a probablement été coupé en chemin."
-                : "Ce lien a expiré. Les liens de réinitialisation ne restent valables qu'un temps."}
+                ? t.incomplet
+                : t.expire}
             </AlerteAuth>
 
             <Link
-              to="/mot-de-passe-oublie"
+              to={lien('/mot-de-passe-oublie')}
               className="block w-full text-center py-3 rounded-xl font-semibold transition-opacity hover:opacity-90"
               style={{ background: 'var(--accent)', color: 'var(--on-accent)', textDecoration: 'none' }}
             >
-              Demander un nouveau lien
+              {t.nouveauLien}
             </Link>
           </>
         ) : fait ? (
           <AlerteAuth type="succes">
-            Mot de passe modifié. Redirection vers la connexion…
+            {t.fait}
           </AlerteAuth>
         ) : (
           <form onSubmit={soumettre} className="flex flex-col gap-5">
             {erreur && <AlerteAuth type="erreur">{erreur}</AlerteAuth>}
 
             <FloatingInput
-              label="Nouveau mot de passe"
+              label={t.nouveau}
               type="password"
               required
               minLength={8}
@@ -102,7 +106,7 @@ export default function ReinitialiserMotDePasse() {
               error={erreursChamp.password}
             />
             <FloatingInput
-              label="Confirmer le mot de passe"
+              label={t.confirmer}
               type="password"
               required
               minLength={8}
@@ -112,7 +116,7 @@ export default function ReinitialiserMotDePasse() {
               error={erreursChamp.password_confirmation}
             />
 
-            <p className="text-xs th-text-3 -mt-2">8 caractères minimum.</p>
+            <p className="text-xs th-text-3 -mt-2">{t.minimum}</p>
 
             {/* `text-white` ne suivait pas le thème : sur l'accent clair du
                 mode jour, le contraste tombait sous le seuil lisible. */}
@@ -122,7 +126,7 @@ export default function ReinitialiserMotDePasse() {
               className="py-3 rounded-xl font-semibold transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50 disabled:translate-y-0"
               style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
             >
-              {envoi ? 'Enregistrement…' : 'Changer mon mot de passe'}
+              {envoi ? t.enregistrement : t.changer}
             </button>
           </form>
         )}

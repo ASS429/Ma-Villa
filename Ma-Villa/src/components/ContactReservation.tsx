@@ -1,6 +1,8 @@
 import { Phone, MessageCircle, Mail } from 'lucide-react'
 import { useConfig } from '../context/ConfigContext'
 import { lienAppel, lienCourriel, lienWhatsApp } from '../lib/contact'
+import { useLangue } from '../i18n/langue'
+import { TEXTES_HEBERGEMENT } from '../i18n/hebergement'
 
 /**
  * Le contact qui remplace la réservation en ligne tant qu'elle est suspendue.
@@ -27,11 +29,12 @@ export default function ContactReservation({
 }) {
   const { reservations } = useConfig()
   const { nom, telephone, email } = reservations.contact
+  const t = TEXTES_HEBERGEMENT[useLangue().langue].contact
 
   if (compact) {
     return (
       <p className="text-xs th-text-2 leading-relaxed">
-        Paiement en ligne momentanément suspendu. Pour finaliser, contactez {nom} au{' '}
+        {t.suspenduCompact(nom)}{' '}
         <a href={lienAppel(telephone)} className="th-text-1 font-medium underline underline-offset-2">
           {telephone}
         </a>.
@@ -39,23 +42,21 @@ export default function ContactReservation({
     )
   }
 
-  const message = hebergement
-    ? `Bonjour, je souhaite réserver « ${hebergement} » vu sur PasseTemps.`
-    : 'Bonjour, je souhaite réserver un hébergement vu sur PasseTemps.'
-  const objet = hebergement ? `Réservation — ${hebergement}` : 'Réservation PasseTemps'
+  const message = t.message(hebergement)
+  const objet = t.objet(hebergement)
 
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <p className="th-text-1 font-medium mb-1">Réservation en ligne bientôt disponible</p>
+        <p className="th-text-1 font-medium mb-1">{t.bientot}</p>
         <p className="th-text-2 text-sm leading-relaxed">
-          En attendant, {nom} prend vos demandes de réservation directement.
+          {t.enAttendant(nom)}
         </p>
       </div>
 
       <a href={lienAppel(telephone)} className="btn btn-primaire btn-md w-full justify-center">
         <Phone size={16} aria-hidden="true" />
-        <span>Appeler le {telephone}</span>
+        <span>{t.appeler(telephone)}</span>
       </a>
 
       <div className="grid grid-cols-2 gap-2">
@@ -70,7 +71,7 @@ export default function ContactReservation({
         </a>
         <a href={lienCourriel(email, objet)} className="btn btn-secondaire btn-sm justify-center">
           <Mail size={15} aria-hidden="true" />
-          <span>E-mail</span>
+          <span>{t.email}</span>
         </a>
       </div>
 

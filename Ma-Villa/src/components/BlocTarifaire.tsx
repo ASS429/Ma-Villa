@@ -1,6 +1,9 @@
-import { LIBELLES_LOGEMENT, LIBELLES_TARIF, type Logement, type Tarif } from '../types'
+import type { Logement, Tarif } from '../types'
 import { fcfa } from '../lib/format'
-import { FORMULES, libelleOptions, tarifLeMoinsCher } from '../lib/tarifs'
+import { FORMULES, tarifLeMoinsCher } from '../lib/tarifs'
+import { useLangue } from '../i18n/langue'
+import { TEXTES_HEBERGEMENT } from '../i18n/hebergement'
+import { METIER, libelleOptionsEn } from '../i18n/metier'
 
 /**
  * Bloc « logements × formules × options » — planche 08.
@@ -27,6 +30,10 @@ export function GrilleTarifaire({
   tarifChoisi: number | null
   onChoisir: (logement: Logement, tarif: Tarif) => void
 }) {
+  const { langue } = useLangue()
+  const t = TEXTES_HEBERGEMENT[langue].grille
+  const metier = METIER[langue]
+
   // Ne garder que les colonnes réellement proposées : afficher quatre colonnes
   // dont trois vides ferait croire à une offre incomplète.
   const colonnes = FORMULES.filter((type) =>
@@ -36,7 +43,7 @@ export function GrilleTarifaire({
   if (colonnes.length === 0) {
     return (
       <p className="th-text-3 text-sm">
-        Aucun tarif n'est encore publié. Contactez le propriétaire.
+        {t.aucunTarif}
       </p>
     )
   }
@@ -45,12 +52,12 @@ export function GrilleTarifaire({
     <div className="grille-tarifs-defilement">
       <table className="grille-tarifs">
         <caption className="sr-only">
-          Tarifs par logement et par formule. Sélectionnez un prix pour préparer votre réservation.
+          {t.legende}
         </caption>
         <thead>
           <tr>
-            <th scope="col">Logement</th>
-            {colonnes.map((c) => <th key={c} scope="col">{LIBELLES_TARIF[c]}</th>)}
+            <th scope="col">{t.logement}</th>
+            {colonnes.map((c) => <th key={c} scope="col">{metier.tarif[c]}</th>)}
           </tr>
         </thead>
         <tbody>
@@ -59,8 +66,8 @@ export function GrilleTarifaire({
               <th scope="row">
                 <span className="grille-tarifs-nom">{l.nom}</span>
                 <span className="grille-tarifs-detail">
-                  {LIBELLES_LOGEMENT[l.type]} · {l.capacite} pers.
-                  {!l.disponible && ' · indisponible'}
+                  {metier.logement[l.type]} · {l.capacite} {metier.pers}
+                  {!l.disponible && t.indisponible}
                 </span>
               </th>
 
@@ -72,7 +79,7 @@ export function GrilleTarifaire({
                   // information, la masquer laisserait le client la chercher.
                   return (
                     <td key={type} className="grille-tarifs-vide">
-                      <span aria-label="non proposé">—</span>
+                      <span aria-label={t.nonPropose}>—</span>
                     </td>
                   )
                 }
@@ -89,7 +96,7 @@ export function GrilleTarifaire({
                       aria-pressed={actif}
                     >
                       {fcfa(tarif.prix)}
-                      {actif && <span className="grille-tarifs-etiquette">choisi</span>}
+                      {actif && <span className="grille-tarifs-etiquette">{t.choisi}</span>}
                     </button>
                   </td>
                 )
@@ -117,6 +124,9 @@ export function ParcoursReservation({
   onChoisirLogement: (l: Logement) => void
   onChoisirTarif: (t: Tarif) => void
 }) {
+  const { langue } = useLangue()
+  const t = TEXTES_HEBERGEMENT[langue].grille
+  const metier = METIER[langue]
   const disponibles = logements.filter((l) => l.disponible)
 
   // Étape 3 : à formule choisie, les variantes ne diffèrent que par les options.
@@ -128,7 +138,7 @@ export function ParcoursReservation({
 
   return (
     <div className="parcours">
-      <Etape numero={1} titre="Logement">
+      <Etape numero={1} titre={t.etapeLogement}>
         <div className="parcours-choix">
           {disponibles.map((l) => (
             <button
@@ -140,7 +150,7 @@ export function ParcoursReservation({
             >
               <span className="parcours-option-nom">{l.nom}</span>
               <span className="parcours-option-detail">
-                {LIBELLES_LOGEMENT[l.type]} · {l.capacite} pers.
+                {metier.logement[l.type]} · {l.capacite} {metier.pers}
               </span>
             </button>
           ))}
@@ -148,7 +158,7 @@ export function ParcoursReservation({
       </Etape>
 
       {logementChoisi && (
-        <Etape numero={2} titre="Formule">
+        <Etape numero={2} titre={t.etapeFormule}>
           <div className="parcours-formules">
             {FORMULES.map((type) => {
               const tarif = tarifLeMoinsCher(logementChoisi, type)
@@ -165,10 +175,10 @@ export function ParcoursReservation({
                   disabled={!tarif}
                   aria-pressed={actif}
                   aria-label={tarif
-                    ? `${LIBELLES_TARIF[type]}, ${fcfa(tarif.prix)}`
-                    : `${LIBELLES_TARIF[type]}, non proposé pour ce logement`}
+                    ? `${metier.tarif[type]}, ${fcfa(tarif.prix)}`
+                    : t.nonProposePour(metier.tarif[type])}
                 >
-                  {LIBELLES_TARIF[type]}
+                  {metier.tarif[type]}
                 </button>
               )
             })}
@@ -177,18 +187,18 @@ export function ParcoursReservation({
       )}
 
       {variantes.length > 1 && (
-        <Etape numero={3} titre="Options">
+        <Etape numero={3} titre={t.etapeOptions}>
           <div className="parcours-choix">
-            {variantes.map((t) => (
+            {variantes.map((v) => (
               <button
-                key={t.id}
+                key={v.id}
                 type="button"
-                className={`parcours-option${tarifChoisi?.id === t.id ? ' est-choisi' : ''}`}
-                onClick={() => onChoisirTarif(t)}
-                aria-pressed={tarifChoisi?.id === t.id}
+                className={`parcours-option${tarifChoisi?.id === v.id ? ' est-choisi' : ''}`}
+                onClick={() => onChoisirTarif(v)}
+                aria-pressed={tarifChoisi?.id === v.id}
               >
-                <span className="parcours-option-nom">{libelleOptions(t)}</span>
-                <span className="parcours-option-detail">{fcfa(t.prix)}</span>
+                <span className="parcours-option-nom">{libelleOptionsEn(v, langue)}</span>
+                <span className="parcours-option-detail">{fcfa(v.prix)}</span>
               </button>
             ))}
           </div>
