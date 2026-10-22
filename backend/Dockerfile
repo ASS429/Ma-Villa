@@ -1,4 +1,18 @@
-FROM php:8.4-cli
+# Version épinglée, pas « 8.4-cli » : PHP2Shell (CVE-2026-109618 et
+# CVE-2026-109619, exécution de code à distance sans authentification) est
+# corrigé en 8.4.27, publié le 21 octobre 2026. L'image construite le 20 servait
+# 8.4.26. Une étiquette mouvante peut ressortir d'un cache de construction ; une
+# version écrite ne le peut pas. À monter à chaque correctif de sécurité.
+FROM php:8.4.27-cli
+
+# Durcissement, en plus du correctif :
+#  — session.upload_progress.enabled : le chemin d'attaque confirmé de la
+#    CVE-2026-109619. Laravel ne se sert pas des sessions natives de PHP ; le
+#    couper ne retire rien au site ;
+#  — expose_php : l'API annonçait « x-powered-by: PHP/8.4.26 » à chaque réponse,
+#    de quoi désigner les serveurs pas encore à jour.
+RUN printf 'session.upload_progress.enabled = 0\nexpose_php = Off\n' \
+        > /usr/local/etc/php/conf.d/zz-durcissement.ini
 
 # gmp : nécessaire à `php artisan push:cles`, qui génère la paire VAPID.
 # Sans elle, la génération échoue sur « Unable to create the key », un message
