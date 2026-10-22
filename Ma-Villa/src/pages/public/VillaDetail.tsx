@@ -14,7 +14,8 @@ import { GrilleTarifaire, ParcoursReservation } from '../../components/BlocTarif
 import { useRequete } from '../../lib/useRequete'
 import { messageErreur } from '../../lib/erreurs'
 import NotFound from '../NotFound'
-import { fcfa, dateCourte, noteLisible, nuits, aujourdhui } from '../../lib/format'
+import { fcfa, dateCourte, noteLisible, aujourdhui, ajouterJours } from '../../lib/format'
+import { prixSejour } from '../../lib/prix'
 import { type Occupation, type VillaDetail as Villa } from '../../types'
 import { lieu } from '../../lib/lieu'
 import { useLangue } from '../../i18n/langue'
@@ -250,13 +251,18 @@ export default function VillaDetail() {
   const logement = villa?.logements.find((l) => l.id === Number(reservation.logement_id))
   const tarif = logement?.tarifs.find((t) => t.id === Number(reservation.tarif_id))
 
-  // Récapitulatif de prix : le client validait sans jamais voir le total.
+  // Récapitulatif de prix : le client validait sans jamais voir le total. Même
+  // calcul que le serveur, prix de la semaine ou du mois compris.
   const recapitulatif = tarif && reservation.date_debut && reservation.date_fin
-    ? (() => {
-        const unites = Math.max(nuits(reservation.date_debut, reservation.date_fin), 1)
-        return { unites, prixUnitaire: tarif.prix, total: tarif.prix * unites }
-      })()
+    ? prixSejour(tarif, reservation.date_debut, reservation.date_fin)
     : null
+
+  // Le séjour le plus court accepté, à la nuitée seulement.
+  const nuitsMinimum = tarif?.type_tarif === 'nuitee' ? Math.max(logement?.nuits_minimum ?? 1, 1) : 1
+  const tropCourt = recapitulatif !== null && tarif?.type_tarif === 'nuitee' && recapitulatif.unites < nuitsMinimum
+  const departAuPlusTot = reservation.date_debut && nuitsMinimum > 1
+    ? ajouterJours(reservation.date_debut, nuitsMinimum)
+    : reservation.date_debut
 
   const plagesPrises = logement ? (occupation[String(logement.id)] ?? []) : []
   const conflitDates =
@@ -297,6 +303,10 @@ export default function VillaDetail() {
 
     if (conflitDates) {
       setErreurResa(t.dejaPris)
+      return
+    }
+    if (tropCourt) {
+      setErreurResa(t.tropCourt(nuitsMinimum))
       return
     }
     if (logement && Number(reservation.nb_personnes) > logement.capacite) {
@@ -692,7 +702,7 @@ export default function VillaDetail() {
                         to={lien(`/reservation/${reservationCreee}/paiement`)}
                         className="btn btn-primaire btn-md w-full justify-center"
                       >
-                        {t.payer(fcfa(recapitulatif?.total ?? 0))}
+                        {t.payer(fcfa(recapitulatif?.montant ?? 0))}
                       </Link>
                       <Link to="/dashboard/reservations" className="text-sm th-text-2 underline underline-offset-4 mt-4 inline-block">
                         {t.payerPlusTard}
@@ -752,7 +762,7 @@ export default function VillaDetail() {
                       <label htmlFor="r-fin" className="text-xs th-text-2 mb-1.5 block">{t.depart}</label>
                       <input
                         id="r-fin" type="date" required
-                        min={reservation.date_debut || aujourdhui()}
+                        min={departAuPlusTot || aujourdhui()}
                         value={reservation.date_fin}
                         onChange={(e) => setReservation({ ...reservation, date_fin: e.target.value })}
                         className={classeDate}
@@ -778,6 +788,12 @@ export default function VillaDetail() {
                     </p>
                   )}
 
+                  {nuitsMinimum > 1 && (
+                    <p className="text-xs" style={{ color: tropCourt ? 'var(--danger)' : 'var(--text-3)' }} role={tropCourt ? 'alert' : undefined}>
+                      {t.minimumNuits(nuitsMinimum)}
+                    </p>
+                  )}
+
                   <div>
                     <label htmlFor="r-personnes" className="text-xs th-text-2 mb-1.5 block">
                       {t.nbPersonnes}{logement ? t.max(logement.capacite) : ''}
@@ -792,22 +808,33 @@ export default function VillaDetail() {
                   </div>
 
                   {/* Total calculé avant validation */}
-                  {recapitulatif && (
+                  {recapitulatif && tarif && (
                     <div className="rounded-xl px-4 py-3 flex flex-col gap-1.5 text-sm" style={{ background: 'var(--bg-elevated)' }}>
-                      <div className="flex justify-between th-text-2">
-                        <span>{fcfa(recapitulatif.prixUnitaire)} × {recapitulatif.unites}</span>
-                        <span>{fcfa(recapitulatif.total)}</span>
+                      <div className="flex justify-between gap-3 th-text-2">
+                        <span>
+                          {recapitulatif.prixApplique === 'semaine'
+                            ? t.prixSemaine(recapitulatif.unites)
+                            : recapitulatif.prixApplique === 'mois'
+                              ? t.prixMois(recapitulatif.unites)
+                              : `${fcfa(tarif.prix)} × ${tarif.type_tarif === 'nuitee' ? t.nuits(recapitulatif.unites) : t.jours(recapitulatif.unites)}`}
+                        </span>
+                        <span className="text-right">
+                          {fcfa(recapitulatif.montant)}
+                          {recapitulatif.prixApplique !== 'unite' && (
+                            <span className="block text-xs th-text-3 line-through">{t.auLieuDe(fcfa(recapitulatif.sansReduction))}</span>
+                          )}
+                        </span>
                       </div>
                       <div className="flex justify-between font-semibold th-text-1 pt-1.5" style={{ borderTop: '1px solid var(--border)' }}>
                         <span>{t.total}</span>
-                        <span>{fcfa(recapitulatif.total)}</span>
+                        <span>{fcfa(recapitulatif.montant)}</span>
                       </div>
                     </div>
                   )}
 
                   <button
                     type="submit"
-                    disabled={envoiResa || conflitDates}
+                    disabled={envoiResa || conflitDates || tropCourt}
                     className="py-3 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
                     style={{ background: 'var(--accent)', color: 'var(--on-accent)', minHeight: 44 }}
                   >

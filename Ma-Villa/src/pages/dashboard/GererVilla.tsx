@@ -13,8 +13,37 @@ import { useConfig } from '../../context/ConfigContext'
 import { lieu } from '../../lib/lieu'
 
 interface Photo { id: number; url: string; alt: string }
-interface Tarif { id: number; type_tarif: string; avec_clim: boolean; avec_buffet: boolean; prix: number }
-interface Logement { id: number; nom: string; type: string; capacite: number; disponible: boolean; tarifs: Tarif[] }
+interface Tarif {
+  id: number; type_tarif: string; avec_clim: boolean; avec_buffet: boolean; prix: number
+  prix_semaine?: number | null; prix_mois?: number | null
+}
+interface Logement { id: number; nom: string; type: string; capacite: number; nuits_minimum?: number; disponible: boolean; tarifs: Tarif[] }
+
+interface FormulaireTarif {
+  type_tarif: string; prix: string; avec_clim: boolean; avec_buffet: boolean
+  prix_semaine: string; prix_mois: string
+}
+
+const TARIF_VIDE: FormulaireTarif = {
+  type_tarif: 'nuitee', prix: '', avec_clim: false, avec_buffet: false, prix_semaine: '', prix_mois: '',
+}
+
+/**
+ * Ce qu'on envoie au serveur. Les prix de semaine et de mois ne valent que pour
+ * une nuitée : sur une autre formule, ils partent vides, sans quoi le serveur
+ * refuserait un champ que le propriétaire ne voit même plus.
+ */
+function chargeTarif(f: FormulaireTarif) {
+  const nuitee = f.type_tarif === 'nuitee'
+  return {
+    type_tarif: f.type_tarif,
+    avec_clim: f.avec_clim,
+    avec_buffet: f.avec_buffet,
+    prix: parseFloat(f.prix),
+    prix_semaine: nuitee && f.prix_semaine ? parseInt(f.prix_semaine) : null,
+    prix_mois: nuitee && f.prix_mois ? parseInt(f.prix_mois) : null,
+  }
+}
 interface Villa {
   id: number; nom: string; description: string; adresse: string; ville: string; quartier: string | null;
   telephone: string; latitude: string | null; longitude: string | null; statut: StatutVilla;
@@ -63,6 +92,32 @@ function SmallField({ label, children }: { label: string; children: React.ReactE
   )
 }
 
+/** Prix à la semaine et au mois, sous le prix de la nuit — sur une nuitée seulement. */
+function ChampsLongsSejours({ formulaire, onChange }: {
+  formulaire: FormulaireTarif
+  onChange: (f: FormulaireTarif) => void
+}) {
+  if (formulaire.type_tarif !== 'nuitee') return null
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="grid grid-cols-2 gap-3">
+        <SmallField label="Prix à la semaine (facultatif)">
+          <input type="number" min="1" value={formulaire.prix_semaine} placeholder="7 nuits"
+            onChange={(e) => onChange({ ...formulaire, prix_semaine: e.target.value })} />
+        </SmallField>
+        <SmallField label="Prix au mois (facultatif)">
+          <input type="number" min="1" value={formulaire.prix_mois} placeholder="30 nuits"
+            onChange={(e) => onChange({ ...formulaire, prix_mois: e.target.value })} />
+        </SmallField>
+      </div>
+      <p className="text-xs" style={{ color: 'var(--text-3)' }}>
+        Appliqués d’eux-mêmes dès 7 et 30 nuits, à tout le séjour, quand ils sont plus avantageux pour le client.
+      </p>
+    </div>
+  )
+}
+
 function InfoRow({ label, value, multiline }: { label: string; value: string; multiline?: boolean }) {
   return (
     <div className={`flex ${multiline ? 'flex-col gap-1' : 'items-start gap-3'}`}>
@@ -92,12 +147,16 @@ export default function GererVilla() {
   const [confirmModal, setConfirmModal] = useState<{ message: string; detail?: string; onConfirm: () => void } | null>(null)
   const [showLogementForm, setShowLogementForm] = useState(false)
   const [showTarifForm, setShowTarifForm] = useState<number | null>(null)
-  const [logementForm, setLogementForm] = useState({ nom: '', type: 'chambre', capacite: '1', description: '' })
-  const [tarifForm, setTarifForm] = useState({ type_tarif: 'nuitee', prix: '', avec_clim: false, avec_buffet: false })
+  const [logementForm, setLogementForm] = useState({ nom: '', type: 'chambre', capacite: '1', nuits_minimum: '1', description: '' })
+  const [tarifForm, setTarifForm] = useState<FormulaireTarif>(TARIF_VIDE)
   const [editingLogement, setEditingLogement] = useState<number | null>(null)
-  const [editLogementForm, setEditLogementForm] = useState({ nom: '', type: 'chambre', capacite: '1' })
+  const [editLogementForm, setEditLogementForm] = useState({ nom: '', type: 'chambre', capacite: '1', nuits_minimum: '1' })
   const [editingTarif, setEditingTarif] = useState<{ logementId: number; tarifId: number } | null>(null)
-  const [editTarifForm, setEditTarifForm] = useState({ type_tarif: 'nuitee', prix: '', avec_clim: false, avec_buffet: false })
+  const [editTarifForm, setEditTarifForm] = useState<FormulaireTarif>(TARIF_VIDE)
+  // Un refus du serveur (prix de semaine trop élevé, par exemple) s'affiche
+  // dans le formulaire concerné : sans lui, l'enregistrement échouait en silence.
+  const [erreurTarif, setErreurTarif] = useState('')
+  const [erreurLogement, setErreurLogement] = useState('')
 
   // Stable par identifiant : l'effet ci-dessous ne se relance qu'au changement
   // de villa, et le rechargement manuel après édition reste possible.
@@ -176,17 +235,33 @@ export default function GererVilla() {
 
   const submitLogement = async (e: React.FormEvent) => {
     e.preventDefault()
-    await api.post(`/villas/${id}/logements`, { ...logementForm, capacite: parseInt(logementForm.capacite) })
+    setErreurLogement('')
+    try {
+      await api.post(`/villas/${id}/logements`, {
+        ...logementForm,
+        capacite: parseInt(logementForm.capacite),
+        nuits_minimum: parseInt(logementForm.nuits_minimum) || 1,
+      })
+    } catch (err) {
+      setErreurLogement(messageErreur(err, 'Le logement n’a pas pu être ajouté.'))
+      return
+    }
     setShowLogementForm(false)
-    setLogementForm({ nom: '', type: 'chambre', capacite: '1', description: '' })
+    setLogementForm({ nom: '', type: 'chambre', capacite: '1', nuits_minimum: '1', description: '' })
     fetchVilla()
   }
 
   const submitTarif = async (e: React.FormEvent, logementId: number) => {
     e.preventDefault()
-    await api.post(`/logements/${logementId}/tarifs`, { ...tarifForm, prix: parseFloat(tarifForm.prix) })
+    setErreurTarif('')
+    try {
+      await api.post(`/logements/${logementId}/tarifs`, chargeTarif(tarifForm))
+    } catch (err) {
+      setErreurTarif(messageErreur(err, 'Le tarif n’a pas pu être ajouté.'))
+      return
+    }
     setShowTarifForm(null)
-    setTarifForm({ type_tarif: 'nuitee', prix: '', avec_clim: false, avec_buffet: false })
+    setTarifForm(TARIF_VIDE)
     fetchVilla()
   }
 
@@ -214,38 +289,55 @@ export default function GererVilla() {
 
   const startEditLogement = (logement: Logement) => {
     setEditingLogement(logement.id)
-    setEditLogementForm({ nom: logement.nom, type: logement.type, capacite: String(logement.capacite) })
+    setEditLogementForm({
+      nom: logement.nom, type: logement.type, capacite: String(logement.capacite),
+      nuits_minimum: String(logement.nuits_minimum ?? 1),
+    })
+    setErreurLogement('')
     setShowLogementForm(false)
     setShowTarifForm(null)
   }
 
   const saveLogement = async (e: React.FormEvent, logementId: number) => {
     e.preventDefault()
-    await api.put(`/villas/${id}/logements/${logementId}`, {
-      ...editLogementForm,
-      capacite: parseInt(editLogementForm.capacite),
-    })
+    setErreurLogement('')
+    try {
+      await api.put(`/villas/${id}/logements/${logementId}`, {
+        ...editLogementForm,
+        capacite: parseInt(editLogementForm.capacite),
+        nuits_minimum: parseInt(editLogementForm.nuits_minimum) || 1,
+      })
+    } catch (err) {
+      setErreurLogement(messageErreur(err, 'Le logement n’a pas pu être enregistré.'))
+      return
+    }
     setEditingLogement(null)
     fetchVilla()
   }
 
   const startEditTarif = (logementId: number, tarif: Tarif) => {
     setEditingTarif({ logementId, tarifId: tarif.id })
+    setErreurTarif('')
     setEditTarifForm({
       type_tarif: tarif.type_tarif,
       prix: String(tarif.prix),
       avec_clim: tarif.avec_clim,
       avec_buffet: tarif.avec_buffet,
+      prix_semaine: tarif.prix_semaine ? String(tarif.prix_semaine) : '',
+      prix_mois: tarif.prix_mois ? String(tarif.prix_mois) : '',
     })
   }
 
   const saveTarif = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!editingTarif) return
-    await api.put(`/logements/${editingTarif.logementId}/tarifs/${editingTarif.tarifId}`, {
-      ...editTarifForm,
-      prix: parseFloat(editTarifForm.prix),
-    })
+    setErreurTarif('')
+    try {
+      await api.put(`/logements/${editingTarif.logementId}/tarifs/${editingTarif.tarifId}`, chargeTarif(editTarifForm))
+    } catch (err) {
+      setErreurTarif(messageErreur(err, 'Le tarif n’a pas pu être enregistré.'))
+      return
+    }
     setEditingTarif(null)
     fetchVilla()
   }
@@ -493,9 +585,15 @@ export default function GererVilla() {
               </select>
             </SmallField>
           </div>
-          <SmallField label="Capacité (personnes)">
-            <input type="number" min="1" required value={logementForm.capacite} onChange={(e) => setLogementForm({ ...logementForm, capacite: e.target.value })} />
-          </SmallField>
+          <div className="grid grid-cols-2 gap-4">
+            <SmallField label="Capacité (personnes)">
+              <input type="number" min="1" required value={logementForm.capacite} onChange={(e) => setLogementForm({ ...logementForm, capacite: e.target.value })} />
+            </SmallField>
+            <SmallField label="Nuits minimum">
+              <input type="number" min="1" max="30" required value={logementForm.nuits_minimum} onChange={(e) => setLogementForm({ ...logementForm, nuits_minimum: e.target.value })} />
+            </SmallField>
+          </div>
+          {erreurLogement && <p className="text-xs" role="alert" style={{ color: 'var(--danger)' }}>{erreurLogement}</p>}
           <div className="flex gap-3">
             <button type="button" onClick={() => setShowLogementForm(false)}
               className="flex-1 py-2 rounded-xl text-sm transition-all hover:opacity-80"
@@ -537,10 +635,17 @@ export default function GererVilla() {
                       </select>
                     </SmallField>
                   </div>
-                  <SmallField label="Capacité (personnes)">
-                    <input type="number" min="1" required value={editLogementForm.capacite}
-                      onChange={(e) => setEditLogementForm({ ...editLogementForm, capacite: e.target.value })} />
-                  </SmallField>
+                  <div className="grid grid-cols-2 gap-3">
+                    <SmallField label="Capacité (personnes)">
+                      <input type="number" min="1" required value={editLogementForm.capacite}
+                        onChange={(e) => setEditLogementForm({ ...editLogementForm, capacite: e.target.value })} />
+                    </SmallField>
+                    <SmallField label="Nuits minimum">
+                      <input type="number" min="1" max="30" required value={editLogementForm.nuits_minimum}
+                        onChange={(e) => setEditLogementForm({ ...editLogementForm, nuits_minimum: e.target.value })} />
+                    </SmallField>
+                  </div>
+                  {erreurLogement && <p className="text-xs" role="alert" style={{ color: 'var(--danger)' }}>{erreurLogement}</p>}
                   <div className="flex gap-2">
                     <button type="button" onClick={() => setEditingLogement(null)}
                       className="flex-1 py-2 rounded-xl text-xs transition-all hover:opacity-80"
@@ -565,6 +670,7 @@ export default function GererVilla() {
                     </div>
                     <p className="text-sm" style={{ color: 'var(--text-3)' }}>
                       {LIBELLES_LOGEMENT[logement.type as TypeLogement]} · {logement.capacite} pers.
+                      {(logement.nuits_minimum ?? 1) > 1 && ` · ${logement.nuits_minimum} nuits minimum`}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
@@ -635,6 +741,8 @@ export default function GererVilla() {
                       Buffet
                     </label>
                   </div>
+                  <ChampsLongsSejours formulaire={tarifForm} onChange={setTarifForm} />
+                  {erreurTarif && <p className="text-xs" role="alert" style={{ color: 'var(--danger)' }}>{erreurTarif}</p>}
                   <div className="flex gap-2">
                     <button type="button" onClick={() => setShowTarifForm(null)}
                       className="flex-1 py-2 rounded-xl text-xs transition-all hover:opacity-80"
@@ -686,6 +794,8 @@ export default function GererVilla() {
                             Buffet
                           </label>
                         </div>
+                        <ChampsLongsSejours formulaire={editTarifForm} onChange={setEditTarifForm} />
+                        {erreurTarif && <p className="text-xs" role="alert" style={{ color: 'var(--danger)' }}>{erreurTarif}</p>}
                         <div className="flex gap-2">
                           <button type="button" onClick={() => setEditingTarif(null)}
                             className="flex-1 py-1.5 rounded-lg text-xs transition-all hover:opacity-80"
@@ -709,6 +819,14 @@ export default function GererVilla() {
                           {tarifLabels[tarif.type_tarif]}
                           {tarif.avec_clim && ' · clim'}
                           {tarif.avec_buffet && ' · buffet'}
+                          {(tarif.prix_semaine || tarif.prix_mois) && (
+                            <span className="block text-xs" style={{ color: 'var(--text-3)' }}>
+                              {[
+                                tarif.prix_semaine ? `${fcfa(tarif.prix_semaine)} la semaine` : null,
+                                tarif.prix_mois ? `${fcfa(tarif.prix_mois)} le mois` : null,
+                              ].filter(Boolean).join(' · ')}
+                            </span>
+                          )}
                         </span>
                         <div className="flex items-center gap-4">
                           <span className="font-medium">{fcfa(tarif.prix)}</span>

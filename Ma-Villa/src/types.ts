@@ -50,6 +50,9 @@ export interface Tarif {
   avec_clim: boolean
   avec_buffet: boolean
   prix: number
+  /** Longs séjours, sur une nuitée seulement : appliqués dès 7 et 30 nuits (`lib/prix.ts`). */
+  prix_semaine?: number | null
+  prix_mois?: number | null
 }
 
 export interface Logement {
@@ -57,6 +60,8 @@ export interface Logement {
   nom: string
   type: TypeLogement
   capacite: number
+  /** Le séjour le plus court accepté à la nuitée ; 1 quand le propriétaire n'a rien fixé. */
+  nuits_minimum?: number
   disponible: boolean
   tarifs: Tarif[]
 }

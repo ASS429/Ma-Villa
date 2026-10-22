@@ -96,6 +96,13 @@ export function aujourdhui(): string {
   return new Date().toISOString().split('T')[0]
 }
 
+/** « 2026-11-06 » + 3 jours → « 2026-11-09 », sans que le fuseau ne déplace la date. */
+export function ajouterJours(iso: string, jours: number): string {
+  const d = new Date(`${iso}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + jours)
+  return d.toISOString().split('T')[0]
+}
+
 /**
  * Temps écoulé, en abrégé : « à l'instant », « 3 h », « hier », « 12 mars ».
  *

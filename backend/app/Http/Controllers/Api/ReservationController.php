@@ -10,6 +10,7 @@ use App\Models\Tarif;
 use App\Models\User;
 use App\Notifications\NouvelleReservation;
 use App\Notifications\ReservationMiseAJour;
+use App\Services\PrixSejour;
 use App\Services\Push;
 use App\Services\ReservationsSuspendues;
 use Illuminate\Http\JsonResponse;
@@ -70,8 +71,18 @@ class ReservationController extends Controller
             ], 422);
         }
 
-        $jours = (int) (new \DateTime($request->date_debut))->diff(new \DateTime($request->date_fin))->days;
-        $montant = $tarif->prix * max($jours, 1);
+        // Nuits ou jours selon la formule, et le prix de la semaine ou du mois
+        // dès qu'il est plus avantageux : voir `PrixSejour`.
+        $prix = PrixSejour::pour($tarif, $request->date_debut, $request->date_fin);
+
+        if ($tarif->type_tarif === 'nuitee' && $prix['unites'] < $logement->nuits_minimum) {
+            return response()->json([
+                'message' => "Ce logement se réserve pour {$logement->nuits_minimum} nuits au moins.",
+                'errors'  => ['date_fin' => ["Ce logement se réserve pour {$logement->nuits_minimum} nuits au moins."]],
+            ], 422);
+        }
+
+        $montant = $prix['montant'];
 
         // Vérifier puis créer sans verrou laisse passer deux demandes simultanées
         // sur les mêmes dates : chacune constate un créneau libre avant que

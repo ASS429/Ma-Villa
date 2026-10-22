@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Tarif extends Model
 {
-    protected $fillable = ['logement_id', 'type_tarif', 'avec_clim', 'avec_buffet', 'prix'];
+    protected $fillable = ['logement_id', 'type_tarif', 'avec_clim', 'avec_buffet', 'prix', 'prix_semaine', 'prix_mois'];
 
     protected function casts(): array
     {
@@ -16,6 +16,9 @@ class Tarif extends Model
             'avec_clim' => 'boolean',
             'avec_buffet' => 'boolean',
             'prix' => 'decimal:2',
+            // Facultatifs, et seulement sur une nuitée : voir `PrixSejour`.
+            'prix_semaine' => 'integer',
+            'prix_mois' => 'integer',
         ];
     }
 

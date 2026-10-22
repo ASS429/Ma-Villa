@@ -10,9 +10,9 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 class Logement extends Model
 {
     protected $fillable = [
-        'categorie_id', 'meuble','villa_id', 'type', 'nom', 'description', 'capacite', 'disponible'];
+        'categorie_id', 'meuble','villa_id', 'type', 'nom', 'description', 'capacite', 'nuits_minimum', 'disponible'];
 
-    protected $casts = ['disponible' => 'boolean'];
+    protected $casts = ['disponible' => 'boolean', 'nuits_minimum' => 'integer'];
 
     /**
      * Le type historique et la catégorie disent la même chose, et seule la

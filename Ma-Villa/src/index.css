@@ -731,6 +731,14 @@ textarea.champ-controle {
   text-transform: uppercase;
   letter-spacing: var(--t-eyebrow-ls);
 }
+/* Prix à la semaine et au mois, sous celui de la nuit, alignés sur son texte. */
+.grille-tarifs-sejour {
+  display: block;
+  padding: 0 12px 4px;
+  font: var(--t-caption);
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
 
 /* — A — */
 
@@ -2526,6 +2534,10 @@ html.video-mode[data-theme="dark"] {
 }
 
 .publication-champs { display: flex; flex-direction: column; gap: var(--space-4); }
+/* Deux champs côte à côte (prix à la semaine, au mois), l'un sous l'autre au téléphone. */
+.publication-champs-duo { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3) var(--space-4); }
+.publication-champs-duo > p { grid-column: 1 / -1; margin: 0; }
+@media (max-width: 480px) { .publication-champs-duo { grid-template-columns: 1fr; } }
 
 .publication-panneau .champ > span {
   font: var(--t-label);

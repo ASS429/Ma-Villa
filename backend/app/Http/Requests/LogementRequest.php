@@ -39,6 +39,8 @@ class LogementRequest extends FormRequest
             'nom'         => 'required|string|max:255',
             'description' => 'nullable|string',
             'capacite'    => 'required|integer|min:1',
+            // Le séjour le plus court accepté à la nuitée. Facultatif : une nuit.
+            'nuits_minimum' => 'sometimes|integer|min:1|max:30',
         ];
     }
 

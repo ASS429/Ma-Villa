@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Services\PrixSejour;
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 
 class TarifRequest extends FormRequest
@@ -18,6 +20,36 @@ class TarifRequest extends FormRequest
             'avec_clim'   => 'boolean',
             'avec_buffet' => 'boolean',
             'prix'        => 'required|numeric|min:0',
+
+            /*
+             | Les longs séjours, seulement sur une nuitée : une semaine de
+             | demi-journées ne veut rien dire. Facultatifs — l'application
+             | mobile déjà distribuée ne les envoie pas.
+             |
+             | Plafonnés à 7 et 30 nuits : un prix de semaine plus cher que sept
+             | nuits ne serait jamais appliqué (`PrixSejour` prend le moins
+             | cher), mais il s'afficherait sur la fiche comme une offre.
+             */
+            'prix_semaine' => ['nullable', 'integer', 'min:1', 'prohibited_unless:type_tarif,nuitee', $this->auPlus(PrixSejour::NUITS_SEMAINE, 'la semaine')],
+            'prix_mois'    => ['nullable', 'integer', 'min:1', 'prohibited_unless:type_tarif,nuitee', $this->auPlus(PrixSejour::NUITS_MOIS, 'le mois')],
         ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'prix_semaine.prohibited_unless' => 'Un prix à la semaine ne se pose que sur une nuitée.',
+            'prix_mois.prohibited_unless'    => 'Un prix au mois ne se pose que sur une nuitée.',
+        ];
+    }
+
+    private function auPlus(int $nuits, string $periode): Closure
+    {
+        return function (string $attribut, mixed $valeur, Closure $echec) use ($nuits, $periode) {
+            $prix = (float) $this->input('prix');
+            if ($prix > 0 && (float) $valeur > $prix * $nuits) {
+                $echec("Le prix pour {$periode} doit rester sous {$nuits} nuits à l’unité, sinon il ne serait jamais appliqué.");
+            }
+        };
     }
 }

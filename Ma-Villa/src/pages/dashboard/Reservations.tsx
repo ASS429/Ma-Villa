@@ -11,6 +11,8 @@ import { useRequete } from '../../lib/useRequete'
 import ListeConsole from '../../components/console/ListeConsole'
 import { messageErreur } from '../../lib/erreurs'
 import { fcfa, dateCourte, nuits, aujourdhui } from '../../lib/format'
+import { unitesSejour } from '../../lib/prix'
+import type { TypeTarif } from '../../types'
 import Button, { ButtonLink } from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import { ChampZoneTexte } from '../../components/ui/Champ'
@@ -58,7 +60,12 @@ const FILTRES = [
   { valeur: 'annulee', label: 'Annulées' },
 ]
 
-function dureeLisible(debut: string, fin: string) {
+/** Nuits pour une nuitée, jours bornes comprises pour une formule de jour : le compte du prix. */
+function dureeLisible(debut: string, fin: string, type?: TypeTarif) {
+  if (type && type !== 'nuitee') {
+    const jours = unitesSejour(type, debut, fin)
+    return `${jours} jour${jours > 1 ? 's' : ''}`
+  }
   const n = nuits(debut, fin)
   return n === 0 ? '1 jour' : `${n} nuit${n > 1 ? 's' : ''}`
 }
@@ -211,7 +218,7 @@ export default function Reservations() {
                     <CalendarDays size={13} aria-hidden="true" />
                     {dateCourte(r.date_debut)} → {dateCourte(r.date_fin)}
                   </li>
-                  <li>{dureeLisible(r.date_debut, r.date_fin)}</li>
+                  <li>{dureeLisible(r.date_debut, r.date_fin, r.tarif?.type_tarif as TypeTarif | undefined)}</li>
                   <li>
                     <Users size={13} aria-hidden="true" />
                     {r.nb_personnes} pers.

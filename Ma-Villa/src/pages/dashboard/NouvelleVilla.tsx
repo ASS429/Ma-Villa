@@ -133,6 +133,7 @@ export default function NouvelleVilla() {
   })
   const [tarif, setTarif] = useState({
     type_tarif: 'nuitee' as TypeTarif, prix: '', avec_clim: false, avec_buffet: false,
+    prix_semaine: '', prix_mois: '',
   })
 
   const etape = ETAPES[index]
@@ -165,6 +166,8 @@ export default function NouvelleVilla() {
             setTarif({
               type_tarif: t.type_tarif, prix: String(t.prix),
               avec_clim: !!t.avec_clim, avec_buffet: !!t.avec_buffet,
+              prix_semaine: t.prix_semaine ? String(t.prix_semaine) : '',
+              prix_mois: t.prix_mois ? String(t.prix_mois) : '',
             })
           }
         }
@@ -263,11 +266,14 @@ export default function NouvelleVilla() {
       }
 
       if (etape.cle === 'prix' && logementId && tarif.prix) {
+        const nuitee = tarif.type_tarif === 'nuitee'
         await api.post(`/logements/${logementId}/tarifs`, {
           type_tarif: tarif.type_tarif,
           prix: Number(tarif.prix),
           avec_clim: tarif.avec_clim,
           avec_buffet: tarif.avec_buffet,
+          prix_semaine: nuitee && tarif.prix_semaine ? Number(tarif.prix_semaine) : null,
+          prix_mois: nuitee && tarif.prix_mois ? Number(tarif.prix_mois) : null,
         })
       }
 
@@ -548,6 +554,34 @@ export default function NouvelleVilla() {
                   Buffet compris
                 </label>
               </div>
+
+              {/* Les longs séjours, à la nuitée seulement. Facultatifs : sans
+                  eux, une semaine coûte sept nuits. */}
+              {tarif.type_tarif === 'nuitee' && (
+                <div className="publication-champs-duo">
+                  <label className="champ">
+                    <span>Prix à la semaine (facultatif)</span>
+                    <input
+                      type="number" min={1} inputMode="numeric"
+                      value={tarif.prix_semaine}
+                      onChange={(e) => setTarif({ ...tarif, prix_semaine: e.target.value })}
+                      placeholder="7 nuits"
+                    />
+                  </label>
+                  <label className="champ">
+                    <span>Prix au mois (facultatif)</span>
+                    <input
+                      type="number" min={1} inputMode="numeric"
+                      value={tarif.prix_mois}
+                      onChange={(e) => setTarif({ ...tarif, prix_mois: e.target.value })}
+                      placeholder="30 nuits"
+                    />
+                  </label>
+                  <p className="publication-repere">
+                    Appliqués d’eux-mêmes dès 7 et 30 nuits, quand ils sont plus avantageux pour le client.
+                  </p>
+                </div>
+              )}
 
               {/* Le net d'abord, la fourchette ensuite. Le net est vrai
                   partout ; la fourchette ne l'est qu'au-delà d'un certain

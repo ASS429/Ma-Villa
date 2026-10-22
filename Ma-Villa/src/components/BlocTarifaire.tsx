@@ -67,6 +67,7 @@ export function GrilleTarifaire({
                 <span className="grille-tarifs-nom">{l.nom}</span>
                 <span className="grille-tarifs-detail">
                   {metier.logement[l.type]} · {l.capacite} {metier.pers}
+                  {(l.nuits_minimum ?? 1) > 1 && t.minimum(l.nuits_minimum as number)}
                   {!l.disponible && t.indisponible}
                 </span>
               </th>
@@ -98,6 +99,16 @@ export function GrilleTarifaire({
                       {fcfa(tarif.prix)}
                       {actif && <span className="grille-tarifs-etiquette">{t.choisi}</span>}
                     </button>
+                    {/* Les longs séjours, sous le prix de la nuit : la grille
+                        reste un support de décision même quand on ne peut pas
+                        encore réserver en ligne. */}
+                    {type === 'nuitee' && (tarif.prix_semaine || tarif.prix_mois) && (
+                      <span className="grille-tarifs-sejour">
+                        {tarif.prix_semaine ? t.semaine(fcfa(tarif.prix_semaine)) : null}
+                        {tarif.prix_semaine && tarif.prix_mois ? <br /> : null}
+                        {tarif.prix_mois ? t.mois(fcfa(tarif.prix_mois)) : null}
+                      </span>
+                    )}
                   </td>
                 )
               })}
