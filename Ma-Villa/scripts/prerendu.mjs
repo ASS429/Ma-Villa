@@ -439,7 +439,9 @@ const FIXES_EN = {
     description: 'Supporting an athlete at the Dakar 2026 Youth Olympic Games? Places to stay in Dakar and Saly, '
       + 'airport transfers, rides to the venues and meals, confirmed on WhatsApp.',
     texte: 'Your athlete stays in the Olympic village; you stay in Dakar or on the Petite Côte. PasseTemps finds you '
-      + 'a place to stay near the venues in Dakar, Diamniadio and Saly, a driver from the airport and meals. '
+      + 'a place to stay in Dakar or Saly, near the venues, a driver from the airport and meals. '
+      + 'Getting around: traffic restrictions come into force on 30 October; official shuttles run from 6:30 am '
+      + 'to 10 pm; the Corniche Ouest is closed on 7, 8 and 10 November from 6 am to 4 pm. '
       + 'Nothing is paid online: the price is confirmed on WhatsApp. PasseTemps is neither a partner nor an '
       + 'official supplier of the Games.',
   },
@@ -588,7 +590,9 @@ const PAGES_FIXES = [
     description: 'Vous accompagnez un athlète aux JOJ Dakar 2026 ? Logements à Dakar et à Saly, transfert depuis '
       + 'l’aéroport AIBD, trajets vers les sites et repas, confirmés sur WhatsApp. Page en français et en anglais.',
     texte: 'Votre athlète loge au village olympique ; vous, à Dakar ou sur la Petite Côte. PasseTemps vous trouve '
-      + 'un logement près des sites de Dakar, Diamniadio et Saly, un chauffeur depuis l’aéroport et des repas. '
+      + 'un logement à Dakar ou à Saly, près des sites, un chauffeur depuis l’aéroport et des repas. '
+      + 'Se déplacer : les restrictions de circulation entrent en vigueur le 30 octobre ; les navettes officielles '
+      + 'roulent de 6 h 30 à 22 h ; la Corniche Ouest est fermée les 7, 8 et 10 novembre de 6 h à 16 h. '
       + 'Rien ne se paie en ligne : le prix est confirmé sur WhatsApp. PasseTemps n’est ni partenaire ni '
       + 'fournisseur officiel des Jeux.',
   },

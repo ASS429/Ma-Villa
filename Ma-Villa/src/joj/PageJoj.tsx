@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Bus, MapPin, MessageCircle, Ticket } from 'lucide-react'
+import { Bus, CalendarDays, MapPin, MessageCircle, Ticket } from 'lucide-react'
 import api from '../services/api'
 import PageHeader from '../components/PageHeader'
 import Footer from '../components/Footer'
@@ -172,13 +172,11 @@ function Contenu() {
         </section>
       )}
 
-      {/* ── Se déplacer, et ce que nous ne sommes pas ───────── */}
+      <SeDeplacer t={t} />
+
+      {/* ── Les billets, et ce que nous ne sommes pas ───────── */}
       <section className="px-6 py-14" style={{ borderTop: '1px solid var(--border)' }}>
         <div className="max-w-6xl mx-auto grid gap-6 md:grid-cols-2">
-          <div className="panneau">
-            <h2 className="panneau-titre"><Bus size={17} aria-hidden="true" /> {t.seDeplacer}</h2>
-            <p className="text-sm th-text-2 leading-relaxed">{t.seDeplacerTexte}</p>
-          </div>
           <div className="panneau">
             <h2 className="panneau-titre"><Ticket size={17} aria-hidden="true" /> {t.billets}</h2>
             <p className="text-sm th-text-2 leading-relaxed mb-3">
@@ -193,6 +191,87 @@ function Contenu() {
 
       <Footer />
     </div>
+  )
+}
+
+/**
+ * Se déplacer pendant les Jeux : les sites et comment y aller, les navettes
+ * officielles, les fermetures. Repris du guide de la mobilité du CETUD ;
+ * ce sont des faits datés, à relire si le guide change.
+ */
+function SeDeplacer({ t }: { t: TextesJoj }) {
+  const d = t.deplacement
+
+  return (
+    <section id="se-deplacer" className="px-6 py-14" style={{ borderTop: '1px solid var(--border)', scrollMarginTop: '5rem' }}>
+      <div className="max-w-6xl mx-auto">
+        <h2 className="text-2xl md:text-3xl font-normal th-text-1 mb-2" style={{ letterSpacing: '-0.02em' }}>{d.titre}</h2>
+        <p className="th-text-2 leading-relaxed max-w-3xl mb-10">{d.intro}</p>
+
+        <h3 className="text-lg font-semibold th-text-1 mb-4">{d.allerAuxSites}</h3>
+        <div className="grid gap-4 md:grid-cols-3 mb-10">
+          {d.poles.map((pole) => (
+            <div key={pole.nom} className="rounded-2xl px-5 py-6 th-card min-w-0">
+              <p className="font-semibold th-text-1 mb-4 flex items-center gap-2">
+                <MapPin size={16} aria-hidden="true" style={{ color: 'var(--accent)' }} />
+                {pole.nom}
+              </p>
+              <ul className="grid gap-4">
+                {pole.sites.map((site) => (
+                  <li key={site.nom} className="text-sm leading-relaxed">
+                    <p className="th-text-1 font-medium">
+                      {site.nom}
+                      {site.lieu && <span className="th-text-3 font-normal"> · {site.lieu}</span>}
+                    </p>
+                    <p className="th-text-2">{site.epreuves}</p>
+                    {site.acces && (
+                      <p className="th-text-3 flex items-start gap-1.5 mt-1">
+                        <Bus size={14} aria-hidden="true" className="shrink-0 mt-1" />
+                        <span>{site.acces}</span>
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              {pole.acces && (
+                <p className="text-sm th-text-2 leading-relaxed mt-4 pt-4 flex items-start gap-1.5" style={{ borderTop: '1px solid var(--border)' }}>
+                  <Bus size={14} aria-hidden="true" className="shrink-0 mt-1" style={{ color: 'var(--accent)' }} />
+                  <span>{pole.acces}</span>
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="panneau">
+            <h3 className="panneau-titre"><Bus size={17} aria-hidden="true" /> {d.navettes}</h3>
+            <p className="text-sm th-text-2 leading-relaxed mb-3">{d.navettesTexte}</p>
+            <ul className="text-sm th-text-2 leading-relaxed grid gap-1 sm:grid-cols-2 sm:gap-x-6">
+              {d.departs.map((depart) => <li key={depart}>{depart}</li>)}
+            </ul>
+          </div>
+          <div className="panneau">
+            <h3 className="panneau-titre"><CalendarDays size={17} aria-hidden="true" /> {d.dates}</h3>
+            <dl className="text-sm leading-relaxed grid gap-3">
+              {d.calendrier.map((date) => (
+                <div key={date.quand}>
+                  <dt className="th-text-1 font-medium" style={{ fontVariantNumeric: 'lining-nums' }}>{date.quand}</dt>
+                  <dd className="th-text-2">{date.quoi}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </div>
+
+        <p className="text-xs th-text-3 leading-relaxed mt-6 max-w-3xl">
+          {d.sources}{' '}
+          <a href="https://www.montrajetjojdakar2026.sn" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 th-text-2">
+            montrajetjojdakar2026.sn
+          </a>.
+        </p>
+      </div>
+    </section>
   )
 }
 
