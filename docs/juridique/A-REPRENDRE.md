@@ -10,7 +10,7 @@
 > **Gelés depuis le 14 septembre 2026**, sur décision de l'exploitant (« ne touche pas aux
 > textes pour le moment »). Rien de cette liste n'est appliqué tant qu'il ne l'a pas décidé.
 
-Dernière mise à jour : 20 octobre 2026.
+Dernière mise à jour : 22 octobre 2026.
 
 ---
 
@@ -19,6 +19,7 @@ Dernière mise à jour : 20 octobre 2026.
 | § | Ce qui est devenu faux ou incomplet | Depuis | Origine |
 |---|---|---|---|
 | 2. Ce que nous conservons | « Nous n'en collectons pas d'autres » est faux : les **demandes de service** (transport, repas) gardent nom, téléphone, e-mail, lieu, numéro de vol, pays de l'athlète, précisions, langue — **sans compte**. | 20 oct. 2026 | Demandes JOJ |
+| 2. Ce que nous conservons | Ajouter la **position** (latitude, longitude, précision) que le visiteur peut joindre à une demande de service par « Utiliser ma position actuelle » : facultative, demandée seulement sur ce geste, transmise au prestataire dans le message WhatsApp. | 22 oct. 2026 | Position |
 | 3. À quoi elles servent | Ajouter : transmettre la demande au prestataire (transporteur, restaurant) et rappeler la famille. | 20 oct. 2026 | Demandes JOJ |
 | 4. Qui les reçoit | Ajouter les **prestataires partenaires** (transport, restauration) et le **partenaire** qui coordonne les JOJ. Ajouter **WhatsApp (Meta)** : la demande y est envoyée. | 20 oct. 2026 | Demandes JOJ |
 | 5. Transfert hors du Sénégal | WhatsApp / Meta s'ajoute aux prestataires établis hors du Sénégal. | 20 oct. 2026 | Demandes JOJ |

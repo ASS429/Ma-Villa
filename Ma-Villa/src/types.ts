@@ -372,6 +372,10 @@ export interface DemandeService {
   heure: string | null
   personnes: number
   lieu: string
+  /** La position donnée par le visiteur (« Utiliser ma position actuelle »), si elle l'a été. */
+  latitude: number | null
+  longitude: number | null
+  precision_m: number | null
   vol: string | null
   delegation: string | null
   nom: string

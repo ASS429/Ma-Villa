@@ -91,6 +91,10 @@ class DemandeServiceController extends Controller
             'heure'        => 'nullable|date_format:H:i',
             'personnes'    => 'required|integer|min:1|max:50',
             'lieu'         => 'required|string|max:160',
+            // La position, si le visiteur l'a donnée : les deux ou aucune.
+            'latitude'     => 'nullable|required_with:longitude|numeric|between:-90,90',
+            'longitude'    => 'nullable|required_with:latitude|numeric|between:-180,180',
+            'precision_m'  => 'nullable|integer|min:0|max:100000',
             'vol'          => 'nullable|string|max:20',
             'delegation'   => 'nullable|string|max:80',
             'nom'          => 'required|string|max:80',

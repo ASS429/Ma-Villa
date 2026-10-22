@@ -8,7 +8,7 @@ import { messageErreur } from '../../lib/erreurs'
 import { dateCourte, depuis } from '../../lib/format'
 import { lienWhatsApp } from '../../lib/contact'
 import { relireAttentes } from '../../lib/attentes'
-import { dateDuService } from '../../prestations/format'
+import { dateDuService, lienCarte } from '../../prestations/format'
 import { versPage, type Page } from '../../lib/page'
 import { LIBELLES_STATUT_DEMANDE, type DemandeService, type StatutDemandeService } from '../../types'
 import Button from '../../components/ui/Button'
@@ -137,7 +137,18 @@ export default function AdminDemandes() {
                 </div>
                 <div>
                   <dt>Où</dt>
-                  <dd>{d.lieu}</dd>
+                  <dd>
+                    {d.lieu}
+                    {d.latitude !== null && d.longitude !== null && (
+                      <>
+                        {' · '}
+                        <a href={lienCarte({ lat: d.latitude, lng: d.longitude })} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+                          voir sur la carte
+                        </a>
+                        {d.precision_m ? ` (à ${d.precision_m} m près)` : ''}
+                      </>
+                    )}
+                  </dd>
                 </div>
                 <div>
                   <dt>Qui</dt>

@@ -35,6 +35,7 @@ class DemandeService extends Model
     */
     protected $fillable = [
         'user_id', 'prestation', 'date_service', 'heure', 'personnes', 'lieu',
+        'latitude', 'longitude', 'precision_m',
         'vol', 'delegation', 'nom', 'telephone', 'email', 'message', 'langue',
         'origine',
     ];
@@ -46,6 +47,9 @@ class DemandeService extends Model
         return [
             'date_service' => 'date:Y-m-d',
             'personnes'    => 'integer',
+            'latitude'     => 'float',
+            'longitude'    => 'float',
+            'precision_m'  => 'integer',
             'traitee_le'   => 'datetime',
         ];
     }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MessageCircle, Phone, Send } from 'lucide-react'
+import { LocateFixed, MapPin, MessageCircle, Phone, Send } from 'lucide-react'
 import api from '../services/api'
 import { useConfig } from '../context/ConfigContext'
 import { erreursParChamp } from '../lib/erreurs'
@@ -8,7 +8,7 @@ import { lienAppel, lienWhatsApp } from '../lib/contact'
 import { useLangue } from '../i18n/langue'
 import { Champ, ChampSelection, ChampZoneTexte } from '../components/ui/Champ'
 import Button from '../components/ui/Button'
-import { dateDuService } from './format'
+import { dateDuService, lienCarte, type Position } from './format'
 import { TEXTES_PRESTATIONS } from './textes'
 import type { CataloguePrestations, FamillePrestation, OrigineDemande } from '../types'
 
@@ -31,6 +31,14 @@ const VIDE: Champs = {
   date_service: '', heure: '', personnes: '1', lieu: '', vol: '', delegation: '',
   nom: '', telephone: '', email: '', message: '', site_web: '',
 }
+
+/** Au-delà, le point peut tomber dans la rue d'à côté : on demande l'adresse aussi. */
+const PRECISION_SUFFISANTE_M = 200
+
+/** La localisation est-elle seulement possible ici ? Sans elle, pas de bouton. */
+const LOCALISATION_POSSIBLE = typeof navigator !== 'undefined' && 'geolocation' in navigator
+
+type EtatLocalisation = 'repos' | 'en_cours' | 'refusee' | 'introuvable'
 
 interface Envoyee {
   reference: string | null
@@ -80,6 +88,8 @@ export default function DemandeService({
   const [erreurs, setErreurs] = useState<Record<string, string>>({})
   const [envoi, setEnvoi] = useState(false)
   const [envoyee, setEnvoyee] = useState<Envoyee | null>(null)
+  const [position, setPosition] = useState<Position | null>(null)
+  const [localisation, setLocalisation] = useState<EtatLocalisation>('repos')
 
   const familles = (Object.keys(catalogue.familles) as FamillePrestation[])
     .filter((f) => !seulement || seulement.includes(f))
@@ -91,6 +101,45 @@ export default function DemandeService({
       setChamps((c) => ({ ...c, [champ]: e.target.value }))
       setErreurs((er) => ({ ...er, [champ]: '' }))
     }
+
+  /**
+   * « Utiliser ma position actuelle ». Demandée seulement sur ce geste : le
+   * navigateur pose alors sa propre question, et un refus n'empêche rien, il
+   * reste à écrire l'adresse. Le champ « Où vous trouver » se remplit s'il
+   * était vide, pour qu'il reste un texte à lire à côté du point.
+   */
+  const localiser = () => {
+    setLocalisation('en_cours')
+    // Une question du navigateur laissée sans réponse ne rappelle jamais la
+    // page : sans ce filet, le bouton resterait bloqué sur « Localisation… ».
+    const filet = window.setTimeout(() => {
+      setLocalisation((etat) => (etat === 'en_cours' ? 'introuvable' : etat))
+    }, 20000)
+    navigator.geolocation.getCurrentPosition(
+      (p) => {
+        window.clearTimeout(filet)
+        setPosition({
+          lat: Number(p.coords.latitude.toFixed(6)),
+          lng: Number(p.coords.longitude.toFixed(6)),
+          precision: Number.isFinite(p.coords.accuracy) ? Math.round(p.coords.accuracy) : null,
+        })
+        setLocalisation('repos')
+        setChamps((c) => (c.lieu.trim() ? c : { ...c, lieu: t.champs.maPosition }))
+        setErreurs((er) => ({ ...er, lieu: '' }))
+      },
+      (err) => {
+        window.clearTimeout(filet)
+        setLocalisation(err.code === err.PERMISSION_DENIED ? 'refusee' : 'introuvable')
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
+    )
+  }
+
+  const retirerPosition = () => {
+    setPosition(null)
+    setLocalisation('repos')
+    setChamps((c) => (c.lieu === t.champs.maPosition ? { ...c, lieu: '' } : c))
+  }
 
   /**
    * Vérifié ici, dans la langue du visiteur. Le serveur vérifie aussi, mais ses
@@ -122,6 +171,7 @@ export default function DemandeService({
       [m.vol, choisie?.vol ? champs.vol : ''],
       [m.personnes, champs.personnes],
       [m.lieu, champs.lieu],
+      [m.position, position ? lienCarte(position) : ''],
       [m.delegation, champs.delegation],
       [m.nom, champs.nom],
       [m.telephone, champs.telephone],
@@ -154,6 +204,9 @@ export default function DemandeService({
         heure: champs.heure || null,
         personnes: Number(champs.personnes),
         lieu: champs.lieu,
+        latitude: position?.lat ?? null,
+        longitude: position?.lng ?? null,
+        precision_m: position?.precision ?? null,
         vol: choisie?.vol ? champs.vol || null : null,
         delegation: champs.delegation || null,
         nom: champs.nom,
@@ -186,6 +239,8 @@ export default function DemandeService({
     setEnvoyee(null)
     setChamps(VIDE)
     setErreurs({})
+    setPosition(null)
+    setLocalisation('repos')
   }
 
   if (envoyee) {
@@ -281,15 +336,58 @@ export default function DemandeService({
           )}
         </div>
 
-        <Champ
-          label={t.champs.lieu}
-          aide={t.champs.lieuAide}
-          value={champs.lieu}
-          onChange={maj('lieu')}
-          erreur={erreurs.lieu}
-          maxLength={160}
-          required
-        />
+        <div className="grid gap-2">
+          <Champ
+            label={t.champs.lieu}
+            aide={t.champs.lieuAide}
+            value={champs.lieu}
+            onChange={maj('lieu')}
+            erreur={erreurs.lieu}
+            maxLength={160}
+            required
+          />
+          {LOCALISATION_POSSIBLE && (
+            <div className="text-sm grid gap-1" aria-live="polite">
+              {position ? (
+                <>
+                  <p className="th-text-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span className="inline-flex items-center gap-1.5">
+                      <MapPin size={14} aria-hidden="true" style={{ color: 'var(--success)' }} />
+                      {t.champs.positionAjoutee(position.precision)}
+                    </span>
+                    <a href={lienCarte(position)} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 th-text-1">
+                      {t.champs.positionVoir}
+                    </a>
+                    <button type="button" onClick={retirerPosition} className="underline underline-offset-2 th-text-2">
+                      {t.champs.positionRetirer}
+                    </button>
+                  </p>
+                  {position.precision !== null && position.precision > PRECISION_SUFFISANTE_M && (
+                    <p className="th-text-3">{t.champs.positionImprecise}</p>
+                  )}
+                </>
+              ) : (
+                <div>
+                  {/* `type="button"` : dans un formulaire, un bouton sans type l'enverrait.
+                      Pas de `chargement` non plus, son « Patientez… » n'existe qu'en français. */}
+                  <Button
+                    type="button"
+                    variante="secondaire"
+                    taille="sm"
+                    onClick={localiser}
+                    disabled={localisation === 'en_cours'}
+                    aria-busy={localisation === 'en_cours' || undefined}
+                    iconeAvant={<LocateFixed size={15} aria-hidden="true" />}
+                  >
+                    {localisation === 'en_cours' ? t.champs.positionEnCours : t.champs.positionBouton}
+                  </Button>
+                </div>
+              )}
+              {localisation === 'refusee' && <p style={{ color: 'var(--warning)' }}>{t.champs.positionRefusee}</p>}
+              {localisation === 'introuvable' && <p style={{ color: 'var(--warning)' }}>{t.champs.positionIntrouvable}</p>}
+            </div>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Champ

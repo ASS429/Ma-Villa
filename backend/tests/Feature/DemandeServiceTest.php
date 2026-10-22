@@ -206,6 +206,45 @@ class DemandeServiceTest extends TestCase
         $this->assertNull($demande->traitee_le);
     }
 
+    /** « Utiliser ma position actuelle » : le chauffeur sait où prendre la famille. */
+    public function test_la_position_donnee_par_le_visiteur_est_gardee(): void
+    {
+        $this->postJson('/api/demandes-service', $this->demande([
+            'latitude' => 14.442186, 'longitude' => -17.000915, 'precision_m' => 25,
+        ]))->assertCreated();
+
+        $demande = DemandeService::sole();
+        $this->assertSame(14.442186, $demande->latitude);
+        $this->assertSame(-17.000915, $demande->longitude);
+        $this->assertSame(25, $demande->precision_m);
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin, 'sanctum')->getJson('/api/admin/demandes-service')
+            ->assertOk()
+            ->assertJsonPath('data.0.latitude', 14.442186);
+    }
+
+    public function test_la_position_reste_facultative(): void
+    {
+        $this->postJson('/api/demandes-service', $this->demande())->assertCreated();
+
+        $this->assertNull(DemandeService::sole()->latitude);
+    }
+
+    /** Une moitié de position ne mène nulle part ; un point hors du globe non plus. */
+    public function test_une_position_incomplete_ou_impossible_est_refusee(): void
+    {
+        $this->postJson('/api/demandes-service', $this->demande(['latitude' => 14.44]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('longitude');
+
+        $this->postJson('/api/demandes-service', $this->demande(['latitude' => 95, 'longitude' => -17]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('latitude');
+
+        $this->assertSame(0, DemandeService::count());
+    }
+
     public function test_une_prestation_hors_catalogue_est_refusee(): void
     {
         $this->postJson('/api/demandes-service', $this->demande(['prestation' => 'jet_prive']))
