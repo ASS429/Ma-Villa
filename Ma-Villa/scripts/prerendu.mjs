@@ -314,7 +314,20 @@ function pageOeuvre(oeuvre) {
     name: oeuvre.titre,
     description: resumer(oeuvre.description || titre, 300),
     ...(photo ? { image: photo } : {}),
-    ...(oeuvre.artiste ? { brand: { '@type': 'Person', name: oeuvre.artiste } } : {}),
+    /*
+     | ⚠️ `Brand`, et non `Person`.
+     |
+     | L'artisan **est** une personne, et c'est ce que disait ce champ. Mais
+     | `brand` ne l'accepte pas : Google n'y documente que `Brand`, et a signalé
+     | le 23 octobre 2026 « Type d'objet non valide pour le champ brand » sur
+     | les fiches de la boutique. Non bloquant — la page restait affichable —
+     | mais la fiche de marchand perdait sa marque.
+     |
+     | Vérifié dans la documentation Google (extrait produit et fiche de
+     | marchand) : les deux exemples écrivent `{"@type": "Brand"}`, et ni
+     | `Person` ni `Organization` n'y figurent pour cette propriété.
+     */
+    ...(oeuvre.artiste ? { brand: { '@type': 'Brand', name: oeuvre.artiste } } : {}),
     ...(oeuvre.categorie ? { category: oeuvre.categorie } : {}),
     offers: {
       '@type': 'Offer',
