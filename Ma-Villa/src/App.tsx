@@ -4,6 +4,7 @@ import { useAuth } from './context/AuthContext'
 import { useToast } from './context/ToastContext'
 import { useConfig } from './context/ConfigContext'
 import api from './services/api'
+import { renouvelerSiCleChangee } from './lib/pwa'
 import { messageErreur } from './lib/erreurs'
 import type { VillaResume } from './types'
 import ChargementPage from './components/ChargementPage'
@@ -566,6 +567,19 @@ export default function App() {
       {/* Proposée seulement après quelques écrans, et jamais deux fois après
           un refus : le navigateur ne redonne pas de seconde chance. */}
       <InvitationInstallation />
+      <RenouvellementNotifications />
     </>
   )
+}
+
+/** Réabonne cet appareil si les clés des notifications ont changé côté serveur. */
+function RenouvellementNotifications() {
+  const { user } = useAuth()
+  const cle = useConfig().notifications.cle_publique
+
+  useEffect(() => {
+    if (user && cle) void renouvelerSiCleChangee(cle)
+  }, [user, cle])
+
+  return null
 }

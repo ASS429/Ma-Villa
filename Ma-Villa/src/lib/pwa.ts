@@ -166,23 +166,68 @@ export async function activerNotifications(cleVapid: string): Promise<EtatNotifi
 
   try {
     const registration = await navigator.serviceWorker.ready
-
-    // Un abonnement existant est réutilisé : en créer un second laisse le
-    // premier vivant côté navigateur, et l'utilisateur reçoit tout en double.
-    const abonnement =
-      (await registration.pushManager.getSubscription()) ??
-      (await registration.pushManager.subscribe({
-        // Sans cela, Chrome refuse l'abonnement : il exige que toute poussée
-        // se traduise par une notification visible.
-        userVisibleOnly: true,
-        applicationServerKey: base64UrlVersOctets(cleVapid),
-      }))
+    const abonnement = await abonnementAvecCle(registration, cleVapid)
 
     await api.post('/notifications/abonnement', corpsAbonnement(abonnement))
 
     return 'actif'
   } catch {
     return 'a-demander'
+  }
+}
+
+/** Vrai si l'abonnement a été pris avec cette clé publique. */
+function memeCle(abonnement: PushSubscription, cle: Uint8Array): boolean {
+  const brute = abonnement.options.applicationServerKey
+  if (!brute) return false
+
+  const prise = new Uint8Array(brute)
+  return prise.length === cle.length && prise.every((octet, i) => octet === cle[i])
+}
+
+async function abonnementAvecCle(
+  registration: ServiceWorkerRegistration,
+  cleVapid: string,
+): Promise<PushSubscription> {
+  const cle = base64UrlVersOctets(cleVapid)
+  const existant = await registration.pushManager.getSubscription()
+
+  // Un abonnement existant est réutilisé : en créer un second laisse le
+  // premier vivant côté navigateur, et l'utilisateur reçoit tout en double.
+  if (existant && memeCle(existant, cle)) return existant
+
+  // Pris avec une ancienne clé — après un changement des clés du serveur —,
+  // il ne reçoit plus rien, et le navigateur refuse d'en ouvrir un autre
+  // tant qu'il vit.
+  if (existant) await existant.unsubscribe()
+
+  return registration.pushManager.subscribe({
+    // Sans cela, Chrome refuse l'abonnement : il exige que toute poussée
+    // se traduise par une notification visible.
+    userVisibleOnly: true,
+    applicationServerKey: cle,
+  })
+}
+
+/**
+ * Réabonne en silence un appareil abonné avec une ancienne clé.
+ *
+ * Sans cela, changer les clés du serveur coupait les notifications de tous
+ * les abonnés sans que rien ne le leur dise : leur réglage restait « activé ».
+ * L'autorisation est déjà donnée, aucune question n'est reposée.
+ */
+export async function renouvelerSiCleChangee(cleVapid: string): Promise<void> {
+  if (!cleVapid || etatNotifications() !== 'actif') return
+
+  try {
+    const registration = await navigator.serviceWorker.ready
+    const existant = await registration.pushManager.getSubscription()
+    if (!existant || memeCle(existant, base64UrlVersOctets(cleVapid))) return
+
+    const nouveau = await abonnementAvecCle(registration, cleVapid)
+    await api.post('/notifications/abonnement', corpsAbonnement(nouveau))
+  } catch {
+    /* La prochaine visite réessaiera. */
   }
 }
 
