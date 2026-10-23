@@ -392,6 +392,67 @@ class SecuriteTest extends TestCase
         $this->assertTrue(Hash::check('secret-solide-de-lexploitant', $admin->fresh()->password));
     }
 
+    public function test_admin_email_demenage_l_admin_au_lieu_d_en_creer_un_second(): void
+    {
+        // mavilla.sn n'est pas à nous : qui l'achèterait recevrait le lien
+        // « mot de passe oublié » de l'admin.
+        $admin = User::create([
+            'email' => 'admin@mavilla.sn', 'name' => 'Admin PasseTemps', 'role' => 'admin',
+            'password' => Hash::make('secret-solide-de-lexploitant'),
+        ]);
+
+        app()['env'] = 'production';
+        putenv('ADMIN_EMAIL=Admin@PasseTemps.sn');
+
+        try {
+            (new \Database\Seeders\ComptesSeeder())->run();
+        } finally {
+            putenv('ADMIN_EMAIL');
+        }
+
+        $this->assertSame('admin@passetemps.sn', $admin->fresh()->email);
+        $this->assertSame(1, User::where('role', 'admin')->count(), 'Un second admin est apparu.');
+        $this->assertFalse(User::where('email', 'admin@mavilla.sn')->exists());
+    }
+
+    public function test_un_compte_inscrit_a_l_adresse_de_l_admin_n_est_jamais_promu(): void
+    {
+        // L'adresse libérée, quelqu'un s'y inscrit : au démarrage suivant, le
+        // peuplement le faisait admin.
+        $intrus = User::factory()->client()->create(['email' => 'admin@mavilla.sn']);
+
+        app()['env'] = 'production';
+        (new \Database\Seeders\ComptesSeeder())->run();
+
+        $this->assertSame('client', $intrus->fresh()->role);
+        $this->assertSame(0, User::where('role', 'admin')->count());
+    }
+
+    public function test_un_mot_de_passe_change_par_l_environnement_ferme_les_sessions(): void
+    {
+        $admin = User::create([
+            'email' => 'admin@mavilla.sn', 'name' => 'Admin PasseTemps', 'role' => 'admin',
+            'password' => Hash::make('ancien-secret'),
+        ]);
+        $admin->createToken('session-volee');
+
+        app()['env'] = 'production';
+        putenv('ADMIN_PASSWORD=ancien-secret');
+
+        try {
+            (new \Database\Seeders\ComptesSeeder())->run();
+            $this->assertSame(1, $admin->tokens()->count(), 'Le même mot de passe ne doit déconnecter personne.');
+
+            putenv('ADMIN_PASSWORD=nouveau-secret');
+            (new \Database\Seeders\ComptesSeeder())->run();
+        } finally {
+            putenv('ADMIN_PASSWORD');
+        }
+
+        $this->assertTrue(Hash::check('nouveau-secret', $admin->fresh()->password));
+        $this->assertSame(0, $admin->tokens()->count(), 'Une session ouverte avec l’ancien mot de passe survit.');
+    }
+
     public function test_les_colonnes_filtrees_a_chaque_recherche_sont_indexees(): void
     {
         // Sur vingt villas l'absence d'index est invisible ; sur deux mille,

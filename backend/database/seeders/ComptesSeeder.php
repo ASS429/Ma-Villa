@@ -26,7 +26,19 @@ class ComptesSeeder extends Seeder
      */
     public const MOT_DE_PASSE_HISTORIQUE = 'password';
 
+    /**
+     * Adresse historique de l'admin. Le domaine mavilla.sn n'est pas à nous :
+     * qui l'achète reçoit le lien « mot de passe oublié » de ce compte. En
+     * production, `ADMIN_EMAIL` doit désigner une adresse que l'exploitant lit.
+     */
     public const ADMIN = 'admin@mavilla.sn';
+
+    public static function adresseAdmin(): string
+    {
+        $voulue = Str::lower(trim((string) env('ADMIN_EMAIL', '')));
+
+        return $voulue !== '' ? $voulue : self::ADMIN;
+    }
 
     /** @var list<array{email: string, name: string, role: string}> */
     public const PROPRIETAIRES = [
@@ -52,10 +64,28 @@ class ComptesSeeder extends Seeder
         $this->clients();
     }
 
-    public function administrateur(): User
+    public function administrateur(): ?User
     {
+        $email = self::adresseAdmin();
+        $compte = User::where('email', $email)->first();
+
+        // Changer d'adresse déménage l'admin existant — son historique, son
+        // journal — au lieu d'en créer un second, et libère l'ancienne.
+        if (! $compte && $email !== self::ADMIN) {
+            $compte = User::where('email', self::ADMIN)->where('role', 'admin')->first();
+            $compte?->forceFill(['email' => $email])->save();
+        }
+
+        // Jamais de promotion : un compte inscrit à cette adresse par
+        // quelqu'un d'autre deviendrait admin au démarrage suivant.
+        if ($compte && $compte->role !== 'admin') {
+            $this->command?->warn("  ! {$email} appartient à un compte non admin : il n'est pas promu.");
+
+            return null;
+        }
+
         return $this->creerOuSecuriser(
-            self::ADMIN,
+            $email,
             ['name' => 'Admin PasseTemps', 'role' => 'admin'],
             (string) env('ADMIN_PASSWORD', '')
         );
@@ -115,7 +145,14 @@ class ComptesSeeder extends Seeder
             && Hash::check(self::MOT_DE_PASSE_HISTORIQUE, (string) $utilisateur->password);
 
         if ($motDePasseVoulu !== '') {
-            $utilisateur->password = Hash::make($motDePasseVoulu);
+            // Réécrit seulement s'il change. Et un mot de passe qui change
+            // ferme les sessions ouvertes avec l'ancien, comme sur le site.
+            if (! $utilisateur->exists || ! Hash::check($motDePasseVoulu, (string) $utilisateur->password)) {
+                $utilisateur->password = Hash::make($motDePasseVoulu);
+                if ($utilisateur->exists) {
+                    $utilisateur->tokens()->delete();
+                }
+            }
         } elseif (! $utilisateur->exists || $vulnerable) {
             $enProduction = app()->environment('production');
             $utilisateur->password = Hash::make(
