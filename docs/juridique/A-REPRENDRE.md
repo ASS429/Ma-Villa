@@ -37,6 +37,8 @@ Dernière mise à jour : 22 octobre 2026.
 | nouvel article | **Les services** : une demande n'est pas une réservation ; prix « à partir de », indicatifs ; confirmation sur WhatsApp ; rien n'est payé en ligne. Règle d'annulation d'un service (le partenaire propose « gratuite jusqu'à 24 h avant ») : **à décider**. | 20 oct. 2026 | Demandes JOJ |
 | 4–5. Réserver, paiement | Décrivent encore le circuit PayDunya, **suspendu** depuis le 14 sept. 2026. | 14 sept. 2026 | Réservations suspendues |
 | 4. Réserver | Dire comment se calcule le prix : nuits pour une nuitée, jours (bornes comprises) pour une formule de jour ; **prix à la semaine dès 7 nuits et au mois dès 30**, appliqués à tout le séjour quand ils sont plus avantageux ; **durée minimale** fixée par le propriétaire. | 22 oct. 2026 | Longs séjours |
+| 4. Réserver | Limites d'une demande : **six mois** de séjour au plus, **dix-huit mois** à l'avance au plus, **cinq demandes** sans réponse à la fois. | 23 oct. 2026 | Audit de sécurité |
+| compte | Changer d'**e-mail ou de téléphone** demande le mot de passe actuel, et ferme les autres sessions. | 23 oct. 2026 | Audit de sécurité |
 | 4–5 | Si le **partenaire encaisse** : qui encaisse (son nom apparaît sur l'écran Wave / Orange Money), qui rembourse, sous quel délai, quand le propriétaire est payé. | si adopté | Encaissement partenaire |
 | commission | Si les taux du partenaire sont retenus (10 % sur les appartements, 5 % sur les services) : nouveau barème, à reporter aussi dans `config/paiement.php` et le pré-rendu. | si adopté | Offre du 19 oct. |
 | nouvel article | **Commande de repas livrés** (si construite) : le restaurant prépare, livre et répond de l'hygiène ; paiement à la livraison. | si codé | Restauration |

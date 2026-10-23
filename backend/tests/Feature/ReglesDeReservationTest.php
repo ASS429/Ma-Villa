@@ -149,4 +149,31 @@ class ReglesDeReservationTest extends TestCase
         $publiee->update(['statut' => 'rejetee']);
         $this->assertCount(0, $this->actingAs($this->client, 'sanctum')->getJson('/api/favoris')->json());
     }
+
+    /* ── Une demande gratuite ne ferme pas un calendrier ─────────── */
+
+    public function test_une_demande_ne_retient_ni_plus_de_six_mois_ni_au_dela_de_dix_huit(): void
+    {
+        [, $logement, $tarif] = $this->annonce();
+        $demander = fn (int $debut, int $fin) => $this->actingAs($this->client, 'sanctum')->postJson('/api/reservations', [
+            'logement_id' => $logement->id, 'tarif_id' => $tarif->id, 'nb_personnes' => 1,
+            'date_debut' => now()->addDays($debut)->toDateString(), 'date_fin' => now()->addDays($fin)->toDateString(),
+        ]);
+
+        $demander(10, 10 + 400)->assertStatus(422)->assertJsonValidationErrors('date_fin');
+        $demander(600, 605)->assertStatus(422)->assertJsonValidationErrors('date_debut');
+        $demander(10, 10 + 120)->assertCreated();
+    }
+
+    public function test_un_client_n_a_pas_plus_de_cinq_demandes_ouvertes(): void
+    {
+        for ($i = 0; $i < 5; $i++) {
+            [, $logement, $tarif] = $this->annonce();
+            $this->demande($logement, $tarif)->assertCreated();
+        }
+
+        [, $logement, $tarif] = $this->annonce();
+        $this->demande($logement, $tarif)->assertStatus(422);
+        $this->assertSame(5, Reservation::count());
+    }
 }

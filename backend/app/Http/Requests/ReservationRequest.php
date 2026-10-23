@@ -24,8 +24,15 @@ class ReservationRequest extends FormRequest
                 'required',
                 Rule::exists('tarifs', 'id')->where('logement_id', $this->input('logement_id')),
             ],
-            'date_debut'   => 'required|date|after_or_equal:today',
-            'date_fin'     => 'required|date|after_or_equal:date_debut',
+            // Une demande non payée bloque le calendrier jusqu'à la réponse du
+            // propriétaire : sans borne, une seule demande gratuite pouvait
+            // fermer un logement pour des années. Six mois couvrent la plus
+            // longue location meublée, dix-huit mois la plus lointaine.
+            'date_debut'   => 'required|date|after_or_equal:today|before_or_equal:'.now()->addMonths(18)->toDateString(),
+            // strtotime plutôt que Carbon : une date illisible doit finir en
+            // erreur de validation, pas en exception.
+            'date_fin'     => 'required|date|after_or_equal:date_debut|before_or_equal:'
+                .date('Y-m-d', strtotime('+183 days', strtotime((string) $this->input('date_debut')) ?: time())),
             'nb_personnes' => 'required|integer|min:1',
         ];
     }
@@ -34,6 +41,8 @@ class ReservationRequest extends FormRequest
     {
         return [
             'tarif_id.exists' => 'Cette formule tarifaire ne correspond pas au logement choisi.',
+            'date_debut.before_or_equal' => 'Les réservations s’ouvrent jusqu’à dix-huit mois à l’avance.',
+            'date_fin.before_or_equal'   => 'Un séjour dure six mois au plus.',
         ];
     }
 }

@@ -20,6 +20,8 @@ use Illuminate\Support\Facades\Log;
 
 class ReservationController extends Controller
 {
+    public const DEMANDES_OUVERTES_MAX = 5;
+
     public function __construct(private readonly Push $push)
     {
     }
@@ -56,6 +58,17 @@ class ReservationController extends Controller
         // pas dépendre de la validité du logement ou des dates.
         if ($refus = ReservationsSuspendues::refus()) {
             return $refus;
+        }
+
+        // Chaque demande sans réponse retient des dates. Un client compare
+        // souvent plusieurs logements à la fois ; au-delà de cinq demandes
+        // ouvertes, il ne compare plus, il bloque des calendriers.
+        $ouvertes = $request->user()->reservations()->where('statut', 'en_attente')->count();
+        if ($ouvertes >= self::DEMANDES_OUVERTES_MAX) {
+            return response()->json([
+                'message' => 'Vous avez déjà '.self::DEMANDES_OUVERTES_MAX.' demandes en attente de réponse. '
+                           .'Attendez une réponse, ou annulez-en une.',
+            ], 422);
         }
 
         $logement = Logement::findOrFail($request->logement_id);
