@@ -232,7 +232,7 @@ class ConnexionParTelephoneTest extends TestCase
         $awa = $this->compte();
 
         $this->actingAs($awa, 'sanctum')
-            ->patchJson('/api/auth/profile', ['phone' => '76 000 11 22'])
+            ->patchJson('/api/auth/profile', ['phone' => '76 000 11 22', 'current_password' => 'motdepasse123'])
             ->assertOk();
 
         $this->postJson('/api/auth/login', [
@@ -251,7 +251,7 @@ class ConnexionParTelephoneTest extends TestCase
         $awa = $this->compte();
 
         $this->actingAs($awa, 'sanctum')
-            ->patchJson('/api/auth/profile', ['phone' => null])
+            ->patchJson('/api/auth/profile', ['phone' => null, 'current_password' => 'motdepasse123'])
             ->assertOk();
 
         $this->assertNull($awa->fresh()->getAttribute('phone_normalise'));

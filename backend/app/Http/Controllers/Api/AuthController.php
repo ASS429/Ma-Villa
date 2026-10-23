@@ -311,30 +311,50 @@ class AuthController extends Controller
             'name'                  => 'sometimes|string|max:255',
             'email'                 => 'sometimes|email|unique:users,email,' . $user->id,
             'phone'                 => ['sometimes', 'nullable', 'string', 'max:50', $this->numeroLibre($user->id)],
-            'current_password'      => 'required_with:password|string',
+            'current_password'      => 'required_with:password|nullable|string',
             'password'              => 'sometimes|string|min:8|confirmed',
             'password_confirmation' => 'sometimes|string',
         ]);
 
         $motDePasseChange = isset($data['password']);
 
-        if ($motDePasseChange) {
-            if (! Hash::check($data['current_password'], $user->password)) {
-                throw ValidationException::withMessages([
-                    'current_password' => ['Mot de passe actuel incorrect.'],
-                ]);
-            }
-            $user->password = $data['password'];
-        }
-
-        if (isset($data['name']))  $user->name  = $data['name'];
-        if (array_key_exists('phone', $data)) $user->phone = $data['phone'] ?: null;
-
         // Changer d'adresse reprend la vérification à zéro. Sans cela le compte
         // reste marqué « vérifié » sur une adresse que personne n'a confirmée —
         // y compris celle de quelqu'un d'autre — et la vérification ne garantit
         // plus rien.
         $adresseChangee = isset($data['email']) && $data['email'] !== $user->email;
+        // Comparés sous leur forme canonique : réécrire le même numéro avec
+        // des espaces n'est pas en changer.
+        $chiffres = fn (?string $n) => User::normaliserNumero($n) ?? preg_replace('/\D+/', '', (string) $n);
+        $numeroChange = array_key_exists('phone', $data)
+            && $chiffres($data['phone'] ?: null) !== $chiffres($user->phone);
+
+        // L'adresse et le numéro servent à se connecter et à récupérer le
+        // compte, et le numéro reçoit les reversements. Les changer avec la
+        // seule session ouverte permettait à qui l'avait volée de prendre le
+        // compte (« mot de passe oublié » vers sa propre adresse) ou de
+        // détourner les versements : on demande le mot de passe, comme pour
+        // le changer lui-même.
+        if ($motDePasseChange || $adresseChangee || $numeroChange) {
+            if (empty($data['current_password'])) {
+                throw ValidationException::withMessages([
+                    'current_password' => ['Confirmez avec votre mot de passe actuel.'],
+                ]);
+            }
+
+            if (! Hash::check($data['current_password'], $user->password)) {
+                throw ValidationException::withMessages([
+                    'current_password' => ['Mot de passe actuel incorrect.'],
+                ]);
+            }
+        }
+
+        if ($motDePasseChange) {
+            $user->password = $data['password'];
+        }
+
+        if (isset($data['name']))  $user->name  = $data['name'];
+        if (array_key_exists('phone', $data)) $user->phone = $data['phone'] ?: null;
 
         if ($adresseChangee) {
             $user->email = $data['email'];
@@ -350,11 +370,11 @@ class AuthController extends Controller
             );
         }
 
-        // Changer son mot de passe est le geste de quelqu'un qui pense son
-        // compte compromis. Laisser vivre les jetons déjà émis le rendrait
+        // Changer son mot de passe — ou ce qui permet de le réinitialiser —
+        // est le geste de quelqu'un qui pense son compte compromis. Laisser vivre les jetons déjà émis le rendrait
         // inutile : celui qui est entré y resterait. La session courante est
         // épargnée, sans quoi l'utilisateur se déconnecte lui-même.
-        if ($motDePasseChange) {
+        if ($motDePasseChange || $adresseChangee || $numeroChange) {
             $courant = $request->user()->currentAccessToken();
 
             $user->tokens()

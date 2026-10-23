@@ -11,10 +11,18 @@ export default function Profil() {
   const [infoLoading, setInfoLoading] = useState(false)
   const [infoSuccess, setInfoSuccess] = useState(false)
   const [infoError, setInfoError] = useState('')
+  const [infoMotDePasse, setInfoMotDePasse] = useState('')
   const [pwd, setPwd] = useState({ current_password: '', password: '', password_confirmation: '' })
   const [pwdLoading, setPwdLoading] = useState(false)
   const [pwdSuccess, setPwdSuccess] = useState(false)
   const [pwdError, setPwdError] = useState('')
+
+  // L'adresse et le numéro permettent de reprendre le compte, et le numéro
+  // reçoit les reversements : les changer demande le mot de passe actuel.
+  const chiffres = (n: string | null | undefined) => (n ?? '').replace(/\D+/g, '').replace(/^221(?=\d{9}$)/, '')
+  const identifiantChange =
+    info.email.trim().toLowerCase() !== (user?.email ?? '').toLowerCase()
+    || chiffres(info.phone) !== chiffres(user?.phone)
 
   const saveInfo = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -26,8 +34,10 @@ export default function Profil() {
         name: info.name,
         email: info.email,
         phone: info.phone || null,
+        ...(identifiantChange ? { current_password: infoMotDePasse } : {}),
       })
       updateUser(res.data)
+      setInfoMotDePasse('')
       setInfoSuccess(true)
     } catch (err) {
       setInfoError(messageErreur(err))
@@ -116,6 +126,26 @@ export default function Profil() {
               className="w-full rounded-xl px-4 py-2.5 text-sm th-input-field"
             />
           </div>
+          {identifiantChange && (
+            <div>
+              <label className="text-xs th-text-2 mb-1.5 block" htmlFor="profil-mot-de-passe">
+                Mot de passe actuel
+              </label>
+              <input
+                id="profil-mot-de-passe"
+                type="password"
+                required
+                autoComplete="current-password"
+                value={infoMotDePasse}
+                onChange={(e) => setInfoMotDePasse(e.target.value)}
+                className="w-full rounded-xl px-4 py-2.5 text-sm th-input-field"
+              />
+              <p className="text-xs th-text-3 mt-1.5">
+                Changer d’e-mail ou de téléphone se confirme par votre mot de passe : ce sont eux qui
+                permettent de récupérer le compte.
+              </p>
+            </div>
+          )}
           <button
             type="submit"
             disabled={infoLoading}

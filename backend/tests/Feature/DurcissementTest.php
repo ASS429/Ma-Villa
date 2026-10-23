@@ -35,7 +35,7 @@ class DurcissementTest extends TestCase
         ]);
 
         $this->actingAs($user, 'sanctum')
-             ->patchJson('/api/auth/profile', ['email' => 'nouvelle@example.com'])
+             ->patchJson('/api/auth/profile', ['email' => 'nouvelle@example.com', 'current_password' => 'password'])
              ->assertOk();
 
         $user->refresh();
@@ -138,5 +138,48 @@ class DurcissementTest extends TestCase
              ->assertOk();
 
         $this->assertDatabaseMissing('users', ['id' => $client->id]);
+    }
+
+    /* ── Ce qui permet de reprendre le compte demande le mot de passe ── */
+
+    public function test_changer_d_adresse_sans_le_mot_de_passe_est_refuse(): void
+    {
+        // Sinon une session volée suffisait : nouvelle adresse, puis « mot de
+        // passe oublié » vers elle, et le titulaire est dehors.
+        $user = User::factory()->client()->create(['email' => 'titulaire@example.com']);
+
+        $this->actingAs($user, 'sanctum')
+             ->patchJson('/api/auth/profile', ['email' => 'voleur@example.com'])
+             ->assertStatus(422)
+             ->assertJsonValidationErrors('current_password');
+
+        $this->assertSame('titulaire@example.com', $user->fresh()->email);
+    }
+
+    public function test_changer_de_numero_avec_un_mauvais_mot_de_passe_est_refuse(): void
+    {
+        // Le numéro reçoit les reversements du propriétaire.
+        $user = User::factory()->proprietaire()->create(['phone' => '+221 77 111 22 33']);
+
+        $this->actingAs($user, 'sanctum')
+             ->patchJson('/api/auth/profile', ['phone' => '+221 76 999 88 77', 'current_password' => 'pas-le-bon'])
+             ->assertStatus(422)
+             ->assertJsonValidationErrors('current_password');
+
+        $this->assertSame('+221 77 111 22 33', $user->fresh()->phone);
+    }
+
+    public function test_changer_d_adresse_ferme_les_autres_sessions(): void
+    {
+        Notification::fake();
+        $user = User::factory()->client()->create();
+        $user->createToken('ancienne-session');
+        $courant = $user->createToken('cette-session')->plainTextToken;
+
+        $this->withToken($courant)
+             ->patchJson('/api/auth/profile', ['email' => 'nouvelle@example.com', 'current_password' => 'password'])
+             ->assertOk();
+
+        $this->assertSame(['cette-session'], $user->tokens()->pluck('name')->all());
     }
 }

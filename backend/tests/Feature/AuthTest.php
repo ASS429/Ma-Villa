@@ -145,6 +145,7 @@ class AuthTest extends TestCase
                  'name'  => 'Nouveau Nom',
                  'email' => $user->email,
                  'phone' => '+221 77 123 45 67',
+                 'current_password' => 'password',
              ]);
 
         $response->assertOk()->assertJsonFragment(['name' => 'Nouveau Nom', 'phone' => '+221 77 123 45 67']);
