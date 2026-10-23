@@ -46,5 +46,10 @@ done &
 echo "==> Diagnostic d'infrastructure..."
 php artisan passetemps:diagnostic || true
 
-echo "==> Démarrage du serveur sur le port ${PORT:-10000}..."
-exec php artisan serve --host=0.0.0.0 --port=${PORT:-10000}
+# Plusieurs processus : avec un seul, une requête lente (vérification
+# PayDunya, notification poussée) faisait attendre tous les visiteurs.
+# Laravel ignore PHP_CLI_SERVER_WORKERS sans `--no-reload` — l'option ne
+# sert qu'à relancer le serveur quand .env change, et il n'y en a pas ici.
+export PHP_CLI_SERVER_WORKERS="${PHP_CLI_SERVER_WORKERS:-4}"
+echo "==> Démarrage du serveur sur le port ${PORT:-10000} (${PHP_CLI_SERVER_WORKERS} processus)..."
+exec php artisan serve --no-reload --host=0.0.0.0 --port=${PORT:-10000}
