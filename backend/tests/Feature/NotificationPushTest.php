@@ -189,4 +189,66 @@ class NotificationPushTest extends TestCase
 
         $this->assertSame(0, AbonnementPush::count());
     }
+
+    /* ── Le serveur n'appelle que des services de notifications ───── */
+
+    public function test_une_adresse_qui_n_est_pas_un_service_de_notifications_est_refusee(): void
+    {
+        // Le serveur envoie une requête à l'adresse enregistrée : acceptée
+        // telle quelle, elle désignait n'importe quelle cible, interne comprise.
+        $this->avecClesVapid();
+        $user = User::factory()->client()->create();
+
+        foreach (['http://169.254.169.254/latest/meta-data', 'https://exemple.test/push',
+                  'https://fcm.googleapis.com.exemple.test/x', 'http://fcm.googleapis.com/fcm/send/x'] as $cible) {
+            $this->actingAs($user, 'sanctum')
+                 ->postJson('/api/notifications/abonnement', $this->abonnement(['endpoint' => $cible]))
+                 ->assertStatus(422);
+        }
+
+        $this->assertSame(0, AbonnementPush::count());
+    }
+
+    public function test_les_services_des_navigateurs_sont_acceptes(): void
+    {
+        $this->avecClesVapid();
+        $user = User::factory()->client()->create();
+
+        foreach (['https://updates.push.services.mozilla.com/wpush/v2/x', 'https://web.push.apple.com/x',
+                  'https://wns2-par02p.notify.windows.com/w/?token=x'] as $i => $cible) {
+            $this->actingAs($user, 'sanctum')
+                 ->postJson('/api/notifications/abonnement', $this->abonnement(['endpoint' => $cible]))
+                 ->assertCreated();
+        }
+
+        $this->assertSame(3, AbonnementPush::count());
+    }
+
+    public function test_un_compte_n_abonne_pas_plus_de_dix_appareils(): void
+    {
+        $this->avecClesVapid();
+        $user = User::factory()->client()->create();
+
+        for ($i = 1; $i <= 11; $i++) {
+            $reponse = $this->actingAs($user, 'sanctum')->postJson('/api/notifications/abonnement',
+                $this->abonnement(['endpoint' => "https://fcm.googleapis.com/fcm/send/appareil-{$i}"]));
+        }
+
+        $reponse->assertStatus(422);
+        $this->assertSame(10, AbonnementPush::where('user_id', $user->id)->count());
+    }
+
+    public function test_changer_de_mot_de_passe_retire_les_abonnements(): void
+    {
+        // Celui d'un intrus lui aurait apporté chaque message du compte.
+        $this->avecClesVapid();
+        $user = User::factory()->client()->create();
+        $this->actingAs($user, 'sanctum')->postJson('/api/notifications/abonnement', $this->abonnement());
+
+        $this->actingAs($user, 'sanctum')->patchJson('/api/auth/profile', [
+            'current_password' => 'password', 'password' => 'nouveau-secret-123', 'password_confirmation' => 'nouveau-secret-123',
+        ])->assertOk();
+
+        $this->assertSame(0, AbonnementPush::count());
+    }
 }

@@ -4,7 +4,7 @@ import { useAuth } from './context/AuthContext'
 import { useToast } from './context/ToastContext'
 import { useConfig } from './context/ConfigContext'
 import api from './services/api'
-import { renouvelerSiCleChangee } from './lib/pwa'
+import { tenirAbonnementAJour } from './lib/pwa'
 import { messageErreur } from './lib/erreurs'
 import type { VillaResume } from './types'
 import ChargementPage from './components/ChargementPage'
@@ -572,14 +572,15 @@ export default function App() {
   )
 }
 
-/** Réabonne cet appareil si les clés des notifications ont changé côté serveur. */
+/** Tient l'abonnement aux notifications de cet appareil à jour, à chaque visite connectée. */
 function RenouvellementNotifications() {
   const { user } = useAuth()
+  const idUtilisateur = user?.id
   const cle = useConfig().notifications.cle_publique
 
   useEffect(() => {
-    if (user && cle) void renouvelerSiCleChangee(cle)
-  }, [user, cle])
+    if (idUtilisateur && cle) void tenirAbonnementAJour(cle)
+  }, [idUtilisateur, cle])
 
   return null
 }

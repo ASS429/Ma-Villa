@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import api from '../services/api'
+import { retirerAbonnementDeCetAppareil } from '../lib/pwa'
 import type { User } from '../types'
 
 interface RegisterData {
@@ -106,8 +107,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const logout = () => {
-    // On révoque le jeton côté serveur sans bloquer la déconnexion locale.
-    api.post('/auth/logout').catch(() => {})
+    // Le jeton est lu ici, avant d'être effacé : l'intercepteur d'axios ne
+    // s'exécute qu'après coup et ne le trouvait plus, si bien que la
+    // déconnexion ne révoquait rien côté serveur. Ensuite, sans bloquer la
+    // déconnexion locale : l'abonnement aux notifications de cet appareil
+    // d'abord (le jeton doit encore être valide), puis le jeton lui-même.
+    const jeton = localStorage.getItem('token')
+    const entetes = jeton ? { Authorization: `Bearer ${jeton}` } : undefined
+    // Plafonné : sans service worker, `serviceWorker.ready` n'aboutit jamais.
+    const delai = new Promise<void>((fini) => setTimeout(fini, 2000))
+
+    void Promise.race([retirerAbonnementDeCetAppareil(entetes), delai]).finally(() => {
+      api.post('/auth/logout', null, { headers: entetes }).catch(() => {})
+    })
     effacerSession()
   }
 

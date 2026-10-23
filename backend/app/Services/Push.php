@@ -72,7 +72,13 @@ class Push
                     'publicKey' => config('push.vapid.publique'),
                     'privateKey' => config('push.vapid.privee'),
                 ],
-            ]);
+            ],
+                // Les envois partent pendant la requête de l'utilisateur :
+                // trente secondes par défaut, c'était autant d'attente pour
+                // lui. Et un service de poussée ne redirige pas.
+                timeout: 5,
+                clientOptions: ['allow_redirects' => false],
+            );
 
             // Le service mono-processus ne doit pas rester bloqué sur un
             // service de poussée lent pendant qu'une réservation attend.

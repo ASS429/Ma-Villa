@@ -11,6 +11,34 @@ use Illuminate\Support\Str;
 
 class NotificationPushController extends Controller
 {
+    public const PLAFOND_PAR_COMPTE = 10;
+
+    /**
+     * Les services de notifications des navigateurs (Chrome, Firefox, Safari,
+     * Edge). Le serveur envoie une requête à l'adresse enregistrée : acceptée
+     * telle quelle, n'importe quelle adresse — interne comprise — lui était
+     * désignée comme cible.
+     */
+    private const SERVICES_DE_POUSSEE = [
+        'fcm.googleapis.com',
+        'updates.push.services.mozilla.com',
+        'web.push.apple.com',
+        'notify.windows.com',
+    ];
+
+    public static function serviceDePoussee(string $endpoint): bool
+    {
+        $hote = strtolower((string) parse_url($endpoint, PHP_URL_HOST));
+
+        foreach (self::SERVICES_DE_POUSSEE as $service) {
+            if ($hote === $service || str_ends_with($hote, '.'.$service)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function __construct(private readonly Push $push)
     {
     }
@@ -32,11 +60,25 @@ class NotificationPushController extends Controller
         }
 
         $donnees = $request->validate([
-            'endpoint' => ['required', 'string', 'max:500', 'url'],
+            'endpoint' => ['required', 'string', 'max:500', 'url:https', function ($attribut, $valeur, $echec) {
+                if (! self::serviceDePoussee((string) $valeur)) {
+                    $echec("Cette adresse n'est pas celle d'un service de notifications.");
+                }
+            }],
             'cle_p256dh' => 'required|string|max:255',
             'cle_auth' => 'required|string|max:255',
             'expire_le' => 'nullable|date',
         ]);
+
+        // Chaque abonnement est une requête que le serveur envoie à chaque
+        // notification : sans plafond, un compte en enregistrait autant qu'il
+        // voulait. Dix appareils couvrent tout usage réel.
+        $dejaLa = AbonnementPush::where('endpoint', $donnees['endpoint'])->exists();
+        if (! $dejaLa && AbonnementPush::where('user_id', $request->user()->id)->count() >= self::PLAFOND_PAR_COMPTE) {
+            return response()->json([
+                'message' => 'Trop d’appareils reçoivent déjà vos notifications. Coupez-les sur un ancien appareil.',
+            ], 422);
+        }
 
         $abonnement = AbonnementPush::updateOrCreate(
             ['endpoint' => $donnees['endpoint']],

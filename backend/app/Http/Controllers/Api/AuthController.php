@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AbonnementPush;
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\JsonResponse;
@@ -206,8 +207,10 @@ class AuthController extends Controller
                 $user->forceFill(['password' => $password])->save();
 
                 // Un mot de passe réinitialisé doit invalider les sessions
-                // ouvertes ailleurs : c'est souvent un compte compromis.
+                // ouvertes ailleurs : c'est souvent un compte compromis. Et
+                // les abonnements aux notifications avec elles.
                 $user->tokens()->delete();
+                AbonnementPush::where('user_id', $user->id)->delete();
             }
         );
 
@@ -371,15 +374,21 @@ class AuthController extends Controller
         }
 
         // Changer son mot de passe — ou ce qui permet de le réinitialiser —
-        // est le geste de quelqu'un qui pense son compte compromis. Laisser vivre les jetons déjà émis le rendrait
-        // inutile : celui qui est entré y resterait. La session courante est
-        // épargnée, sans quoi l'utilisateur se déconnecte lui-même.
+        // est le geste de quelqu'un qui pense son compte compromis. Laisser
+        // vivre les jetons déjà émis le rendrait inutile : celui qui est entré
+        // y resterait. La session courante est épargnée, sans quoi
+        // l'utilisateur se déconnecte lui-même.
+        //
+        // Les abonnements aux notifications aussi : celui d'un intrus lui
+        // aurait apporté chaque message du compte. L'appareil de
+        // l'utilisateur se réinscrit seul à sa prochaine visite.
         if ($motDePasseChange || $adresseChangee || $numeroChange) {
             $courant = $request->user()->currentAccessToken();
 
             $user->tokens()
                 ->when($courant, fn ($q) => $q->where('id', '!=', $courant->id))
                 ->delete();
+            AbonnementPush::where('user_id', $user->id)->delete();
         }
 
         return response()->json($user);

@@ -210,24 +210,43 @@ async function abonnementAvecCle(
 }
 
 /**
- * Réabonne en silence un appareil abonné avec une ancienne clé.
+ * Tient l'abonnement de cet appareil à jour, à chaque visite connectée.
  *
- * Sans cela, changer les clés du serveur coupait les notifications de tous
- * les abonnés sans que rien ne le leur dise : leur réglage restait « activé ».
- * L'autorisation est déjà donnée, aucune question n'est reposée.
+ * Deux cas que rien ne signalait à l'utilisateur, dont le réglage restait
+ * « activé » : des clés du serveur changées (l'abonnement à l'ancienne clé
+ * ne reçoit plus rien, on le remplace), et un abonnement retiré côté serveur
+ * — à la déconnexion ou après un changement de mot de passe —, qu'on
+ * réinscrit. L'autorisation est déjà donnée, aucune question n'est reposée.
  */
-export async function renouvelerSiCleChangee(cleVapid: string): Promise<void> {
+export async function tenirAbonnementAJour(cleVapid: string): Promise<void> {
   if (!cleVapid || etatNotifications() !== 'actif') return
 
   try {
     const registration = await navigator.serviceWorker.ready
-    const existant = await registration.pushManager.getSubscription()
-    if (!existant || memeCle(existant, base64UrlVersOctets(cleVapid))) return
+    if (!(await registration.pushManager.getSubscription())) return
 
-    const nouveau = await abonnementAvecCle(registration, cleVapid)
-    await api.post('/notifications/abonnement', corpsAbonnement(nouveau))
+    const abonnement = await abonnementAvecCle(registration, cleVapid)
+    await api.post('/notifications/abonnement', corpsAbonnement(abonnement))
   } catch {
     /* La prochaine visite réessaiera. */
+  }
+}
+
+/**
+ * À la déconnexion : le compte cesse d'envoyer ses notifications ici. Le
+ * navigateur garde son abonnement, que la prochaine connexion réinscrit.
+ */
+export async function retirerAbonnementDeCetAppareil(entetes?: Record<string, string>): Promise<void> {
+  if (etatNotifications() !== 'actif') return
+
+  try {
+    const registration = await navigator.serviceWorker.ready
+    const abonnement = await registration.pushManager.getSubscription()
+    if (abonnement) {
+      await api.delete('/notifications/abonnement', { data: { endpoint: abonnement.endpoint }, headers: entetes })
+    }
+  } catch {
+    /* L'abonnement sera retiré au prochain changement de mot de passe. */
   }
 }
 
