@@ -201,6 +201,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/oeuvres/{oeuvre}/photos/{photo}', [PhotoController::class, 'destroyForOeuvre']);
         Route::get('/commandes', [CommandeController::class, 'indexAdmin']);
         Route::patch('/commandes/{commande}/statut', [CommandeController::class, 'avancer']);
+        Route::patch('/commandes/{commande}/remboursee', [CommandeController::class, 'marquerRemboursee']);
 
         // Demandes de service des voyageurs : la réponse se fait sur
         // WhatsApp, l'écran trace seulement qu'elle a été faite.

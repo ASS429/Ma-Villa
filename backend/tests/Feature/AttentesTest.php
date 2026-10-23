@@ -415,4 +415,48 @@ class AttentesTest extends TestCase
 
         $this->assertSame(['versements_panne', 'avis'], $this->cles());
     }
+
+    /* ── Payée puis annulée : à rembourser ───────────────────────── */
+
+    public function test_une_commande_annulee_mais_payee_attend_son_remboursement(): void
+    {
+        $commande = $this->commande([
+            'mode_paiement' => 'en_ligne', 'statut_paiement' => 'reussi', 'statut' => 'annulee',
+        ]);
+
+        $this->assertContains('commandes_a_rembourser', $this->cles());
+
+        $this->actingAs($this->admin, 'sanctum')
+            ->patchJson("/api/admin/commandes/{$commande->id}/remboursee")
+            ->assertOk();
+
+        $this->assertNotNull($commande->fresh()->remboursee_le);
+        $this->assertNotContains('commandes_a_rembourser', $this->cles());
+        $this->assertTrue(\App\Models\JournalAdmin::where('action', 'commande.remboursee')->exists());
+    }
+
+    public function test_on_ne_note_pas_remboursee_une_commande_jamais_payee(): void
+    {
+        $commande = $this->commande([
+            'mode_paiement' => 'en_ligne', 'statut_paiement' => 'en_attente', 'statut' => 'annulee',
+        ]);
+
+        $this->actingAs($this->admin, 'sanctum')
+            ->patchJson("/api/admin/commandes/{$commande->id}/remboursee")
+            ->assertStatus(409);
+    }
+
+    public function test_une_commande_annulee_ne_se_rouvre_pas(): void
+    {
+        // Rouvrir remettait en vente puis vendait une pièce déjà rendue au stock.
+        $commande = $this->commande([
+            'mode_paiement' => 'livraison', 'statut_paiement' => 'en_attente', 'statut' => 'annulee',
+        ]);
+
+        $this->actingAs($this->admin, 'sanctum')
+            ->patchJson("/api/admin/commandes/{$commande->id}/statut", ['statut' => 'confirmee'])
+            ->assertStatus(409);
+
+        $this->assertSame('annulee', $commande->fresh()->statut);
+    }
 }

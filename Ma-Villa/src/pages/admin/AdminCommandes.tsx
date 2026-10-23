@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { ShoppingBag, ImageOff } from 'lucide-react'
 import api from '../../services/api'
 import { useToast } from '../../context/ToastContext'
@@ -26,6 +27,7 @@ const FILTRES = [
   { valeur: 'expediee', label: 'En route' },
   { valeur: 'en_attente', label: 'En attente' },
   { valeur: 'livree', label: 'Livrées' },
+  { valeur: 'annulee', label: 'Annulées' },
 ]
 
 /** L'étape suivante, pour chaque état. Un seul bouton, jamais un menu. */
@@ -37,7 +39,12 @@ const SUITE: Partial<Record<StatutCommande, { vers: StatutCommande; label: strin
 
 export default function AdminCommandes() {
   const toast = useToast()
-  const [filtre, setFiltre] = useState('')
+  // « Ce qui attend » arrive ici avec `?statut=annulee` : ouvrir l'onglet visé.
+  const [params] = useSearchParams()
+  const [filtre, setFiltre] = useState(() => {
+    const voulu = params.get('statut') ?? ''
+    return FILTRES.some((f) => f.valeur === voulu) ? voulu : ''
+  })
   const [page, setPage] = useState(1)
   const [enCours, setEnCours] = useState<number | null>(null)
 
@@ -64,6 +71,21 @@ export default function AdminCommandes() {
       reessayer()
     } catch (err) {
       toast.erreur(messageErreur(err, "Le statut n'a pas pu être changé."))
+    } finally {
+      setEnCours(null)
+    }
+  }
+
+  const noterRemboursee = async (commande: Commande) => {
+    if (!window.confirm(`Confirmez-vous avoir rendu ${fcfa(commande.montant_total)} à ${commande.destinataire} ?`)) return
+
+    setEnCours(commande.id)
+    try {
+      await api.patch(`/admin/commandes/${commande.id}/remboursee`)
+      toast.succes('Remboursement noté.')
+      reessayer()
+    } catch (err) {
+      toast.erreur(messageErreur(err, "Le remboursement n'a pas pu être noté."))
     } finally {
       setEnCours(null)
     }
@@ -105,6 +127,8 @@ export default function AdminCommandes() {
             {liste.map((c) => {
               const suite = SUITE[c.statut]
               const aRegler = c.mode_paiement === 'en_ligne' && c.statut_paiement !== 'reussi'
+              // Payée puis annulée : l'acheteur attend son argent.
+              const aRembourser = c.statut === 'annulee' && c.statut_paiement === 'reussi' && !c.remboursee_le
 
               return (
                 <article key={c.id} className="panneau commande-admin">
@@ -145,12 +169,27 @@ export default function AdminCommandes() {
                             yeux : c'est ce qui décide si l'on expédie. */}
                         {aRegler && <span className="commande-impaye"> · non réglé</span>}
                         {c.paye_le && ` · payé le ${dateCourte(c.paye_le)}`}
+                        {aRembourser && <span className="commande-impaye"> · à rembourser</span>}
+                        {c.remboursee_le && ` · remboursé le ${dateCourte(c.remboursee_le)}`}
                       </dd>
                     </div>
                     {c.note && (
                       <div><dt>Précision</dt><dd>{c.note}</dd></div>
                     )}
                   </dl>
+
+                  {aRembourser && (
+                    <div className="reservation-actions">
+                      <Button
+                        variante="primaire"
+                        taille="sm"
+                        disabled={enCours === c.id}
+                        onClick={() => noterRemboursee(c)}
+                      >
+                        Noter le remboursement
+                      </Button>
+                    </div>
+                  )}
 
                   {c.statut !== 'annulee' && c.statut !== 'livree' && (
                     <div className="reservation-actions">

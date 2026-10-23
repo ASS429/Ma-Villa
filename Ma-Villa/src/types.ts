@@ -314,6 +314,8 @@ export interface Commande {
   paye_le: string | null
   expediee_le: string | null
   livree_le: string | null
+  /** Annulée alors qu'elle était payée : la date où l'acheteur a été remboursé. */
+  remboursee_le?: string | null
   created_at: string
   oeuvre?: Oeuvre
   client?: { id: number; name: string; email: string }

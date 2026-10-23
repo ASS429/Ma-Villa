@@ -54,6 +54,7 @@ class AttentesController extends Controller
             $this->annulationsDemandees(),
             $this->versementsDus(),
             $this->versementsEnPanne(),
+            $this->commandesARembourser(),
             $this->commandesImpayees(),
             $this->commandesAExpedier(),
             $this->avisSeveres(),
@@ -286,6 +287,31 @@ class AttentesController extends Controller
             'detail'       => 'Le propriétaire se croit payé. Seul le statut dit le contraire.',
             'lien'         => '/admin/reversements',
             'libelle_lien' => 'Reprendre',
+        ];
+    }
+
+    /** Payées puis annulées : l'acheteur attend son argent, et rien d'autre ne le dit. */
+    private function commandesARembourser(): ?array
+    {
+        $compte = Commande::where('statut', 'annulee')
+            ->where('statut_paiement', 'reussi')
+            ->whereNull('remboursee_le')
+            ->count();
+
+        if ($compte === 0) {
+            return null;
+        }
+
+        return [
+            'cle'          => 'commandes_a_rembourser',
+            'gravite'      => 'urgent',
+            'compte'       => $compte,
+            'titre'        => $compte === 1
+                ? 'Une commande annulée a été payée'
+                : "{$compte} commandes annulées ont été payées",
+            'detail'       => "L'acheteur a réglé une commande qui n'existe plus : il faut le rembourser.",
+            'lien'         => '/admin/commandes?statut=annulee',
+            'libelle_lien' => 'Rembourser',
         ];
     }
 

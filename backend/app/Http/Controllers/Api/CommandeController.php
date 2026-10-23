@@ -233,6 +233,12 @@ class CommandeController extends Controller
 
         $avant = $commande->statut;
 
+        // Annulée ou livrée, une commande est close. Rouvrir une annulée
+        // remettait en vente — puis vendait — une pièce déjà rendue au stock.
+        if (in_array($avant, ['annulee', 'livree'], true)) {
+            return response()->json(['message' => "Cette commande est close : elle ne change plus d'état."], 409);
+        }
+
         if ($donnees['statut'] === 'annulee') {
             $this->libererEtAnnuler($commande);
         } else {
@@ -259,6 +265,37 @@ class CommandeController extends Controller
         );
 
         $this->prevenirLAcheteur($commande->fresh());
+
+        return response()->json($commande->fresh()->load('oeuvre.photos', 'client:id,name,email'));
+    }
+
+    /**
+     * Noter qu'une commande annulée mais payée a été remboursée.
+     *
+     * Le remboursement lui-même se fait hors du site (mobile money) : on
+     * n'enregistre que le fait, pour qu'il quitte « Ce qui attend » et reste
+     * au journal.
+     */
+    public function marquerRemboursee(Request $request, Commande $commande): JsonResponse
+    {
+        if ($commande->statut !== 'annulee' || $commande->statut_paiement !== 'reussi') {
+            return response()->json(['message' => "Seule une commande annulée et payée se rembourse."], 409);
+        }
+
+        if ($commande->remboursee_le !== null) {
+            return response()->json(['message' => 'Cette commande est déjà notée remboursée.'], 409);
+        }
+
+        $commande->update(['remboursee_le' => now()]);
+
+        JournalAdmin::consigner(
+            $request->user(),
+            'commande.remboursee',
+            $commande,
+            $commande->oeuvre_titre,
+            ['montant' => $commande->montant_total],
+            $request->ip(),
+        );
 
         return response()->json($commande->fresh()->load('oeuvre.photos', 'client:id,name,email'));
     }

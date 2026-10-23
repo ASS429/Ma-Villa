@@ -22,7 +22,7 @@ class Commande extends Model
         'destinataire', 'telephone', 'adresse', 'ville', 'note',
         'mode_paiement', 'statut_paiement', 'statut',
         'reference', 'token_paydunya', 'url_paiement', 'url_application',
-        'reponse_prestataire', 'paye_le', 'expediee_le', 'livree_le',
+        'reponse_prestataire', 'paye_le', 'expediee_le', 'livree_le', 'remboursee_le',
     ];
 
     protected function casts(): array
@@ -35,6 +35,7 @@ class Commande extends Model
             'paye_le'             => 'datetime',
             'expediee_le'         => 'datetime',
             'livree_le'           => 'datetime',
+            'remboursee_le'       => 'datetime',
         ];
     }
 
