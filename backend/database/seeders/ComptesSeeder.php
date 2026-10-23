@@ -59,9 +59,39 @@ class ComptesSeeder extends Seeder
 
     public function run(): void
     {
+        // En production, plus aucun compte n'est créé d'office : l'exploitant
+        // a son propre compte admin, et les comptes de démonstration ont été
+        // retirés (migration du 23 octobre 2026) — leurs adresses en
+        // @mavilla.sn, domaine qui n'est pas à nous, ou sur des gmail
+        // inventés, permettaient à leur détenant de les reprendre. Seul
+        // `ADMIN_EMAIL`, s'il est posé, désigne un admin à tenir.
+        if (app()->environment('production')) {
+            if (trim((string) env('ADMIN_EMAIL', '')) !== '') {
+                $this->administrateur();
+            }
+
+            foreach ([self::ADMIN, ...array_column([...self::PROPRIETAIRES, ...self::CLIENTS], 'email')] as $email) {
+                $this->fermerSiOuvert($email);
+            }
+
+            return;
+        }
+
         $this->administrateur();
         $this->proprietaires();
         $this->clients();
+    }
+
+    /** Un compte historique encore présent ne garde jamais le mot de passe public. */
+    private function fermerSiOuvert(string $email): void
+    {
+        $compte = User::where('email', $email)->first();
+
+        if ($compte && Hash::check(self::MOT_DE_PASSE_HISTORIQUE, (string) $compte->password)) {
+            $compte->forceFill(['password' => Hash::make(Str::random(48))])->save();
+            $compte->tokens()->delete();
+            $this->command?->warn("  ! {$email} : mot de passe public révoqué.");
+        }
     }
 
     public function administrateur(): ?User
@@ -139,7 +169,9 @@ class ComptesSeeder extends Seeder
     private function creerOuSecuriser(string $email, array $attributs, string $motDePasseVoulu): User
     {
         $utilisateur = User::firstOrNew(['email' => $email]);
-        $utilisateur->fill($attributs);
+        // Le nom n'est posé qu'à la création : un compte existant désigné par
+        // ADMIN_EMAIL garde celui que son titulaire a choisi.
+        $utilisateur->fill($utilisateur->exists ? ['role' => $attributs['role']] : $attributs);
 
         $vulnerable = $utilisateur->exists
             && Hash::check(self::MOT_DE_PASSE_HISTORIQUE, (string) $utilisateur->password);

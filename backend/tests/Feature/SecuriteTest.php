@@ -336,26 +336,15 @@ class SecuriteTest extends TestCase
         );
     }
 
-    public function test_le_peuplement_ne_laisse_aucun_compte_ouvert_en_production(): void
+    public function test_en_production_le_peuplement_ne_cree_aucun_compte(): void
     {
+        // Leurs adresses n'étaient pas à nous (@mavilla.sn, gmail inventés) :
+        // créés d'office, ils revenaient à chaque démarrage, reprenables.
         app()['env'] = 'production';
 
         (new \Database\Seeders\ComptesSeeder())->run();
 
-        $comptes = User::whereIn('email', [
-            'admin@mavilla.sn',
-            'amadou.diallo@mavilla.sn',
-            'sophie.martin@gmail.com',
-        ])->get();
-
-        $this->assertCount(3, $comptes);
-
-        foreach ($comptes as $compte) {
-            $this->assertFalse(
-                Hash::check('password', $compte->password),
-                "Le compte {$compte->email} accepte encore le mot de passe public."
-            );
-        }
+        $this->assertSame(0, User::count());
     }
 
     public function test_un_mot_de_passe_fourni_par_l_environnement_fait_foi(): void
@@ -363,17 +352,19 @@ class SecuriteTest extends TestCase
         // Sinon l'exploitant n'aurait aucun moyen de reprendre la main sur son
         // propre compte d'administration.
         app()['env'] = 'production';
+        putenv('ADMIN_EMAIL=admin@passetemps.sn');
         putenv('ADMIN_PASSWORD=un-secret-choisi-par-lexploitant');
 
         try {
             (new \Database\Seeders\ComptesSeeder())->run();
 
-            $admin = User::where('email', 'admin@mavilla.sn')->firstOrFail();
+            $admin = User::where('email', 'admin@passetemps.sn')->firstOrFail();
             $this->assertTrue(
                 Hash::check('un-secret-choisi-par-lexploitant', $admin->password)
             );
         } finally {
             putenv('ADMIN_PASSWORD');
+            putenv('ADMIN_EMAIL');
         }
     }
 
@@ -419,10 +410,16 @@ class SecuriteTest extends TestCase
     {
         // L'adresse libérée, quelqu'un s'y inscrit : au démarrage suivant, le
         // peuplement le faisait admin.
-        $intrus = User::factory()->client()->create(['email' => 'admin@mavilla.sn']);
+        $intrus = User::factory()->client()->create(['email' => 'admin@passetemps.sn']);
 
         app()['env'] = 'production';
-        (new \Database\Seeders\ComptesSeeder())->run();
+        putenv('ADMIN_EMAIL=admin@passetemps.sn');
+
+        try {
+            (new \Database\Seeders\ComptesSeeder())->run();
+        } finally {
+            putenv('ADMIN_EMAIL');
+        }
 
         $this->assertSame('client', $intrus->fresh()->role);
         $this->assertSame(0, User::where('role', 'admin')->count());
@@ -437,6 +434,7 @@ class SecuriteTest extends TestCase
         $admin->createToken('session-volee');
 
         app()['env'] = 'production';
+        putenv('ADMIN_EMAIL=admin@mavilla.sn');
         putenv('ADMIN_PASSWORD=ancien-secret');
 
         try {
@@ -447,6 +445,7 @@ class SecuriteTest extends TestCase
             (new \Database\Seeders\ComptesSeeder())->run();
         } finally {
             putenv('ADMIN_PASSWORD');
+            putenv('ADMIN_EMAIL');
         }
 
         $this->assertTrue(Hash::check('nouveau-secret', $admin->fresh()->password));
