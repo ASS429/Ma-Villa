@@ -13,6 +13,9 @@ use Illuminate\Support\Str;
 
 class PhotoController extends Controller
 {
+    /** 60 Mpx : au-delà de tout appareil photo de téléphone, en deçà d'une image piégée. */
+    private const PIXELS_MAX = 60_000_000;
+
     /**
      * L'URL d'une photo n'était validée que comme chaîne : un propriétaire
      * pouvait enregistrer n'importe quoi — un pixel de suivi, une image
@@ -152,6 +155,17 @@ class PhotoController extends Controller
         // avec un stockage objet il n'existe aucun chemin local à retoucher
         // après coup.
         if ($estImage) {
+            // Les dimensions se lisent dans l'en-tête, sans décoder : une image
+            // de quelques Ko peut annoncer 30 000 × 30 000 pixels, que le
+            // décodage déploierait en gigaoctets de mémoire.
+            $dimensions = @getimagesize($fichier->getRealPath());
+            if ($dimensions !== false && $dimensions[0] * $dimensions[1] > self::PIXELS_MAX) {
+                return response()->json([
+                    'message' => 'Image trop grande : 60 mégapixels au maximum.',
+                    'errors'  => ['file' => ['Image trop grande : 60 mégapixels au maximum.']],
+                ], 422);
+            }
+
             $this->reduireImage($fichier->getRealPath());
         }
 
@@ -188,6 +202,14 @@ class PhotoController extends Controller
         if (! extension_loaded('gd')) {
             return;
         }
+
+        // Une photo de 50 Mpx décodée occupe 200 Mo : plus que la limite par
+        // défaut, et l'envoi échouait sur une erreur fatale, que rien ne
+        // rattrape. Relevée ici seulement, le temps du décodage — les
+        // dimensions sont déjà plafonnées à l'entrée.
+        $limite = ini_get('memory_limit');
+        ini_set('memory_limit', '512M');
+        $source = $cible = null;
 
         try {
             $infos = @getimagesize($chemin);
@@ -226,6 +248,11 @@ class PhotoController extends Controller
             // L'original reste servi tel quel : mieux vaut une photo lourde
             // qu'une annonce sans photo.
             report($e);
+        } finally {
+            // Libérer avant de redescendre : sous la mémoire déjà occupée, la
+            // limite refuserait de baisser.
+            $source = $cible = null;
+            ini_set('memory_limit', (string) $limite);
         }
     }
 

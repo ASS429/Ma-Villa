@@ -21,8 +21,13 @@ RUN printf 'session.upload_progress.enabled = 0\nexpose_php = Off\n' \
 # ⚠️ Elle n'est PAS requise pour *envoyer* une notification — vérifié le
 # 19 août 2026, la signature aboutit sans elle. Elle est gardée pour que la
 # paire puisse être régénérée depuis le serveur le jour où il le faudra.
+#
+# gd avec JPEG et WebP : construite sans, elle ne lisait que le PNG, et les
+# photos de téléphone (JPEG) partaient en ligne sans être réduites — chaque
+# visiteur retéléchargeait plusieurs mégaoctets payés au volume.
 RUN apt-get update && apt-get install -y \
-        git curl libpng-dev libonig-dev libxml2-dev zip unzip libpq-dev libgmp-dev \
+        git curl libpng-dev libjpeg62-turbo-dev libwebp-dev libonig-dev libxml2-dev zip unzip libpq-dev libgmp-dev \
+    && docker-php-ext-configure gd --with-jpeg --with-webp \
     && docker-php-ext-install pdo pdo_pgsql pdo_mysql mbstring exif pcntl bcmath gd gmp \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
