@@ -182,4 +182,19 @@ class DurcissementTest extends TestCase
 
         $this->assertSame(['cette-session'], $user->tokens()->pluck('name')->all());
     }
+
+    public function test_un_nom_ne_devient_pas_un_lien_dans_un_mail(): void
+    {
+        // Le nom est choisi par l'utilisateur et part dans un mail signé
+        // PasseTemps : il ne doit y être que du texte.
+        $user = User::factory()->client()->create([
+            'name' => '[Gagnez 100 000 F](https://piege.example) ![x](https://piege.example/i.png) <b>gras</b>',
+        ]);
+
+        $html = (string) (new VerifierAdresseEmail())->toMail($user)->render();
+
+        $this->assertStringNotContainsString('href="https://piege.example"', $html);
+        $this->assertStringNotContainsString('src="https://piege.example/i.png"', $html);
+        $this->assertStringNotContainsString('<b>gras</b>', $html);
+    }
 }

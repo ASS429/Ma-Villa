@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Services\PayDunya;
 use Illuminate\Mail\Events\MessageSending;
+use Illuminate\Mail\Markdown;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Symfony\Component\Mime\Address;
@@ -26,6 +27,12 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->poserLAdresseDeReponse();
+
+        // Les mails glissent dans leur texte des noms choisis par les
+        // utilisateurs — le sien, celui d'une annonce. Sans cela, un nom
+        // comme « [Gagnez 100 000 F](https://piege.example) » devenait un
+        // vrai lien dans un mail signé PasseTemps.
+        Markdown::withSecuredEncoding();
     }
 
     /**
