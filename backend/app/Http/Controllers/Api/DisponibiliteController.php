@@ -12,6 +12,8 @@ class DisponibiliteController extends Controller
 {
     public function index(Logement $logement, Request $request): JsonResponse
     {
+        abort_unless($logement->villa?->visiblePour(auth('sanctum')->user()), 404);
+
         $query = $logement->disponibilites();
 
         if ($request->date_debut && $request->date_fin) {

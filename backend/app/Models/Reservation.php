@@ -43,6 +43,18 @@ class Reservation extends Model
         return $query->where('statut', '!=', 'annulee');
     }
 
+    /**
+     * Ce que l'exploitant doit trancher : une annulation demandée par le
+     * client, ou un paiement arrivé sur une réservation déjà annulée — dans
+     * ce cas l'argent est encaissé et doit être rendu.
+     */
+    public function scopeAttendUneDecisionDeRemboursement(Builder $query): Builder
+    {
+        return $query->whereNotNull('annulation_demandee_le')
+            ->where(fn (Builder $q) => $q->where('statut', '!=', 'annulee')
+                ->orWhereHas('paiement', fn (Builder $p) => $p->where('statut', 'reussi')));
+    }
+
     public function client(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');

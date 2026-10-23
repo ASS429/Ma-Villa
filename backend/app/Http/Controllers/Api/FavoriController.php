@@ -12,13 +12,20 @@ class FavoriController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $favoris = $request->user()->favoris()->with('villa.photos', 'villa.avis')->get();
+        // Mêmes règles que le catalogue : une annonce retirée ou en brouillon
+        // ne s'y lit pas, et le numéro de la villa n'est pas public.
+        $favoris = $request->user()->favoris()
+            ->whereHas('villa', fn ($q) => $q->where('statut', 'validee'))
+            ->with(['villa' => fn ($q) => $q->withoutTelephone(), 'villa.photos', 'villa.avis'])
+            ->get();
 
         return response()->json($favoris);
     }
 
     public function store(Request $request, Villa $villa): JsonResponse
     {
+        abort_if($villa->statut !== 'validee', 404);
+
         $favori = Favori::firstOrCreate([
             'user_id'  => $request->user()->id,
             'villa_id' => $villa->id,

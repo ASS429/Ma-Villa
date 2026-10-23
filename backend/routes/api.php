@@ -62,7 +62,7 @@ Route::get('/destinations', [VillaController::class, 'destinations']);
 Route::get('/villas/{villa}', [VillaController::class, 'show']);
 Route::get('/villas/{villa}/occupation', [VillaController::class, 'occupation']);
 Route::get('/villas/{villa}/logements', [LogementController::class, 'index']);
-Route::get('/villas/{villa}/logements/{logement}', [LogementController::class, 'show']);
+Route::get('/villas/{villa}/logements/{logement}', [LogementController::class, 'show'])->scopeBindings();
 Route::get('/logements/{logement}/tarifs', [TarifController::class, 'index']);
 Route::get('/logements/{logement}/disponibilites', [DisponibiliteController::class, 'index']);
 
@@ -101,16 +101,18 @@ Route::middleware('auth:sanctum')->group(function () {
     // À l'étape du prix, où il hésite le plus.
     Route::get('/reperes-de-prix', [VillaController::class, 'reperesDePrix']);
 
-    // Logements
+    // Logements. `scopeBindings` cherche l'enfant DANS le parent autorisé :
+    // sans lui, un propriétaire passait par sa propre villa pour modifier,
+    // désactiver ou supprimer le logement (ou le prix) d'un autre.
     Route::post('/villas/{villa}/logements', [LogementController::class, 'store']);
-    Route::put('/villas/{villa}/logements/{logement}', [LogementController::class, 'update']);
-    Route::patch('/villas/{villa}/logements/{logement}/disponibilite', [LogementController::class, 'toggleDisponibilite']);
-    Route::delete('/villas/{villa}/logements/{logement}', [LogementController::class, 'destroy']);
+    Route::put('/villas/{villa}/logements/{logement}', [LogementController::class, 'update'])->scopeBindings();
+    Route::patch('/villas/{villa}/logements/{logement}/disponibilite', [LogementController::class, 'toggleDisponibilite'])->scopeBindings();
+    Route::delete('/villas/{villa}/logements/{logement}', [LogementController::class, 'destroy'])->scopeBindings();
 
     // Tarifs
     Route::post('/logements/{logement}/tarifs', [TarifController::class, 'store']);
-    Route::put('/logements/{logement}/tarifs/{tarif}', [TarifController::class, 'update']);
-    Route::delete('/logements/{logement}/tarifs/{tarif}', [TarifController::class, 'destroy']);
+    Route::put('/logements/{logement}/tarifs/{tarif}', [TarifController::class, 'update'])->scopeBindings();
+    Route::delete('/logements/{logement}/tarifs/{tarif}', [TarifController::class, 'destroy'])->scopeBindings();
 
     // Disponibilités
     Route::post('/logements/{logement}/disponibilites', [DisponibiliteController::class, 'store']);
@@ -157,7 +159,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Photos
     Route::post('/villas/{villa}/photos', [PhotoController::class, 'storeForVilla']);
-    Route::post('/villas/{villa}/logements/{logement}/photos', [PhotoController::class, 'storeForLogement']);
+    Route::post('/villas/{villa}/logements/{logement}/photos', [PhotoController::class, 'storeForLogement'])->scopeBindings();
     Route::delete('/villas/{villa}/photos/{photo}', [PhotoController::class, 'destroy']);
 
     // Avis

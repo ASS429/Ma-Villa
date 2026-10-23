@@ -93,10 +93,13 @@ export default function CarteVillas({
         keyboard: true,
       })
 
-      marqueur.bindPopup(
-        `<strong>${v.nom}</strong><br>${v.ville}`,
-        { closeButton: false }
-      )
+      // Des nœuds, pas une chaîne HTML : Leaflet passe une chaîne à
+      // innerHTML, et le nom d'une annonce est écrit par son propriétaire.
+      const bulle = document.createElement('div')
+      const nom = document.createElement('strong')
+      nom.textContent = v.nom
+      bulle.append(nom, document.createElement('br'), v.ville ?? '')
+      marqueur.bindPopup(bulle, { closeButton: false })
       marqueur.on('click', () => navigate(cheminEn(langue, `/hebergements/${v.id}/`)))
       marqueur.addTo(g)
     }

@@ -9,6 +9,21 @@ import { erreursParChamp, messageErreur } from '../lib/erreurs'
 import { useLangue } from '../i18n/langue'
 import { TEXTES_COMPTES } from '../i18n/comptes'
 
+/**
+ * Le chemin de retour, s'il reste sur le site. Commencer par « / » ne
+ * suffisait pas : « //ailleurs.com » ou « /\tailleurs.com » (le navigateur
+ * retire la tabulation) menaient hors du site, juste après la connexion.
+ */
+function cheminInterne(chemin: string | null): string | null {
+  if (!chemin || !chemin.startsWith('/')) return null
+  try {
+    const url = new URL(chemin, window.location.origin)
+    return url.origin === window.location.origin ? url.pathname + url.search + url.hash : null
+  } catch {
+    return null
+  }
+}
+
 function IconEye({ show }: { show: boolean }) {
   return show ? (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -38,10 +53,10 @@ export default function Login() {
   const t = TEXTES_COMPTES[langue].connexion
 
   // Après une session expirée, on ramène l'utilisateur là où il était.
-  const retour = params.get('retour')
+  const retour = cheminInterne(params.get('retour'))
 
   const destination = (role: string) =>
-    retour && retour.startsWith('/') ? retour : role === 'admin' ? '/admin' : '/dashboard'
+    retour ?? (role === 'admin' ? '/admin' : '/dashboard')
 
   if (user) return <Navigate to={destination(user.role)} replace />
 

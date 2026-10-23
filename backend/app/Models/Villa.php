@@ -54,6 +54,17 @@ class Villa extends Model
      * Retiré du SELECT plutôt que masqué à la sérialisation : ce qui n'est
      * jamais lu ne peut pas fuiter par un autre chemin.
      */
+    /**
+     * Une annonce non publiée ne se lit que par son propriétaire et l'admin.
+     * Partagée par toutes les lectures publiques qui passent par la villa —
+     * logements, prix, calendrier : la fiche cachée l'était aussi par là.
+     */
+    public function visiblePour(?User $user): bool
+    {
+        return $this->statut === 'validee'
+            || ($user !== null && ($user->id === $this->user_id || $user->role === 'admin'));
+    }
+
     public function scopeWithoutTelephone(Builder $query): Builder
     {
         $colonnes = array_diff(

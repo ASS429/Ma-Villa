@@ -872,4 +872,22 @@ class PaiementTest extends TestCase
             ->assertOk()
             ->assertJsonPath('0.paiement.statut', 'reussi');
     }
+
+    /* ── Payé après l'annulation ─────────────────────────────── */
+
+    public function test_un_paiement_abouti_apres_l_annulation_ne_ressuscite_pas_la_reservation(): void
+    {
+        // Les dates d'une réservation annulée sont rendues au calendrier et
+        // peut-être revendues : la reconfirmer vendrait deux fois la nuit.
+        Http::fake($this->reponsesPayDunya('completed'));
+        $reservation = $this->reservation();
+        $paiement = $this->paiementEnAttente($reservation);
+        $reservation->update(['statut' => 'annulee']);
+
+        $this->postJson('/api/paiements/ipn', $this->ipn('JETON123', 'completed'))->assertOk();
+
+        $this->assertSame('annulee', $reservation->fresh()->statut);
+        $this->assertSame('reussi', $paiement->fresh()->statut, "L'argent est encaissé : il doit rester inscrit.");
+        $this->assertSame(1, Reservation::attendUneDecisionDeRemboursement()->count(), 'Il doit être rendu.');
+    }
 }

@@ -37,7 +37,9 @@ class NouvelleReservation extends Notification implements ShouldQueue
             ->line('**Dates** : du '.$this->jour($r->date_debut).' au '.$this->jour($r->date_fin))
             ->line('**Voyageurs** : '.$r->nb_personnes)
             ->line('**Montant** : '.number_format((float) $r->montant_total, 0, ',', ' ').' FCFA')
-            ->line('**Client** : '.$r->client->name.($r->client->phone ? ' — '.$r->client->phone : ''))
+            // Pas de numéro : le propriétaire n'a celui du client qu'après avoir
+            // accepté (même règle que son espace réservations).
+            ->line('**Client** : '.$r->client->name)
             ->action('Répondre à la demande', rtrim(config('app.frontend_url'), '/').'/dashboard/reservations')
             ->line('Merci de répondre rapidement : les clients réservent souvent plusieurs villas en parallèle.');
     }

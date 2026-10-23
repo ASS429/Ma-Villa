@@ -61,7 +61,9 @@ class ReservationController extends Controller
         $logement = Logement::findOrFail($request->logement_id);
         $tarif = Tarif::findOrFail($request->tarif_id);
 
-        if (! $logement->disponible) {
+        // Une annonce en brouillon, en attente, refusée ou retirée n'est pas
+        // à vendre : la fiche publique la cache, la réservation aussi.
+        if (! $logement->disponible || $logement->villa?->statut !== 'validee') {
             return response()->json(['message' => 'Ce logement n\'est plus proposé à la réservation.'], 409);
         }
 
@@ -147,6 +149,13 @@ class ReservationController extends Controller
             'groupe' => "reservation-{$reservation->id}",
         ]);
 
+        // La réponse va au client : le numéro de la villa n'y figure qu'une
+        // fois le séjour engagé, et les coordonnées personnelles du
+        // propriétaire jamais — elles voyageaient avec la relation chargée
+        // pour la notification.
+        $this->revelerLesCoordonnees($reservation, $request->user());
+        $reservation->logement->villa->unsetRelation('proprietaire');
+
         return response()->json($reservation, 201);
     }
 
@@ -215,6 +224,17 @@ class ReservationController extends Controller
             return response()->json(['message' => 'Non autorisé.'], 403);
         }
 
+        // Une annulation est définitive : ses dates ont été rendues au
+        // calendrier, et un remboursement a pu suivre. La reconfirmer rendait
+        // de nouveau exigible la part d'un propriétaire déjà remboursée.
+        if ($reservation->statut === 'annulee') {
+            return response()->json(['message' => 'Cette réservation est annulée : elle ne se rouvre pas.'], 409);
+        }
+
+        if ($reservation->statut === $request->statut) {
+            return response()->json(['message' => 'La réservation est déjà dans cet état.'], 409);
+        }
+
         /*
          * Un client ne peut plus annuler seul une réservation **payée**.
          *
@@ -277,6 +297,9 @@ class ReservationController extends Controller
                 'groupe' => "reservation-{$reservation->id}",
             ]);
         }
+
+        // Un refus ne donne pas au propriétaire le numéro du client.
+        $this->revelerLesCoordonnees($reservation, $request->user());
 
         return response()->json($reservation);
     }

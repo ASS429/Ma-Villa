@@ -181,8 +181,7 @@ class AttentesController extends Controller
      */
     private function annulationsDemandees(): ?array
     {
-        $demandes = Reservation::whereNotNull('annulation_demandee_le')
-            ->where('statut', '!=', 'annulee')
+        $demandes = Reservation::attendUneDecisionDeRemboursement()
             ->get(['id', 'annulation_demandee_le']);
 
         if ($demandes->isEmpty()) {

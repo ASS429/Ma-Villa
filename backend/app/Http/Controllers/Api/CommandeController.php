@@ -278,6 +278,13 @@ class CommandeController extends Controller
     private function libererEtAnnuler(Commande $commande): void
     {
         DB::transaction(function () use ($commande) {
+            // Une seule remise en stock par commande : annuler deux fois une
+            // pièce unique la mettait deux fois en vente.
+            $verrouillee = Commande::whereKey($commande->id)->lockForUpdate()->first();
+            if ($verrouillee->statut === 'annulee') {
+                return;
+            }
+
             $commande->update(['statut' => 'annulee']);
 
             // L'exemplaire retourne au stock : une commande abandonnée ne doit
@@ -482,11 +489,20 @@ class CommandeController extends Controller
             return;
         }
 
+        // Payée après l'annulation : la pièce, remise en vente, a pu partir
+        // chez quelqu'un d'autre. La commande reste annulée, l'argent est
+        // inscrit pour être rendu.
+        $tardive = $statut === 'reussi' && $commande->statut === 'annulee';
+
+        if ($tardive) {
+            Log::warning('Commande payée après son annulation : à rembourser', ['commande' => $commande->id]);
+        }
+
         $commande->update([
             'statut_paiement'     => $statut,
             'paye_le'             => $statut === 'reussi' ? now() : null,
             'reponse_prestataire' => $verifie['brut'],
-            'statut'              => $statut === 'reussi' ? 'confirmee' : $commande->statut,
+            'statut'              => $statut === 'reussi' && ! $tardive ? 'confirmee' : $commande->statut,
         ]);
     }
 }

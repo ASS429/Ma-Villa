@@ -6,6 +6,7 @@ use App\Models\Commande;
 use App\Models\Oeuvre;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 /**
@@ -648,5 +649,40 @@ class BoutiqueTest extends TestCase
         $this->oeuvre(['stock' => 0, 'statut' => 'vendue']);
 
         $this->assertNull($this->getJson('/api/oeuvres')->json('prix_min'));
+    }
+
+    /* ── Annulations ─────────────────────────────────────────── */
+
+    public function test_annuler_deux_fois_ne_remet_qu_un_exemplaire_en_stock(): void
+    {
+        $oeuvre = $this->oeuvre();
+        $this->actingAs($this->client, 'sanctum')->postJson('/api/commandes', $this->commandeValide($oeuvre));
+        $commande = Commande::first();
+
+        $this->actingAs($this->client, 'sanctum')->patchJson("/api/commandes/{$commande->id}/annuler")->assertOk();
+        $this->actingAs($this->client, 'sanctum')->patchJson("/api/commandes/{$commande->id}/annuler");
+
+        $this->assertSame(1, (int) $oeuvre->refresh()->stock, 'Une pièce unique ne se vend pas deux fois.');
+    }
+
+    public function test_une_commande_payee_apres_son_annulation_reste_annulee(): void
+    {
+        $oeuvre = $this->oeuvre();
+        $this->actingAs($this->client, 'sanctum')->postJson('/api/commandes', $this->commandeValide($oeuvre));
+        $commande = Commande::first();
+        $commande->forceFill([
+            'mode_paiement' => 'en_ligne', 'statut' => 'annulee',
+            'statut_paiement' => 'en_attente', 'token_paydunya' => 'JETON-C',
+        ])->save();
+
+        Http::fake(['*checkout-invoice/confirm/*' => Http::response([
+            'response_code' => '00', 'status' => 'completed',
+            'invoice' => ['token' => 'JETON-C', 'total_amount' => $commande->montant_total],
+        ])]);
+
+        $this->actingAs($this->client, 'sanctum')->getJson("/api/commandes/{$commande->id}/paiement/statut")->assertOk();
+
+        $this->assertSame('annulee', $commande->refresh()->statut);
+        $this->assertSame('reussi', $commande->statut_paiement);
     }
 }

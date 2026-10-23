@@ -48,6 +48,7 @@ Dernière mise à jour : 22 octobre 2026.
 |---|---|---|---|
 | nouveau | Annulation d'un **service** (transport, repas) : délai et ce qui est rendu. **À décider.** | 20 oct. 2026 | Demandes JOJ |
 | 5–7 | Si le **partenaire encaisse** : c'est lui qui rembourse — le texte dit aujourd'hui PasseTemps. | si adopté | Encaissement partenaire |
+| nouveau | Une annulation est **définitive** ; un paiement arrivé **après** l'annulation ne rouvre pas la réservation, il est rendu au client. | 23 oct. 2026 | Audit de sécurité |
 
 ## 4. Mentions légales
 
@@ -59,7 +60,9 @@ Dernière mise à jour : 22 octobre 2026.
 
 ## 5. Conditions générales de vente (boutique)
 
-Rien à reprendre pour l'instant.
+| § | Ce qui manque ou a changé | Depuis | Origine |
+|---|---|---|---|
+| nouveau | Une commande payée **après** son annulation reste annulée et le montant est rendu (la pièce a pu être revendue). | 23 oct. 2026 | Audit de sécurité |
 
 ---
 

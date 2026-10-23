@@ -24,6 +24,20 @@ return Application::configure(basePath: dirname(__DIR__))
         // Error » là où « 401 » était la réponse juste, et un diagnostic qui
         // devient un second bug à élucider.
         $middleware->redirectGuestsTo(fn () => null);
+
+        // Chez Railway, la requête arrive par un relais : sans lui faire
+        // confiance, l'adresse vue est celle du relais pour tout le monde —
+        // une limite de tentatives atteinte par un seul visiteur bloquait la
+        // connexion de tous — et le schéma était « http », si bien que
+        // l'adresse de rappel donnée à PayDunya l'était aussi. Le conteneur
+        // n'est joignable que par ce relais. L'hôte n'est pas repris de
+        // l'en-tête transmis : il sert à fabriquer des liens envoyés par mail.
+        $middleware->trustProxies(
+            at: '*',
+            headers: Request::HEADER_X_FORWARDED_FOR
+                | Request::HEADER_X_FORWARDED_PORT
+                | Request::HEADER_X_FORWARDED_PROTO,
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Ce back n'expose aucune interface, donc aucune route « login ». Sans

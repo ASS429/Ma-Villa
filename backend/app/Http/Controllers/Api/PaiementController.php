@@ -355,25 +355,45 @@ class PaiementController extends Controller
             return $verifie['statut'];
         }
 
-        DB::transaction(function () use ($paiement, $statut, $verifie) {
+        $tardif = DB::transaction(function () use ($paiement, $statut, $verifie) {
             $paiement->update([
                 'statut'              => $statut,
                 'reponse_prestataire' => $verifie['brut'],
                 'paye_le'             => $statut === 'reussi' ? now() : null,
             ]);
 
+            if ($statut !== 'reussi') {
+                return false;
+            }
+
+            $reservation = Reservation::lockForUpdate()->find($paiement->reservation_id);
+
+            // Payé après l'annulation : l'argent est là, mais les dates ont
+            // été rendues au calendrier et peut-être revendues. Ressusciter la
+            // réservation créerait un double séjour. Elle reste annulée et
+            // passe dans la file des remboursements, où l'exploitant décide.
+            if ($reservation->statut === 'annulee') {
+                $reservation->update([
+                    'annulation_demandee_le' => now(),
+                    'annulation_motif'       => 'Paiement reçu après l’annulation : à rendre au client.',
+                ]);
+                Log::warning('Paiement abouti sur une réservation annulée', ['paiement' => $paiement->id]);
+
+                return true;
+            }
+
             // Un paiement abouti confirme la réservation sans intervention du
             // propriétaire : le client a payé, la place lui est due.
-            if ($statut === 'reussi') {
-                $paiement->reservation->update(['statut' => 'confirmee']);
-            }
+            $reservation->update(['statut' => 'confirmee']);
+
+            return false;
         });
 
         // Le propriétaire doit apprendre qu'une nuit est vendue sans avoir à
         // ouvrir son tableau de bord : c'est lui qui doit préparer la venue.
         // Après la transaction, pour qu'un service de poussée lent ne tienne
         // pas ouverte une transaction de base de données.
-        if ($statut === 'reussi') {
+        if ($statut === 'reussi' && ! $tardif) {
             $paiement->loadMissing('reservation.logement.villa.proprietaire');
 
             $this->push->versUtilisateur($paiement->reservation->logement->villa->proprietaire, [

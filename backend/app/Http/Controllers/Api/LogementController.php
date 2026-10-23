@@ -12,6 +12,8 @@ class LogementController extends Controller
 {
     public function index(Villa $villa): JsonResponse
     {
+        abort_unless($villa->visiblePour(auth('sanctum')->user()), 404);
+
         return response()->json($villa->logements()->with(['tarifs', 'photos'])->get());
     }
 
@@ -25,6 +27,8 @@ class LogementController extends Controller
 
     public function show(Villa $villa, Logement $logement): JsonResponse
     {
+        abort_unless($villa->visiblePour(auth('sanctum')->user()), 404);
+
         return response()->json($logement->load(['tarifs', 'photos', 'disponibilites']));
     }
 

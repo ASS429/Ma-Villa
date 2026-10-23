@@ -51,8 +51,7 @@ class RemboursementController extends Controller
      */
     private function demandes(): array
     {
-        return Reservation::whereNotNull('annulation_demandee_le')
-            ->where('statut', '!=', 'annulee')
+        return Reservation::attendUneDecisionDeRemboursement()
             ->with([
                 'client:id,name,email,phone',
                 'paiement',
@@ -193,12 +192,12 @@ class RemboursementController extends Controller
 
             // Annuler la réservation coupe le versement à venir : sans cela,
             // la part du propriétaire resterait exigible sur un séjour rendu.
-            if ($reservation->statut !== 'annulee') {
-                $reservation->update([
-                    'statut' => 'annulee',
-                    'annulation_demandee_le' => null,
-                ]);
-            }
+            // La demande est tranchée dans tous les cas, même sur une
+            // réservation déjà annulée (paiement arrivé après l'annulation).
+            $reservation->update([
+                'statut' => 'annulee',
+                'annulation_demandee_le' => null,
+            ]);
 
             JournalAdmin::consigner(
                 $moi,

@@ -12,6 +12,8 @@ class TarifController extends Controller
 {
     public function index(Logement $logement): JsonResponse
     {
+        abort_unless($logement->villa?->visiblePour(auth('sanctum')->user()), 404);
+
         return response()->json($logement->tarifs);
     }
 
