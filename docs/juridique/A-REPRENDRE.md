@@ -43,6 +43,7 @@ Dernière mise à jour : 22 octobre 2026.
 | commission | Si les taux du partenaire sont retenus (10 % sur les appartements, 5 % sur les services) : nouveau barème, à reporter aussi dans `config/paiement.php` et le pré-rendu. | si adopté | Offre du 19 oct. |
 | nouvel article | **Commande de repas livrés** (si construite) : le restaurant prépare, livre et répond de l'hygiène ; paiement à la livraison. | si codé | Restauration |
 | — | Version anglaise des articles qui concernent les clients. | si multilingue | Multilingue |
+| commission, 6 | **Circuit des associés (JOJ)** : sur les annonces de partenaires passés par un gérant (Clé d'Or…), le prix affiché est celui du propriétaire **majoré de 14 %** (pas le barème 10 / 14 prélevé) ; l'argent est transmis **aux associés à chaque paiement**, pas au propriétaire après le séjour ; les frais PayDunya sortent de leur part. Les textes disent aujourd'hui l'inverse. | 29 oct. 2026 | Circuit des associés |
 
 ## 3. Politique d'annulation
 
@@ -51,6 +52,7 @@ Dernière mise à jour : 22 octobre 2026.
 | nouveau | Annulation d'un **service** (transport, repas) : délai et ce qui est rendu. **À décider.** | 20 oct. 2026 | Demandes JOJ |
 | 5–7 | Si le **partenaire encaisse** : c'est lui qui rembourse — le texte dit aujourd'hui PasseTemps. | si adopté | Encaissement partenaire |
 | nouveau | Une annulation est **définitive** ; un paiement arrivé **après** l'annulation ne rouvre pas la réservation, il est rendu au client. | 23 oct. 2026 | Audit de sécurité |
+| 5–7 | Circuit des associés : l'argent leur est transmis dès le paiement ; en cas de remboursement, **ce sont eux qui le rendent** (engagement à obtenir par écrit). | 29 oct. 2026 | Circuit des associés |
 
 ## 4. Mentions légales
 

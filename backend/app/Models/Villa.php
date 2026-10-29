@@ -40,7 +40,21 @@ class Villa extends Model
             'a_climatisation' => 'boolean',
             'latitude'        => 'float',
             'longitude'       => 'float',
+            'majoration'      => 'float',
         ];
+    }
+
+    /**
+     * Ni `majoration` ni `circuit` ne sont assignables en masse : ils fixent
+     * qui reçoit l'argent. Ils ne se posent que par migration ou par la
+     * console. Masqués aussi : le client n'a pas à lire notre part.
+     */
+    protected $hidden = ['majoration', 'circuit'];
+
+    /** Le prix affiché comprend notre part, et l'argent va aux associés. */
+    public function passeParLesAssocies(): bool
+    {
+        return $this->circuit === 'associe';
     }
 
     /**

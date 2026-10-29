@@ -104,6 +104,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Le circuit des associés (JOJ, 31 octobre – 13 novembre 2026)
+    |--------------------------------------------------------------------------
+    |
+    | Décidé par l'exploitant le 29 octobre 2026. Pendant les Jeux, un gérant
+    | (associé) par service traite avec les prestataires : Clé d'Or, SEN IMMO…
+    | Sur une annonce de ce circuit, le prix affiché est celui du propriétaire
+    | **majoré** de notre part (14 %). Quand le client paie, PasseTemps garde
+    | 10 % de cette part ; le reste — le prix du propriétaire et 90 % de la
+    | part — est transmis aux associés **à chaque paiement**, sans attendre la
+    | fin du séjour. Les frais PayDunya sortent de ce qui est transmis.
+    |
+    | Les autres annonces ne changent pas : barème ci-dessus, reversement au
+    | propriétaire après le séjour.
+    |
+    */
+    'associes' => [
+        'majoration'      => (float) env('ASSOCIES_MAJORATION', 0.14),
+        'part_passetemps' => (float) env('ASSOCIES_PART_PASSETEMPS', 0.10),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | PayDunya
     |--------------------------------------------------------------------------
     */

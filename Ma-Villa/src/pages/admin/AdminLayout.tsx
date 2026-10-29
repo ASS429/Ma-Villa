@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutGrid, Building2, Users, MessageSquare, CreditCard,
-  Menu, X, Sun, Moon, LogOut, ArrowLeft, BellRing, ScrollText, Banknote, Undo2, Send, Palette, ShoppingBag, Inbox, Mail, ConciergeBell,
+  Menu, X, Sun, Moon, LogOut, ArrowLeft, BellRing, ScrollText, Banknote, Undo2, Send, Palette, ShoppingBag, Inbox, Mail, ConciergeBell, CalendarCheck,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
@@ -17,7 +17,7 @@ interface Entree {
   Icone: typeof LayoutGrid
   end?: boolean
   /** Clé du compteur d'attente, s'il y en a un. */
-  attente?: 'villas' | 'demandes' | 'total'
+  attente?: 'villas' | 'demandes' | 'reservations' | 'total'
 }
 
 const ENTREES: Entree[] = [
@@ -25,6 +25,7 @@ const ENTREES: Entree[] = [
   { to: '/admin/tableau-de-bord', label: 'Tableau de bord', Icone: LayoutGrid },
   { to: '/admin/villas',       label: 'Hébergements',    Icone: Building2,      attente: 'villas' },
   // Transport et repas demandés par les voyageurs : une réponse promise sous deux heures.
+  { to: '/admin/reservations', label: 'Réservations',   Icone: CalendarCheck,  attente: 'reservations' },
   { to: '/admin/demandes',     label: 'Demandes',        Icone: ConciergeBell,  attente: 'demandes' },
   { to: '/admin/utilisateurs', label: 'Utilisateurs',    Icone: Users },
   { to: '/admin/avis',         label: 'Avis',            Icone: MessageSquare },
@@ -55,7 +56,7 @@ function initiales(nom: string) {
  * jours et que leurs propriétaires, eux, attendent aussi.
  */
 function useAttentes() {
-  const [attentes, setAttentes] = useState<Compteurs>({ villas: 0, demandes: 0, total: 0 })
+  const [attentes, setAttentes] = useState<Compteurs>({ villas: 0, demandes: 0, reservations: 0, total: 0 })
   const emplacement = useLocation()
 
   const relire = useCallback(() => {
@@ -69,6 +70,10 @@ function useAttentes() {
         setAttentes({
           villas: lignes.find((l) => l.cle === 'villas')?.compte ?? 0,
           demandes: lignes.find((l) => l.cle === 'demandes_service')?.compte ?? 0,
+          // Les demandes à confirmer et les paiements à transmettre : les deux
+          // se traitent sur le même écran.
+          reservations: (lignes.find((l) => l.cle === 'demandes_reservation')?.compte ?? 0)
+            + (lignes.find((l) => l.cle === 'transmissions')?.compte ?? 0),
           total: r.data?.total ?? 0,
         })
       })
@@ -90,7 +95,7 @@ function useAttentes() {
   return attentes
 }
 
-interface Compteurs { villas: number; demandes: number; total: number }
+interface Compteurs { villas: number; demandes: number; reservations: number; total: number }
 
 function Navigation({ attentes, onNaviguer }: { attentes: Compteurs; onNaviguer?: () => void }) {
   return (

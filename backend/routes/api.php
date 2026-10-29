@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AttentesController;
 use App\Http\Controllers\Api\AvisController;
+use App\Http\Controllers\Api\CircuitAssociesController;
 use App\Http\Controllers\Api\ConfigurationController;
 use App\Http\Controllers\Api\DemandeServiceController;
 use App\Http\Controllers\Api\DiagnosticCourrielController;
@@ -213,6 +214,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/remboursements', [RemboursementController::class, 'index']);
         Route::get('/reservations/{reservation}/remboursement', [RemboursementController::class, 'proposition']);
         Route::post('/reservations/{reservation}/remboursement', [RemboursementController::class, 'store'])
+            ->middleware('throttle:20,1');
+
+        // Pendant les JOJ : les demandes que personne d'autre ne verrait, et
+        // ce qui est dû aux associés à chaque paiement.
+        Route::get('/reservations', [CircuitAssociesController::class, 'demandes']);
+        Route::get('/transmissions', [CircuitAssociesController::class, 'transmissions']);
+        Route::patch('/paiements/{paiement}/transmission', [CircuitAssociesController::class, 'noterTransmission'])
+            ->middleware('throttle:20,1');
+        Route::post('/utilisateurs/{user}/annonces', [CircuitAssociesController::class, 'transfererAnnonces'])
             ->middleware('throttle:20,1');
 
         Route::get('/reversements', [ReversementController::class, 'index']);

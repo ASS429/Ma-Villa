@@ -48,6 +48,8 @@ class AttentesController extends Controller
     public function __invoke(): JsonResponse
     {
         $lignes = array_values(array_filter([
+            $this->demandesDeReservation(),
+            $this->transmissionsDues(),
             $this->demandesDeService(),
             $this->annoncesAValider(),
             $this->brouillonsBloques(),
@@ -109,6 +111,64 @@ class AttentesController extends Controller
                 : "La page promet une réponse sous {$delai} h, sur WhatsApp.",
             'lien'         => '/admin/demandes',
             'libelle_lien' => 'Répondre',
+        ];
+    }
+
+    /**
+     * Une demande de réservation sans réponse s'annule seule au bout du délai.
+     * Sur un compte que personne n'ouvre, c'est la console qui répond : la
+     * ligne devient urgente à mi-délai, quand il reste de quoi joindre le
+     * gérant.
+     */
+    private function demandesDeReservation(): ?array
+    {
+        $attente = Reservation::where('statut', 'en_attente');
+        $compte = (clone $attente)->count();
+
+        if ($compte === 0) {
+            return null;
+        }
+
+        $delai = (int) config('reservations.delai_reponse_heures');
+        $plusAncienne = (clone $attente)->min('created_at');
+        $heures = $plusAncienne ? (int) Carbon::parse($plusAncienne)->diffInHours(now()) : 0;
+        $restant = max(0, $delai - $heures);
+
+        return [
+            'cle'          => 'demandes_reservation',
+            'gravite'      => $heures * 2 >= $delai ? 'urgent' : 'action',
+            'compte'       => $compte,
+            'titre'        => $compte === 1
+                ? 'Une demande de réservation attend une réponse'
+                : "{$compte} demandes de réservation attendent une réponse",
+            'detail'       => "Sans réponse, elle s'annule seule : la plus ancienne dans {$restant} h.",
+            'lien'         => '/admin/reservations',
+            'libelle_lien' => 'Répondre',
+        ];
+    }
+
+    /** L'argent du circuit des associés leur est dû dès le paiement. */
+    private function transmissionsDues(): ?array
+    {
+        $dus = Paiement::query()->aTransmettre()->get();
+
+        if ($dus->isEmpty()) {
+            return null;
+        }
+
+        $compte = $dus->count();
+
+        return [
+            'cle'          => 'transmissions',
+            'gravite'      => 'urgent',
+            'compte'       => $compte,
+            'montant'      => $dus->sum(fn (Paiement $p) => $p->aTransmettre()),
+            'titre'        => $compte === 1
+                ? 'Un paiement à transmettre aux associés'
+                : "{$compte} paiements à transmettre aux associés",
+            'detail'       => 'Leur part leur revient à chaque paiement, frais PayDunya déduits.',
+            'lien'         => '/admin/reservations',
+            'libelle_lien' => 'Transmettre',
         ];
     }
 

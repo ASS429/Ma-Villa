@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Paiement;
 use App\Models\Reservation;
+use App\Models\User;
 use App\Services\Commission;
 use App\Services\PayDunya;
 use App\Services\Push;
@@ -63,7 +64,15 @@ class PaiementController extends Controller
             return response()->json(['message' => 'Cette réservation est déjà réglée.'], 409);
         }
 
-        $repartition = Commission::pour($reservation->montant_total);
+        $reservation->loadMissing('logement.villa');
+        $villa = $reservation->logement->villa;
+
+        // La majoration de l'annonce, pas le barème : sur le circuit des
+        // associés, le prix affiché comprend déjà notre part.
+        $repartition = Commission::pour(
+            $reservation->montant_total,
+            $villa->passeParLesAssocies() ? $villa->majoration : null,
+        );
 
         // Le prestataire refuse en dessous d'un plancher. Le laisser refuser
         // renverrait une 502 : un échec qui accuse la plateforme, alors que le
@@ -75,8 +84,6 @@ class PaiementController extends Controller
                     .'Réglez directement avec le propriétaire, qui vous contactera.',
             ], 422);
         }
-
-        $reservation->loadMissing('logement.villa');
 
         try {
             $facture = $this->paydunya->creerFacture(
@@ -115,7 +122,7 @@ class PaiementController extends Controller
                 'reference'      => $reference,
                 'token_paydunya' => $facture['token'],
             ]);
-            $paiement->appliquerRepartition($repartition);
+            $paiement->appliquerRepartition($repartition, $villa->circuit);
             $paiement->save();
 
             $resultat = $this->lancerSoftpay(
@@ -403,6 +410,21 @@ class PaiementController extends Controller
                 'url' => '/dashboard/reservations',
                 'groupe' => "reservation-{$paiement->reservation_id}",
             ]);
+
+            // Les associés attendent leur part à chaque paiement : la
+            // transmission est un geste manuel, il faut le savoir tout de suite.
+            if ($paiement->circuit === 'associe') {
+                $paiement->refresh();
+                foreach (User::where('role', 'admin')->get() as $admin) {
+                    $this->push->versUtilisateur($admin, [
+                        'titre' => 'À transmettre aux associés',
+                        'corps' => $paiement->reservation->logement->villa->nom.' — '
+                            .number_format($paiement->aTransmettre(), 0, ',', ' ').' FCFA',
+                        'url' => '/admin/reservations',
+                        'groupe' => "transmission-{$paiement->id}",
+                    ]);
+                }
+            }
         }
 
         return $verifie['statut'];

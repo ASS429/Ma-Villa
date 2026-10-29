@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Search, Trash2, Users, ShieldCheck } from 'lucide-react'
+import { Search, Trash2, Users, ShieldCheck, ArrowRightLeft } from 'lucide-react'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
@@ -79,6 +79,22 @@ export default function AdminUtilisateurs() {
       toast.erreur(messageErreur(err, "Le compte n'a pas pu être supprimé."))
     } finally {
       setASupprimer(null)
+    }
+  }
+
+  // Clé d'Or, SEN IMMO : leurs annonces ont été créées sous un compte
+  // d'attente, et leur reviennent quand ils s'inscrivent eux-mêmes.
+  const rattacher = async (u: Utilisateur) => {
+    const email = window.prompt(
+      `Rattacher les ${u.villas_count ?? 0} annonce(s) de ${u.name} à quel compte ? Adresse e-mail de son inscription :`
+    )
+    if (!email?.trim()) return
+    try {
+      const r = await api.post(`/admin/utilisateurs/${u.id}/annonces`, { email: email.trim() })
+      toast.succes(r.data?.message ?? 'Annonces rattachées.')
+      reessayer()
+    } catch (err) {
+      toast.erreur(messageErreur(err, "Les annonces n'ont pas pu être rattachées."))
     }
   }
 
@@ -205,6 +221,17 @@ export default function AdminUtilisateurs() {
                           <ShieldCheck size={14} /> protégé
                         </span>
                       ) : (
+                        <>
+                        {u.role === 'proprietaire' && (u.villas_count ?? 0) > 0 && (
+                          <Button
+                            variante="discret"
+                            taille="sm"
+                            onClick={() => rattacher(u)}
+                            iconeAvant={<ArrowRightLeft size={15} />}
+                            aria-label={`Rattacher les annonces de ${u.name} à un autre compte`}
+                            title="Rattacher ses annonces à un autre compte"
+                          />
+                        )}
                         <Button
                           variante="discret"
                           taille="sm"
@@ -212,6 +239,7 @@ export default function AdminUtilisateurs() {
                           iconeAvant={<Trash2 size={15} />}
                           aria-label={`Supprimer le compte de ${u.name}`}
                         />
+                        </>
                       )}
                     </td>
                   </tr>

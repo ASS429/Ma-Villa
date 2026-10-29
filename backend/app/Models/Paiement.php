@@ -24,6 +24,9 @@ class Paiement extends Model
             'taux_commission'      => 'decimal:4',
             'reponse_prestataire'  => 'array',
             'paye_le'              => 'datetime',
+            'part_passetemps'      => 'decimal:2',
+            'transmis_le'          => 'datetime',
+            'transmis_montant'     => 'decimal:2',
         ];
     }
 
@@ -83,7 +86,11 @@ class Paiement extends Model
      */
     public function scopeExigible(Builder $query): Builder
     {
+        // Le circuit des associés ne doit jamais apparaître ici : son argent
+        // leur est transmis à chaque paiement, le reverser aussi au
+        // propriétaire après le séjour, ce serait payer deux fois.
         return $query->abouti()
+            ->where('circuit', 'direct')
             ->whereNull('reversement_id')
             ->whereHas('reservation', fn (Builder $q) => $q
                 ->where('statut', '!=', 'annulee')
@@ -94,6 +101,7 @@ class Paiement extends Model
     public function scopeAVenir(Builder $query): Builder
     {
         return $query->abouti()
+            ->where('circuit', 'direct')
             ->whereNull('reversement_id')
             ->whereHas('reservation', fn (Builder $q) => $q
                 ->where('statut', '!=', 'annulee')
@@ -107,7 +115,7 @@ class Paiement extends Model
      * de barème ne doit jamais réécrire l'histoire comptable des réservations
      * déjà réglées.
      */
-    public function appliquerRepartition(Commission $repartition): void
+    public function appliquerRepartition(Commission $repartition, string $circuit = 'direct'): void
     {
         $this->fill([
             'montant'              => $repartition->montantClient,
@@ -115,6 +123,37 @@ class Paiement extends Model
             'montant_proprietaire' => $repartition->montantProprietaire,
             'taux_commission'      => $repartition->taux,
         ]);
+
+        // Hors de `$fillable` : le circuit décide à qui part l'argent.
+        $associes = $circuit === 'associe';
+        $this->forceFill([
+            'circuit'         => $associes ? 'associe' : 'direct',
+            // Arrondie à l'inférieur : à franc près, le doute profite aux
+            // associés, qui paient aussi les frais PayDunya.
+            'part_passetemps' => $associes
+                ? (int) floor($repartition->commission * (float) config('paiement.associes.part_passetemps'))
+                : null,
+        ]);
+    }
+
+    /**
+     * Encaissé sur une annonce du circuit des associés, et pas encore transmis.
+     *
+     * Une réservation annulée en sort : son argent attend la décision de
+     * remboursement (« Ce qui attend »), pas une transmission.
+     */
+    public function scopeATransmettre(Builder $query): Builder
+    {
+        return $query->abouti()
+            ->where('circuit', 'associe')
+            ->whereNull('transmis_le')
+            ->whereHas('reservation', fn (Builder $q) => $q->where('statut', '!=', 'annulee'));
+    }
+
+    /** Ce que les associés doivent recevoir : tout, sauf notre part. */
+    public function aTransmettre(): int
+    {
+        return (int) round((float) $this->montant - (float) $this->part_passetemps);
     }
 
     public function estRegle(): bool

@@ -39,13 +39,30 @@ final class Commission
         public readonly int $montantProprietaire,
     ) {}
 
-    public static function pour(int|float|string $montantClient): self
+    /**
+     * `$majoration` : l'annonce d'un propriétaire qui passe par un associé
+     * (JOJ) affiche son prix **augmenté** de notre part — 50 000 F demandés,
+     * 57 000 F affichés à 14 %. Le propriétaire doit alors retrouver son prix
+     * exact, quelle que soit la durée : le barème par tranches, calculé sur le
+     * total, le ferait varier avec le nombre de nuits.
+     */
+    public static function pour(int|float|string $montantClient, int|float|string|null $majoration = null): self
     {
         // Le FCFA n'a pas de subdivision : tout se raisonne en unités entières.
         $client = (int) round((float) $montantClient);
 
         if ($client <= 0) {
             return new self(0, 0.0, 0, 0);
+        }
+
+        if ($majoration !== null && (float) $majoration > 0) {
+            // Arrondi au franc supérieur pour le propriétaire : le doute lui
+            // profite, comme pour le barème. Le epsilon absorbe 57 000 / 1,14
+            // qui tombe à 50 000,000…01 en virgule flottante.
+            $proprietaire = min($client, (int) ceil($client / (1 + (float) $majoration) - 1e-6));
+            $commission = $client - $proprietaire;
+
+            return new self($client, $commission / $client, $commission, $proprietaire);
         }
 
         $seuil  = (int) config('paiement.commission.seuil');

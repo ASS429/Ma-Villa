@@ -162,6 +162,19 @@ class ReservationController extends Controller
             'groupe' => "reservation-{$reservation->id}",
         ]);
 
+        // L'administration aussi : certains comptes ne sont ouverts par
+        // personne (Clé d'Or, tenu par un associé), et une demande sans
+        // réponse s'annule seule au bout du délai. La console peut confirmer.
+        foreach (User::where('role', 'admin')->get() as $admin) {
+            $this->push->versUtilisateur($admin, [
+                'titre' => 'Demande de réservation',
+                'corps' => "{$reservation->logement->villa->nom} — du "
+                    .$this->jour($reservation->date_debut).' au '.$this->jour($reservation->date_fin),
+                'url' => '/admin/reservations',
+                'groupe' => "reservation-{$reservation->id}",
+            ]);
+        }
+
         // La réponse va au client : le numéro de la villa n'y figure qu'une
         // fois le séjour engagé, et les coordonnées personnelles du
         // propriétaire jamais — elles voyageaient avec la relation chargée

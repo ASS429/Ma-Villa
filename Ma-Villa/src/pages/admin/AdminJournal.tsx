@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import {
-  ScrollText, CheckCircle2, XCircle, Star, StarOff, UserX, MessageSquareX,
+  ScrollText, CheckCircle2, XCircle, Star, StarOff, UserX, MessageSquareX, HandCoins, ArrowRightLeft,
 } from 'lucide-react'
 import api from '../../services/api'
 import { useRequete } from '../../lib/useRequete'
@@ -35,6 +35,8 @@ const ACTIONS: Record<string, { libelle: string; Icone: typeof CheckCircle2; ton
   'villa.retiree_vedette': { libelle: 'Retirée de la vedette', Icone: StarOff, ton: 'var(--text-3)' },
   'compte.supprime': { libelle: 'Compte supprimé', Icone: UserX, ton: 'var(--danger)' },
   'avis.supprime': { libelle: 'Avis supprimé', Icone: MessageSquareX, ton: 'var(--danger)' },
+  'associes.transmission': { libelle: 'Transmis aux associés', Icone: HandCoins, ton: 'var(--success)' },
+  'villas.transferees': { libelle: 'Annonces rattachées', Icone: ArrowRightLeft, ton: 'var(--text-2)' },
 }
 
 const FILTRES = [
