@@ -101,7 +101,7 @@ export default function Boutique() {
       />
       <Navbar />
 
-      <main className="boutique">
+      <div className="boutique">
         <header className="boutique-entete">
           <p className="boutique-surtitre">
             <Palette size={15} aria-hidden="true" />
@@ -228,7 +228,7 @@ export default function Boutique() {
             <Pagination page={resultat} onChange={setPage} unite={t.unite} />
           </>
         )}
-      </main>
+      </div>
 
       <Footer />
     </>

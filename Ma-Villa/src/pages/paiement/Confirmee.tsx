@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, Navigate } from 'react-router-dom'
 import { MapPin, Phone, CalendarPlus, MessageSquare, ChevronRight, WifiOff } from 'lucide-react'
 import api from '../../services/api'
 import { useRequete } from '../../lib/useRequete'
@@ -82,7 +82,8 @@ export default function Confirmee() {
   // l'écran d'accueil devient légitime : le client a maintenant quelque chose
   // à retrouver. Elle n'apparaît pas sur cet écran — il reste nu — mais à
   // partir d'ici, sur les écrans qui l'accueillent.
-  useEffect(() => { marquerPremiereReservation() }, [])
+  const paye = reservation?.paiement?.statut === 'reussi'
+  useEffect(() => { if (paye) marquerPremiereReservation() }, [paye])
 
   const villa = reservation?.logement.villa
   const paiement = reservation?.paiement
@@ -113,6 +114,13 @@ export default function Confirmee() {
       fin: reservation.date_fin,
       note: `Réservation PasseTemps n° ${reservation.id}${villa.telephone ? ` · propriétaire ${villa.telephone}` : ''}`,
     }, `sejour-${reservation.id}.ics`)
+  }
+
+  // On n'arrive ici qu'après un paiement réussi. Ouvert par son adresse sur
+  // une réservation non réglée, l'écran annonçait « 450 000 FCFA payés » : le
+  // tunnel, lui, dit où en est le règlement.
+  if (reservation && !paye) {
+    return <Navigate to={`/reservation/${id}/paiement`} replace />
   }
 
   return (

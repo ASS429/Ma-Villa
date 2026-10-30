@@ -48,7 +48,7 @@ export default function MesCommandes() {
       <Seo titre={t.seoTitre} description={t.seoDescription} />
       <Navbar />
 
-      <main className="boutique">
+      <div className="boutique">
         <Link to={lien('/boutique/')} className="oeuvre-retour">
           <ArrowLeft size={16} aria-hidden="true" />
           {t.retour}
@@ -107,7 +107,7 @@ export default function MesCommandes() {
             ))}
           </div>
         )}
-      </main>
+      </div>
 
       <Footer />
     </>

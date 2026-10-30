@@ -62,7 +62,7 @@ export default function OeuvreDetail() {
       />
       <Navbar />
 
-      <main className="oeuvre">
+      <div className="oeuvre">
         <Link to={lien('/boutique/')} className="oeuvre-retour">
           <ArrowLeft size={16} aria-hidden="true" />
           {t.tous}
@@ -200,7 +200,7 @@ export default function OeuvreDetail() {
             </div>
           </div>
         ) : null}
-      </main>
+      </div>
 
       <Footer />
     </>

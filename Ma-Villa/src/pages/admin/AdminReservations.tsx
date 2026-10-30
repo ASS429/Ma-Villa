@@ -196,7 +196,7 @@ export default function AdminReservations() {
               return (
                 <article key={d.id} className="panneau commande-admin">
                   <div className="commande-admin-haut">
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="commande-admin-titre">
                       <p className="tableau-fort">
                         {d.villa_id ? <Link to={`/hebergements/${d.villa_id}/`} className="underline underline-offset-2">{d.villa}</Link> : d.villa}
                         {d.logement ? ` · ${d.logement}` : ''}
@@ -236,7 +236,7 @@ export default function AdminReservations() {
             {(onglet === 'transmettre' ? aTransmettre : transmis).map((t) => (
               <article key={t.id} className="panneau commande-admin">
                 <div className="commande-admin-haut">
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="commande-admin-titre">
                     <p className="tableau-fort">{t.villa}{t.logement ? ` · ${t.logement}` : ''}</p>
                     <p className="tableau-second">
                       {t.client ?? '—'} · {periode(t.date_debut, t.date_fin)}

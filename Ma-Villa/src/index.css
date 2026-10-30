@@ -2280,6 +2280,9 @@ html.video-mode[data-theme="dark"] {
 .villes-404 a {
   display: inline-flex;
   align-items: center;
+  /* L'espace qui ouvre « hébergements à Dakar » disparaît dans un flex :
+     sans écart, on lisait « 9hébergements ». */
+  gap: 0.3em;
   min-height: 40px;
   padding: 0 var(--space-4);
   border: 1px solid var(--border);

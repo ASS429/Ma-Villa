@@ -113,6 +113,9 @@ export default function NouvelleVilla() {
     parametres.get('brouillon') ? Number(parametres.get('brouillon')) : null
   )
   const [logementId, setLogementId] = useState<number | null>(null)
+  // Retenu comme le logement : sans lui, revenir à l'étape du prix puis
+  // continuer créait un second tarif au lieu de corriger le premier.
+  const [tarifId, setTarifId] = useState<number | null>(null)
   const [photos, setPhotos] = useState<(Photo & { id?: number })[]>([])
   const [enregistre, setEnregistre] = useState(false)
   const [occupe, setOccupe] = useState(false)
@@ -163,6 +166,7 @@ export default function NouvelleVilla() {
           setLogement({ nom: premier.nom, type: premier.type, capacite: String(premier.capacite) })
           const t = premier.tarifs?.[0]
           if (t) {
+            setTarifId(t.id)
             setTarif({
               type_tarif: t.type_tarif, prix: String(t.prix),
               avec_clim: !!t.avec_clim, avec_buffet: !!t.avec_buffet,
@@ -267,14 +271,21 @@ export default function NouvelleVilla() {
 
       if (etape.cle === 'prix' && logementId && tarif.prix) {
         const nuitee = tarif.type_tarif === 'nuitee'
-        await api.post(`/logements/${logementId}/tarifs`, {
+        const charge = {
           type_tarif: tarif.type_tarif,
           prix: Number(tarif.prix),
           avec_clim: tarif.avec_clim,
           avec_buffet: tarif.avec_buffet,
           prix_semaine: nuitee && tarif.prix_semaine ? Number(tarif.prix_semaine) : null,
           prix_mois: nuitee && tarif.prix_mois ? Number(tarif.prix_mois) : null,
-        })
+        }
+
+        if (tarifId) {
+          await api.put(`/logements/${logementId}/tarifs/${tarifId}`, charge)
+        } else {
+          const { data } = await api.post(`/logements/${logementId}/tarifs`, charge)
+          setTarifId(data.id)
+        }
       }
 
       setEnregistre(true)

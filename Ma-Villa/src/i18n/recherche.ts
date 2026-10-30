@@ -90,7 +90,11 @@ const fr = {
     trierPar: 'Trier par',
     chargementImpossibleTitre: 'Chargement impossible',
     reessayer: 'Réessayer',
-    trouves: (n: number, nom: string | null) => `${n} ${nom ?? `villa${n > 1 ? 's' : ''}`} trouvée${n > 1 ? 's' : ''}`,
+    // Le participe s'accorde avec la catégorie : « 3 studios trouvées » se
+    // lisait sous le filtre Studio. Sans filtre, tous les types sont là : ce
+    // sont des hébergements, pas seulement des villas.
+    trouves: (n: number, nom: string | null, feminin = false) =>
+      `${n} ${nom ?? `hébergement${n > 1 ? 's' : ''}`} trouvé${nom && feminin ? 'e' : ''}${n > 1 ? 's' : ''}`,
     prixPar: (u: string) => ` · prix en FCFA / ${u}`,
     page: (p: number, d: number) => ` · page ${p}/${d}`,
     chargementCarte: 'Chargement de la carte…',

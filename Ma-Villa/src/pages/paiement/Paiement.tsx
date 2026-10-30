@@ -47,6 +47,23 @@ function raisonTechnique(err: unknown): string {
 }
 
 /**
+ * Les écrans d'état du tunnel (chargement, fermé, déjà réglé…) gardent la
+ * marque et la colonne du formulaire. Sans elles, le texte se collait au coin
+ * de l'écran et le bouton s'étirait sur toute la largeur.
+ */
+function EcranEtat({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="tunnel">
+      <Seo titre="Paiement" description="Réglez votre réservation." indexable={false} />
+      <div className="tunnel-marque">
+        <Marque taille="sm" />
+      </div>
+      <section className="tunnel-corps">{children}</section>
+    </div>
+  )
+}
+
+/**
  * Tunnel de paiement — planche 12.
  *
  * Aucune animation décorative ici : chaque milliseconde ajoutée entre un
@@ -219,18 +236,18 @@ export default function Paiement() {
   }
 
   if (chargement) {
-    return <div className="tunnel"><p className="th-text-2 text-sm">Chargement…</p></div>
+    return <EcranEtat><p className="th-text-2 text-sm">Chargement…</p></EcranEtat>
   }
 
   if (erreur || !reservation) {
     return (
-      <div className="tunnel">
+      <EcranEtat>
         <p className="th-text-1 font-medium mb-2">Réservation introuvable</p>
         <p className="th-text-2 text-sm mb-6">{erreur}</p>
         <Button variante="secondaire" taille="sm" onClick={() => navigate('/dashboard/reservations')}>
           Mes réservations
         </Button>
-      </div>
+      </EcranEtat>
     )
   }
 
@@ -238,7 +255,7 @@ export default function Paiement() {
   // tout de suite la confirmation plutôt qu'un formulaire condamné.
   if (reservation.paiement?.statut === 'reussi') {
     return (
-      <div className="tunnel">
+      <EcranEtat>
         <p className="th-text-1 font-medium mb-2">Cette réservation est déjà réglée</p>
         <p className="th-text-2 text-sm mb-6">
           Référence {reservation.paiement.reference ?? '—'}.
@@ -246,7 +263,7 @@ export default function Paiement() {
         <Button variante="secondaire" taille="sm" onClick={() => navigate(`/reservation/${id}/confirmee`)}>
           Voir la confirmation
         </Button>
-      </div>
+      </EcranEtat>
     )
   }
 
@@ -255,20 +272,20 @@ export default function Paiement() {
   // vérifiable — l'écran ne doit pas cacher un débit qui attend sa confirmation.
   if (!reservations.ouvertes && reservation.paiement?.statut !== 'en_attente') {
     return (
-      <div className="tunnel">
+      <EcranEtat>
         <div className="mb-6">
           <ContactReservation />
         </div>
         <Button variante="secondaire" taille="sm" onClick={() => navigate('/dashboard/reservations')}>
           Mes réservations
         </Button>
-      </div>
+      </EcranEtat>
     )
   }
 
   if (!config.actif) {
     return (
-      <div className="tunnel">
+      <EcranEtat>
         <p className="th-text-1 font-medium mb-2">Paiement en ligne pas encore ouvert</p>
         <p className="th-text-2 text-sm mb-6">
           Le règlement se fait directement avec le propriétaire, qui vous contactera.
@@ -276,7 +293,7 @@ export default function Paiement() {
         <Button variante="secondaire" taille="sm" onClick={() => navigate('/dashboard/reservations')}>
           Mes réservations
         </Button>
-      </div>
+      </EcranEtat>
     )
   }
 

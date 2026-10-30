@@ -97,8 +97,9 @@ export default function Profil() {
             </div>
           )}
           <div>
-            <label className="text-xs th-text-2 mb-1.5 block">Nom</label>
+            <label className="text-xs th-text-2 mb-1.5 block" htmlFor="profil-nom">Nom</label>
             <input
+              id="profil-nom"
               type="text"
               required
               value={info.name}
@@ -107,8 +108,10 @@ export default function Profil() {
             />
           </div>
           <div>
-            <label className="text-xs th-text-2 mb-1.5 block">Email</label>
+            <label className="text-xs th-text-2 mb-1.5 block" htmlFor="profil-email">Email</label>
             <input
+              id="profil-email"
+              autoComplete="email"
               type="email"
               required
               value={info.email}
@@ -117,8 +120,10 @@ export default function Profil() {
             />
           </div>
           <div>
-            <label className="text-xs th-text-2 mb-1.5 block">Téléphone</label>
+            <label className="text-xs th-text-2 mb-1.5 block" htmlFor="profil-telephone">Téléphone</label>
             <input
+              id="profil-telephone"
+              autoComplete="tel"
               type="tel"
               value={info.phone}
               onChange={(e) => { setInfo({ ...info, phone: e.target.value }); setInfoSuccess(false) }}
@@ -175,8 +180,10 @@ export default function Profil() {
             </div>
           )}
           <div>
-            <label className="text-xs th-text-2 mb-1.5 block">Mot de passe actuel</label>
+            <label className="text-xs th-text-2 mb-1.5 block" htmlFor="profil-mdp-actuel">Mot de passe actuel</label>
             <input
+              id="profil-mdp-actuel"
+              autoComplete="current-password"
               type="password"
               value={pwd.current_password}
               onChange={(e) => { setPwd({ ...pwd, current_password: e.target.value }); setPwdSuccess(false) }}
@@ -184,8 +191,10 @@ export default function Profil() {
             />
           </div>
           <div>
-            <label className="text-xs th-text-2 mb-1.5 block">Nouveau mot de passe</label>
+            <label className="text-xs th-text-2 mb-1.5 block" htmlFor="profil-mdp-nouveau">Nouveau mot de passe</label>
             <input
+              id="profil-mdp-nouveau"
+              autoComplete="new-password"
               type="password"
               value={pwd.password}
               onChange={(e) => { setPwd({ ...pwd, password: e.target.value }); setPwdSuccess(false) }}
@@ -193,8 +202,10 @@ export default function Profil() {
             />
           </div>
           <div>
-            <label className="text-xs th-text-2 mb-1.5 block">Confirmer le nouveau mot de passe</label>
+            <label className="text-xs th-text-2 mb-1.5 block" htmlFor="profil-mdp-confirmation">Confirmer le nouveau mot de passe</label>
             <input
+              id="profil-mdp-confirmation"
+              autoComplete="new-password"
               type="password"
               value={pwd.password_confirmation}
               onChange={(e) => { setPwd({ ...pwd, password_confirmation: e.target.value }); setPwdSuccess(false) }}

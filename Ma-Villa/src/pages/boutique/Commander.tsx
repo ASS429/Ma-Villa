@@ -116,7 +116,7 @@ export default function Commander() {
       <Seo titre={t.seoTitre} description={t.seoDescription} />
       <Navbar />
 
-      <main className="achat">
+      <div className="achat">
         <Link to={lien(`/boutique/${id}/`)} className="oeuvre-retour">
           <ArrowLeft size={16} aria-hidden="true" />
           {t.retour}
@@ -290,7 +290,7 @@ export default function Commander() {
             </div>
           </form>
         ) : null}
-      </main>
+      </div>
     </>
   )
 }

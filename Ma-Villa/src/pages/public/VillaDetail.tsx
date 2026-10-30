@@ -248,8 +248,14 @@ export default function VillaDetail() {
       .catch(() => setPeutNoter(false))
   }, [user, id])
 
+  // Un seul logement réservable, une seule formule : rien à choisir, donc rien
+  // à oublier — ils valent choix. Le client remplissait ses dates, demandait à
+  // réserver, et n'apprenait qu'alors qu'il fallait cliquer plus haut.
+  const reservables = villa?.logements.filter((l) => l.disponible && l.tarifs.length > 0) ?? []
   const logement = villa?.logements.find((l) => l.id === Number(reservation.logement_id))
+    ?? (reservables.length === 1 ? reservables[0] : undefined)
   const tarif = logement?.tarifs.find((t) => t.id === Number(reservation.tarif_id))
+    ?? (logement?.tarifs.length === 1 ? logement.tarifs[0] : undefined)
 
   // Récapitulatif de prix : le client validait sans jamais voir le total. Même
   // calcul que le serveur, prix de la semaine ou du mois compris.
@@ -301,6 +307,12 @@ export default function VillaDetail() {
 
     setErreurResa('')
 
+    // Sans logement ni formule choisis, la demande partait avec des zéros et
+    // revenait en « Le champ logement id sélectionné est invalide ».
+    if (!logement || !tarif) {
+      setErreurResa(logement ? t.choisirFormule : t.choisirLogement)
+      return
+    }
     if (conflitDates) {
       setErreurResa(t.dejaPris)
       return
@@ -317,8 +329,8 @@ export default function VillaDetail() {
     setEnvoiResa(true)
     try {
       const { data: creee } = await api.post('/reservations', {
-        logement_id: Number(reservation.logement_id),
-        tarif_id: Number(reservation.tarif_id),
+        logement_id: logement.id,
+        tarif_id: tarif.id,
         date_debut: reservation.date_debut,
         date_fin: reservation.date_fin,
         nb_personnes: Number(reservation.nb_personnes),

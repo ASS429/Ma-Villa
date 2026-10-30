@@ -265,9 +265,9 @@ export default function AdminLayout() {
           </>
         )}
 
-        <main className="console-principal">
+        <div className="console-principal">
           <Outlet />
-        </main>
+        </div>
       </div>
     </div>
   )

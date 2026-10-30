@@ -51,8 +51,10 @@ export default function AdminVillas() {
   const [statut, setStatut] = useState(
     ONGLETS.some((o) => o.valeur === demande) ? (demande as string) : 'en_attente'
   )
-  // Le panneau de motif : ouvert sur une villa, il porte la raison du retrait.
+  // Le panneau de motif : ouvert sur une villa, il porte la raison du refus
+  // (annonce en attente) ou du retrait (annonce en ligne).
   const [aRetirer, setARetirer] = useState<Villa | null>(null)
+  const refus = statut === 'en_attente'
   const [motif, setMotif] = useState('')
   const [recherche, setRecherche] = useState('')
   const [terme, setTerme] = useState('')
@@ -88,7 +90,7 @@ export default function AdminVillas() {
       toast.succes(
         nouveau === 'validee'
           ? `« ${villa.nom} » validée et publiée.`
-          : `« ${villa.nom} » retirée. Le propriétaire reçoit le motif.`
+          : `« ${villa.nom} » ${refus ? 'refusée' : 'retirée'}. Le propriétaire reçoit le motif.`
       )
       setARetirer(null)
       setMotif('')
@@ -269,9 +271,13 @@ export default function AdminVillas() {
                       >
                         Valider
                       </Button>
+                      {/* Refuser exige un motif, comme retirer : sans le
+                          panneau, le refus partait vide et le serveur le
+                          renvoyait — aucune annonce en attente ne pouvait
+                          être refusée. */}
                       <Button
                         variante="secondaire" taille="sm"
-                        onClick={() => changerStatut(villa, 'rejetee')}
+                        onClick={() => { setARetirer(villa); setMotif('') }}
                         disabled={enCours === villa.id}
                         iconeAvant={<X size={15} />}
                       >
@@ -340,7 +346,7 @@ export default function AdminVillas() {
           <div className="modale" role="dialog" aria-modal="true" aria-labelledby="titre-retrait">
             <div className="modale-entete">
               <h2 id="titre-retrait" className="panneau-titre" style={{ margin: 0 }}>
-                Retirer « {aRetirer.nom} »
+                {refus ? 'Refuser' : 'Retirer'} « {aRetirer.nom} »
               </h2>
               <Button
                 variante="discret" taille="sm" onClick={() => setARetirer(null)}
@@ -349,14 +355,14 @@ export default function AdminVillas() {
             </div>
 
             <p className="console-sous-titre">
-              L'annonce quitte le site immédiatement. <strong>Le propriétaire
-              reçoit ce motif</strong> — c'est ce qui lui permet de corriger ou
-              de contester.
+              {refus ? "L'annonce ne sera pas publiée. " : "L'annonce quitte le site immédiatement. "}
+              <strong>Le propriétaire reçoit ce motif</strong> — c'est ce qui lui
+              permet de corriger ou de contester.
             </p>
 
             <div className="modale-formulaire">
               <ChampZoneTexte
-                label="Motif du retrait"
+                label={refus ? 'Motif du refus' : 'Motif du retrait'}
                 aide="Une phrase suffit. Elle sera lue par le propriétaire et consignée au journal."
                 rows={3}
                 value={motif}
@@ -374,7 +380,7 @@ export default function AdminVillas() {
                 disabled={motif.trim().length < 10 || enCours === aRetirer.id}
                 chargement={enCours === aRetirer.id}
               >
-                Retirer l'annonce
+                {refus ? "Refuser l'annonce" : "Retirer l'annonce"}
               </Button>
             </div>
           </div>

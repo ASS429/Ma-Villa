@@ -141,7 +141,7 @@ export default function CommandeDetail() {
       <Seo titre={t.seoTitre} description={t.seoDescription} />
       <Navbar />
 
-      <main className="achat">
+      <div className="achat">
         <Link to={chemin('/boutique/commandes')} className="oeuvre-retour">
           <ArrowLeft size={16} aria-hidden="true" />
           {t.mesCommandes}
@@ -284,7 +284,7 @@ export default function CommandeDetail() {
             )}
           </div>
         ) : null}
-      </main>
+      </div>
     </>
   )
 }

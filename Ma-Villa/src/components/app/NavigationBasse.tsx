@@ -37,7 +37,11 @@ export default function NavigationBasse() {
   // La confirmation fait exception : c'est le dernier écran du tunnel, et on
   // veut justement que le client reparte dans l'application — voir sa
   // réservation, écrire au propriétaire. Le masquer l'y enfermerait.
+  // La console d'administration a son propre menu : « Explorer » ou
+  // « Réservations » du voyageur y menaient hors de la console, et son
+  // « Réservations » à elle se confondait avec celui-ci.
   const masquee = (pathname.startsWith('/reservation/') && !pathname.endsWith('/confirmee'))
+    || pathname.startsWith('/admin')
     || pathname.startsWith('/paiement')
     || pathname.endsWith('/commander')
     || /^\/boutique\/commandes\/\d+/.test(pathname)

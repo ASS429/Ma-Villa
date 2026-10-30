@@ -129,10 +129,10 @@ export default function AdminOeuvres() {
 
       if (edition) {
         await api.patch(`/admin/oeuvres/${edition.id}`, charge)
-        toast.succes('Article mise à jour.')
+        toast.succes('Article mis à jour.')
       } else {
         const { data } = await api.post('/admin/oeuvres', charge)
-        toast.succes('Article créée. Ajoutez-lui des photos.')
+        toast.succes('Article créé. Ajoutez-lui des photos.')
         // On enchaîne sur l'édition : un article sans photo ne se vend pas, et
         // refermer ici obligerait à la rouvrir aussitôt.
         setCreation(false)
@@ -153,7 +153,7 @@ export default function AdminOeuvres() {
   const supprimer = async (oeuvre: Oeuvre) => {
     try {
       await api.delete(`/admin/oeuvres/${oeuvre.id}`)
-      toast.succes('Article supprimée.')
+      toast.succes('Article supprimé.')
       fermer()
       reessayer()
     } catch (err) {

@@ -24,7 +24,7 @@ interface Reservation {
   nb_personnes: number
   montant_total: number
   statut: 'en_attente' | 'confirmee' | 'annulee'
-  client?: { name: string; email: string }
+  client?: { id: number; name: string; email: string }
   logement: { nom: string; villa: { nom: string } }
   tarif: { type_tarif: string }
   paiement?: {
@@ -226,7 +226,8 @@ export default function Reservations() {
                 </ul>
 
                 <div className="reservation-bas">
-                  {r.client ? (
+                  {/* Le client n'a pas à relire son propre nom sur chaque carte. */}
+                  {r.client && r.client.id !== user?.id ? (
                     <p className="reservation-client">{r.client.name} · {r.client.email}</p>
                   ) : <span />}
 

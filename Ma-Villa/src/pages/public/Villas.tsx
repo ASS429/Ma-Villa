@@ -29,6 +29,9 @@ import { useLangue } from '../../i18n/langue'
 import { METIER, nomCategorie } from '../../i18n/metier'
 import { TEXTES_RECHERCHE } from '../../i18n/recherche'
 
+/** Pour accorder « trouvées » : une villa, mais un studio. */
+const CATEGORIES_FEMININES = new Set(['villa', 'residence', 'chambre', 'auberge', 'piscine'])
+
 const TRIS = [
   { value: '', cle: 'recentes' },
   { value: 'prix_asc', cle: 'prixAsc' },
@@ -332,8 +335,9 @@ export default function Villas() {
                 categorieActive
                   ? nomCategorie(categorieActive, langue, pagination.total > 1).toLowerCase()
                   : null,
+                CATEGORIES_FEMININES.has(categorieActive?.cle ?? ''),
               )}
-              {categorieActive && (
+              {categorieActive && METIER[langue].unite[categorieActive.unite_prix] && (
                 <span className="th-text-3">{t.prixPar(METIER[langue].unite[categorieActive.unite_prix])}</span>
               )}
               {pagination.dernierePage > 1 && (

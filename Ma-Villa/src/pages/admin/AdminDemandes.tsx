@@ -114,7 +114,7 @@ export default function AdminDemandes() {
           {liste.map((d) => (
             <article key={d.id} className="panneau commande-admin">
               <div className="commande-admin-haut">
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="commande-admin-titre">
                   <p className="tableau-fort">{d.libelle_prestation}</p>
                   <p className="tableau-second">
                     {d.reference} · {depuis(d.created_at)}
