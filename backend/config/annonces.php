@@ -22,6 +22,15 @@ return [
     'photos_max' => (int) env('ANNONCE_PHOTOS_MAX', 5),
 
     /*
+    | Le plus petit prix qu'un tarif accepte, en FCFA.
+    |
+    | Un garde-fou contre la faute de frappe, pas une politique tarifaire :
+    | « 4 » saisi pour « 40 000 » passait, et l'annonce s'affichait « à partir
+    | de 4 FCFA ». Le moins cher en ligne était à 17 000 F le 30 octobre 2026.
+    */
+    'prix_minimum' => (int) env('ANNONCE_PRIX_MINIMUM', 1000),
+
+    /*
     |--------------------------------------------------------------------------
     | Repères de prix à l'étape tarifaire
     |--------------------------------------------------------------------------

@@ -19,7 +19,7 @@ class TarifRequest extends FormRequest
             'type_tarif'  => 'required|in:journee,nuitee,demi_journee,pass',
             'avec_clim'   => 'boolean',
             'avec_buffet' => 'boolean',
-            'prix'        => 'required|numeric|min:0',
+            'prix'        => 'required|numeric|min:'.(int) config('annonces.prix_minimum'),
 
             /*
              | Les longs séjours, seulement sur une nuitée : une semaine de
@@ -30,14 +30,17 @@ class TarifRequest extends FormRequest
              | nuits ne serait jamais appliqué (`PrixSejour` prend le moins
              | cher), mais il s'afficherait sur la fiche comme une offre.
              */
-            'prix_semaine' => ['nullable', 'integer', 'min:1', 'prohibited_unless:type_tarif,nuitee', $this->auPlus(PrixSejour::NUITS_SEMAINE, 'la semaine')],
-            'prix_mois'    => ['nullable', 'integer', 'min:1', 'prohibited_unless:type_tarif,nuitee', $this->auPlus(PrixSejour::NUITS_MOIS, 'le mois')],
+            'prix_semaine' => ['nullable', 'integer', 'min:'.(int) config('annonces.prix_minimum'), 'prohibited_unless:type_tarif,nuitee', $this->auPlus(PrixSejour::NUITS_SEMAINE, 'la semaine')],
+            'prix_mois'    => ['nullable', 'integer', 'min:'.(int) config('annonces.prix_minimum'), 'prohibited_unless:type_tarif,nuitee', $this->auPlus(PrixSejour::NUITS_MOIS, 'le mois')],
         ];
     }
 
     public function messages(): array
     {
         return [
+            'prix.min' => 'Un prix commence à :min FCFA : vérifiez qu’il ne manque pas de zéros.',
+            'prix_semaine.min' => 'Un prix commence à :min FCFA : vérifiez qu’il ne manque pas de zéros.',
+            'prix_mois.min' => 'Un prix commence à :min FCFA : vérifiez qu’il ne manque pas de zéros.',
             'prix_semaine.prohibited_unless' => 'Un prix à la semaine ne se pose que sur une nuitée.',
             'prix_mois.prohibited_unless'    => 'Un prix au mois ne se pose que sur une nuitée.',
         ];

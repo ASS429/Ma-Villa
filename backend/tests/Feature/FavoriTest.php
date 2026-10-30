@@ -83,6 +83,29 @@ class FavoriTest extends TestCase
         $this->assertCount(2, $response->json());
     }
 
+    public function test_un_favori_porte_ce_qu_affiche_la_carte(): void
+    {
+        // Sans ces champs, chaque favori s'affichait « Tarif sur demande »,
+        // sans note ni capacité, alors que la même carte au catalogue les avait.
+        $client = User::factory()->client()->create();
+        $villa = Villa::factory()->validee()->create();
+        $logement = $villa->logements()->create(['nom' => 'Villa', 'type' => 'villa_entiere', 'capacite' => 8, 'disponible' => true]);
+        $logement->tarifs()->create(['type_tarif' => 'nuitee', 'prix' => 85000, 'avec_clim' => true]);
+        $logement->tarifs()->create(['type_tarif' => 'journee', 'prix' => 60000]);
+        Favori::create(['user_id' => $client->id, 'villa_id' => $villa->id]);
+
+        $carte = $this->actingAs($client, 'sanctum')->getJson('/api/favoris')->assertOk()->json('0.villa');
+
+        $this->assertEquals(60000, $carte['prix_min']);
+        $this->assertSame('journee', $carte['prix_min_unite']);
+        $this->assertEquals(8, $carte['capacite_max']);
+        $this->assertTrue((bool) $carte['a_climatisation']);
+        $this->assertArrayHasKey('note_moyenne', $carte);
+        $this->assertArrayHasKey('avis_count', $carte);
+        // Le numéro reste hors des listes, comme au catalogue.
+        $this->assertArrayNotHasKey('telephone', $carte);
+    }
+
     public function test_favoris_list_is_empty_when_none_added(): void
     {
         $client = User::factory()->client()->create();

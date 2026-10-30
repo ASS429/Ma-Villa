@@ -43,41 +43,8 @@ class VillaController extends Controller
             // d'appeler et de convenir d'un séjour hors plateforme. Il n'a de
             // toute façon aucun usage sur une carte de résultat.
             ->withoutTelephone()
-            // Agrégats affichés sur la carte de villa : sans eux le prix
-            // n'apparaît nulle part dans la liste.
-            ->withMin('tarifs as prix_min', 'prix')
-            ->withAvg('avis as note_moyenne', 'note')
-            ->withCount('avis')
-            ->withMax('logements as capacite_max', 'capacite')
-            // Équipements affichés sur la carte de villa. Ils ne sont pas
-            // stockés tels quels : ils se déduisent des logements et des
-            // formules tarifaires, sans charger toute l'arborescence.
-            // EXISTS plutôt qu'un SELECT 1 limité : ce dernier renvoyait `null`
-            // en l'absence de résultat, si bien que le champ valait tantôt
-            // true, tantôt null — jamais false. EXISTS renvoie toujours une
-            // valeur, que le transtypage du modèle ramène à un booléen sur les
-            // trois moteurs. L'alias vit dans le SQL : `addSelect` ne sait pas
-            // nommer une expression brute par clé de tableau.
-            ->addSelect(DB::raw(
-                "(exists (select 1 from logements"
-                ." where logements.villa_id = villas.id and logements.type = 'piscine'))"
-                .' as a_piscine'
-            ))
-            ->addSelect(DB::raw(
-                '(exists (select 1 from tarifs'
-                .' inner join logements as l_clim on l_clim.id = tarifs.logement_id'
-                .' where l_clim.villa_id = villas.id and tarifs.avec_clim = true))'
-                .' as a_climatisation'
-            ))
-            ->addSelect([
-                // Unité du tarif le moins cher : « à partir de 45 000 FCFA »
-                // n'a pas le même sens à la nuitée qu'à la demi-journée.
-                'prix_min_unite' => Tarif::select('tarifs.type_tarif')
-                    ->join('logements as l_unite', 'l_unite.id', '=', 'tarifs.logement_id')
-                    ->whereColumn('l_unite.villa_id', 'villas.id')
-                    ->orderBy('tarifs.prix')
-                    ->limit(1),
-            ]);
+            // Ce qu'affiche la carte : prix, note, capacité, équipements.
+            ->pourCarte();
 
         if ($request->ville) {
             // On filtre sur la ville **reconnue**, pas sur la saisie : un

@@ -40,12 +40,15 @@ class CategorieTest extends TestCase
 
     public function test_une_categorie_porte_son_unite_de_prix_et_ses_formules(): void
     {
-        // C'est tout l'intérêt du triplet : un studio se loue au mois, une
+        // C'est tout l'intérêt du triplet : un studio se loue à la nuit, une
         // piscine à la journée, et aucune des deux ne redessine la carte.
+        // Le studio annonçait « au mois » jusqu'au 30 octobre 2026, une unité
+        // qu'aucune de ses formules ne porte : la liste affichait « / undefined ».
         $studio = Categorie::where('cle', 'studio')->first();
         $piscine = Categorie::where('cle', 'piscine')->first();
 
-        $this->assertEquals('mois', $studio->unite_prix);
+        $this->assertEquals('nuitee', $studio->unite_prix);
+        $this->assertTrue($studio->accepteFormule($studio->unite_prix));
         $this->assertEquals('journee', $piscine->unite_prix);
 
         // Une piscine ne se loue pas à la nuitée.

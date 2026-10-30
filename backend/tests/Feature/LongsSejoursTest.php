@@ -206,6 +206,18 @@ class LongsSejoursTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors('prix_mois');
 
+        // « 4 » saisi pour « 40 000 » : un prix sous le plancher est une faute de frappe.
+        $this->actingAs($proprietaire, 'sanctum')
+            ->postJson("/api/logements/{$logement->id}/tarifs", ['type_tarif' => 'nuitee', 'prix' => 4])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('prix');
+        $this->actingAs($proprietaire, 'sanctum')
+            ->postJson("/api/logements/{$logement->id}/tarifs", [
+                'type_tarif' => 'nuitee', 'prix' => 50000, 'prix_semaine' => 4, 'prix_mois' => 4,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['prix_semaine', 'prix_mois']);
+
         // Sans prix de séjour, rien ne change : l'application mobile ne les envoie pas.
         $this->actingAs($proprietaire, 'sanctum')
             ->postJson("/api/logements/{$logement->id}/tarifs", ['type_tarif' => 'nuitee', 'prix' => 50000])

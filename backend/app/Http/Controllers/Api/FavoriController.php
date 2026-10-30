@@ -16,7 +16,7 @@ class FavoriController extends Controller
         // ne s'y lit pas, et le numéro de la villa n'est pas public.
         $favoris = $request->user()->favoris()
             ->whereHas('villa', fn ($q) => $q->where('statut', 'validee'))
-            ->with(['villa' => fn ($q) => $q->withoutTelephone(), 'villa.photos', 'villa.avis'])
+            ->with(['villa' => fn ($q) => $q->withoutTelephone()->pourCarte(), 'villa.photos'])
             ->get();
 
         return response()->json($favoris);

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
@@ -77,6 +78,52 @@ class Villa extends Model
     {
         return $this->statut === 'validee'
             || ($user !== null && ($user->id === $this->user_id || $user->role === 'admin'));
+    }
+
+    /**
+     * Ce qu'affiche une carte de villa : prix « à partir de » et son unité,
+     * note, capacité, équipements. Le catalogue et les favoris montrent la
+     * même carte ; les favoris s'en passaient, et chacun s'y lisait « Tarif
+     * sur demande », sans note ni capacité.
+     */
+    public function scopePourCarte(Builder $query): Builder
+    {
+        // Les agrégats d'abord : ils posent `villas.*`, qu'un `addSelect` brut
+        // remplacerait sinon par sa seule expression.
+        return $query
+            ->withMin('tarifs as prix_min', 'prix')
+            ->withAvg('avis as note_moyenne', 'note')
+            ->withCount('avis')
+            ->withMax('logements as capacite_max', 'capacite')
+            // Équipements affichés sur la carte de villa. Ils ne sont pas
+            // stockés tels quels : ils se déduisent des logements et des
+            // formules tarifaires, sans charger toute l'arborescence.
+            // EXISTS plutôt qu'un SELECT 1 limité : ce dernier renvoyait `null`
+            // en l'absence de résultat, si bien que le champ valait tantôt
+            // true, tantôt null — jamais false. EXISTS renvoie toujours une
+            // valeur, que le transtypage du modèle ramène à un booléen sur les
+            // trois moteurs. L'alias vit dans le SQL : `addSelect` ne sait pas
+            // nommer une expression brute par clé de tableau.
+            ->addSelect(DB::raw(
+                "(exists (select 1 from logements"
+                ." where logements.villa_id = villas.id and logements.type = 'piscine'))"
+                .' as a_piscine'
+            ))
+            ->addSelect(DB::raw(
+                '(exists (select 1 from tarifs'
+                .' inner join logements as l_clim on l_clim.id = tarifs.logement_id'
+                .' where l_clim.villa_id = villas.id and tarifs.avec_clim = true))'
+                .' as a_climatisation'
+            ))
+            ->addSelect([
+                // Unité du tarif le moins cher : « à partir de 45 000 FCFA »
+                // n'a pas le même sens à la nuitée qu'à la demi-journée.
+                'prix_min_unite' => Tarif::select('tarifs.type_tarif')
+                    ->join('logements as l_unite', 'l_unite.id', '=', 'tarifs.logement_id')
+                    ->whereColumn('l_unite.villa_id', 'villas.id')
+                    ->orderBy('tarifs.prix')
+                    ->limit(1),
+            ]);
     }
 
     public function scopeWithoutTelephone(Builder $query): Builder
