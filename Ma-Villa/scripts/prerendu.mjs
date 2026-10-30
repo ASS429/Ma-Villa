@@ -425,7 +425,7 @@ const FIXES_EN = {
   '': {
     titre: 'PasseTemps — Villas, residences and rooms in Senegal',
     description: 'Rent a villa, a residence, an apartment or a room in Senegal — Saly, Mbour, Dakar. '
-      + 'Prices shown, live availability, pay with Wave or Orange Money.',
+      + 'Prices shown, live availability.',
   },
   hebergements: {
     titre: 'All places to stay — PasseTemps',
@@ -434,8 +434,7 @@ const FIXES_EN = {
   },
   boutique: {
     titre: 'Shop — Senegalese crafts and makers — PasseTemps',
-    description: 'Clothing, basketry and crafts by Senegalese makers. Delivery in Dakar and every region, '
-      + 'pay with Wave or Orange Money.',
+    description: 'Clothing, basketry and crafts by Senegalese makers. Delivery in Dakar and every region.',
   },
   transport: {
     titre: 'Transport in Senegal: AIBD airport transfer and private driver — PasseTemps',
@@ -534,7 +533,7 @@ const PAGES_FIXES = [
     chemin: '',
     titre: 'PasseTemps — Villas, résidences et chambres au Sénégal',
     description: 'Louez une villa, une résidence, un appartement ou une chambre au Sénégal — Saly, '
-      + 'Mbour, Dakar. Tarifs affichés, disponibilités en temps réel, paiement Wave ou Orange Money.',
+      + 'Mbour, Dakar. Tarifs affichés, disponibilités en temps réel.',
     donnees: {
       '@context': 'https://schema.org',
       '@type': 'WebSite',
@@ -562,8 +561,10 @@ const PAGES_FIXES = [
     // catalogue réel est fait de vêtements et de vannerie, et les CGV parlent
     // déjà d'artisanat. Un visiteur venu par Google pour une toile repartait.
     titre: 'Boutique — artisanat et créateurs sénégalais — PasseTemps',
+    // Ni Wave ni Orange Money : le pré-rendu est figé au build, et un moyen de
+    // paiement fermé y resterait promis jusqu'au déploiement suivant.
     description: "Vêtements, vannerie et pièces d'artisanat de créateurs sénégalais. "
-      + 'Livraison à Dakar et dans toutes les régions, paiement Wave ou Orange Money.',
+      + 'Livraison à Dakar et dans toutes les régions.',
   },
   // Les cinq pages légales sont en vigueur depuis le 3 septembre 2026 : elles
   // portaient jusque-là une note d'attente, et les descriptions le disaient.

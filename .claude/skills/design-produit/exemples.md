@@ -18,6 +18,7 @@ a été trouvée : c'est souvent la partie la plus utile.
 | La fourchette de prix mélangeait une piscine à la journée et une villa entière | **navigateur** | comparer à formule et type égaux, sinon ne rien dire |
 | Un brouillon de vrai propriétaire était invisible de l'administration | l'exploitant | chaque statut a un écran qui le liste |
 | « Piscine seule », « Annonces vérifiées », « villas » pour tout le catalogue, et l'adresse promise privée, restés à l'écran des semaines après les décisions | relecture des vidéos (15/10) puis ESLint (30/10) | `passetemps/vocabulaire` ; dire vrai avant d'écrire |
+| Le propriétaire n'apprenait jamais la mise en ligne de son annonce (seulement un refus) ; la fiche disait « Écrivez-lui depuis vos réservations » alors qu'on ne pouvait plus réserver ; Google lisait « paiement Wave ou Orange Money » sur un paiement fermé | relecture (15/10), corrigé le 30/10 | prévenir de chaque changement d'état qui le concerne, par e-mail ; un texte suit la bascule ; une description figée au build ne promet que ce qui reste vrai dans tous les états |
 | Réserver depuis une fiche échouait dès qu'il fallait choisir un logement (`logement_id: 0`), latent tant que la réservation était fermée | tour complet en local (30/10) | éprouver le parcours **ouvert** même quand la production est fermée |
 
 ## Décisions à refaire

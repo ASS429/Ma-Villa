@@ -2,7 +2,7 @@
 
 const fr = {
   seo: {
-    description: 'Louez une villa, une résidence, un appartement ou une chambre au Sénégal — Saly, Mbour, Dakar. Tarifs affichés, disponibilités en temps réel, réservation directe auprès des propriétaires.',
+    description: 'Louez une villa, une résidence, un appartement ou une chambre au Sénégal — Saly, Mbour, Dakar. Tarifs affichés, disponibilités en temps réel.',
     site: 'Villas, résidences, appartements et chambres à louer au Sénégal',
   },
   hero: {
@@ -47,7 +47,7 @@ const fr = {
 
 const en: typeof fr = {
   seo: {
-    description: 'Rent a villa, a residence, an apartment or a room in Senegal — Saly, Mbour, Dakar. Prices shown, live availability, book directly with the owners.',
+    description: 'Rent a villa, a residence, an apartment or a room in Senegal — Saly, Mbour, Dakar. Prices shown, live availability.',
     site: 'Villas, residences, apartments and rooms to rent in Senegal',
   },
   hero: {

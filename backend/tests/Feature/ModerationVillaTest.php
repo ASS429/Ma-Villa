@@ -134,4 +134,61 @@ class ModerationVillaTest extends TestCase
 
         $this->assertSame('validee', $villa->refresh()->statut);
     }
+
+    /* ── Le propriétaire apprend la mise en ligne ────────────────── */
+
+    /**
+     * Il était prévenu d'un refus, jamais d'une validation : il envoyait son
+     * annonce, puis n'apprenait plus rien.
+     */
+    public function test_la_mise_en_ligne_previent_le_proprietaire_par_e_mail(): void
+    {
+        \Illuminate\Support\Facades\Notification::fake();
+        $villa = Villa::factory()->create(['statut' => 'en_attente']);
+        $proprietaire = User::findOrFail($villa->user_id);
+
+        $this->changer($villa, ['statut' => 'validee'])->assertOk();
+
+        \Illuminate\Support\Facades\Notification::assertSentTo(
+            $proprietaire,
+            \App\Notifications\AnnonceEnLigne::class,
+            fn ($notification, array $canaux) => $canaux === ['mail'] && $notification->villa->is($villa),
+        );
+    }
+
+    /** Revalider une annonce déjà en ligne ne change rien pour lui. */
+    public function test_revalider_une_annonce_en_ligne_ne_previent_pas(): void
+    {
+        \Illuminate\Support\Facades\Notification::fake();
+        $villa = Villa::factory()->validee()->create();
+
+        $this->changer($villa, ['statut' => 'validee'])->assertOk();
+
+        \Illuminate\Support\Facades\Notification::assertNothingSent();
+    }
+
+    /** `passetemps.sn` n'a pas de boîte : les comptes d'import y ont une adresse d'attente. */
+    public function test_une_adresse_sans_boite_ne_recoit_pas_d_e_mail(): void
+    {
+        \Illuminate\Support\Facades\Notification::fake();
+        $proprietaire = User::factory()->proprietaire()->create(['email' => 'cle-dor@passetemps.sn']);
+        $villa = Villa::factory()->create(['statut' => 'en_attente', 'user_id' => $proprietaire->id]);
+
+        $this->changer($villa, ['statut' => 'validee'])->assertOk();
+
+        \Illuminate\Support\Facades\Notification::assertNotSentTo($proprietaire, \App\Notifications\AnnonceEnLigne::class);
+        $this->assertSame('validee', $villa->refresh()->statut);
+    }
+
+    /** Sans la barre oblique finale, Render sert le gabarit générique. */
+    public function test_l_e_mail_mene_a_la_page_de_l_annonce(): void
+    {
+        $villa = Villa::factory()->validee()->create();
+        $proprietaire = User::findOrFail($villa->user_id);
+
+        $mail = (new \App\Notifications\AnnonceEnLigne($villa))->toMail($proprietaire);
+
+        $this->assertStringEndsWith("/hebergements/{$villa->id}/", $mail->actionUrl);
+        $this->assertStringContainsString($villa->nom, $mail->subject);
+    }
 }

@@ -567,7 +567,7 @@ export default function VillaDetail() {
                 {t.proprietaire} <span className="th-text-1 font-medium">{villa.proprietaire.name}</span>
               </span>
               <span className="text-sm th-text-3">
-                {t.ecrire}
+                {reservations.ouvertes ? t.ecrire : t.ecrireFerme}
               </span>
             </div>
 

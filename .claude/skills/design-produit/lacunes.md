@@ -6,8 +6,13 @@ trancher seul ; une réponse de l'utilisateur fait une règle.
 - **Adresse de l'annonce** : publique aujourd'hui. Faut-il la réserver, comme
   le numéro, au client dont la réservation est confirmée, et ne montrer que
   quartier et ville ? Décision de produit, pas encore prise.
-- **Propriétaire prévenu de la validation** : il est prévenu d'un refus ou
-  d'un retrait (avec motif), pas de la mise en ligne de son annonce.
+- **Refus et retrait par e-mail** : le propriétaire en est prévenu par
+  notification poussée seulement (avec motif), alors que la mise en ligne lui
+  arrive par e-mail. Un propriétaire sans notifications activées n'apprend pas
+  un refus.
+- **Image d'accueil** : une villa de luxe de synthèse, absente du catalogue.
+  La remplacer demande une vraie photo (annonce réelle avec l'accord écrit du
+  propriétaire, ou photo libre de 1 600 px).
 - **Synchronisation des calendriers** (Airbnb, Booking) : la fermeture des
   dates reste manuelle.
 - **Ville saisie en texte libre** : une ville inconnue est acceptée telle

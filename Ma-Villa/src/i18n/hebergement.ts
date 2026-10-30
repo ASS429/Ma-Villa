@@ -41,6 +41,9 @@ const fr = {
     avis: (n: number) => `${n} avis`,
     proprietaire: 'Propriétaire :',
     ecrire: 'Écrivez-lui depuis vos réservations, une fois votre demande envoyée.',
+    // Réservation suspendue : aucune demande ne peut être envoyée, donc aucune
+    // conversation ne peut s'ouvrir. On dit le chemin qui marche aujourd'hui.
+    ecrireFerme: 'Pour l’instant, réservations et questions passent par notre équipe : voyez le bloc « Réserver ».',
     localisation: 'Localisation',
     localisationDe: (nom: string) => `Localisation de ${nom}`,
     logementsTarifs: 'Logements et tarifs',
@@ -167,6 +170,7 @@ const en: typeof fr = {
     avis: (n: number) => `${n} review${n > 1 ? 's' : ''}`,
     proprietaire: 'Owner:',
     ecrire: 'You can message them from your bookings once your request is sent.',
+    ecrireFerme: 'For now, bookings and questions go through our team: see the “Book” box.',
     localisation: 'Location',
     localisationDe: (nom: string) => `Location of ${nom}`,
     logementsTarifs: 'Units and prices',

@@ -32,7 +32,7 @@ class NouvelleReservation extends Notification implements ShouldQueue
             ->subject('Nouvelle demande de réservation — '.$r->logement->villa->nom)
             ->greeting('Bonjour '.$notifiable->name.',')
             ->line('Vous avez reçu une nouvelle demande de réservation.')
-            ->line('**Villa** : '.$r->logement->villa->nom)
+            ->line('**Annonce** : '.$r->logement->villa->nom)
             ->line('**Logement** : '.$r->logement->nom)
             ->line('**Dates** : du '.$this->jour($r->date_debut).' au '.$this->jour($r->date_fin))
             ->line('**Voyageurs** : '.$r->nb_personnes)
@@ -41,7 +41,7 @@ class NouvelleReservation extends Notification implements ShouldQueue
             // accepté (même règle que son espace réservations).
             ->line('**Client** : '.$r->client->name)
             ->action('Répondre à la demande', rtrim(config('app.frontend_url'), '/').'/dashboard/reservations')
-            ->line('Merci de répondre rapidement : les clients réservent souvent plusieurs villas en parallèle.');
+            ->line('Merci de répondre rapidement : les clients réservent souvent plusieurs hébergements en parallèle.');
     }
 
     private function jour($date): string

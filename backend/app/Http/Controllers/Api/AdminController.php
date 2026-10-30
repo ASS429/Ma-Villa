@@ -353,9 +353,45 @@ class AdminController extends Controller
 
         if ($action !== 'villa.validee') {
             $this->prevenirDuRefus($villa, $donnees['motif'] ?? '', $action === 'villa.retiree');
+        } elseif ($avant !== 'validee') {
+            // Revalider une annonce déjà en ligne ne change rien pour lui :
+            // on ne le prévient que d'une vraie mise en ligne.
+            $this->prevenirDeLaMiseEnLigne($villa);
         }
 
         return response()->json($villa);
+    }
+
+    /**
+     * Le propriétaire apprend que son annonce est en ligne. Sans cela, il
+     * l'envoyait à la validation puis n'apprenait plus rien.
+     *
+     * Un échec d'envoi ne défait pas la validation : elle est faite, et le
+     * journal l'a consignée.
+     */
+    private function prevenirDeLaMiseEnLigne(Villa $villa): void
+    {
+        $proprietaire = $villa->proprietaire;
+        if (! $proprietaire) {
+            return;
+        }
+
+        try {
+            $proprietaire->notify(new \App\Notifications\AnnonceEnLigne($villa));
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Notification non envoyée', [
+                'notification' => \App\Notifications\AnnonceEnLigne::class,
+                'destinataire' => $proprietaire->id,
+                'erreur'       => $e->getMessage(),
+            ]);
+        }
+
+        app(\App\Services\Push::class)->versUtilisateur($proprietaire, [
+            'titre'  => 'Annonce en ligne',
+            'corps'  => $villa->nom.' est visible sur PasseTemps.',
+            'url'    => '/hebergements/'.$villa->id.'/',
+            'groupe' => "villa-{$villa->id}",
+        ]);
     }
 
     /**

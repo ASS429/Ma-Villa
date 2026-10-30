@@ -39,7 +39,7 @@ class ReservationMiseAJour extends Notification implements ShouldQueue
                  ->line('Si vous n\'êtes pas à l\'origine de cette annulation, le propriétaire n\'a pas pu honorer la demande.');
         }
 
-        $mail->line('**Villa** : '.$villa->nom.' — '.$villa->ville)
+        $mail->line('**Hébergement** : '.$villa->nom.' — '.$villa->ville)
              ->line('**Logement** : '.$r->logement->nom)
              ->line('**Dates** : du '.$this->jour($r->date_debut).' au '.$this->jour($r->date_fin))
              ->line('**Montant** : '.number_format((float) $r->montant_total, 0, ',', ' ').' FCFA');
@@ -48,7 +48,7 @@ class ReservationMiseAJour extends Notification implements ShouldQueue
             $mail->line('**Contact du propriétaire** : '.$villa->telephone)
                  ->action('Voir ma réservation', rtrim(config('app.frontend_url'), '/').'/dashboard/reservations');
         } else {
-            $mail->action('Chercher une autre villa', rtrim(config('app.frontend_url'), '/').'/villas');
+            $mail->action('Chercher un autre hébergement', rtrim(config('app.frontend_url'), '/').'/hebergements/');
         }
 
         return $mail;
