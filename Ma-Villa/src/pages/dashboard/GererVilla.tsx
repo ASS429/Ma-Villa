@@ -9,6 +9,7 @@ import {
   type StatutVilla, type TypeLogement,
 } from '../../types'
 import ConfirmModal from '../../components/ConfirmModal'
+import DatesFermees from '../../components/console/DatesFermees'
 import { useConfig } from '../../context/ConfigContext'
 import { lieu } from '../../lib/lieu'
 
@@ -660,7 +661,9 @@ export default function GererVilla() {
                   </div>
                 </form>
               ) : (
-                <div className="flex items-start justify-between mb-4 gap-3">
+                // En colonne sur téléphone : quatre boutons à côté du titre
+                // l'écrasaient jusqu'à un mot par ligne, et sortaient de la carte.
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4 gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-0.5">
                       <h3 className="font-medium">{logement.nom}</h3>
@@ -673,7 +676,7 @@ export default function GererVilla() {
                       {(logement.nuits_minimum ?? 1) > 1 && ` · ${logement.nuits_minimum} nuits minimum`}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                  <div className="flex items-center gap-2 flex-wrap sm:shrink-0 sm:justify-end">
                     <button
                       onClick={() => toggleDisponibilite(logement)}
                       className="btn btn-secondaire btn-sm"
@@ -812,7 +815,7 @@ export default function GererVilla() {
                     ) : (
                       <div
                         key={tarif.id}
-                        className="flex items-center justify-between text-sm rounded-xl px-4 py-2.5"
+                        className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm rounded-xl px-4 py-2.5"
                         style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
                       >
                         <span style={{ color: 'var(--text-2)' }}>
@@ -829,7 +832,7 @@ export default function GererVilla() {
                           )}
                         </span>
                         <div className="flex items-center gap-4">
-                          <span className="font-medium">{fcfa(tarif.prix)}</span>
+                          <span className="font-medium whitespace-nowrap">{fcfa(tarif.prix)}</span>
                           <button
                             onClick={() => startEditTarif(logement.id, tarif)}
                             className="text-xs transition-colors hover:opacity-70"
@@ -850,6 +853,8 @@ export default function GererVilla() {
                   )}
                 </div>
               )}
+
+              <DatesFermees logementId={logement.id} />
             </div>
           ))}
         </div>

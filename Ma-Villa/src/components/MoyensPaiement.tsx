@@ -31,13 +31,13 @@ function Logos({ moyens }: { moyens: { cle: string; nom: string }[] }) {
 /**
  * Annonce les moyens de paiement, sans jamais laisser croire qu'un règlement
  * en ligne est possible tant qu'il ne l'est pas : si le serveur renvoie
- * `paiement.actif = false`, le texte dit explicitement que le règlement se
- * fait avec le propriétaire.
+ * `paiement.actif = false`, le texte dit explicitement à qui l'on règle — le
+ * propriétaire, ou PasseTemps sur le circuit des associés (`plateforme`).
  *
  * Le passage à `true` côté API suffit à basculer l'affichage, sans redéployer
  * le front.
  */
-export default function MoyensPaiement({ compact = false }: { compact?: boolean }) {
+export default function MoyensPaiement({ compact = false, plateforme = false }: { compact?: boolean; plateforme?: boolean }) {
   const { paiement } = useConfig()
   const t = TEXTES_HEBERGEMENT[useLangue().langue].paiement
   const noms = paiement.moyens.map((m) => m.nom).join(t.et)
@@ -54,7 +54,7 @@ export default function MoyensPaiement({ compact = false }: { compact?: boolean 
   if (compact) {
     return (
       <p className="text-xs th-text-3 leading-relaxed">
-        {t.directCompact}{' '}
+        {t.directCompact(plateforme)}{' '}
         <span className="th-text-2">{t.bientotCompact(noms)}</span>
       </p>
     )
@@ -71,7 +71,7 @@ export default function MoyensPaiement({ compact = false }: { compact?: boolean 
           {t.bientotTitre}
         </p>
         <p className="th-text-2">
-          {t.bientotTexte(noms)}
+          {t.bientotTexte(noms, plateforme)}
         </p>
       </div>
     </div>

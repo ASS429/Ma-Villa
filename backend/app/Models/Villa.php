@@ -59,6 +59,17 @@ class Villa extends Model
     }
 
     /**
+     * À qui le client règle, sans dire combien nous prenons. Tant que le
+     * paiement en ligne est fermé, la fiche annonçait « directement avec le
+     * propriétaire » : faux sur le circuit des associés, où l'argent passe par
+     * nous. Ajouté à la demande (`append`), sur les écrans qui le lisent.
+     */
+    public function getEncaisseParLaPlateformeAttribute(): bool
+    {
+        return $this->passeParLesAssocies();
+    }
+
+    /**
      * Retire le numéro de la villa des résultats.
      *
      * Publié, il permet d'appeler le propriétaire et de convenir d'un séjour

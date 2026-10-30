@@ -81,7 +81,9 @@ class PaiementController extends Controller
         if ($repartition->montantClient < $minimum) {
             return response()->json([
                 'message' => "Le paiement en ligne accepte {$minimum} FCFA au minimum. "
-                    .'Réglez directement avec le propriétaire, qui vous contactera.',
+                    .($villa->passeParLesAssocies()
+                        ? 'Réglez auprès de PasseTemps, qui vous contactera.'
+                        : 'Réglez directement avec le propriétaire, qui vous contactera.'),
             ], 422);
         }
 

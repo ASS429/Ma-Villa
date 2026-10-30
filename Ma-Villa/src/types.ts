@@ -125,6 +125,8 @@ export interface VillaDetail extends VillaBase {
   logements: Logement[]
   avis: Avis[]
   proprietaire: { name: string }
+  /** Circuit des associés : le client règle PasseTemps, jamais le propriétaire. */
+  encaisse_par_la_plateforme?: boolean
 }
 
 /**
@@ -168,6 +170,8 @@ export interface Reservation {
       telephone?: string | null
       latitude?: number | string | null
       longitude?: number | string | null
+      /** Circuit des associés : le client règle PasseTemps, jamais le propriétaire. */
+      encaisse_par_la_plateforme?: boolean
     }
   }
   tarif: { type_tarif: TypeTarif }

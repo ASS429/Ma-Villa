@@ -193,6 +193,7 @@ class ReservationController extends Controller
 
         $reservation->load(['logement.villa', 'tarif', 'paiement', 'client:id,name,email,phone']);
         $this->revelerLesCoordonnees($reservation, $request->user());
+        $reservation->logement->villa->append('encaisse_par_la_plateforme');
 
         return response()->json($reservation);
     }

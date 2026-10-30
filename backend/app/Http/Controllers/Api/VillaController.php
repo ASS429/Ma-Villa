@@ -410,7 +410,7 @@ class VillaController extends Controller
             $villa->makeHidden('telephone');
         }
 
-        return response()->json($villa);
+        return response()->json($villa->append('encaisse_par_la_plateforme'));
     }
 
     /**

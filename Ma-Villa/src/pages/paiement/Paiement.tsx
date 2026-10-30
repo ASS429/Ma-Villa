@@ -288,7 +288,9 @@ export default function Paiement() {
       <EcranEtat>
         <p className="th-text-1 font-medium mb-2">Paiement en ligne pas encore ouvert</p>
         <p className="th-text-2 text-sm mb-6">
-          Le règlement se fait directement avec le propriétaire, qui vous contactera.
+          {reservation.logement.villa.encaisse_par_la_plateforme
+            ? 'Le règlement se fait auprès de PasseTemps, qui vous contactera.'
+            : 'Le règlement se fait directement avec le propriétaire, qui vous contactera.'}
         </p>
         <Button variante="secondaire" taille="sm" onClick={() => navigate('/dashboard/reservations')}>
           Mes réservations

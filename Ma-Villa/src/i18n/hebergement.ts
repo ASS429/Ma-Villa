@@ -123,10 +123,12 @@ const fr = {
   paiement: {
     securise: (noms: string) => `Paiement sécurisé par ${noms}.`,
     et: ' et ',
-    directCompact: 'Règlement directement avec le propriétaire.',
+    directCompact: (plateforme: boolean): string => plateforme
+      ? 'Règlement auprès de PasseTemps.'
+      : 'Règlement directement avec le propriétaire.',
     bientotCompact: (noms: string) => `Paiement en ligne (${noms}) bientôt disponible.`,
     bientotTitre: 'Paiement en ligne bientôt disponible',
-    bientotTexte: (noms: string) => `${noms} arrivent prochainement. Pour l’instant, le règlement se fait directement avec le propriétaire, qui vous contactera après confirmation.`,
+    bientotTexte: (noms: string, plateforme: boolean) => `${noms} arrivent prochainement. Pour l’instant, le règlement se fait ${plateforme ? 'auprès de PasseTemps' : 'directement avec le propriétaire'}, qui vous contactera après confirmation.`,
   },
 }
 
@@ -247,10 +249,12 @@ const en: typeof fr = {
   paiement: {
     securise: (noms: string) => `Secure payment by ${noms}.`,
     et: ' and ',
-    directCompact: 'Payment is made directly with the owner.',
+    directCompact: (plateforme: boolean): string => plateforme
+      ? 'Payment is made to PasseTemps.'
+      : 'Payment is made directly with the owner.',
     bientotCompact: (noms: string) => `Online payment (${noms}) coming soon.`,
     bientotTitre: 'Online payment coming soon',
-    bientotTexte: (noms: string) => `${noms} are coming soon. For now, you pay the owner directly; they will contact you after confirming.`,
+    bientotTexte: (noms: string, plateforme: boolean) => `${noms} are coming soon. For now, you pay ${plateforme ? 'PasseTemps' : 'the owner directly'}; they will contact you after confirming.`,
   },
 }
 

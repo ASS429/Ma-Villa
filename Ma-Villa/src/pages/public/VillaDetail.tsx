@@ -853,7 +853,7 @@ export default function VillaDetail() {
                     {envoiResa ? t.envoi : user ? t.demanderAReserver : t.seConnecter}
                   </button>
 
-                  <MoyensPaiement />
+                  <MoyensPaiement plateforme={villa.encaisse_par_la_plateforme} />
 
                   <p className="text-xs th-text-3 text-center leading-relaxed">
                     {t.rienMaintenant}{' '}
