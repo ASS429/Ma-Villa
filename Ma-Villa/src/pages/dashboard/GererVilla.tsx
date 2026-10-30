@@ -523,7 +523,7 @@ export default function GererVilla() {
 
         {villa.photos.length === 0 ? (
           <p className="text-sm" style={{ color: 'var(--text-3)' }}>
-            Aucun média. Ajoutez des photos ou vidéos pour illustrer votre villa.
+            Aucun média. Ajoutez des photos ou vidéos pour illustrer votre annonce.
           </p>
         ) : (
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">

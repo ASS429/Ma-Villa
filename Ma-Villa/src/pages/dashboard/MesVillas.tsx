@@ -28,7 +28,7 @@ export default function MesVillas() {
   const { donnees, chargement, erreur, reessayer } = useRequete<Villa[]>(
     async (signal) => (await api.get('/proprietaire/villas', { signal })).data,
     'mes-villas',
-    { messageErreurParDefaut: 'Impossible de charger vos villas.' }
+    { messageErreurParDefaut: 'Impossible de charger vos annonces.' }
   )
 
   const villas = donnees ?? []
@@ -73,7 +73,7 @@ export default function MesVillas() {
             commencer à recevoir des réservations.
           </p>
           <ButtonLink to="/dashboard/villas/nouvelle" variante="primaire" taille="sm" iconeAvant={<Plus size={15} />}>
-            Publier ma première villa
+            Publier ma première annonce
           </ButtonLink>
         </div>
       ) : (

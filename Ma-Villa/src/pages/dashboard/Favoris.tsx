@@ -34,7 +34,7 @@ export default function Favoris() {
       // Le retrait était fait dans l'état local sans attendre le serveur : en
       // cas d'échec, la villa disparaissait de l'écran mais restait en base,
       // et revenait au rechargement suivant.
-      toast.erreur(messageErreur(err, "La villa n'a pas pu être retirée."))
+      toast.erreur(messageErreur(err, "L'hébergement n'a pas pu être retiré des favoris."))
     }
   }
 
@@ -56,7 +56,7 @@ export default function Favoris() {
         </>}
         videAction={
           <ButtonLink to="/hebergements/" variante="primaire" taille="sm" iconeAvant={<Compass size={15} />}>
-            Explorer les villas
+            Explorer les hébergements
           </ButtonLink>
         }
       >

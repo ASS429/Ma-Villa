@@ -19,8 +19,10 @@ Villa  →  Logements  →  Formules tarifaires
                                     × avec ou sans buffet)
 ```
 
-Types de logement : `villa_entiere`, `appartement`, `chambre`, **`piscine`** (on peut
-réserver la piscine seule à la journée — cas d'usage réel pour les fêtes de famille).
+Types de logement proposés : `villa_entiere`, `appartement`, `residence`, `studio`,
+`chambre`, `hotel`, `auberge` (`TYPES_LOGEMENT_PROPOSES`). La **piscine seule** a été
+retirée du catalogue le 28 août 2026 : `piscine` reste dans l'énumération pour les
+logements anciens, mais ne se propose plus et ne se promet plus à l'écran.
 
 **C'est l'avantage concurrentiel sur Airbnb, qui ne sait pas représenter ça.** Toute
 évolution d'interface doit garder ce modèle lisible.
@@ -71,6 +73,14 @@ API Laravel dans `../backend/`. `VITE_API_URL` pointe vers `.../api`.
 ---
 
 ## Design
+
+**Avant de toucher à ce que voit un utilisateur** — écran, parcours, texte, message,
+état vide ou fermé — charger le skill **`design-produit`**
+(`../.claude/skills/design-produit/`, à la racine du dépôt). Il range les décisions
+déjà prises et leur raison, sur le modèle de Vercel (« teaching agents product
+design »). Ce qu'une machine sait vérifier est dans les règles ESLint
+`eslint-regles/passetemps.js` (vocabulaire, blanc sur fond de couleur) et dans
+`eslint.config.js` (WebGL et Chart.js interdits, montants par `fcfa()`).
 
 Le design system est en place : tokens dans `src/index.css`, primitifs
 `Button` / `Champ` / `Badge` dans `src/components/ui/`. Il n'existe plus de relevé
@@ -146,6 +156,9 @@ elle, c'est l'URL Render. Détail et pièges dans `../docs/`.
 ```bash
 npx tsc -b          # doit passer
 npx eslint src      # doit être à zéro — c'est l'état actuel, ne pas le dégrader
+npm run test:regles # les règles ESLint de PasseTemps elles-mêmes
+npm run verifier:css                     # utilitaire de position battu par une classe
+python scripts/audit-collisions-css.py   # même classe dans deux feuilles
 npm run build
 cd ../backend && php artisan test    # 421 tests
 ```

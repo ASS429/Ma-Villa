@@ -19,10 +19,10 @@ const fr = {
   destinations: {
     eyebrow: 'Destinations',
     titre: 'Où allez-vous ?',
-    nb: (n: number) => `${n} villa${n > 1 ? 's' : ''}`,
+    nb: (n: number) => `${n} hébergement${n > 1 ? 's' : ''}`,
     des: (prix: string) => ` · dès ${prix}`,
   },
-  vedette: { eyebrow: 'Sélection', titre: 'Villas en vedette', voirTout: 'Voir toutes →', favorisImpossible: 'Impossible de mettre à jour vos favoris.' },
+  vedette: { eyebrow: 'Sélection', titre: 'Hébergements en vedette', voirTout: 'Voir toutes →', favorisImpossible: 'Impossible de mettre à jour vos favoris.' },
   etapes: {
     eyebrow: 'Comment ça marche',
     titre: 'Réserver en trois étapes',
@@ -34,7 +34,7 @@ const fr = {
   },
   arguments: [
     { label: 'Partout au Sénégal', sub: 'Saly, Mbour, Dakar, Ziguinchor et plus encore' },
-    { label: 'Annonces vérifiées', sub: 'Chaque villa est contrôlée par notre équipe avant publication' },
+    { label: 'Annonces relues', sub: 'Chaque annonce est relue par notre équipe avant publication' },
     { label: 'Avis de vrais séjours', sub: 'Seuls les clients ayant séjourné peuvent laisser une note' },
   ],
   proprietaires: {
@@ -64,10 +64,10 @@ const en: typeof fr = {
   destinations: {
     eyebrow: 'Destinations',
     titre: 'Where are you going?',
-    nb: (n: number) => `${n} villa${n > 1 ? 's' : ''}`,
+    nb: (n: number) => `${n} place${n > 1 ? 's' : ''}`,
     des: (prix: string) => ` · from ${prix}`,
   },
-  vedette: { eyebrow: 'Selection', titre: 'Featured villas', voirTout: 'See all →', favorisImpossible: 'Your favourites could not be updated.' },
+  vedette: { eyebrow: 'Selection', titre: 'Featured places', voirTout: 'See all →', favorisImpossible: 'Your favourites could not be updated.' },
   etapes: {
     eyebrow: 'How it works',
     titre: 'Book in three steps',
@@ -79,7 +79,7 @@ const en: typeof fr = {
   },
   arguments: [
     { label: 'All over Senegal', sub: 'Saly, Mbour, Dakar, Ziguinchor and more' },
-    { label: 'Verified listings', sub: 'Every villa is checked by our team before it goes live' },
+    { label: 'Reviewed listings', sub: 'Every listing is reviewed by our team before it goes live' },
     { label: 'Reviews from real stays', sub: 'Only guests who have stayed can leave a rating' },
   ],
   proprietaires: {

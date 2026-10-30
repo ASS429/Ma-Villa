@@ -73,7 +73,7 @@ export default function AdminVillas() {
   const { donnees, chargement, erreur, reessayer } = useRequete<Page<Villa> | Villa[]>(
     async (signal) => (await api.get(`/admin/villas?${requete}`, { signal })).data,
     requete,
-    { messageErreurParDefaut: 'Impossible de charger les villas.' }
+    { messageErreurParDefaut: 'Impossible de charger les annonces.' }
   )
 
   const page_ = versPage(donnees)

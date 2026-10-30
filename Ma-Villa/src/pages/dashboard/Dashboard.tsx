@@ -99,7 +99,7 @@ export default function Dashboard() {
   const { donnees: villas } = useRequete<Villa[]>(
     async (signal) => (estProprietaire ? (await api.get('/proprietaire/villas', { signal })).data : []),
     `villas-${estProprietaire}`,
-    { messageErreurParDefaut: 'Impossible de charger vos villas.' }
+    { messageErreurParDefaut: 'Impossible de charger vos annonces.' }
   )
 
   const { donnees: favoris } = useRequete<unknown[]>(
@@ -175,7 +175,7 @@ export default function Dashboard() {
             />
             <Chiffre
               Icone={Building2}
-              libelle="Villas publiées"
+              libelle="Annonces publiées"
               valeur={villasPubliees}
               detail={villasAttente > 0 ? `${villasAttente} en cours de validation` : 'toutes validées'}
             />
@@ -211,7 +211,7 @@ export default function Dashboard() {
               Icone={Heart}
               libelle="Favoris"
               valeur={(favoris ?? []).length}
-              detail="villas enregistrées"
+              detail="hébergements enregistrés"
             />
             <Chiffre
               Icone={Home}
@@ -249,12 +249,12 @@ export default function Dashboard() {
       <div className="console-grille console-grille-2">
         {estProprietaire ? (
           <>
-            <Raccourci to="/dashboard/villas" Icone={Building2} titre="Mes villas" detail="Logements, tarifs, photos, disponibilités" />
+            <Raccourci to="/dashboard/villas" Icone={Building2} titre="Mes hébergements" detail="Logements, tarifs, photos, disponibilités" />
             <Raccourci to="/dashboard/villas/nouvelle" Icone={Plus} titre="Publier une annonce" detail="Villa, résidence, appartement ou chambre" />
           </>
         ) : (
           <>
-            <Raccourci to="/hebergements/" Icone={Compass} titre="Explorer" detail="Villas, appartements, piscines à la journée" />
+            <Raccourci to="/hebergements/" Icone={Compass} titre="Explorer" detail="Villas, appartements, studios, chambres" />
             <Raccourci to="/dashboard/favoris" Icone={Heart} titre="Mes favoris" detail="Les logements que vous avez enregistrés" />
           </>
         )}

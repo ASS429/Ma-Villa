@@ -63,7 +63,7 @@ export default function AdminAvis() {
         <ConfirmModal
           message="Supprimer cet avis ?"
           detail={
-            "L'avis disparaîtra de la fiche de la villa et la note moyenne sera recalculée. "
+            "L'avis disparaîtra de la fiche de l'annonce et la note moyenne sera recalculée. "
             + 'Seul un client ayant réellement séjourné a pu le déposer : ne le retirer que pour un abus.'
           }
           confirmLabel="Supprimer"

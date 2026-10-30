@@ -102,7 +102,7 @@ interface ProprietesBarres {
  */
 export function Barres({ lignes, format = String }: ProprietesBarres) {
   if (lignes.length === 0) {
-    return <p className="graphe-vide">Aucune villa publiée pour l'instant.</p>
+    return <p className="graphe-vide">Aucune annonce publiée pour l'instant.</p>
   }
 
   const max = Math.max(...lignes.map((l) => l.valeur), 1)

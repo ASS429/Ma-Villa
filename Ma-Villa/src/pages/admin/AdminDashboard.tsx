@@ -231,7 +231,7 @@ export default function AdminDashboard() {
           />
           <Chiffre
             Icone={Building2}
-            libelle="Villas publiées"
+            libelle="Annonces publiées"
             valeur={stats.villas.validees}
             detail={`${stats.villas.total} au total · ${stats.villas.vedettes} en vedette`}
           />
@@ -293,7 +293,7 @@ export default function AdminDashboard() {
           <h2 className="panneau-titre"><MapPin size={16} /> Offre par ville</h2>
           <Barres
             lignes={(serie?.villes ?? []).map((v) => ({ nom: v.ville, valeur: v.total }))}
-            format={(n) => `${n} villa${n > 1 ? 's' : ''}`}
+            format={(n) => `${n} annonce${n > 1 ? 's' : ''}`}
           />
         </section>
       </div>

@@ -44,13 +44,13 @@ const ETAPES: Etape[] = [
   {
     cle: 'adresse',
     titre: 'Où et comment vous joindre',
-    aide: 'L\'adresse n\'apparaît qu\'au client qui a réservé et payé. Votre numéro, jamais avant.',
+    aide: 'L\'adresse s\'affiche sur l\'annonce : le quartier suffit, inutile de donner la rue. Votre numéro, lui, n\'est donné qu\'au client dont la réservation est confirmée ou payée.',
     minutes: 2,
   },
   {
     cle: 'logement',
     titre: 'Ce que vous louez',
-    aide: 'La villa entière, une chambre, ou la piscine seule à la journée. Vous pourrez en ajouter d\'autres après publication.',
+    aide: 'La villa entière, un appartement, un studio, une chambre… Vous pourrez en ajouter d\'autres après publication.',
     minutes: 2,
   },
   {
