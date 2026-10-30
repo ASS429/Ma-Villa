@@ -66,7 +66,7 @@ class ImportVirageTest extends TestCase
         $this->assertSame(8, Villa::count());
     }
 
-    public function test_rattachees_au_compte_inscrit_elles_sont_publiees_sauf_celle_a_confirmer(): void
+    public function test_rattachees_au_compte_inscrit_elles_sont_publiees(): void
     {
         $import = new class extends ImportVirage {
             public ?User $compte = null;
@@ -82,8 +82,68 @@ class ImportVirageTest extends TestCase
 
         $this->assertTrue($bilan['rattachees']);
         $this->assertSame('proprietaire', $import->compte->fresh()->role);
-        $this->assertSame(8, Villa::where('user_id', $import->compte->id)->where('statut', 'validee')->count());
-        $this->assertSame('en_attente', Villa::where('nom', 'Appartement 3 chambres décoré · Virage')->value('statut'));
+        $this->assertSame(9, Villa::where('user_id', $import->compte->id)->where('statut', 'validee')->count());
+    }
+
+    public function test_completer_publie_ap3_et_montre_la_piscine_d_ap8(): void
+    {
+        $proprietaire = User::factory()->create(['role' => 'proprietaire']);
+        $ap3 = Villa::factory()->create(['user_id' => $proprietaire->id, 'nom' => 'Appartement 3 chambres décoré · Virage']);
+        $ap8 = $this->ap8CommeEnLigne($proprietaire);
+
+        $bilan = app(ImportVirage::class)->completer();
+
+        $this->assertSame(['publiee' => true, 'photos' => 2], $bilan);
+        $this->assertSame('validee', $ap3->fresh()->statut);
+
+        $ap8->refresh();
+        $this->assertSame('Appartement 3 chambres, piscine et salle de sport · Almadies', $ap8->nom);
+        $this->assertStringContainsString('piscine et salle de sport', $ap8->description);
+
+        $photos = $ap8->photos()->get();
+        $this->assertSame([
+            'Appartement 3 chambres, piscine et salle de sport · Almadies — Salon',
+            "Appartement 3 chambres, piscine et salle de sport · Almadies — Piscine de l'immeuble",
+            'Appartement 3 chambres, piscine et salle de sport · Almadies — Cuisine équipée',
+            'Appartement 3 chambres, piscine et salle de sport · Almadies — Chambre avec vue sur la mer',
+            'Appartement 3 chambres, piscine et salle de sport · Almadies — Salle de sport',
+        ], $photos->pluck('alt')->all());
+        // Les photos déjà en ligne gardent leur fichier ; seules les deux nouvelles sont envoyées.
+        $this->assertSame('https://exemple.test/salon.jpg', $photos[0]->url);
+        $this->assertSame('https://exemple.test/cuisine.jpg', $photos[2]->url);
+        $this->assertCount(2, Storage::disk('public')->files('uploads/virage'));
+
+        $this->assertSame(['publiee' => false, 'photos' => 0], app(ImportVirage::class)->completer());
+        $this->assertSame(5, $ap8->photos()->count());
+    }
+
+    public function test_completer_ne_publie_pas_ap3_restee_sous_le_compte_d_attente(): void
+    {
+        $attente = User::factory()->create(['role' => 'proprietaire', 'email' => ImportVirage::EMAIL_ATTENTE]);
+        $ap3 = Villa::factory()->create(['user_id' => $attente->id, 'nom' => 'Appartement 3 chambres décoré · Virage']);
+
+        app(ImportVirage::class)->completer();
+
+        $this->assertSame('en_attente', $ap3->fresh()->statut);
+    }
+
+    /** AP8 telle que l'import du 29 octobre l'a mise en ligne. */
+    private function ap8CommeEnLigne(User $proprietaire): Villa
+    {
+        $nom = 'Appartement 3 chambres · Almadies';
+        $villa = Villa::factory()->validee()->create(['user_id' => $proprietaire->id, 'nom' => $nom]);
+        $villa->forceFill(['majoration' => 0.14, 'circuit' => 'associe'])->save();
+
+        foreach (['salon' => 'Salon', 'sejour' => 'Salon et salle à manger', 'cuisine' => 'Cuisine équipée',
+            'chambre' => 'Chambre avec vue sur la mer', 'vue' => 'Vue depuis l’appartement'] as $fichier => $alt) {
+            $villa->photos()->create([
+                'url'   => "https://exemple.test/{$fichier}.jpg",
+                'alt'   => "{$nom} — {$alt}",
+                'ordre' => $villa->photos()->count(),
+            ]);
+        }
+
+        return $villa;
     }
 
     public function test_l_empreinte_retrouve_le_compte_quelle_que_soit_la_casse(): void

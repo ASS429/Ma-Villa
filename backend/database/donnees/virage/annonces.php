@@ -17,8 +17,9 @@
 | wifi, Canal+, sécurité 24 h/24, cuisine équipée. Capacité : deux
 | personnes par chambre, comme pour Clé d'Or, à faire confirmer.
 |
-| `publiee` à false : AP3 ressemble trop à AP4 (mêmes chambres, même prix)
-| pour être publié avant que l'exploitant dise si c'est le même logement.
+| Précisé par l'exploitant le 30 octobre : AP3 et AP4 sont deux logements
+| différents, et l'immeuble d'AP8 a bien piscine et salle de sport
+| (`ImportVirage::completer` l'a reporté sur les annonces déjà en ligne).
 |
 */
 
@@ -99,7 +100,6 @@ return [
         'adresse' => 'Virage, Yoff',
         'ville' => 'Dakar',
         'quartier' => 'Yoff',
-        'publiee' => false,
         'description' => <<<TEXTE
             Appartement décoré à Virage, près des Almadies.
 
@@ -207,12 +207,12 @@ return [
     ],
 
     [
-        'nom' => 'Appartement 3 chambres · Almadies',
+        'nom' => 'Appartement 3 chambres, piscine et salle de sport · Almadies',
         'adresse' => 'Almadies',
         'ville' => 'Dakar',
         'quartier' => 'Almadies',
         'description' => <<<TEXTE
-            Appartement aux Almadies, dans un immeuble récent.
+            Appartement aux Almadies, dans un immeuble récent avec piscine et salle de sport.
 
             • 3 chambres, salon et salle à manger
             • Cuisine équipée
@@ -220,10 +220,10 @@ return [
             TEXTE,
         'photos' => [
             ['ap8-1.jpg', 'Salon'],
-            ['ap8-2.jpg', 'Salon et salle à manger'],
+            ['ap8-2.jpg', "Piscine de l'immeuble"],
             ['ap8-3.jpg', 'Cuisine équipée'],
             ['ap8-4.jpg', 'Chambre avec vue sur la mer'],
-            ['ap8-5.jpg', 'Vue depuis l’appartement'],
+            ['ap8-5.jpg', 'Salle de sport'],
         ],
         'logement' => ['nom' => 'Appartement · 3 chambres', 'type' => 'appartement', 'capacite' => 6, 'prix' => 100000],
     ],

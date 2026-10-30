@@ -87,9 +87,8 @@ class ImportVirage
                     'ville'       => $annonce['ville'],
                     'quartier'    => $annonce['quartier'],
                     'telephone'   => $proprietaire->phone,
-                    // Publiées seulement chez le bon propriétaire, et si rien
-                    // ne reste à confirmer.
-                    'statut'      => $bilan['rattachees'] && ($annonce['publiee'] ?? true) ? 'validee' : 'en_attente',
+                    // Publiées seulement chez le bon propriétaire.
+                    'statut'      => $bilan['rattachees'] ? 'validee' : 'en_attente',
                 ]);
                 $villa->forceFill(['majoration' => $taux, 'circuit' => 'associe'])->save();
                 $bilan['annonces']++;
@@ -122,6 +121,70 @@ class ImportVirage
                     'avec_clim'   => true,
                     'avec_buffet' => false,
                 ]);
+            }
+        });
+
+        return $bilan;
+    }
+
+    /**
+     * Ce que l'exploitant a tranché le 30 octobre, reporté sur les annonces
+     * déjà en ligne, puisque l'import ne se rejoue pas :
+     *
+     * - AP3 n'est pas AP4 : elle est publiée, si elle est chez son propriétaire ;
+     * - l'immeuble d'AP8 a piscine et salle de sport : nom, description et
+     *   photos sont repris du dossier. Les photos déjà en ligne qui y figurent
+     *   encore restent, à leur nouvelle place ; il n'en manque une que si son
+     *   envoi échoue, et alors on ne retouche rien.
+     *
+     * Ne fait rien deux fois.
+     *
+     * @return array{publiee: bool, photos: int}
+     */
+    public function completer(): array
+    {
+        $bilan = ['publiee' => false, 'photos' => 0];
+
+        $ap3 = Villa::with('proprietaire')
+            ->where('nom', 'Appartement 3 chambres décoré · Virage')
+            ->where('statut', 'en_attente')
+            ->first();
+        if ($ap3 && $ap3->proprietaire?->email !== self::EMAIL_ATTENTE) {
+            $ap3->update(['statut' => 'validee']);
+            $bilan['publiee'] = true;
+        }
+
+        $ap8 = Villa::where('nom', 'Appartement 3 chambres · Almadies')->where('circuit', 'associe')->first();
+        if (! $ap8) {
+            return $bilan;
+        }
+
+        $donnees = collect(require base_path(self::DOSSIER.'/annonces.php'))
+            ->firstWhere('nom', 'Appartement 3 chambres, piscine et salle de sport · Almadies');
+        $enLigne = $ap8->photos()->get()->keyBy(fn (Photo $p) => Str::afterLast((string) $p->alt, ' — '));
+
+        $urls = [];
+        foreach ($donnees['photos'] as [$fichier, $alt]) {
+            $urls[$alt] = $enLigne->get($alt)?->url ?? $this->envoyer($fichier);
+            if (! $urls[$alt]) {
+                return $bilan;
+            }
+        }
+
+        DB::transaction(function () use ($ap8, $donnees, $enLigne, $urls, &$bilan) {
+            $ap8->update(['nom' => $donnees['nom'], 'description' => $donnees['description']]);
+            // Pas `except()` : sur une collection Eloquent, il filtre par
+            // identifiant de modèle, et supprimerait tout.
+            $enLigne->reject(fn (Photo $p, string $alt) => isset($urls[$alt]))->each->delete();
+
+            foreach (array_keys($urls) as $ordre => $alt) {
+                $attributs = ['url' => $urls[$alt], 'alt' => "{$donnees['nom']} — {$alt}", 'ordre' => $ordre];
+                if ($photo = $enLigne->get($alt)) {
+                    $photo->update($attributs);
+                } else {
+                    $ap8->photos()->create($attributs);
+                    $bilan['photos']++;
+                }
             }
         });
 
