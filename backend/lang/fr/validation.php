@@ -81,5 +81,14 @@ return [
         'technique'             => 'technique',
         'dimensions'            => 'dimensions',
         'destinataire'          => 'destinataire',
+        // Les demandes de service (transport, repas, JOJ).
+        'prestation'            => 'service',
+        'date_service'          => 'date',
+        'heure'                 => 'heure',
+        'personnes'             => 'nombre de personnes',
+        'lieu'                  => 'lieu',
+        'vol'                   => 'numéro de vol',
+        'delegation'            => 'pays d’origine',
+        'message'               => 'précisions',
     ],
 ];
