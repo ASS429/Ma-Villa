@@ -10,6 +10,7 @@ import { messageErreur } from '../../lib/erreurs'
 import { fcfa, dateCourte } from '../../lib/format'
 import Button from '../../components/ui/Button'
 import CodeQR from '../../components/paiement/CodeQR'
+import { surAppareilMobile } from '../../lib/appareil'
 import Seo from '../../components/Seo'
 import type { Reservation } from '../../types'
 import Marque from '../../components/Marque'
@@ -23,20 +24,6 @@ const LOGOS: Record<string, string> = {
  *  un appel sortant vers le prestataire, et le serveur est mono-processus. */
 const DUREE_SUIVI = 90_000
 
-/**
- * L'appareil peut-il ouvrir Wave ou Orange Money ?
- *
- * Les URL renvoyées par le prestataire sont des liens d'application : sur un
- * ordinateur elles ne mènent nulle part, et c'est là qu'un code QR prend le
- * relais. Le pointeur grossier est un meilleur signal que la chaîne d'agent,
- * qui ment de plus en plus.
- */
-function surAppareilMobile(): boolean {
-  if (typeof window === 'undefined') return false
-
-  return window.matchMedia?.('(pointer: coarse)').matches === true
-    || /android|iphone|ipad|ipod/i.test(navigator.userAgent)
-}
 
 /**
  * Cause technique que le serveur joint au refus hors encaissement réel — le

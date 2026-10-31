@@ -17,6 +17,8 @@ import Badge from '../../components/ui/Badge'
 import { Champ, ChampSelection } from '../../components/ui/Champ'
 import { useLangue } from '../../i18n/langue'
 import { TEXTES_BOUTIQUE } from '../../i18n/boutique'
+import CodeQR from '../../components/paiement/CodeQR'
+import { surAppareilMobile } from '../../lib/appareil'
 
 const TON: Record<Commande['statut'], 'success' | 'warning' | 'danger' | 'neutre'> = {
   en_attente: 'warning',
@@ -44,6 +46,7 @@ export default function CommandeDetail() {
   const [telephone, setTelephone] = useState('')
   const [envoi, setEnvoi] = useState(false)
   const [lien, setLien] = useState<string | null>(null)
+  const [mobile] = useState(surAppareilMobile)
   const [annulation, setAnnulation] = useState(false)
 
   const { donnees: commande, chargement, erreur, reessayer } = useRequete<Commande>(
@@ -101,7 +104,10 @@ export default function CommandeDetail() {
       setLien(cible)
       // Sur téléphone, ouvrir l'application vaut mieux que demander un clic
       // de plus — le lien reste affiché pour ceux que la redirection rate.
-      window.location.href = cible
+      // Sur ordinateur, la page de l'opérateur ne sert à rien (celle
+      // d'Orange Money n'a pas de code QR) : on montre le nôtre, et cette
+      // page suit le paiement. La carte, elle, se saisit sur la page PayDunya.
+      if (mobile || methode === 'carte') window.location.href = cible
     } catch (err) {
       toast.erreur(messageErreur(err, t.lancementEchoue))
     } finally {
@@ -230,11 +236,17 @@ export default function CommandeDetail() {
                 {lien ? (
                   <>
                     <p className="tableau-second" style={{ marginBottom: 'var(--space-3)' }}>
-                      {t.validez}
+                      {!mobile && methode !== 'carte' ? t.scannez : t.validez}
                     </p>
-                    <a href={lien} className="btn btn-primaire btn-md" style={{ width: '100%', justifyContent: 'center' }}>
-                      {t.rouvrir}
-                    </a>
+                    {!mobile && methode !== 'carte' ? (
+                      <div className="tunnel-qr">
+                        <CodeQR valeur={lien} taille={200} />
+                      </div>
+                    ) : (
+                      <a href={lien} className="btn btn-primaire btn-md" style={{ width: '100%', justifyContent: 'center' }}>
+                        {methode === 'carte' ? t.rouvrirPage : t.rouvrir}
+                      </a>
+                    )}
                   </>
                 ) : (
                   <form onSubmit={payer} className="achat-champs">

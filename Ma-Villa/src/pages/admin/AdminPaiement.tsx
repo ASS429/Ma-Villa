@@ -2,6 +2,7 @@ import { useState } from 'react'
 import api from '../../services/api'
 import { useConfig } from '../../context/ConfigContext'
 import { fcfa } from '../../lib/format'
+import CodeQR from '../../components/paiement/CodeQR'
 import { messageErreur } from '../../lib/erreurs'
 import Button from '../../components/ui/Button'
 import { Bloc, Ligne, Alerte } from '../../components/console/Sonde'
@@ -164,6 +165,13 @@ export default function AdminPaiement() {
                       ? ' — si le formulaire de carte s’affiche, la carte est active : PAIEMENT_CARTE_ACTIVE=true.'
                       : ' — facultatif : l’argent arrive sur votre solde PayDunya.'}
                   </span>
+                  {/* Depuis un ordinateur : la page d'Orange Money n'a pas de
+                      code QR, celle de Wave si. Le nôtre vaut pour les deux. */}
+                  {sonde.softpay.methode !== 'carte' && sonde.softpay.url && (
+                    <span className="block mt-3">
+                      <CodeQR valeur={sonde.softpay.url} taille={180} />
+                    </span>
+                  )}
                 </Alerte>
               )}
               {sonde.softpay?.essaye && sonde.softpay.ok === false && (
