@@ -294,7 +294,12 @@ function Features() {
 
 function AppelProprietaires() {
   const { langue, lien } = useLangue()
+  const { user } = useAuth()
   const t = TEXTES_ACCUEIL[langue].proprietaires
+  // Le bouton menait à l'inscription avec « client » présélectionné : un
+  // propriétaire distrait ouvrait un compte client, puis l'espace de
+  // publication le renvoyait à son tableau de bord (tour du 31 octobre 2026).
+  const cible = user?.role === 'proprietaire' ? '/dashboard/villas/nouvelle' : lien('/register?role=proprietaire')
   return (
     <section className="px-6 md:px-12 lg:px-16 py-20" style={{ borderTop: '1px solid var(--border)' }}>
       <div className="max-w-6xl mx-auto">
@@ -312,7 +317,7 @@ function AppelProprietaires() {
               section qui lui est consacrée, donc la conversion du parcours en
               cours. Ailleurs, elle reste secondaire pour ne pas détourner la
               couleur d'action vers une action qui ne concerne pas le client. */}
-          <ButtonLink to={lien('/register')} variante="primaire" taille="md">
+          <ButtonLink to={cible} variante="primaire" taille="md">
             {t.bouton}
           </ButtonLink>
         </ScrollReveal>

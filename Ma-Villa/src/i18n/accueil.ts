@@ -28,7 +28,8 @@ const fr = {
     titre: 'Réserver en trois étapes',
     cherchez: { titre: 'Cherchez', texte: 'Filtrez par ville, dates et budget. Les prix sont affichés, sans surprise.' },
     reservez: { titre: 'Réservez', texte: 'Choisissez un logement et une formule : à la nuitée, à la journée ou à la demi-journée.' },
-    profitezOuvert: { titre: 'Profitez', texte: 'Le propriétaire confirme, vous recevez ses coordonnées par email.' },
+    // Un paiement confirme la réservation sans attendre le propriétaire.
+    profitezOuvert: { titre: 'Profitez', texte: 'Réservation confirmée, vous recevez les coordonnées du propriétaire.' },
     contactez: (nom: string, tel: string) => ({ titre: 'Contactez-nous', texte: `La réservation en ligne arrive bientôt. En attendant, ${nom} prend vos demandes au ${tel}.` }),
     profitezFerme: { titre: 'Profitez', texte: 'Votre séjour est confirmé : il ne reste plus qu’à partir.' },
   },
@@ -73,7 +74,7 @@ const en: typeof fr = {
     titre: 'Book in three steps',
     cherchez: { titre: 'Search', texte: 'Filter by town, dates and budget. Prices are shown upfront, no surprises.' },
     reservez: { titre: 'Book', texte: 'Pick a unit and an option: by the night, by the day or by the half-day.' },
-    profitezOuvert: { titre: 'Enjoy', texte: 'The owner confirms and you get their contact details by email.' },
+    profitezOuvert: { titre: 'Enjoy', texte: 'Booking confirmed: you get the owner’s contact details.' },
     contactez: (nom: string, tel: string) => ({ titre: 'Contact us', texte: `Online booking is coming soon. Meanwhile, ${nom} takes your requests on ${tel}.` }),
     profitezFerme: { titre: 'Enjoy', texte: 'Your stay is confirmed: all that is left is to pack.' },
   },

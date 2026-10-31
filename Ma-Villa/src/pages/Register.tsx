@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate, Navigate } from 'react-router-dom'
+import { Link, useNavigate, Navigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import CoquilleAuth, { AlerteAuth } from '../components/CoquilleAuth'
 import FloatingInput from '../components/FloatingInput'
@@ -25,9 +25,11 @@ function IconEye({ show }: { show: boolean }) {
 export default function Register() {
   const { register, isLoading, user } = useAuth()
   const navigate = useNavigate()
+  // « Publier mon hébergement » arrive ici avec `?role=proprietaire`.
+  const [params] = useSearchParams()
   const [form, setForm] = useState({
     name: '', email: '', phone: '', password: '', password_confirmation: '',
-    role: 'client' as 'client' | 'proprietaire',
+    role: (params.get('role') === 'proprietaire' ? 'proprietaire' : 'client') as 'client' | 'proprietaire',
   })
   const [error, setError] = useState('')
   const [erreursChamp, setErreursChamp] = useState<Record<string, string>>({})
