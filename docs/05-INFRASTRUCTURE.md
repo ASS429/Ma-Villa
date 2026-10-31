@@ -130,6 +130,7 @@ aboutit.
 
 ```
 RESERVATIONS_OUVERTES=false
+RESERVATIONS_ASSOCIES_OUVERTES=false
 RESERVATIONS_CONTACT_NOM="Abdou Ndour"
 RESERVATIONS_CONTACT_TELEPHONE="+221 77 868 47 23"
 RESERVATIONS_CONTACT_EMAIL=ndourabdou011@gmail.com
@@ -140,6 +141,12 @@ d'identité. Fermée par défaut dans le code : aucune variable n'est nécessair
 pour qu'elle le reste. Le contact s'affiche sur chaque fiche et dans le refus
 de l'API. Pour rouvrir : `RESERVATIONS_OUVERTES=true`, après avoir vérifié la
 sonde `/admin/paiement`.
+
+`RESERVATIONS_ASSOCIES_OUVERTES` (31 octobre 2026) : même ouverte, la réservation
+en ligne ne vaut pas pour les annonces du circuit des associés (Clé d'Or, Virage,
+lots importés) — elles gardent le contact, sur décision de l'exploitant. Fermée
+par défaut ; `true` les ouvre en ligne, **après** avoir repris l'article 6 des
+CGU, qui dit qu'elles se réservent auprès de l'équipe.
 
 ### La boutique
 

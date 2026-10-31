@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import api from '../../services/api'
 import { useConfig } from '../../context/ConfigContext'
 import ContactReservation from '../../components/ContactReservation'
+import { modeReservation } from '../../lib/ouverture'
 import { useRequete } from '../../lib/useRequete'
 import { messageErreur } from '../../lib/erreurs'
 import { fcfa, dateCourte } from '../../lib/format'
@@ -270,11 +271,13 @@ export default function Paiement() {
   // Suspendue, la réservation l'est jusqu'au règlement : le serveur refuserait
   // de lancer le paiement. Un paiement **déjà lancé** reste en revanche
   // vérifiable — l'écran ne doit pas cacher un débit qui attend sa confirmation.
-  if (!reservations.ouvertes && reservation.paiement?.statut !== 'en_attente') {
+  // Une annonce des associés se règle, elle, auprès de l'équipe.
+  const mode = modeReservation(reservations, reservation.logement.villa)
+  if (mode !== 'en_ligne' && reservation.paiement?.statut !== 'en_attente') {
     return (
       <EcranEtat>
         <div className="mb-6">
-          <ContactReservation />
+          <ContactReservation hebergement={reservation.logement.villa.nom} equipe={mode === 'equipe'} />
         </div>
         <Button variante="secondaire" taille="sm" onClick={() => navigate('/dashboard/reservations')}>
           Mes réservations

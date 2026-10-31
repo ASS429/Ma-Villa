@@ -60,6 +60,9 @@ class ConfigurationController extends Controller
             // chaque fiche affiche ce contact à la place du formulaire.
             'reservations' => [
                 'ouvertes' => ! ReservationsSuspendues::enVigueur(),
+                // Les annonces des associés (`encaisse_par_la_plateforme`) se
+                // réservent auprès du contact tant que ce drapeau est faux.
+                'associes_ouvertes' => (bool) config('reservations.associes_ouvertes'),
                 'contact'  => ReservationsSuspendues::contact(),
             ],
             // Le plafond de photos vient du serveur : le téléverseur doit

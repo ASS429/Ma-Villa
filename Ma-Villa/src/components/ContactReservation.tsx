@@ -19,13 +19,19 @@ import { TEXTES_HEBERGEMENT } from '../i18n/hebergement'
  *
  * Le contact vient de `/api/configuration` : le changer ne demande pas de
  * redéployer le site.
+ *
+ * `equipe` : depuis le 31 octobre 2026, la réservation en ligne est rouverte,
+ * mais les annonces des associés se réservent auprès de ce même contact. Ce
+ * n'est ni une panne ni une attente : le texte ne dit donc pas « bientôt ».
  */
 export default function ContactReservation({
   hebergement,
   compact = false,
+  equipe = false,
 }: {
   hebergement?: string
   compact?: boolean
+  equipe?: boolean
 }) {
   const { reservations } = useConfig()
   const { nom, telephone, email } = reservations.contact
@@ -34,7 +40,7 @@ export default function ContactReservation({
   if (compact) {
     return (
       <p className="text-xs th-text-2 leading-relaxed">
-        {t.suspenduCompact(nom)}{' '}
+        {equipe ? t.equipeCompact(nom) : t.suspenduCompact(nom)}{' '}
         <a href={lienAppel(telephone)} className="th-text-1 font-medium underline underline-offset-2">
           {telephone}
         </a>.
@@ -48,9 +54,9 @@ export default function ContactReservation({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <p className="th-text-1 font-medium mb-1">{t.bientot}</p>
+        <p className="th-text-1 font-medium mb-1">{equipe ? t.equipeTitre : t.bientot}</p>
         <p className="th-text-2 text-sm leading-relaxed">
-          {t.enAttendant(nom)}
+          {equipe ? t.equipeTexte(nom) : t.enAttendant(nom)}
         </p>
       </div>
 

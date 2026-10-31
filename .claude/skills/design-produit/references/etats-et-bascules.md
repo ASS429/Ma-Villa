@@ -9,6 +9,7 @@ redéployer : `GET /api/configuration` dit ce qui est ouvert. Un écran doit
 | Bascule (`/api/configuration`) | Quand elle est fermée |
 |---|---|
 | `reservations.ouvertes` | aucune demande ; la fiche donne un contact (`ContactReservation`) ; le refus est aussi **côté serveur** (503), car l'appli Android appelle la même API |
+| `reservations.associes_ouvertes` | ouverte ou non pour les autres, une annonce des associés (`encaisse_par_la_plateforme`) se réserve **auprès de l'équipe** : `ContactReservation equipe`, sans « bientôt » — ce n'est pas une attente. Un seul calcul, `modeReservation()` |
 | `paiement.actif` | pas de « Payer » ni de « Régler » ; ne pas annoncer Wave ni Orange Money comme disponibles |
 | `boutique.actif` | pas d'onglet Boutique (un onglet qui ramène à l'accueil est pire que pas d'onglet) |
 | `boutique.livraison` | pas de « Payer à la livraison » |

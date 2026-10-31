@@ -28,3 +28,26 @@ export function useOuverture(ouvert: boolean): Ouverture {
 export function estVisible(o: Ouverture): boolean {
   return o === 'ouvert' || o === 'apercu'
 }
+
+/**
+ * Comment se réserve une annonce, pour le client.
+ *
+ * - `suspendue` : la réservation en ligne est fermée pour tous
+ *   (`RESERVATIONS_OUVERTES`) ;
+ * - `equipe` : elle est ouverte, mais cette annonce passe par les associés et
+ *   se réserve auprès du contact (`RESERVATIONS_ASSOCIES_OUVERTES`, décision
+ *   du 31 octobre 2026 : « pour nos annonces à nous, contacter directement
+ *   Abdou Ndour ») ;
+ * - `en_ligne` : formulaire, puis règlement.
+ *
+ * Le serveur refuse de la même façon : ceci ne fait que l'annoncer.
+ */
+export type ModeReservation = 'en_ligne' | 'equipe' | 'suspendue'
+
+export function modeReservation(
+  reservations: { ouvertes: boolean; associes_ouvertes?: boolean },
+  villa?: { encaisse_par_la_plateforme?: boolean },
+): ModeReservation {
+  if (!reservations.ouvertes) return 'suspendue'
+  return villa?.encaisse_par_la_plateforme && !reservations.associes_ouvertes ? 'equipe' : 'en_ligne'
+}

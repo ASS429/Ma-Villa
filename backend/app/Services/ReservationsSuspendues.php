@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Villa;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -54,20 +55,55 @@ final class ReservationsSuspendues
             . "ou à {$contact['email']}.";
     }
 
-    /** La réponse à renvoyer quand la réservation est suspendue, `null` sinon. */
-    public static function refus(): ?JsonResponse
+    /**
+     * Vrai si cette annonce se réserve auprès de l'équipe et non en ligne.
+     *
+     * Décidé le 31 octobre 2026 : on rouvre la réservation en ligne, mais les
+     * annonces du circuit des associés restent au contact. Certains de leurs
+     * comptes n'ont aucune boîte aux lettres : une demande n'y serait lue par
+     * personne. Voir `reservations.associes_ouvertes`.
+     */
+    public static function aupresDeLEquipe(?Villa $villa): bool
     {
-        if (! self::enVigueur()) {
-            return null;
+        return (bool) $villa?->passeParLesAssocies()
+            && ! config('reservations.associes_ouvertes');
+    }
+
+    public static function messageEquipe(): string
+    {
+        $contact = self::contact();
+
+        return 'Cet hébergement se réserve auprès de notre équipe. '
+            . "Contactez {$contact['nom']} au {$contact['telephone']} "
+            . "ou à {$contact['email']}.";
+    }
+
+    /**
+     * La réponse à renvoyer quand on ne réserve pas en ligne, `null` sinon.
+     *
+     * Sans annonce, seule la fermeture générale compte : c'est le contrôle
+     * fait avant toute lecture. Avec l'annonce, son circuit compte aussi.
+     */
+    public static function refus(?Villa $villa = null): ?JsonResponse
+    {
+        if (self::enVigueur()) {
+            return self::reponse(self::message());
         }
 
+        return self::aupresDeLEquipe($villa)
+            ? self::reponse(self::messageEquipe(), ['aupres_de_l_equipe' => true])
+            : null;
+    }
+
+    private static function reponse(string $message, array $plus = []): JsonResponse
+    {
         // 503 et non 403 : ce n'est pas un refus adressé à ce client, c'est un
         // service momentanément fermé — un 403 se lirait « vous n'avez pas le
         // droit ». Même code que le paiement fermé, déjà en place.
         return response()->json([
-            'message'  => self::message(),
+            'message'  => $message,
             'suspendu' => true,
             'contact'  => self::contact(),
-        ], 503);
+        ] + $plus, 503);
     }
 }

@@ -43,14 +43,35 @@ export interface DocumentLegal {
 
 const MAJ = '3 septembre 2026'
 
-/**
+/*
  * Le taux élevé est passé de 20 à 14 % le 10 septembre 2026, pour que le taux
- * réel reste sous la moyenne de Booking (15 %) à tout montant.
+ * réel reste sous la moyenne de Booking (15 %) à tout montant. Les deux textes
+ * qui citent un chiffre de commission avaient alors pris cette date ; ils
+ * portent depuis celle de la réouverture, ci-dessous.
  *
- * Seuls les deux textes qui citent un chiffre de commission changent de date.
- * Redater les autres annoncerait une modification qui n'a pas eu lieu.
+ * Seuls les textes réellement modifiés changent de date. Redater les autres
+ * annoncerait une modification qui n'a pas eu lieu.
  */
-const MAJ_COMMISSION = '10 septembre 2026'
+
+/**
+ * Réouverture de la réservation en ligne, 31 octobre 2026 — sur autorisation
+ * de l'exploitant (« Oui je te l'autorise »), les textes étant gelés depuis
+ * le 14 septembre. Les CGU et la politique d'annulation, qui en fait partie,
+ * changent ; les trois autres textes gardent leur date.
+ *
+ * Ce qui a changé, chaque point adossé au code :
+ *   — le règlement **confirme** la demande sans attendre le propriétaire
+ *     (`PaiementController`, statut `confirmee`) : l'ancien texte disait
+ *     « confirmation, puis règlement » ;
+ *   — le calcul du prix (`PrixSejour`), les limites d'une demande
+ *     (`ReservationRequest`, `DEMANDES_OUVERTES_MAX`), le changement
+ *     d'adresse ou de numéro (`AuthController::update`) ;
+ *   — les annonces des associés, réservées auprès de l'équipe
+ *     (`reservations.associes_ouvertes`) ;
+ *   — les services (transport, repas), simples demandes sans paiement ;
+ *   — une annulation est définitive, même si un paiement arrive après.
+ */
+const MAJ_RESERVATION = '31 octobre 2026'
 const EXPLOITANT = 'PasseTemps'
 const CONTACT = 'contactptemps@gmail.com'
 const DIRECTEUR = 'Abdou Ndour'
@@ -98,17 +119,17 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
   cgu: {
     cle: 'cgu',
     titre: 'Conditions générales d\'utilisation',
-    description: `Conditions générales d'utilisation de ${EXPLOITANT} : rôle de la plateforme, réservation, paiement, commission et responsabilités.`,
-    miseAJour: MAJ_COMMISSION,
+    description: `Conditions générales d'utilisation de ${EXPLOITANT} : rôle de la plateforme, réservation, paiement, commission, services et responsabilités.`,
+    miseAJour: MAJ_RESERVATION,
     chapeau:
       `Les présentes conditions régissent l'utilisation de la plateforme ${EXPLOITANT}. En créant un compte, vous les acceptez.`,
     sections: [
       {
         titre: '1. Ce qu’est PasseTemps',
         paragraphes: [
-          `${EXPLOITANT} met en relation des propriétaires de villas, résidences, appartements et chambres situés au Sénégal avec des clients souhaitant les louer pour un séjour.`,
-          `Le séjour lui-même est fourni par le propriétaire, qui reste responsable de l'état du bien, de sa conformité à l'annonce et du déroulement du séjour. ${EXPLOITANT} n'est ni propriétaire, ni gestionnaire, ni loueur des biens présentés.`,
-          `${EXPLOITANT} exerce en revanche deux activités qui lui sont propres : elle encaisse le prix des séjours et en détient les fonds jusqu'au reversement (article 5), et elle vend pour son propre compte les articles d'artisanat de sa boutique, régis par des conditions de vente distinctes.`,
+          `${EXPLOITANT} met en relation des propriétaires de villas, résidences, appartements et chambres situés au Sénégal avec des clients souhaitant les louer pour un séjour. Elle transmet aussi des demandes de services aux voyageurs — transport, repas — à des prestataires partenaires (article 7).`,
+          `Le séjour lui-même est fourni par le propriétaire, qui reste responsable de l'état du bien, de sa conformité à l'annonce et du déroulement du séjour. ${EXPLOITANT} n'est ni propriétaire, ni gestionnaire, ni loueur des biens présentés. De même, un service est exécuté par le prestataire qui l'accepte, et qui en répond.`,
+          `${EXPLOITANT} exerce en revanche deux activités qui lui sont propres : elle encaisse le prix des séjours réservés en ligne et en détient les fonds jusqu'au reversement (article 5), et elle vend pour son propre compte les articles d'artisanat de sa boutique, régis par des conditions de vente distinctes.`,
         ],
       },
       {
@@ -117,6 +138,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
           `L'inscription est gratuite et ouverte à toute personne majeure. Trois rôles existent : client, propriétaire et administrateur.`,
           `Vous vous engagez à fournir des informations exactes et à les tenir à jour, notamment votre numéro de téléphone : c'est par lui que vous vous connectez, et c'est par lui qu'un remboursement vous parviendrait.`,
           `Vous êtes responsable de la confidentialité de votre mot de passe. Prévenez-nous sans délai si vous soupçonnez que votre compte est utilisé par un tiers.`,
+          `Changer votre mot de passe, votre adresse électronique ou votre numéro de téléphone exige votre mot de passe actuel, et ferme les sessions ouvertes sur vos autres appareils : une personne entrée sur l'un d'eux ne peut pas s'approprier le compte.`,
         ],
       },
       {
@@ -131,50 +153,70 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
       {
         titre: '4. Réserver',
         paragraphes: [
-          `Une demande de réservation précise le logement, la formule tarifaire, les dates et le nombre de personnes. Elle n'engage définitivement les parties qu'après confirmation par le propriétaire, puis règlement.`,
-          `Le propriétaire dispose de 24 heures pour répondre. Passé ce délai, la demande est annulée automatiquement et les dates sont libérées. Aucune somme n'ayant été versée à ce stade, il n'y a rien à rembourser.`,
+          `Une demande de réservation précise le logement, la formule tarifaire, les dates et le nombre de personnes. Vous pouvez la régler dès son envoi : le règlement confirme la réservation sans attendre le propriétaire, et les dates vous sont acquises. Vous pouvez aussi attendre sa confirmation, puis régler.`,
+          `Tant qu'elle n'est ni réglée ni confirmée, le propriétaire dispose de 24 heures pour répondre. Passé ce délai, la demande est annulée automatiquement et les dates sont libérées. Aucune somme n'ayant été versée à ce stade, il n'y a rien à rembourser.`,
+          `Le propriétaire s'engage à tenir son calendrier à jour. Il peut y fermer les dates où son logement n'est pas disponible ; ces dates ne se réservent pas.`,
+          `Le prix se calcule en nuits pour une nuitée, et en jours — jour d'arrivée et jour de départ compris — pour une formule à la journée, à la demi-journée ou au pass. Lorsqu'un logement affiche un prix à la semaine ou au mois, ce prix s'applique à tout le séjour, au prorata, dès 7 nuits pour la semaine et dès 30 nuits pour le mois, chaque fois qu'il est plus avantageux que le prix à la nuit. Le propriétaire peut fixer une durée minimale de séjour, indiquée sur l'annonce.`,
+          `Une demande porte sur un séjour de six mois au plus, qui commence dans les dix-huit mois. Un client ne peut avoir plus de cinq demandes en attente de réponse à la fois.`,
           `Le nombre de personnes déclaré ne peut excéder la capacité du logement. Tout dépassement autorise le propriétaire à refuser l'accès, sans remboursement.`,
           `Les coordonnées du propriétaire vous sont communiquées une fois la réservation confirmée ou réglée. Avant cela, toutes vos questions passent par la messagerie rattachée à votre réservation, qui en conserve la trace.`,
+          `Les hébergements réservés auprès de notre équipe suivent l'article 6.`,
         ],
       },
       ARGENT,
       {
-        titre: '6. Annulation et remboursement',
+        titre: '6. Les hébergements réservés auprès de notre équipe',
+        paragraphes: [
+          `Certains hébergements sont présentés par ${EXPLOITANT} avec des partenaires qui les gèrent. Leur fiche l'indique : ils ne se réservent pas en ligne, mais auprès de l'équipe ${EXPLOITANT}, dont le contact figure sur la fiche.`,
+          `Le prix affiché sur ces annonces comprend la rémunération de ${EXPLOITANT} : aucun frais ne s'y ajoute.`,
+          `Les disponibilités, le mode de règlement et les conditions d'annulation vous sont confirmés par écrit — message ou courriel — par l'équipe, avant tout paiement. Pour ces hébergements, ce qui est ainsi convenu remplace les articles 4 et 5 et la politique d'annulation.`,
+        ],
+      },
+      {
+        titre: '7. Les services',
+        paragraphes: [
+          `Les services proposés aux voyageurs — transport, repas — se demandent sur la plateforme, sans compte. Une demande de service n'est pas une réservation : l'équipe ${EXPLOITANT} la reçoit, la transmet au prestataire et la confirme avec vous, notamment par WhatsApp.`,
+          `Les prix affichés pour les services sont indicatifs (« à partir de ») ; le prix définitif vous est donné à la confirmation. Aucun service ne se règle en ligne sur la plateforme.`,
+          `Le service est exécuté par le prestataire, qui en répond. Ses conditions d'annulation vous sont indiquées à la confirmation.`,
+        ],
+      },
+      {
+        titre: '8. Annulation et remboursement',
         paragraphes: [
           `Les règles d'annulation, le barème de remboursement et le délai dans lequel les sommes sont rendues font l'objet d'un document distinct : la politique d'annulation, qui fait partie intégrante des présentes conditions.`,
         ],
       },
       {
-        titre: '7. Avis',
+        titre: '9. Avis',
         paragraphes: [
           `Seul un client ayant effectivement séjourné dans un logement peut en publier un avis. Les avis engagent leur auteur.`,
           `${EXPLOITANT} peut retirer un avis manifestement injurieux, diffamatoire ou étranger au séjour. Elle ne retire pas un avis au seul motif qu'il est défavorable.`,
         ],
       },
       {
-        titre: '8. Responsabilité',
+        titre: '10. Responsabilité',
         paragraphes: [
           `${EXPLOITANT} met en œuvre les moyens raisonnables pour assurer la disponibilité et la sécurité de la plateforme, sans garantir une continuité de service ininterrompue.`,
-          `La responsabilité de ${EXPLOITANT} ne peut être engagée en cas de litige entre un client et un propriétaire, de dommage survenu pendant un séjour, ou d'inexécution imputable à l'une de ces deux parties.`,
+          `La responsabilité de ${EXPLOITANT} ne peut être engagée en cas de litige entre un client et un propriétaire ou un prestataire, de dommage survenu pendant un séjour ou un service, ou d'inexécution imputable à l'une de ces parties.`,
           `Elle demeure en revanche responsable des sommes qu'elle encaisse et détient, jusqu'à leur reversement au propriétaire ou leur remboursement au client.`,
         ],
       },
       {
-        titre: '9. Propriété intellectuelle',
+        titre: '11. Propriété intellectuelle',
         paragraphes: [
           `La marque, les textes, l'interface et le code de la plateforme sont protégés. Toute reproduction sans autorisation est interdite.`,
           `Les photographies des annonces demeurent la propriété de leurs auteurs.`,
         ],
       },
       {
-        titre: '10. Modification des conditions',
+        titre: '12. Modification des conditions',
         paragraphes: [
           `Ces conditions peuvent être modifiées pour suivre l'évolution du service ou de la réglementation. La date de dernière mise à jour figure en tête de page.`,
           `Une modification touchant le prix, la commission ou les règles de remboursement est annoncée aux utilisateurs avant son entrée en vigueur, et ne s'applique jamais à une réservation déjà réglée.`,
         ],
       },
       {
-        titre: '11. Droit applicable',
+        titre: '13. Droit applicable',
         paragraphes: [
           `Les présentes conditions sont régies par le droit sénégalais. En cas de différend, les parties recherchent d'abord une solution amiable en nous écrivant à ${CONTACT}. À défaut, les tribunaux compétents de Dakar sont saisis.`,
         ],
@@ -284,7 +326,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
     cle: 'annulation',
     titre: 'Politique d\'annulation',
     description: `Conditions d'annulation et barème de remboursement de ${EXPLOITANT} : ce qui vous est rendu, selon la cause et le délai.`,
-    miseAJour: MAJ_COMMISSION,
+    miseAJour: MAJ_RESERVATION,
     chapeau:
       `Cette page dit ce qui vous est remboursé quand un séjour n'a pas lieu, et sous quel délai. Elle fait partie intégrante des conditions générales.`,
     sections: [
@@ -293,6 +335,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
         paragraphes: [
           `${EXPLOITANT} encaisse le prix du séjour et détient les fonds jusqu'au reversement au propriétaire. C'est donc ${EXPLOITANT} qui rembourse, et non le propriétaire.`,
           `Ce qui vous est rendu dépend de deux choses, et de deux seulement : qui est à l'origine de l'annulation, et combien de temps sépare la demande de la date d'arrivée.`,
+          `Cette politique s'applique aux séjours réservés en ligne. Pour un hébergement réservé auprès de notre équipe, les conditions d'annulation vous sont confirmées par écrit avant tout paiement (article 6 des conditions générales).`,
         ],
       },
       {
@@ -320,6 +363,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
         paragraphes: [
           `Une demande de réservation qui n'a pas encore été réglée s'annule librement depuis votre espace, à tout moment et sans frais. Aucune somme n'ayant été versée, il n'y a rien à rembourser.`,
           `Il en va de même d'une demande restée sans réponse du propriétaire pendant 24 heures : elle s'annule d'elle-même.`,
+          `Une annulation est définitive. Si un paiement aboutit malgré tout après elle — lancé juste avant, par exemple —, il ne rouvre pas la réservation, dont les dates ont pu être reprises : la somme vous est rendue, dans le délai prévu à l'article 7.`,
         ],
       },
       {

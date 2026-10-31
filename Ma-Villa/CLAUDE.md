@@ -216,7 +216,16 @@ sans confirmation.
 
 **Rouvrir** : `RESERVATIONS_OUVERTES=true` sur Railway, rien à redéployer. Fermée
 par défaut dans le code, comme la boutique et le paiement. Passer d'abord par la
-sonde `/admin/paiement`. Le contact se change par `RESERVATIONS_CONTACT_NOM`,
+sonde `/admin/paiement`.
+
+**Sauf les annonces des associés** (31 octobre 2026) : même rouverte, la
+réservation en ligne ne vaut pas pour le circuit des associés
+(`encaisse_par_la_plateforme`) tant que `RESERVATIONS_ASSOCIES_OUVERTES` est
+fausse — fermée par défaut. Ces fiches gardent le contact (« Réservation auprès
+de notre équipe », sans « bientôt »), et le serveur refuse demande et règlement
+en 503 avec `aupres_de_l_equipe`. Côté écran, un seul calcul :
+`modeReservation()` de `src/lib/ouverture.ts` (`en_ligne | equipe | suspendue`).
+CGU article 6. `tests/Feature/AnnoncesDeLEquipeTest.php`. Le contact se change par `RESERVATIONS_CONTACT_NOM`,
 `_TELEPHONE` et `_EMAIL`. `App\Services\ReservationsSuspendues`,
 `tests/Feature/ReservationsSuspenduesTest.php`.
 

@@ -83,6 +83,13 @@ interface Configuration {
   reservations: {
     /** Faux tant que RESERVATIONS_OUVERTES n'est pas levée : chaque fiche affiche le contact. */
     ouvertes: boolean
+    /**
+     * Faux tant que RESERVATIONS_ASSOCIES_OUVERTES n'est pas levée : les
+     * annonces des associés (`encaisse_par_la_plateforme`) se réservent alors
+     * auprès du contact, même quand les autres se réservent en ligne.
+     * Absent d'une API antérieure : lu comme fermé. Voir `reservableEnLigne`.
+     */
+    associes_ouvertes?: boolean
     /** Qui joindre pour réserver pendant la suspension. */
     contact: { nom: string; telephone: string; email: string }
   }
@@ -135,6 +142,7 @@ const DEFAUT: Configuration = {
   // foi côté serveur ; celui-ci n'est qu'un repli.
   reservations: {
     ouvertes: false,
+    associes_ouvertes: false,
     contact: { nom: 'Abdou Ndour', telephone: '+221 77 868 47 23', email: 'ndourabdou011@gmail.com' },
   },
   // Fermés par défaut, comme la boutique : une API qui ne répond pas — ou qui

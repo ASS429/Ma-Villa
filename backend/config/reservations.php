@@ -31,6 +31,24 @@ return [
     'ouvertes' => (bool) env('RESERVATIONS_OUVERTES', false),
 
     /*
+    | Les annonces du circuit des associés (Clé d'Or, Virage, lots importés…)
+    | se réservent-elles en ligne ?
+    |
+    | Non par défaut. Décision de l'exploitant du 31 octobre 2026, au moment de
+    | rouvrir : la réservation en ligne pour toutes les annonces, mais « pour
+    | nos annonces à nous », contacter directement Abdou Ndour. Plusieurs de ces
+    | comptes n'ont aucune boîte aux lettres : une demande en ligne n'y serait
+    | lue par personne, et s'annulerait seule au bout de 24 heures.
+    |
+    | Elle ne joue que si `ouvertes` est vraie : fermée, la réservation l'est
+    | pour tout le monde. Le circuit en ligne (majoration, part transmise aux
+    | associés à chaque paiement) est écrit et testé : `true` suffit le jour
+    | où l'exploitant le décide — après avoir repris les CGU, qui ne le
+    | décrivent pas.
+    */
+    'associes_ouvertes' => (bool) env('RESERVATIONS_ASSOCIES_OUVERTES', false),
+
+    /*
     | Qui joindre tant qu'elle est fermée. Affiché sur chaque fiche à la place
     | du formulaire, et renvoyé dans le message d'erreur de l'API — c'est tout
     | ce que verra l'application mobile déjà distribuée.

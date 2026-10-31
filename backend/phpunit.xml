@@ -31,6 +31,9 @@
              Les tests exercent le parcours ouvert ; ReservationsSuspenduesTest ferme
              explicitement. -->
         <env name="RESERVATIONS_OUVERTES" value="true"/>
+        <!-- Même principe pour le circuit des associés, fermé par défaut depuis
+             le 31 octobre 2026 : AnnoncesDeLEquipeTest ferme explicitement. -->
+        <env name="RESERVATIONS_ASSOCIES_OUVERTES" value="true"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>

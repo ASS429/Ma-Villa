@@ -47,7 +47,12 @@ class ReservationController extends Controller
                 ->with(['logement.villa', 'tarif', $client, $paiement])->get()
             : $user->reservations()->with(['logement.villa', 'tarif', $paiement])->get();
 
-        $reservations->each(fn (Reservation $r) => $this->revelerLesCoordonnees($r, $user));
+        $reservations->each(function (Reservation $r) use ($user) {
+            $this->revelerLesCoordonnees($r, $user);
+            // Pour savoir, sans dire combien nous prenons, si « Régler » se
+            // fait en ligne ou auprès de l'équipe.
+            $r->logement?->villa?->append('encaisse_par_la_plateforme');
+        });
 
         return response()->json($reservations);
     }
@@ -73,6 +78,12 @@ class ReservationController extends Controller
 
         $logement = Logement::findOrFail($request->logement_id);
         $tarif = Tarif::findOrFail($request->tarif_id);
+
+        // Les annonces des associés se réservent auprès de l'équipe, même
+        // quand la réservation en ligne est ouverte pour les autres.
+        if ($refus = ReservationsSuspendues::refus($logement->villa)) {
+            return $refus;
+        }
 
         // Une annonce en brouillon, en attente, refusée ou retirée n'est pas
         // à vendre : la fiche publique la cache, la réservation aussi.

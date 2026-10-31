@@ -6,6 +6,9 @@
  * langue : seule l'interface autour est traduite.
  */
 
+/** « auprès d’Abdou », « auprès de Moussa » : le contact se change sans redéployer. */
+const aupresDe = (nom: string) => (/^[aeiouyhàâéèêîïôû]/i.test(nom) ? `auprès d’${nom}` : `auprès de ${nom}`)
+
 const fr = {
   carte: {
     vedette: 'Vedette',
@@ -44,6 +47,9 @@ const fr = {
     // Réservation suspendue : aucune demande ne peut être envoyée, donc aucune
     // conversation ne peut s'ouvrir. On dit le chemin qui marche aujourd'hui.
     ecrireFerme: 'Pour l’instant, réservations et questions passent par notre équipe : voyez le bloc « Réserver ».',
+    // Annonce des associés : elle se réserve auprès de l'équipe, et ce n'est
+    // pas provisoire — d'où l'absence de « pour l'instant ».
+    ecrireEquipe: 'Réservations et questions passent par notre équipe : voyez le bloc « Réserver ».',
     localisation: 'Localisation',
     localisationDe: (nom: string) => `Localisation de ${nom}`,
     logementsTarifs: 'Logements et tarifs',
@@ -116,6 +122,9 @@ const fr = {
     suspenduCompact: (nom: string) => `Paiement en ligne momentanément suspendu. Pour finaliser, contactez ${nom} au`,
     bientot: 'Réservation en ligne bientôt disponible',
     enAttendant: (nom: string) => `En attendant, ${nom} prend vos demandes de réservation directement.`,
+    equipeTitre: 'Réservation auprès de notre équipe',
+    equipeTexte: (nom: string) => `Cet hébergement se réserve directement ${aupresDe(nom)}, de l’équipe PasseTemps, qui vous confirme les disponibilités et le règlement.`,
+    equipeCompact: (nom: string) => `Cet hébergement se règle auprès de notre équipe : contactez ${nom} au`,
     appeler: (tel: string) => `Appeler le ${tel}`,
     message: (h?: string) => h
       ? `Bonjour, je souhaite réserver « ${h} » vu sur PasseTemps.`
@@ -171,6 +180,7 @@ const en: typeof fr = {
     proprietaire: 'Owner:',
     ecrire: 'You can message them from your bookings once your request is sent.',
     ecrireFerme: 'For now, bookings and questions go through our team: see the “Book” box.',
+    ecrireEquipe: 'Bookings and questions go through our team: see the “Book” box.',
     localisation: 'Location',
     localisationDe: (nom: string) => `Location of ${nom}`,
     logementsTarifs: 'Units and prices',
@@ -243,6 +253,9 @@ const en: typeof fr = {
     suspenduCompact: (nom: string) => `Online payment is temporarily suspended. To complete your booking, contact ${nom} on`,
     bientot: 'Online booking coming soon',
     enAttendant: (nom: string) => `Meanwhile, ${nom} takes your booking requests directly.`,
+    equipeTitre: 'Book through our team',
+    equipeTexte: (nom: string) => `This place is booked directly through ${nom}, from the PasseTemps team, who will confirm availability and payment.`,
+    equipeCompact: (nom: string) => `This place is paid through our team: contact ${nom} on`,
     appeler: (tel: string) => `Call ${tel}`,
     message: (h?: string) => h
       ? `Hello, I would like to book "${h}", seen on PasseTemps.`

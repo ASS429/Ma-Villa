@@ -9,8 +9,12 @@
 >
 > **Gelés depuis le 14 septembre 2026**, sur décision de l'exploitant (« ne touche pas aux
 > textes pour le moment »). Rien de cette liste n'est appliqué tant qu'il ne l'a pas décidé.
+>
+> **31 octobre 2026 — CGU et politique d'annulation reprises**, sur son autorisation, pour
+> rouvrir la réservation en ligne. Les lignes appliquées sont retirées ci-dessous et
+> relevées en fin de page. La confidentialité et les mentions légales restent gelées.
 
-Dernière mise à jour : 22 octobre 2026.
+Dernière mise à jour : 31 octobre 2026.
 
 ---
 
@@ -33,32 +37,25 @@ Dernière mise à jour : 22 octobre 2026.
 
 | Art. | Ce qui manque ou a changé | Depuis | Origine |
 |---|---|---|---|
-| 1. Ce qu'est PasseTemps | Ajouter les **services** (transport, repas ; plus tard sorties guidées) : PasseTemps met en relation, le prestataire exécute et en répond. | 20 oct. 2026 | Demandes JOJ |
-| nouvel article | **Les services** : une demande n'est pas une réservation ; prix « à partir de », indicatifs ; confirmation sur WhatsApp ; rien n'est payé en ligne. Règle d'annulation d'un service (le partenaire propose « gratuite jusqu'à 24 h avant ») : **à décider**. | 20 oct. 2026 | Demandes JOJ |
-| 4–5. Réserver, paiement | Décrivent encore le circuit PayDunya, **suspendu** depuis le 14 sept. 2026. | 14 sept. 2026 | Réservations suspendues |
-| 4. Réserver | Dire comment se calcule le prix : nuits pour une nuitée, jours (bornes comprises) pour une formule de jour ; **prix à la semaine dès 7 nuits et au mois dès 30**, appliqués à tout le séjour quand ils sont plus avantageux ; **durée minimale** fixée par le propriétaire. | 22 oct. 2026 | Longs séjours |
-| 4. Réserver | Limites d'une demande : **six mois** de séjour au plus, **dix-huit mois** à l'avance au plus, **cinq demandes** sans réponse à la fois. | 23 oct. 2026 | Audit de sécurité |
-| compte | Changer d'**e-mail ou de téléphone** demande le mot de passe actuel, et ferme les autres sessions. | 23 oct. 2026 | Audit de sécurité |
-| 4–5 | Si le **partenaire encaisse** : qui encaisse (son nom apparaît sur l'écran Wave / Orange Money), qui rembourse, sous quel délai, quand le propriétaire est payé. | si adopté | Encaissement partenaire |
+| 7. Les services | **Règle d'annulation d'un service** (le partenaire propose « gratuite jusqu'à 24 h avant ») : le texte dit seulement qu'elle est « indiquée à la confirmation ». **À décider.** | 20 oct. 2026 | Demandes JOJ |
+| 6. Équipe | Si **`RESERVATIONS_ASSOCIES_OUVERTES`** passe à vrai : ces annonces se réservent en ligne. Réécrire l'article — prix du propriétaire **majoré de 14 %** (pas le barème prélevé), argent transmis **aux associés à chaque paiement** et non au propriétaire après le séjour, frais PayDunya sur leur part, remboursement par eux (engagement écrit à obtenir). **Avant** d'ouvrir. | 31 oct. 2026 | Circuit des associés |
 | commission | Si les taux du partenaire sont retenus (10 % sur les appartements, 5 % sur les services) : nouveau barème, à reporter aussi dans `config/paiement.php` et le pré-rendu. | si adopté | Offre du 19 oct. |
 | nouvel article | **Commande de repas livrés** (si construite) : le restaurant prépare, livre et répond de l'hygiène ; paiement à la livraison. | si codé | Restauration |
+| 7. Les services | Si le **paiement en ligne des services** est construit : « aucun service ne se règle en ligne » devient faux. | si codé | Paiement des services |
 | — | Version anglaise des articles qui concernent les clients. | si multilingue | Multilingue |
-| commission, 6 | **Circuit des associés (JOJ)** : sur les annonces de partenaires passés par un gérant (Clé d'Or…), le prix affiché est celui du propriétaire **majoré de 14 %** (pas le barème 10 / 14 prélevé) ; l'argent est transmis **aux associés à chaque paiement**, pas au propriétaire après le séjour ; les frais PayDunya sortent de leur part. Les textes disent aujourd'hui l'inverse. | 29 oct. 2026 | Circuit des associés |
 
 ## 3. Politique d'annulation
 
 | § | Ce qui manque ou a changé | Depuis | Origine |
 |---|---|---|---|
 | nouveau | Annulation d'un **service** (transport, repas) : délai et ce qui est rendu. **À décider.** | 20 oct. 2026 | Demandes JOJ |
-| 5–7 | Si le **partenaire encaisse** : c'est lui qui rembourse — le texte dit aujourd'hui PasseTemps. | si adopté | Encaissement partenaire |
-| nouveau | Une annulation est **définitive** ; un paiement arrivé **après** l'annulation ne rouvre pas la réservation, il est rendu au client. | 23 oct. 2026 | Audit de sécurité |
-| 5–7 | Circuit des associés : l'argent leur est transmis dès le paiement ; en cas de remboursement, **ce sont eux qui le rendent** (engagement à obtenir par écrit). | 29 oct. 2026 | Circuit des associés |
+| 1 | Si `RESERVATIONS_ASSOCIES_OUVERTES` passe à vrai : la phrase « pour un hébergement réservé auprès de notre équipe » tombe, et les § 5–7 doivent dire que **les associés rendent** ce qu'ils ont reçu. | 31 oct. 2026 | Circuit des associés |
 
 ## 4. Mentions légales
 
 | Bloc | Ce qui manque ou a changé | Depuis | Origine |
 |---|---|---|---|
-| Éditeur | Toujours aucune structure déclarée (RCCM, NINEA). | 22 août 2026 | Statut informel |
+| Éditeur | Forme juridique, RCCM et NINEA : « en cours de formalisation ». Déposés le 21 oct. 2026, **numéros attendus le 2 ou le 3 novembre** : les reporter ici dès réception (et dans le bloc éditeur de la confidentialité si la dénomination change). | 22 août 2026 | Statut informel |
 | Éditeur | Si le **partenaire encaisse** : le nommer comme encaisseur. | si adopté | Encaissement partenaire |
 | Propriété intellectuelle | « JOJ Dakar 2026 » : PasseTemps n'est ni partenaire ni fournisseur officiel — déjà dit sur la page, à dire aussi ici. | 20 oct. 2026 | Page JOJ |
 
@@ -74,3 +71,24 @@ Dernière mise à jour : 22 octobre 2026.
 
 Retirer toute mention des JOJ ajoutée aux textes. Les services (transport, repas) restent :
 leurs clauses aussi.
+
+---
+
+## Appliqué le 31 octobre 2026 (CGU et annulation)
+
+- CGU art. 1 : les **services** (transport, repas) ; le prestataire exécute et en répond.
+- CGU art. 2 : changer mot de passe, adresse ou numéro exige le mot de passe actuel et ferme
+  les autres sessions.
+- CGU art. 4 : **le règlement confirme la demande** sans attendre le propriétaire (l'ancien
+  texte disait « confirmation, puis règlement », faux depuis l'origine) ; calendrier tenu par
+  le propriétaire et dates fermées ; calcul du prix (nuits, jours bornes comprises, semaine
+  dès 7 nuits, mois dès 30, durée minimale) ; limites (six mois, dix-huit mois, cinq demandes).
+- CGU art. 6 (nouveau) : les annonces des associés se réservent **auprès de l'équipe**, prix
+  tout compris, conditions confirmées par écrit avant paiement.
+- CGU art. 7 (nouveau) : les services — une demande n'est pas une réservation, prix
+  indicatifs, confirmation notamment par WhatsApp, rien n'est payé en ligne.
+- CGU art. 10 : la responsabilité couvre aussi les prestataires.
+- Annulation § 1 : ne vaut que pour les séjours réservés en ligne. § 4 : une annulation est
+  **définitive**, un paiement arrivé après est rendu.
+- Lignes devenues sans objet : « circuit PayDunya suspendu » (réouverture) et « si le
+  partenaire encaisse » (c'est nous qui encaissons depuis le 29 octobre).

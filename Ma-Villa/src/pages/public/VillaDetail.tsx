@@ -20,6 +20,7 @@ import { type Occupation, type VillaDetail as Villa } from '../../types'
 import { lieu } from '../../lib/lieu'
 import { useLangue } from '../../i18n/langue'
 import { TEXTES_HEBERGEMENT } from '../../i18n/hebergement'
+import { modeReservation } from '../../lib/ouverture'
 
 /* ─── Utilitaires ────────────────────────────────────────────── */
 
@@ -213,6 +214,8 @@ export default function VillaDetail() {
     `villa-${id}`,
     { messageErreurParDefaut: t.chargementImpossible }
   )
+  // En ligne, auprès de l'équipe (annonce des associés) ou suspendue.
+  const mode = modeReservation(reservations, villa ?? undefined)
 
   const [occupation, setOccupation] = useState<Occupation>({})
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null)
@@ -491,7 +494,7 @@ export default function VillaDetail() {
             className="px-6 py-3 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90"
             style={{ background: 'var(--accent)', color: 'var(--on-accent)', minHeight: 44 }}
           >
-            {reservations.ouvertes ? t.reserver : t.contacter}
+            {mode === 'en_ligne' ? t.reserver : t.contacter}
           </button>
         </div>
       )}
@@ -567,7 +570,7 @@ export default function VillaDetail() {
                 {t.proprietaire} <span className="th-text-1 font-medium">{villa.proprietaire.name}</span>
               </span>
               <span className="text-sm th-text-3">
-                {reservations.ouvertes ? t.ecrire : t.ecrireFerme}
+                {{ en_ligne: t.ecrire, equipe: t.ecrireEquipe, suspendue: t.ecrireFerme }[mode]}
               </span>
             </div>
 
@@ -696,11 +699,15 @@ export default function VillaDetail() {
                     ? t.apercuProprietaire
                     : t.reserveesAuxClients}
                 </p>
-              ) : !reservations.ouvertes ? (
-                // Suspendue : un humain à joindre à la place du formulaire, que
-                // le serveur refuserait de toute façon. Les prix restent
-                // affichés au-dessus — ils servent toujours à choisir.
-                <ContactReservation hebergement={villa.nom} />
+              ) : mode !== 'en_ligne' ? (
+                // Suspendue, ou annonce des associés : un humain à joindre à la
+                // place du formulaire, que le serveur refuserait de toute façon.
+                // Les prix restent affichés au-dessus — ils servent toujours à
+                // choisir.
+                <ContactReservation
+                  hebergement={villa.nom}
+                  equipe={mode === 'equipe'}
+                />
               ) : resaEnvoyee ? (
                 <div className="text-center py-6">
                   <p className="text-2xl mb-3" aria-hidden="true">✅</p>

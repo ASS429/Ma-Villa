@@ -5,6 +5,7 @@ import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import { useConfig } from '../../context/ConfigContext'
 import ContactReservation from '../../components/ContactReservation'
+import { modeReservation } from '../../lib/ouverture'
 import { useMessages } from '../../context/MessagesContext'
 import { useToast } from '../../context/ToastContext'
 import { useRequete } from '../../lib/useRequete'
@@ -25,7 +26,7 @@ interface Reservation {
   montant_total: number
   statut: 'en_attente' | 'confirmee' | 'annulee'
   client?: { id: number; name: string; email: string }
-  logement: { nom: string; villa: { nom: string } }
+  logement: { nom: string; villa: { nom: string; encaisse_par_la_plateforme?: boolean } }
   tarif: { type_tarif: string }
   paiement?: {
     statut: 'en_attente' | 'reussi' | 'echoue'
@@ -185,16 +186,22 @@ export default function Reservations() {
         <div className="liste-console">
           {liste.map((r) => {
             const statut = STATUT[r.statut]
-            const payable = paiement.actif && reservations.ouvertes && resteARegler(r, paiement.montant_minimum)
+            const mode = modeReservation(reservations, r.logement.villa)
+            const payable = paiement.actif && mode === 'en_ligne' && resteARegler(r, paiement.montant_minimum)
             // Suspendue, la réservation l'est jusqu'au règlement : « Régler »
             // disparaît, et le client apprend qui joindre à la place — sans quoi
-            // il croirait sa demande oubliée.
-            const reglementSuspendu = !reservations.ouvertes && !estProprietaire
+            // il croirait sa demande oubliée. Même chose pour une annonce des
+            // associés, qui se règle auprès de l'équipe.
+            const reglementSuspendu = mode !== 'en_ligne' && !estProprietaire
               && resteARegler(r, paiement.montant_minimum)
             const paye = r.paiement?.statut === 'reussi'
             // Sans argent encaissé, l'annulation est immédiate : il n'y a rien
             // à rendre, donc rien à décider, et faire attendre serait gratuit.
-            const annulable = !estProprietaire && r.statut === 'en_attente' && !paye
+            // Confirmée par le propriétaire mais pas réglée, elle s'annule
+            // aussi — la politique d'annulation le promet (§ 4), et le serveur
+            // l'accepte — tant que le séjour n'a pas commencé.
+            const annulable = !estProprietaire && !paye
+              && (r.statut === 'en_attente' || (r.statut === 'confirmee' && r.date_debut > aujourdhui()))
             // Un séjour terminé ne s'annule plus : il a eu lieu. Ce qui reste
             // à dire se dit par la messagerie, et se règle en remboursement.
             const demandable = !estProprietaire && paye
@@ -294,7 +301,7 @@ export default function Reservations() {
                       onClick={() => changerStatut(r, 'annulee')}
                       disabled={enCours === r.id}
                     >
-                      Annuler la demande
+                      {r.statut === 'confirmee' ? 'Annuler la réservation' : 'Annuler la demande'}
                     </Button>
                   )}
 
@@ -315,7 +322,7 @@ export default function Reservations() {
                     </Link>
                   )}
 
-                  {reglementSuspendu && <ContactReservation compact />}
+                  {reglementSuspendu && <ContactReservation compact equipe={mode === 'equipe'} />}
                 </div>
               </article>
             )

@@ -38,8 +38,10 @@ class PaiementController extends Controller
         // La suspension couvre le règlement : payer une demande déjà créée
         // encaisserait sur le compte bloqué. Seule l'**initiation** est fermée
         // — `statut` reste ouvert, pour qu'un paiement déjà lancé puisse encore
-        // être constaté.
-        if ($refus = ReservationsSuspendues::refus()) {
+        // être constaté. Une annonce des associés se règle auprès de l'équipe
+        // tant que leur circuit n'est pas ouvert en ligne.
+        $reservation->loadMissing('logement.villa');
+        if ($refus = ReservationsSuspendues::refus($reservation->logement->villa)) {
             return $refus;
         }
 
