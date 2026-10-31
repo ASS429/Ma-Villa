@@ -97,4 +97,16 @@ class PositionApprocheeTest extends TestCase
         $this->assertTrue($villa->refresh()->position_approximative);
         $this->assertNotNull($villa->latitude);
     }
+
+    /**
+     * Appelé par un import d'une migration antérieure à la colonne : sous
+     * Postgres, l'erreur aurait annulé l'import entier (31 octobre 2026).
+     */
+    public function test_sans_la_colonne_le_placement_ne_fait_rien(): void
+    {
+        $this->villa();
+        \Illuminate\Support\Facades\Schema::table('villas', fn ($t) => $t->dropColumn('position_approximative'));
+
+        $this->assertSame(0, PositionApprochee::placerCelles());
+    }
 }

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Villa;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Une position approximative pour les annonces qui n'en ont pas.
@@ -74,6 +75,16 @@ final class PositionApprochee
      */
     public static function placerCelles(): int
     {
+        // ⚠️ Appelée par `ImportLot`, donc par des migrations **antérieures** à
+        // celle qui crée la colonne (2026_10_31_000004). Le 31 octobre, l'import
+        // de la villa de Saly (000003) l'a appelée trop tôt : sous Postgres,
+        // l'erreur — pourtant rattrapée — a annulé toute la transaction de la
+        // migration, import compris, et Laravel l'a quand même notée « faite ».
+        // Sur une base neuve, les imports du lot le referaient.
+        if (! Schema::hasColumn('villas', 'position_approximative')) {
+            return 0;
+        }
+
         $rangs = [];
         $placees = 0;
 
