@@ -16,6 +16,8 @@ class ImportLotTest extends TestCase
 
     private const DOSSIER = 'database/donnees/lot-31-octobre';
 
+    private const SUITE = 'database/donnees/lot-31-octobre-suite';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -33,22 +35,28 @@ class ImportLotTest extends TestCase
         return Villa::where('nom', $nom)->with('logements.tarifs')->firstOrFail();
     }
 
-    public function test_le_dossier_est_complet_et_les_descriptions_sans_prix(): void
+    public static function lots(): array
     {
-        $lot = require base_path(self::DOSSIER.'/annonces.php');
+        return ['premier lot' => [self::DOSSIER, 9], 'suite' => [self::SUITE, 3]];
+    }
 
-        $this->assertCount(9, $lot['annonces']);
+    #[\PHPUnit\Framework\Attributes\DataProvider('lots')]
+    public function test_le_dossier_est_complet_et_les_descriptions_sans_prix(string $dossier, int $annonces): void
+    {
+        $lot = require base_path($dossier.'/annonces.php');
+
+        $this->assertCount($annonces, $lot['annonces']);
         foreach ($lot['annonces'] as $annonce) {
             $this->assertArrayHasKey($annonce['proprietaire'], $lot['proprietaires']);
             $this->assertLessThanOrEqual((int) config('annonces.photos_max'), count($annonce['photos']));
             foreach ($annonce['photos'] as [$fichier]) {
-                $this->assertFileExists(base_path(self::DOSSIER."/{$fichier}"));
+                $this->assertFileExists(base_path("{$dossier}/{$fichier}"));
             }
             $this->assertDoesNotMatchRegularExpression('/\d{1,3}[  ]\d{3}/u', $annonce['description'],
                 'Un prix écrit dans la description contredirait la grille.');
         }
         // Le dépôt est public : aucune adresse en clair.
-        $this->assertStringNotContainsString('gmail', file_get_contents(base_path(self::DOSSIER.'/annonces.php')));
+        $this->assertStringNotContainsString('gmail', file_get_contents(base_path($dossier.'/annonces.php')));
     }
 
     public function test_sans_compte_les_annonces_paraissent_sous_un_compte_a_leur_nom(): void
@@ -118,6 +126,25 @@ class ImportLotTest extends TestCase
         $chambres = $this->annonce('Chambres en appartement · Ouest Foire')->logements;
         $this->assertCount(4, $chambres);
         $this->assertSame(40000, (int) $chambres->first()->tarifs->first()->prix);
+    }
+
+    public function test_la_suite_va_au_meme_compte_d_attente_que_le_premier_lot(): void
+    {
+        $this->importer();
+        $bilan = (new ImportLot(self::SUITE))->executer();
+
+        $this->assertSame(3, $bilan['annonces']);
+        $jule = User::where('email', 'jule@passetemps.sn')->sole();
+        $this->assertSame(6, Villa::where('user_id', $jule->id)->count());
+
+        $ngor = $this->annonce('Villa 6 chambres rénovée avec piscine · Ngor');
+        $this->assertSame(285000, (int) $ngor->logements->first()->tarifs->first()->prix);
+        $this->assertCount(2, $this->annonce('Appartements 5 chambres vue mer · Ngor')->logements);
+
+        // Au mois : 2 000 000 F demandés, 2 280 000 F pour trente nuits.
+        $exception = $this->annonce('Appartement d\'exception 3 chambres · Almadies')->logements->first();
+        $this->assertSame(30, $exception->nuits_minimum);
+        $this->assertSame(2280000, PrixSejour::pour($exception->tarifs->first(), '2026-12-01', '2026-12-31')['montant']);
     }
 
     public function test_l_import_ne_se_rejoue_pas(): void

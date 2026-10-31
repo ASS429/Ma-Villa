@@ -19,10 +19,9 @@
 | de nuit égal à la période divisée par ses nuits : le prix de période
 | s'applique alors de lui-même (`PrixSejour`).
 |
-| Mis de côté, en attente de réponses de l'exploitant : la villa 5 chambres
-| (pas de ville), la villa de Ngor (deux maisons dans le même dossier), les
-| deux appartements de Ngor (nombre de chambres illisible) et l'appartement
-| d'exception des Almadies (photos au filigrane d'une agence).
+| Mis de côté puis précisés le même jour : la villa de Ngor, les deux
+| appartements de Ngor et l'appartement d'exception des Almadies (voir
+| `../lot-31-octobre-suite`). La villa 5 chambres attend toujours sa ville.
 |
 */
 
