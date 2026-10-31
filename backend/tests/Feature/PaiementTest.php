@@ -130,6 +130,21 @@ class PaiementTest extends TestCase
         ]);
     }
 
+    /** Réglé sur place, un séjour terminé payé en ligne le serait deux fois. */
+    public function test_un_sejour_termine_ne_se_regle_plus_en_ligne(): void
+    {
+        Http::fake();
+        $reservation = $this->reservation();
+        $reservation->forceFill(['date_debut' => now()->subDays(5)->toDateString(), 'date_fin' => now()->subDays(2)->toDateString(), 'statut' => 'confirmee'])->save();
+
+        $this->actingAs($reservation->client, 'sanctum')
+            ->postJson("/api/reservations/{$reservation->id}/paiement", ['methode' => 'wave', 'telephone' => '771234567'])
+            ->assertStatus(409)
+            ->assertJsonPath('message', 'Ce séjour est terminé : il ne se règle plus en ligne. Écrivez-nous si un montant reste dû.');
+
+        Http::assertNothingSent();
+    }
+
     /* ── La carte bancaire (31 octobre 2026) ─────────────────── */
 
     public function test_la_carte_est_refusee_tant_qu_elle_n_est_pas_ouverte(): void

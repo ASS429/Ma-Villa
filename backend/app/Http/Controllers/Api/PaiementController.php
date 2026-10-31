@@ -65,6 +65,14 @@ class PaiementController extends Controller
             return response()->json(['message' => 'Cette réservation est annulée.'], 409);
         }
 
+        // Un séjour terminé ne se règle plus en ligne : s'il a été réglé sur
+        // place, le payer ici le ferait payer deux fois.
+        if ($reservation->date_fin->lt(today())) {
+            return response()->json([
+                'message' => 'Ce séjour est terminé : il ne se règle plus en ligne. Écrivez-nous si un montant reste dû.',
+            ], 409);
+        }
+
         if ($reservation->paiement?->estRegle()) {
             return response()->json(['message' => 'Cette réservation est déjà réglée.'], 409);
         }

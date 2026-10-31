@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { CalendarDays, Users, Check, X, CreditCard, Inbox, MessageSquare } from 'lucide-react'
+import { Star, CalendarDays, Users, Check, X, CreditCard, Inbox, MessageSquare } from 'lucide-react'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import { useConfig } from '../../context/ConfigContext'
@@ -26,7 +26,7 @@ interface Reservation {
   montant_total: number
   statut: 'en_attente' | 'confirmee' | 'annulee'
   client?: { id: number; name: string; email: string }
-  logement: { nom: string; villa: { nom: string; encaisse_par_la_plateforme?: boolean } }
+  logement: { nom: string; villa: { id: number; nom: string; encaisse_par_la_plateforme?: boolean } }
   tarif: { type_tarif: string }
   paiement?: {
     statut: 'en_attente' | 'reussi' | 'echoue'
@@ -83,6 +83,9 @@ function resteARegler(r: Reservation, minimum: number) {
     // Sous le plancher du prestataire, proposer « Régler » enverrait droit dans
     // un refus : mieux vaut ne rien proposer que promettre l'impossible.
     && r.montant_total >= minimum
+    // Un séjour terminé ne se règle plus en ligne : réglé sur place, il serait
+    // payé deux fois (tour du 31 octobre 2026). Le serveur refuse aussi.
+    && r.date_fin >= aujourdhui()
 }
 
 export default function Reservations() {
@@ -274,6 +277,15 @@ export default function Reservations() {
                       <span className="console-pastille">{parReservation[r.id]}</span>
                     )}
                   </Link>
+
+                  {/* Le formulaire d'avis vit sur la fiche, réservé à qui a
+                      séjourné : rien n'y menait depuis la réservation. */}
+                  {!estProprietaire && r.statut === 'confirmee' && r.date_fin < aujourdhui() && (
+                    <Link to={`/hebergements/${r.logement.villa.id}/#avis`} className="btn btn-secondaire btn-sm">
+                      <Star size={15} aria-hidden="true" />
+                      <span>Donner votre avis</span>
+                    </Link>
+                  )}
 
                   {estProprietaire && r.statut === 'en_attente' && (
                     <>

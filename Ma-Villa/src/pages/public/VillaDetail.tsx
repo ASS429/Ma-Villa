@@ -620,7 +620,8 @@ export default function VillaDetail() {
             </section>
 
             {/* Avis */}
-            <section>
+            {/* `#avis` : « Donner votre avis » y mène depuis Mes réservations. */}
+            <section id="avis" style={{ scrollMarginTop: 96 }}>
               <h2 className="text-lg font-medium mb-4">
                 {t.titreAvis}{villa.avis.length > 0 && <span className="th-text-3 font-normal ml-2">({villa.avis.length})</span>}
               </h2>
