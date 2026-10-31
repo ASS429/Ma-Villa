@@ -38,6 +38,9 @@ import { fileURLToPath } from 'node:url'
 import { enSlug } from './villes.mjs'
 
 const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..')
+
+// Les comptes de PasseTemps (Instagram, TikTok…) : même fichier que le pied de page.
+const RESEAUX = JSON.parse(readFileSync(join(RACINE, 'src', 'reseaux.json'), 'utf8'))
 const DIST = join(RACINE, 'dist')
 
 /**
@@ -536,15 +539,28 @@ const PAGES_FIXES = [
       + 'Mbour, Dakar. Tarifs affichés, disponibilités en temps réel.',
     donnees: {
       '@context': 'https://schema.org',
-      '@type': 'WebSite',
-      name: 'PasseTemps',
-      url: SITE,
-      inLanguage: 'fr',
-      potentialAction: {
-        '@type': 'SearchAction',
-        target: `${SITE}/hebergements?ville={search_term_string}`,
-        'query-input': 'required name=search_term_string',
-      },
+      '@graph': [
+        {
+          '@type': 'WebSite',
+          name: 'PasseTemps',
+          url: SITE,
+          inLanguage: 'fr',
+          potentialAction: {
+            '@type': 'SearchAction',
+            target: `${SITE}/hebergements?ville={search_term_string}`,
+            'query-input': 'required name=search_term_string',
+          },
+        },
+        // Les comptes de PasseTemps : c'est par `sameAs` que Google relie le
+        // site à ses profils. Le groupe WhatsApp n'est pas un profil.
+        {
+          '@type': 'Organization',
+          name: 'PasseTemps',
+          url: SITE,
+          logo: `${SITE}/logo.png`,
+          sameAs: RESEAUX.filter((r) => r.profil).map((r) => r.url),
+        },
+      ],
     },
   },
   {

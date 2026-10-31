@@ -35,6 +35,7 @@ const fr = {
     annulation: 'Politique d’annulation',
     vente: 'Conditions de vente',
     mentions: 'Mentions légales',
+    suivre: 'Suivez-nous',
     pays: 'Sénégal',
   },
   basse: {
@@ -86,6 +87,7 @@ const en: typeof fr = {
     annulation: 'Cancellation policy',
     vente: 'Terms of sale',
     mentions: 'Legal notice',
+    suivre: 'Follow us',
     pays: 'Senegal',
   },
   basse: {

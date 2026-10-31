@@ -1,0 +1,50 @@
+[
+  {
+    "cle": "facebook",
+    "icone": "facebook",
+    "nom": "Facebook",
+    "nom_en": "Facebook",
+    "url": "https://www.facebook.com/profile.php?id=61575974714655",
+    "profil": true
+  },
+  {
+    "cle": "instagram",
+    "icone": "instagram",
+    "nom": "Instagram",
+    "nom_en": "Instagram",
+    "url": "https://www.instagram.com/passetemps.sn",
+    "profil": true
+  },
+  {
+    "cle": "tiktok",
+    "icone": "tiktok",
+    "nom": "TikTok",
+    "nom_en": "TikTok",
+    "url": "https://www.tiktok.com/@passetemps.sn",
+    "profil": true
+  },
+  {
+    "cle": "snapchat",
+    "icone": "snapchat",
+    "nom": "Snapchat",
+    "nom_en": "Snapchat",
+    "url": "https://snapchat.com/t/oP5ks8ry",
+    "profil": true
+  },
+  {
+    "cle": "chaine-whatsapp",
+    "icone": "whatsapp",
+    "nom": "Chaîne WhatsApp",
+    "nom_en": "WhatsApp channel",
+    "url": "https://whatsapp.com/channel/0029VbEOT9SKgsNmy0fcYh02",
+    "profil": true
+  },
+  {
+    "cle": "groupe-whatsapp",
+    "icone": "whatsapp",
+    "nom": "Groupe WhatsApp",
+    "nom_en": "WhatsApp group",
+    "url": "https://chat.whatsapp.com/KfZoMzKfxteHHXkXhKhf8R",
+    "profil": false
+  }
+]

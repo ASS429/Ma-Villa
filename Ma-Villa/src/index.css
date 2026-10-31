@@ -1726,6 +1726,12 @@ html.video-mode[data-theme="dark"] {
   .th-text-3[href] { display: inline-block; padding: 6px 0; min-height: 32px; }
 }
 
+/* Pied de page, colonne « Suivez-nous » : l'icône reste à côté du nom.
+   La règle ci-dessus passait le lien en `inline-block` sur téléphone, et
+   l'icône montait au-dessus du nom. `[href]` : la même règle vise aussi
+   `.th-text-2[href]`, plus spécifique qu'une seule classe. */
+footer nav a.lien-reseau[href] { display: inline-flex; align-items: center; gap: 0.5rem; }
+
 @media (max-width: 767px) {
   .bascule-carte-flottante { display: inline-flex; }
 }

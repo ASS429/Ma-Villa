@@ -7,6 +7,8 @@ import { CHEMIN_JOJ } from '../joj'
 import { useLangue } from '../i18n/langue'
 import { COMMUN } from '../i18n/commun'
 import Marque from './Marque'
+import IconeReseau from './IconeReseau'
+import RESEAUX from '../reseaux.json'
 
 export default function Footer() {
   const { user } = useAuth()
@@ -55,6 +57,25 @@ export default function Footer() {
               <Link to={lien('/annulation/')} className="th-text-2 hover:th-text-1 transition-colors">{t.annulation}</Link>
               <Link to={lien('/conditions-vente/')} className="th-text-2 hover:th-text-1 transition-colors">{t.vente}</Link>
               <Link to={lien('/mentions-legales/')} className="th-text-2 hover:th-text-1 transition-colors">{t.mentions}</Link>
+            </div>
+
+            {/* Icône et nom, pas l'icône seule : les deux liens WhatsApp (chaîne
+                et groupe) auraient le même pictogramme. `rel="me"` sur les
+                profils : il relie le site à ses comptes. */}
+            <div className="flex flex-col gap-2.5">
+              <p className="font-semibold th-text-1">{t.suivre}</p>
+              {RESEAUX.map((r) => (
+                <a
+                  key={r.cle}
+                  href={r.url}
+                  target="_blank"
+                  rel={r.profil ? 'me noopener noreferrer' : 'noopener noreferrer'}
+                  className="lien-reseau th-text-2 hover:th-text-1 transition-colors"
+                >
+                  <IconeReseau icone={r.icone} />
+                  <span>{langue === 'en' ? r.nom_en : r.nom}</span>
+                </a>
+              ))}
             </div>
           </nav>
         </div>
