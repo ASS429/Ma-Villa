@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
@@ -216,6 +216,14 @@ export default function VillaDetail() {
   )
   // En ligne, auprès de l'équipe (annonce des associés) ou suspendue.
   const mode = modeReservation(reservations, villa ?? undefined)
+
+  // « Donner votre avis » arrive avec #avis. La section n'existe qu'une fois
+  // l'annonce chargée, et le routeur ne défile pas vers une ancre.
+  const { hash } = useLocation()
+  useEffect(() => {
+    if (!villa || !hash) return
+    document.getElementById(decodeURIComponent(hash.slice(1)))?.scrollIntoView({ block: 'start' })
+  }, [villa, hash])
 
   const [occupation, setOccupation] = useState<Occupation>({})
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null)
