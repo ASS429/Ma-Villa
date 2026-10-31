@@ -136,6 +136,8 @@ const fr = {
   paiement: {
     securise: (noms: string) => `Paiement sécurisé par ${noms}.`,
     et: ' et ',
+    // Le nom vient du serveur, en français ; la carte s'écrit en minuscules dans une phrase.
+    nomMoyen: (cle: string, nom: string): string => (cle === 'carte' ? 'carte bancaire' : nom),
     directCompact: (plateforme: boolean): string => plateforme
       ? 'Règlement auprès de PasseTemps.'
       : 'Règlement directement avec le propriétaire.',
@@ -268,6 +270,7 @@ const en: typeof fr = {
   paiement: {
     securise: (noms: string) => `Secure payment by ${noms}.`,
     et: ' and ',
+    nomMoyen: (cle: string, nom: string): string => (cle === 'carte' ? 'bank card' : nom),
     directCompact: (plateforme: boolean): string => plateforme
       ? 'Payment is made to PasseTemps.'
       : 'Payment is made directly with the owner.',

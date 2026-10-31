@@ -12,6 +12,7 @@ use App\Services\Push;
 use App\Services\ReservationsSuspendues;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -50,7 +51,9 @@ class PaiementController extends Controller
         }
 
         $donnees = $request->validate([
-            'methode'   => 'required|in:wave,orange_money',
+            // Les moyens ouverts, pas une liste figée : la carte n'est
+            // acceptée que si `PAIEMENT_CARTE_ACTIVE` l'a ajoutée.
+            'methode'   => ['required', Rule::in(array_column(config('paiement.moyens'), 'cle'))],
             'telephone' => 'required|string|max:30',
         ]);
 
@@ -113,6 +116,7 @@ class PaiementController extends Controller
                 // écran d'attente, qui interroge le serveur jusqu'à l'IPN.
                 urlRetour: rtrim((string) config('app.frontend_url'), '/')
                     ."/reservation/{$reservation->id}/paiement",
+                canaux: $donnees['methode'] === 'carte' ? ['card'] : null,
             );
 
             $paiement = $reservation->paiement ?? new Paiement(['reservation_id' => $reservation->id]);
@@ -129,9 +133,11 @@ class PaiementController extends Controller
             $paiement->appliquerRepartition($repartition, $villa->circuit);
             $paiement->save();
 
-            $resultat = $this->lancerSoftpay(
-                $facture, $donnees['methode'], $request->user(), $donnees['telephone']
-            );
+            // La carte se saisit sur la page de PayDunya, jamais chez nous :
+            // pas de SoftPay, le lien de la facture suffit.
+            $resultat = $donnees['methode'] === 'carte'
+                ? ['url' => $facture['url'], 'url_application' => null, 'repli' => false]
+                : $this->lancerSoftpay($facture, $donnees['methode'], $request->user(), $donnees['telephone']);
 
             $lienApplication = $resultat['url_application'] ?? $resultat['url'];
 

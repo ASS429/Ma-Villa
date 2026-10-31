@@ -130,6 +130,67 @@ class PaiementTest extends TestCase
         ]);
     }
 
+    /* ── La carte bancaire (31 octobre 2026) ─────────────────── */
+
+    public function test_la_carte_est_refusee_tant_qu_elle_n_est_pas_ouverte(): void
+    {
+        Http::fake();
+        $reservation = $this->reservation();
+
+        $this->actingAs($reservation->client, 'sanctum')
+            ->postJson("/api/reservations/{$reservation->id}/paiement", [
+                'methode' => 'carte', 'telephone' => '+221 77 123 45 67',
+            ])->assertStatus(422);
+
+        Http::assertNothingSent();
+    }
+
+    /**
+     * La carte se saisit sur la page de PayDunya, restreinte à la carte :
+     * aucun appel SoftPay, et jamais un numéro de carte chez nous.
+     */
+    public function test_la_carte_passe_par_la_page_de_paydunya_restreinte_a_la_carte(): void
+    {
+        config(['paiement.moyens' => [
+            ['cle' => 'wave', 'nom' => 'Wave'], ['cle' => 'carte', 'nom' => 'Carte bancaire'],
+        ]]);
+        Http::fake([
+            '*checkout-invoice/create' => Http::response([
+                'response_code' => '00', 'response_text' => 'https://paydunya.com/checkout/invoice/CARTE1', 'token' => 'CARTE1',
+            ]),
+        ]);
+
+        $reservation = $this->reservation();
+
+        $reponse = $this->actingAs($reservation->client, 'sanctum')
+            ->postJson("/api/reservations/{$reservation->id}/paiement", [
+                'methode' => 'carte', 'telephone' => '+221 77 123 45 67',
+            ])->assertOk();
+
+        $this->assertSame('https://paydunya.com/checkout/invoice/CARTE1', $reponse->json('url'));
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'checkout-invoice/create')
+            && $r['invoice']['channels'] === ['card']);
+        Http::assertNotSent(fn ($r) => str_contains($r->url(), 'softpay'));
+        $this->assertDatabaseHas('paiements', [
+            'reservation_id' => $reservation->id, 'methode' => 'carte', 'token_paydunya' => 'CARTE1', 'statut' => 'en_attente',
+        ]);
+    }
+
+    public function test_wave_ne_restreint_pas_la_page_de_paiement(): void
+    {
+        Http::fake([
+            '*checkout-invoice/create' => Http::response(['response_code' => '00', 'response_text' => 'https://paydunya/x', 'token' => 'J']),
+            '*softpay/wave-senegal' => Http::response(['success' => true, 'url' => 'https://pay.wave.com/c/abc']),
+        ]);
+        $reservation = $this->reservation();
+
+        $this->actingAs($reservation->client, 'sanctum')
+            ->postJson("/api/reservations/{$reservation->id}/paiement", ['methode' => 'wave', 'telephone' => '771234567'])
+            ->assertOk();
+
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'checkout-invoice/create') && ! isset($r['invoice']['channels']));
+    }
+
     public function test_orange_money_expose_et_conserve_ses_deux_liens(): void
     {
         // Orange Money ne met pas son URL au premier niveau : les liens vivent

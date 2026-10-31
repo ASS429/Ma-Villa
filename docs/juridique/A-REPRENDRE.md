@@ -99,3 +99,12 @@ leurs clauses aussi.
   `passetemps:effacer-demandes-de-service`, chaque jour (durée proposée le 20 octobre,
   retenue faute d'autre décision ; à changer dans la commande **et** le texte).
 - § 7 : le numéro part tout de suite chez le prestataire pour une demande de service.
+
+## Appliqué le 31 octobre 2026 (carte bancaire)
+
+Demandée par l'exploitant (« je veux ajouter le paiement par carte »). Écrit au conditionnel
+— « lorsqu'elle est proposée » — car la carte n'est servie que si `PAIEMENT_CARTE_ACTIVE`
+est vraie : CGU art. 5 (moyens, la carte saisie chez PayDunya), annulation § 7 (remboursement
+d'un paiement par carte : Wave ou Orange Money sur le numéro indiqué, sauf autre moyen
+convenu), confidentialité § 2 et § 4 (numéro du payeur, PayDunya traite aussi la carte),
+CGV § 5. Si la carte devient permanente, retirer « lorsqu'elle est proposée ».

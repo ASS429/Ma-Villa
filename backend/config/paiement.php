@@ -18,10 +18,22 @@ return [
 
     'actif' => env('PAIEMENT_ACTIF', false),
 
-    'moyens' => [
+    /*
+    | La carte bancaire (31 octobre 2026) passe par la **page de paiement de
+    | PayDunya**, restreinte à la carte (`channels: card`) : le client y saisit
+    | sa carte, 3D Secure compris, et nous ne voyons jamais son numéro.
+    | L'API SoftPay carte, qui le ferait transiter par notre serveur, est
+    | réservée aux sociétés certifiées PCI-DSS — et c'est tant mieux.
+    |
+    | Fermée par défaut : la carte doit être activée sur le compte marchand.
+    | La sonde `/admin/paiement` (moyen « Carte ») ouvre une page de test ;
+    | si le formulaire de carte s'y affiche, `PAIEMENT_CARTE_ACTIVE=true`.
+    */
+    'moyens' => array_values(array_filter([
         ['cle' => 'wave', 'nom' => 'Wave'],
         ['cle' => 'orange_money', 'nom' => 'Orange Money'],
-    ],
+        env('PAIEMENT_CARTE_ACTIVE', false) ? ['cle' => 'carte', 'nom' => 'Carte bancaire'] : null,
+    ])),
 
     /*
     |--------------------------------------------------------------------------

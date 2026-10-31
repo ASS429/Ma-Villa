@@ -40,7 +40,10 @@ function Logos({ moyens }: { moyens: { cle: string; nom: string }[] }) {
 export default function MoyensPaiement({ compact = false, plateforme = false }: { compact?: boolean; plateforme?: boolean }) {
   const { paiement } = useConfig()
   const t = TEXTES_HEBERGEMENT[useLangue().langue].paiement
-  const noms = paiement.moyens.map((m) => m.nom).join(t.et)
+  // « Wave, Orange Money et carte bancaire » : à trois, joindre par « et »
+  // donnait « Wave et Orange Money et Carte bancaire ».
+  const liste = paiement.moyens.map((m) => t.nomMoyen(m.cle, m.nom))
+  const noms = liste.length > 1 ? `${liste.slice(0, -1).join(', ')}${t.et}${liste[liste.length - 1]}` : liste.join('')
 
   if (paiement.actif) {
     return (

@@ -54,7 +54,7 @@ export default function AdminPaiement() {
   const [chargement, setChargement] = useState(false)
   const [erreur, setErreur] = useState('')
   const [telephone, setTelephone] = useState('')
-  const [methode, setMethode] = useState<'wave' | 'orange_money'>('wave')
+  const [methode, setMethode] = useState<'wave' | 'orange_money' | 'carte'>('wave')
 
   const lancer = async (avecSoftpay: boolean) => {
     setChargement(true)
@@ -72,7 +72,8 @@ export default function AdminPaiement() {
     }
   }
 
-  const numeroValide = telephone.replace(/\D/g, '').length >= 9
+  // La carte n'a pas besoin de numéro : la sonde rend seulement la page à ouvrir.
+  const numeroValide = methode === 'carte' || telephone.replace(/\D/g, '').length >= 9
 
   return (
     <div className="max-w-3xl">
@@ -140,7 +141,8 @@ export default function AdminPaiement() {
             <Bloc titre="SoftPay — ouverture directe de l'application">
               {sonde.softpay?.ok && (
                 <Alerte ton="succes">
-                  SoftPay répond. Lien : <code className="break-all">{sonde.softpay.url}</code>
+                  {sonde.softpay.methode === 'carte' ? 'Page de paiement par carte créée.' : 'SoftPay répond.'}
+                  {' '}Lien : <code className="break-all">{sonde.softpay.url}</code>
                   {/* Le paiement test de bout en bout, sans réservation ni
                       boutique : le montant minimum, payé depuis son propre
                       téléphone, arrive sur le solde PayDunya — c'est ce qu'on
@@ -151,9 +153,13 @@ export default function AdminPaiement() {
                       target="_blank" rel="noopener noreferrer"
                       className="underline underline-offset-2 font-medium"
                     >
-                      Payer ce montant pour tester l’encaissement
+                      {sonde.softpay.methode === 'carte'
+                        ? 'Ouvrir la page de paiement par carte'
+                        : 'Payer ce montant pour tester l’encaissement'}
                     </a>
-                    {' '}— facultatif : l’argent arrive sur votre solde PayDunya.
+                    {sonde.softpay.methode === 'carte'
+                      ? ' — si le formulaire de carte s’affiche, la carte est active : PAIEMENT_CARTE_ACTIVE=true.'
+                      : ' — facultatif : l’argent arrive sur votre solde PayDunya.'}
                   </span>
                 </Alerte>
               )}
@@ -184,11 +190,12 @@ export default function AdminPaiement() {
                   <span className="text-xs th-text-2">Moyen</span>
                   <select
                     value={methode}
-                    onChange={(e) => setMethode(e.target.value as 'wave' | 'orange_money')}
+                    onChange={(e) => setMethode(e.target.value as 'wave' | 'orange_money' | 'carte')}
                     className="champ-controle"
                   >
                     <option value="wave">Wave</option>
                     <option value="orange_money">Orange Money</option>
+                    <option value="carte">Carte bancaire (page PayDunya)</option>
                   </select>
                 </label>
 

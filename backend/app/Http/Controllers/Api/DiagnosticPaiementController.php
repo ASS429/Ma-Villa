@@ -68,6 +68,32 @@ class DiagnosticPaiementController extends Controller
         // numéro est fourni — il déclenche une demande de paiement sur ce
         // téléphone, et rien ne doit partir par surprise. Aucun débit n'a lieu
         // sans confirmation du porteur.
+        // La carte : une facture restreinte à la carte, dont on rend la page.
+        // L'ouvrir montre si la carte est activée sur le compte marchand —
+        // c'est le seul moyen de le savoir avant `PAIEMENT_CARTE_ACTIVE=true`.
+        // Rien n'est débité tant que personne ne saisit de carte.
+        if ($request->query('methode') === 'carte') {
+            try {
+                $carte = $this->paydunya->creerFacture(
+                    montant: (int) config('paiement.montant_minimum'),
+                    description: 'Sonde de paiement par carte PasseTemps',
+                    canaux: ['card'],
+                );
+
+                return response()->json($etat + [
+                    'ok'      => true,
+                    'verdict' => 'Facture carte créée. Ouvrez la page : si le formulaire de carte s’affiche, la carte est active sur votre compte.',
+                    'softpay' => ['essaye' => true, 'methode' => 'carte', 'ok' => true, 'url' => $carte['url']],
+                ]);
+            } catch (\Throwable $e) {
+                return response()->json($etat + [
+                    'ok'      => false,
+                    'verdict' => 'Non. PayDunya refuse une facture restreinte à la carte.',
+                    'softpay' => ['essaye' => true, 'methode' => 'carte', 'ok' => false, 'erreur' => $e->getMessage()],
+                ]);
+            }
+        }
+
         $telephone = $request->query('telephone');
         if (! is_string($telephone) || $telephone === '') {
             return response()->json($etat + [

@@ -102,7 +102,7 @@ export const TEXTES_PROVISOIRES = false
 const ARGENT: Section = {
   titre: '5. Ce que devient votre paiement',
   paragraphes: [
-    `Le règlement d'une réservation s'effectue en ligne, par Wave ou Orange Money, via le prestataire de paiement PayDunya.`,
+    `Le règlement d'une réservation s'effectue en ligne, par Wave, Orange Money ou, lorsqu'elle est proposée, par carte bancaire, via le prestataire de paiement PayDunya. La carte se saisit sur la page sécurisée de PayDunya : ${EXPLOITANT} n'en connaît jamais le numéro.`,
     `Le montant est encaissé par ${EXPLOITANT}, et non par le propriétaire. ${EXPLOITANT} en retient une commission, puis reverse le solde au propriétaire après la fin du séjour. Entre l'encaissement et ce reversement, les fonds sont détenus par ${EXPLOITANT}.`,
     `La commission est prélevée sur le montant affiché : le prix indiqué sur l'annonce est celui que vous réglez, et aucun supplément ne s'y ajoute.`,
   ],
@@ -255,7 +255,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
         liste: [
           'Votre compte : nom, adresse électronique, numéro de téléphone, mot de passe chiffré, photographie de profil si vous en ajoutez une.',
           'Vos réservations : dates, logement, nombre de personnes, montant, statut du paiement.',
-          'Le numéro de téléphone que vous indiquez pour payer, qui n’est pas nécessairement celui de votre compte. Il est conservé afin de pouvoir vous rembourser sur le numéro réellement débité.',
+          'Le numéro de téléphone que vous indiquez pour payer, qui n’est pas nécessairement celui de votre compte. Il est conservé afin de pouvoir vous rembourser sur le numéro réellement débité — ou, pour un paiement par carte, sur ce numéro.',
           'Vos messages échangés avec un propriétaire au sujet d’une réservation, et le motif que vous indiquez en demandant une annulation.',
           'Vos avis, vos favoris, et les annonces que vous publiez si vous êtes propriétaire — y compris la position sur la carte, si vous choisissez de la renseigner.',
           'Si vous demandez un service (transport, repas) : la prestation, la date et l’heure, le nombre de personnes, le lieu, le numéro de vol et la délégation le cas échéant, vos nom, téléphone et adresse électronique, vos précisions, et la langue de la page. Un compte n’est pas nécessaire.',
@@ -284,7 +284,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
           'Railway Corporation (États-Unis) — hébergement de l’interface applicative et de la base de données.',
           'Cloudflare, Inc. (États-Unis) — stockage des photographies des annonces.',
           'Plus Five Five, Inc., qui exploite le service Resend (États-Unis) — acheminement des courriels du service.',
-          'PayDunya (Sénégal) — traitement des paiements par Wave et Orange Money.',
+          'PayDunya (Sénégal) — traitement des paiements par Wave, Orange Money et carte bancaire.',
         ],
       },
       {
@@ -396,7 +396,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
       {
         titre: '7. Comment et quand vous êtes remboursé',
         paragraphes: [
-          `Le remboursement est effectué par ${EXPLOITANT} sur le numéro de téléphone qui a servi au paiement, par le même moyen — Wave ou Orange Money.`,
+          `Le remboursement est effectué par ${EXPLOITANT} sur le numéro de téléphone qui a servi au paiement, par le même moyen — Wave ou Orange Money. Pour un paiement par carte, il est fait par Wave ou Orange Money sur le numéro que vous avez indiqué en payant, sauf autre moyen convenu avec vous.`,
           `Il intervient au plus tard sous 15 jours ouvrés à compter de la décision. Si le numéro ayant servi au paiement n'est plus utilisable, prévenez-nous : nous conviendrons d'un autre moyen avant tout virement.`,
           `Une réservation annulée reste consultable dans votre espace, et sa messagerie reste ouverte : la conversation en garde la trace.`,
         ],
@@ -414,7 +414,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
     cle: 'vente',
     titre: 'Conditions générales de vente',
     description: `Conditions de vente de la boutique ${EXPLOITANT} : commande, prix, livraison, paiement et retours des articles d'artisanat.`,
-    miseAJour: MAJ,
+    miseAJour: MAJ_RESERVATION,
     chapeau:
       `Ces conditions régissent les achats effectués dans la boutique d'artisanat. Elles sont distinctes des conditions générales d'utilisation, qui régissent la location de logements.`,
     sections: [
@@ -457,7 +457,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
       {
         titre: '5. Payer',
         paragraphes: [
-          `Deux moyens sont possibles : le paiement en ligne par Wave ou Orange Money, via PayDunya ; ou le paiement à la livraison, en main propre au moment de la remise.`,
+          `Deux moyens sont possibles : le paiement en ligne par Wave, Orange Money ou, lorsqu'elle est proposée, par carte bancaire, via PayDunya ; ou le paiement à la livraison, en main propre au moment de la remise.`,
           `Une commande à régler à la livraison est valable dès sa validation, sans qu'aucune somme n'ait transité. Le refus répété de retirer une commande réglée à la livraison peut entraîner la suspension de cette facilité.`,
         ],
       },

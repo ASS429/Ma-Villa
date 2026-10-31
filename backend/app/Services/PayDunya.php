@@ -108,15 +108,19 @@ class PayDunya
         array $donneesPersonnalisees = [],
         ?string $urlRetour = null,
         ?string $urlAnnulation = null,
+        // Les moyens que la page de paiement propose (`['card']` pour la
+        // carte seule). Sans eux, elle propose tout ce qui est activé.
+        ?array $canaux = null,
     ): array {
         $front = rtrim((string) config('app.frontend_url'), '/');
 
         $reponse = $this->requete()->post($this->base().'/checkout-invoice/create', [
-            'invoice' => [
+            'invoice' => array_filter([
                 'total_amount' => $montant,
                 'description'  => $description,
                 'items'        => $articles ?: (object) [],
-            ],
+                'channels'     => $canaux,
+            ], fn ($valeur) => $valeur !== null),
             'store' => [
                 'name'        => $this->config['boutique']['nom'],
                 'tagline'     => $this->config['boutique']['description'],

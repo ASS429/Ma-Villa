@@ -13,6 +13,7 @@ import { marquerPremiereReservation } from '../../lib/installation'
 const MOYENS: Record<string, string> = {
   wave: 'Wave',
   orange_money: 'Orange Money',
+  carte: 'carte bancaire',
 }
 
 /* ── Une chose à faire ───────────────────────────────────────── */

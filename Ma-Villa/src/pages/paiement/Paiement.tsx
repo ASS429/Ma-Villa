@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { CreditCard } from 'lucide-react'
 import api from '../../services/api'
 import { useConfig } from '../../context/ConfigContext'
 import ContactReservation from '../../components/ContactReservation'
@@ -215,6 +216,14 @@ export default function Paiement() {
     try {
       const { data } = await api.post(`/reservations/${id}/paiement`, { methode, telephone })
 
+      // La carte se saisit sur la page de PayDunya, sur ordinateur comme sur
+      // téléphone : y aller tout de suite. Elle ramène ici, où le suivi
+      // reprend le paiement en cours. Ni code QR ni application à ouvrir.
+      if (methode === 'carte' && data.url) {
+        window.location.href = data.url
+        return
+      }
+
       setSuiviEpuise(false)
       dejaRedirige.current = false
       const principal: string = data.url_application || data.url || ''
@@ -322,14 +331,18 @@ export default function Paiement() {
               renvoyé aucun lien, l'écran doit le dire au lieu de faire attendre
               devant une consigne impossible à suivre. */}
           <h1 className="tunnel-h1">
-            {!enCours.url && !enCours.lien
-              ? 'Paiement lancé'
-              : mobile ? 'Confirmez sur votre téléphone' : 'Scannez pour payer'}
+            {cleMoyen === 'carte'
+              ? 'Paiement par carte en cours'
+              : !enCours.url && !enCours.lien
+                ? 'Paiement lancé'
+                : mobile ? 'Confirmez sur votre téléphone' : 'Scannez pour payer'}
           </h1>
           <p className="th-text-2 text-sm mb-6">
             {/* Le repli passe par la page du prestataire : annoncer l'étape de
                 plus plutôt que de laisser découvrir un écran inattendu. */}
-            {enCours.repli
+            {cleMoyen === 'carte'
+              ? `Réglez ${fcfa(reservation.montant_total)} sur la page sécurisée de PayDunya. Cet écran se met à jour tout seul dès que le paiement est reçu.`
+              : enCours.repli
               ? `Une page de paiement sécurisée va s'ouvrir : choisissez-y ${nomMoyen} pour régler ${fcfa(reservation.montant_total)}. Cet écran se met à jour tout seul.`
               : !enCours.url && !enCours.lien
                 ? `Ouvrez ${nomMoyen} sur votre téléphone : la demande de ${fcfa(reservation.montant_total)} vous y attend. Cet écran se met à jour tout seul.`
@@ -340,13 +353,21 @@ export default function Paiement() {
 
           {/* Sur ordinateur, le lien du prestataire ne mène nulle part : c'est
               le téléphone qui paie. Le code QR est le seul pont entre les deux. */}
-          {!mobile && enCours.url && (
+          {/* La carte se paie sur la page de PayDunya, depuis cet appareil :
+              un code QR n'aurait aucun sens. */}
+          {cleMoyen === 'carte' && enCours.url && (
+            <a href={enCours.url} className="btn btn-primaire btn-md w-full justify-center mb-4">
+              Rouvrir la page de paiement
+            </a>
+          )}
+
+          {cleMoyen !== 'carte' && !mobile && enCours.url && (
             <div className="tunnel-qr">
               <CodeQR valeur={enCours.url} taille={200} />
             </div>
           )}
 
-          {mobile && enCours.lien && (
+          {cleMoyen !== 'carte' && mobile && enCours.lien && (
             <a href={enCours.lien} className="btn btn-primaire btn-md w-full justify-center mb-4">
               {enCours.repli ? 'Ouvrir la page de paiement' : `Ouvrir ${nomMoyen}`}
             </a>
@@ -442,6 +463,7 @@ export default function Paiement() {
                 aria-pressed={methode === m.cle}
               >
                 {LOGOS[m.cle] && <img src={LOGOS[m.cle]} alt="" aria-hidden="true" width={36} height={36} />}
+                {m.cle === 'carte' && <CreditCard size={30} strokeWidth={1.6} aria-hidden="true" />}
                 <span>{m.nom}</span>
               </button>
             ))}
@@ -449,7 +471,13 @@ export default function Paiement() {
 
           {methode && (
             <label className="tunnel-champ">
-              <span className="champ-label">Numéro {config.moyens.find((m) => m.cle === methode)?.nom}</span>
+              {/* Le numéro reste demandé pour la carte : c'est par lui qu'un
+                  remboursement vous parviendrait, sur Wave ou Orange Money. */}
+              <span className="champ-label">
+                {methode === 'carte'
+                  ? 'Votre numéro, pour un éventuel remboursement'
+                  : `Numéro ${config.moyens.find((m) => m.cle === methode)?.nom}`}
+              </span>
               <input
                 type="tel"
                 inputMode="tel"
@@ -482,7 +510,9 @@ export default function Paiement() {
           </Button>
 
           <p className="text-xs th-text-3 mt-4 text-center">
-            Vous serez redirigé vers votre application pour confirmer.
+            {methode === 'carte'
+              ? 'Vous saisirez votre carte sur la page sécurisée de PayDunya. Nous ne voyons jamais son numéro.'
+              : 'Vous serez redirigé vers votre application pour confirmer.'}
           </p>
         </section>
       )}

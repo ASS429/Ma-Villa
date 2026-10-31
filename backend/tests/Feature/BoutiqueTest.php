@@ -433,6 +433,32 @@ class BoutiqueTest extends TestCase
      * bloqué), une commande « en ligne » passait quand même, l'article quittait
      * la vitrine, puis personne ne pouvait la régler.
      */
+    /** La carte, ouverte, se règle sur la page de PayDunya restreinte à la carte. */
+    public function test_une_commande_se_regle_par_carte_sur_la_page_de_paydunya(): void
+    {
+        config([
+            'paiement.moyens' => [['cle' => 'wave', 'nom' => 'Wave'], ['cle' => 'carte', 'nom' => 'Carte bancaire']],
+            'paiement.paydunya.cle_maitre' => 'maitre', 'paiement.paydunya.cle_privee' => 'privee',
+            'paiement.paydunya.cle_publique' => 'publique', 'paiement.paydunya.token' => 'jeton',
+        ]);
+        Http::fake([
+            '*checkout-invoice/create' => Http::response([
+                'response_code' => '00', 'response_text' => 'https://paydunya.com/checkout/invoice/OEUVRE1', 'token' => 'OEUVRE1',
+            ]),
+        ]);
+        $id = $this->actingAs($this->client, 'sanctum')
+            ->postJson('/api/commandes', $this->commandeValide($this->oeuvre(), ['mode_paiement' => 'en_ligne']))
+            ->assertCreated()->json('id');
+
+        $this->actingAs($this->client, 'sanctum')
+            ->postJson("/api/commandes/{$id}/paiement", ['methode' => 'carte', 'telephone' => '771234567'])
+            ->assertOk()
+            ->assertJsonPath('url', 'https://paydunya.com/checkout/invoice/OEUVRE1');
+
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'checkout-invoice/create') && $r['invoice']['channels'] === ['card']);
+        Http::assertNotSent(fn ($r) => str_contains($r->url(), 'softpay'));
+    }
+
     public function test_on_ne_commande_pas_en_ligne_quand_le_paiement_est_ferme(): void
     {
         config(['paiement.actif' => false]);

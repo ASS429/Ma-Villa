@@ -94,12 +94,20 @@ expéditeur signé (SPF/DKIM), sans quoi les courriels finissent en indésirable
 
 ```
 PAIEMENT_ACTIF=true
+PAIEMENT_CARTE_ACTIVE=false
 PAYDUNYA_MODE=live
 PAYDUNYA_MASTER_KEY=…
 PAYDUNYA_PRIVATE_KEY=…
 PAYDUNYA_PUBLIC_KEY=…
 PAYDUNYA_TOKEN=…
 ```
+
+`PAIEMENT_CARTE_ACTIVE` (31 octobre 2026) ajoute « Carte bancaire » aux moyens : le client
+est envoyé sur la page de PayDunya restreinte à la carte (`channels: card`) et y saisit sa
+carte, 3D Secure compris — jamais chez nous (l'API SoftPay carte est réservée aux sociétés
+certifiées PCI-DSS). Avant de l'ouvrir : sonde `/admin/paiement`, moyen « Carte bancaire »,
+puis ouvrir la page rendue ; si le formulaire de carte s'affiche, la carte est active sur le
+compte marchand.
 
 La sonde `/admin/paiement` dit en une phrase si PayDunya répond, et distingue le cas
 trompeur : une facture qui passe et un paiement direct qui tombe.

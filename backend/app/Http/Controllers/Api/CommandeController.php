@@ -10,6 +10,7 @@ use App\Services\PayDunya;
 use App\Services\Push;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -399,7 +400,7 @@ class CommandeController extends Controller
         }
 
         $donnees = $request->validate([
-            'methode'   => 'required|in:wave,orange_money',
+            'methode'   => ['required', Rule::in(array_column(config('paiement.moyens'), 'cle'))],
             'telephone' => 'required|string|max:30',
         ]);
 
@@ -436,13 +437,17 @@ class CommandeController extends Controller
                 ],
                 urlRetour: rtrim((string) config('app.frontend_url'), '/')
                     ."/boutique/commandes/{$commande->id}",
+                canaux: $donnees['methode'] === 'carte' ? ['card'] : null,
             );
 
             $commande->update(['token_paydunya' => $facture['token'], 'statut_paiement' => 'en_attente']);
 
-            $resultat = $donnees['methode'] === 'wave'
-                ? $this->paydunya->payerAvecWave($facture['token'], $request->user()->name, $request->user()->email, $donnees['telephone'])
-                : $this->paydunya->payerAvecOrangeMoney($facture['token'], $request->user()->name, $request->user()->email, $donnees['telephone']);
+            $resultat = match ($donnees['methode']) {
+                // La carte se saisit sur la page de PayDunya, jamais chez nous.
+                'carte' => ['url' => $facture['url']],
+                'wave'  => $this->paydunya->payerAvecWave($facture['token'], $request->user()->name, $request->user()->email, $donnees['telephone']),
+                default => $this->paydunya->payerAvecOrangeMoney($facture['token'], $request->user()->name, $request->user()->email, $donnees['telephone']),
+            };
 
             $lien = $resultat['url'] ?? $resultat['url_application'] ?? null;
 
