@@ -24,7 +24,7 @@ export default function OeuvreDetail() {
   const t = TEXTES_BOUTIQUE[langue].article
   // Même règle que la vitrine : seuls les moyens ouverts sont annoncés.
   const moyens = paiement.actif
-    ? t.moyensEnLigne(boutique.livraison)
+    ? t.moyensEnLigne(boutique.livraison, paiement.moyens.some((m) => m.cle === 'carte'))
     : boutique.livraison ? t.moyensLivraison : t.moyensBientot
   const [imageActive, setImageActive] = useState(0)
 

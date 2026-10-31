@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import api from '../../services/api'
 import { televerserFichier as uploadFile } from '../../services/televerser'
 import { messageErreur } from '../../lib/erreurs'
+import { useToast } from '../../context/ToastContext'
 import { fcfa } from '../../lib/format'
 import {
   LIBELLES_LOGEMENT, LIBELLES_STATUT_VILLA, TYPES_LOGEMENT_PROPOSES,
@@ -133,6 +134,7 @@ function InfoRow({ label, value, multiline }: { label: string; value: string; mu
 
 export default function GererVilla() {
   const { id } = useParams()
+  const toast = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Les villes proposées viennent du serveur : ce sont celles sous lesquelles
@@ -267,9 +269,18 @@ export default function GererVilla() {
     fetchVilla()
   }
 
+  // Ces deux gestes avalaient leurs erreurs : un refus du serveur ne changeait
+  // rien à l'écran, sans un mot (relevé au tour du 31 octobre 2026).
   const toggleDisponibilite = async (logement: Logement) => {
-    await api.patch(`/villas/${id}/logements/${logement.id}/disponibilite`)
-    fetchVilla()
+    try {
+      await api.patch(`/villas/${id}/logements/${logement.id}/disponibilite`)
+      toast.succes(logement.disponible
+        ? `« ${logement.nom} » est retiré du catalogue.`
+        : `« ${logement.nom} » est de nouveau au catalogue.`)
+      fetchVilla()
+    } catch (err) {
+      toast.erreur(messageErreur(err, 'Le logement n’a pas pu être modifié.'))
+    }
   }
 
   const deleteLogement = (logementId: number) => {
@@ -278,8 +289,13 @@ export default function GererVilla() {
       detail: 'Cette action supprimera le logement et tous ses tarifs. Elle est irréversible.',
       onConfirm: async () => {
         setConfirmModal(null)
-        await api.delete(`/villas/${id}/logements/${logementId}`)
-        fetchVilla()
+        try {
+          await api.delete(`/villas/${id}/logements/${logementId}`)
+          toast.succes('Logement supprimé.')
+          fetchVilla()
+        } catch (err) {
+          toast.erreur(messageErreur(err, 'Le logement n’a pas pu être supprimé.'))
+        }
       },
     })
   }

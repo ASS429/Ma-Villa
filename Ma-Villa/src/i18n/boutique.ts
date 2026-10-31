@@ -11,7 +11,8 @@ const fr = {
   carte: { epuise: 'Épuisé', vendue: 'Vendue', derniere: 'Dernière pièce', coupDeCoeur: 'Coup de cœur' },
   vitrine: {
     tris: { recent: 'Nouveautés', prixAsc: 'Prix croissant', prixDesc: 'Prix décroissant' },
-    reglementEnLigne: (livraison: boolean) => `règlement par Wave, Orange Money${livraison ? ' ou à la livraison' : ''}`,
+    // `carte` : la carte bancaire est-elle ouverte (PAIEMENT_CARTE_ACTIVE) ?
+    reglementEnLigne: (livraison: boolean, carte = false) => `règlement par Wave, Orange Money${carte ? ', carte bancaire' : ''}${livraison ? ' ou à la livraison' : ''}`,
     reglementLivraison: 'règlement à la livraison',
     reglementBientot: 'règlement bientôt disponible',
     chargementImpossible: 'Impossible de charger la boutique.',
@@ -37,7 +38,7 @@ const fr = {
     unite: 'articles',
   },
   article: {
-    moyensEnLigne: (livraison: boolean) => `Wave, Orange Money${livraison ? ' ou paiement à la livraison' : ''}`,
+    moyensEnLigne: (livraison: boolean, carte = false) => `Wave, Orange Money${carte ? ', carte bancaire' : ''}${livraison ? ' ou paiement à la livraison' : ''}`,
     moyensLivraison: 'Paiement à la livraison',
     moyensBientot: 'Paiement bientôt disponible',
     introuvable: 'Cet article est introuvable.',
@@ -87,7 +88,7 @@ const fr = {
     reglement: 'Règlement',
     commentPayer: 'Comment payer',
     payerMaintenant: 'Payer maintenant',
-    payerMaintenantAide: 'Wave ou Orange Money, depuis votre téléphone.',
+    payerMaintenantAide: (carte: boolean): string => (carte ? 'Wave, Orange Money ou carte bancaire.' : 'Wave ou Orange Money, depuis votre téléphone.'),
     payerLivraison: 'Payer à la livraison',
     payerLivraisonAide: 'Vous réglez en main propre à la remise de l’article.',
     enLigneIndisponible: 'Le paiement en ligne est momentanément indisponible : vous réglez à la remise de l’article.',
@@ -154,7 +155,7 @@ const en: typeof fr = {
   carte: { epuise: 'Sold out', vendue: 'Sold', derniere: 'Last piece', coupDeCoeur: 'Our pick' },
   vitrine: {
     tris: { recent: 'Newest', prixAsc: 'Price: low to high', prixDesc: 'Price: high to low' },
-    reglementEnLigne: (livraison: boolean) => `pay with Wave, Orange Money${livraison ? ' or on delivery' : ''}`,
+    reglementEnLigne: (livraison: boolean, carte = false) => `pay with Wave, Orange Money${carte ? ', bank card' : ''}${livraison ? ' or on delivery' : ''}`,
     reglementLivraison: 'pay on delivery',
     reglementBientot: 'payment coming soon',
     chargementImpossible: 'The shop could not be loaded.',
@@ -180,7 +181,7 @@ const en: typeof fr = {
     unite: 'items',
   },
   article: {
-    moyensEnLigne: (livraison: boolean) => `Wave, Orange Money${livraison ? ' or payment on delivery' : ''}`,
+    moyensEnLigne: (livraison: boolean, carte = false) => `Wave, Orange Money${carte ? ', bank card' : ''}${livraison ? ' or payment on delivery' : ''}`,
     moyensLivraison: 'Payment on delivery',
     moyensBientot: 'Payment coming soon',
     introuvable: 'This item cannot be found.',
@@ -230,7 +231,7 @@ const en: typeof fr = {
     reglement: 'Payment',
     commentPayer: 'How to pay',
     payerMaintenant: 'Pay now',
-    payerMaintenantAide: 'Wave or Orange Money, from your phone.',
+    payerMaintenantAide: (carte: boolean) => (carte ? 'Wave, Orange Money or bank card.' : 'Wave or Orange Money, from your phone.'),
     payerLivraison: 'Pay on delivery',
     payerLivraisonAide: 'You pay in person when the item is handed over.',
     enLigneIndisponible: 'Online payment is temporarily unavailable: you pay when the item is handed over.',

@@ -229,7 +229,7 @@ export default function Commander() {
                       <span className="choix-titre">
                         <CreditCard size={14} aria-hidden="true" /> {t.payerMaintenant}
                       </span>
-                      <span className="choix-aide">{t.payerMaintenantAide}</span>
+                      <span className="choix-aide">{t.payerMaintenantAide(paiement.moyens.some((m) => m.cle === 'carte'))}</span>
                     </span>
                   </label>
                 )}

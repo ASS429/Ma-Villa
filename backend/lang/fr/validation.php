@@ -7,9 +7,11 @@ return [
     'alpha'                => 'Le champ :attribute doit contenir uniquement des lettres.',
     'before'               => 'Le champ :attribute doit être une date antérieure au :date.',
     'before_or_equal'      => 'Le champ :attribute doit être une date antérieure ou égale au :date.',
+    // « Le champ … » partout : « La valeur de :attribute » donnait « de année »,
+    // « de adresse » devant une voyelle (relevé au tour du 31 octobre 2026).
     'between'              => [
-        'numeric' => 'La valeur de :attribute doit être comprise entre :min et :max.',
-        'string'  => 'Le texte :attribute doit contenir entre :min et :max caractères.',
+        'numeric' => 'Le champ :attribute doit être compris entre :min et :max.',
+        'string'  => 'Le champ :attribute doit contenir entre :min et :max caractères.',
     ],
     'boolean'              => 'Le champ :attribute doit être vrai ou faux.',
     'confirmed'            => 'Le champ de confirmation :attribute ne correspond pas.',
@@ -21,24 +23,24 @@ return [
     'in'                   => 'Le champ :attribute est invalide.',
     'integer'              => 'Le champ :attribute doit être un entier.',
     'max'                  => [
-        'numeric' => 'La valeur de :attribute ne peut être supérieure à :max.',
-        'string'  => 'Le texte de :attribute ne peut contenir plus de :max caractères.',
+        'numeric' => 'Le champ :attribute ne peut dépasser :max.',
+        'string'  => 'Le champ :attribute ne peut contenir plus de :max caractères.',
     ],
     'min'                  => [
-        'numeric' => 'La valeur de :attribute doit être supérieure ou égale à :min.',
-        'string'  => 'Le texte :attribute doit contenir au moins :min caractères.',
+        'numeric' => 'Le champ :attribute doit valoir au moins :min.',
+        'string'  => 'Le champ :attribute doit contenir au moins :min caractères.',
     ],
     'not_in'               => 'Le champ :attribute sélectionné n\'est pas valide.',
     'numeric'              => 'Le champ :attribute doit contenir un nombre.',
     'required'             => 'Le champ :attribute est obligatoire.',
     'same'                 => 'Les champs :attribute et :other doivent être identiques.',
     'size'                 => [
-        'numeric' => 'La valeur de :attribute doit être :size.',
-        'string'  => 'Le texte de :attribute doit contenir :size caractères.',
+        'numeric' => 'Le champ :attribute doit valoir :size.',
+        'string'  => 'Le champ :attribute doit contenir :size caractères.',
     ],
     'string'               => 'Le champ :attribute doit être une chaîne de caractères.',
     'unique'               => 'La valeur du champ :attribute est déjà utilisée.',
-    'url'                  => 'Le format de :attribute est invalide.',
+    'url'                  => 'Le champ :attribute n’est pas une adresse web valide.',
 
     'attributes' => [
         'name'                  => 'nom',

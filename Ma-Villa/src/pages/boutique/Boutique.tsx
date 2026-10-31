@@ -32,7 +32,7 @@ export default function Boutique() {
   // 14 septembre 2026, et le promettre ici, c'est le voir manquer au moment de
   // commander.
   const reglement = paiement.actif
-    ? t.reglementEnLigne(boutique.livraison)
+    ? t.reglementEnLigne(boutique.livraison, paiement.moyens.some((m) => m.cle === 'carte'))
     : boutique.livraison ? t.reglementLivraison : t.reglementBientot
   const [recherche, setRecherche] = useState('')
   const [saisie, setSaisie] = useState('')
