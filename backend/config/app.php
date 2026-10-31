@@ -103,7 +103,11 @@ return [
     |
     */
 
-    'locale' => env('APP_LOCALE', 'en'),
+    // Français par défaut : la production n'a jamais eu `APP_LOCALE`, et toutes
+    // les erreurs de formulaire génériques y partaient en anglais (« The nom
+    // field is required. ») — le `.env` local disait `fr`, ce qui le cachait.
+    // Relevé au tour du 31 octobre 2026.
+    'locale' => env('APP_LOCALE', 'fr'),
 
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 
