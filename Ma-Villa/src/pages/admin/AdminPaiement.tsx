@@ -170,6 +170,11 @@ export default function AdminPaiement() {
                   {sonde.softpay.methode !== 'carte' && sonde.softpay.url && (
                     <span className="block mt-3">
                       <CodeQR valeur={sonde.softpay.url} taille={180} />
+                      <span className="block mt-2 text-xs">
+                        Sur ordinateur, scannez ce code avec l’appareil photo de votre téléphone :
+                        {sonde.softpay.methode === 'orange_money' ? ' Maxit' : ' Wave'} s’ouvre pour valider.
+                        Le lien ouvert sur un ordinateur ne mène qu’à une page d’installation.
+                      </span>
                     </span>
                   )}
                 </Alerte>
