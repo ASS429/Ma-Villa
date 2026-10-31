@@ -119,7 +119,8 @@ export default function Reservations() {
       toast.succes(
         data?.message
           ?? (statut === 'confirmee'
-            ? `Réservation confirmée. ${r.client?.name ?? 'Le client'} en est prévenu.`
+            // « Sophie Martin en est prévenu » : le nom ne dit pas l'accord.
+            ? `Réservation confirmée. Nous avons prévenu ${r.client?.name ?? 'le client'}.`
             : 'Réservation annulée.')
       )
       reessayer()

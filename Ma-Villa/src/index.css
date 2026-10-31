@@ -1766,6 +1766,11 @@ html.video-mode[data-theme="dark"] {
   border-top: 1px solid var(--border);
 }
 
+/* La barre d'action d'une fiche : au ras du bas hors téléphone, au-dessus de
+   la navigation basse sur téléphone (voir plus bas). Avant la requête
+   média, sinon elle l'emporterait sur elle. */
+.barre-action-fiche { bottom: 0; }
+
 @media (max-width: 767px) {
   .nav-basse { display: grid; grid-template-columns: repeat(4, 1fr); }
 
@@ -1775,6 +1780,12 @@ html.video-mode[data-theme="dark"] {
 
   /* Le bouton flottant de la carte se pose au-dessus de la barre. */
   .bascule-carte-flottante { bottom: calc(var(--nav-h) + var(--safe-b) + 16px); }
+
+  /* La barre d'action d'une fiche (prix, « Réserver ») aussi. Posée à
+     `bottom: 0`, elle passait entièrement sous la navigation basse : sur
+     téléphone, ni le prix ni le bouton n'étaient visibles (constaté en
+     production le 31 octobre 2026, au moment de rouvrir la réservation). */
+  .barre-action-fiche { bottom: calc(var(--nav-h) + var(--safe-b)); }
 }
 
 .nav-basse-onglet {

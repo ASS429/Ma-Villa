@@ -478,7 +478,7 @@ export default function VillaDetail() {
       {/* Barre d'action mobile */}
       {(!user || user.role === 'client') && !resaEnvoyee && (
         <div
-          className="lg:hidden fixed bottom-0 left-0 right-0 z-30 backdrop-blur-md px-5 py-3 flex items-center gap-4"
+          className="barre-action-fiche lg:hidden fixed left-0 right-0 z-30 backdrop-blur-md px-5 py-3 flex items-center gap-4"
           style={{ background: 'var(--header-bg)', borderTop: '1px solid var(--border)' }}
         >
           <div className="flex-1 min-w-0">
