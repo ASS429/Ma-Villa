@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import api from '../../services/api'
+import { useConfig } from '../../context/ConfigContext'
+import { fcfa } from '../../lib/format'
 import { messageErreur } from '../../lib/erreurs'
 import Button from '../../components/ui/Button'
 import { Bloc, Ligne, Alerte } from '../../components/console/Sonde'
@@ -53,6 +55,7 @@ export default function AdminPaiement() {
   const [sonde, setSonde] = useState<Sonde | null>(null)
   const [chargement, setChargement] = useState(false)
   const [erreur, setErreur] = useState('')
+  const { paiement } = useConfig()
   const [telephone, setTelephone] = useState('')
   const [methode, setMethode] = useState<'wave' | 'orange_money' | 'carte'>('wave')
 
@@ -168,8 +171,12 @@ export default function AdminPaiement() {
               )}
 
               <p className="text-sm th-text-2 mb-4">
-                Envoie une demande de <strong>100 FCFA</strong> sur le numéro indiqué. Rien
-                n'est débité tant que vous ne validez pas dans l'application.
+                {/* Le montant est celui de la facture de sonde, le plancher du
+                    serveur : il annonçait « 100 FCFA » alors que Wave en
+                    demandait 200 (relevé le 31 octobre 2026). */}
+                {methode === 'carte'
+                  ? <>Crée une page de paiement limitée à la carte, de <strong>{fcfa(paiement.montant_minimum)}</strong>. Rien n'est débité tant que personne n'y saisit de carte.</>
+                  : <>Envoie une demande de <strong>{fcfa(paiement.montant_minimum)}</strong> sur le numéro indiqué. Rien n'est débité tant que vous ne validez pas dans l'application.</>}
               </p>
 
               <div className="flex flex-wrap items-end gap-3">
@@ -205,7 +212,7 @@ export default function AdminPaiement() {
                   disabled={chargement || !numeroValide}
                   onClick={() => lancer(true)}
                 >
-                  Tester SoftPay
+                  {methode === 'carte' ? 'Créer la page carte' : 'Tester SoftPay'}
                 </Button>
               </div>
             </Bloc>
