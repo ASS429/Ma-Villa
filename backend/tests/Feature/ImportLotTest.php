@@ -18,6 +18,8 @@ class ImportLotTest extends TestCase
 
     private const SUITE = 'database/donnees/lot-31-octobre-suite';
 
+    private const SALY = 'database/donnees/lot-31-octobre-villa-saly';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -37,7 +39,7 @@ class ImportLotTest extends TestCase
 
     public static function lots(): array
     {
-        return ['premier lot' => [self::DOSSIER, 9], 'suite' => [self::SUITE, 3]];
+        return ['premier lot' => [self::DOSSIER, 9], 'suite' => [self::SUITE, 3], 'villa de Saly' => [self::SALY, 1]];
     }
 
     #[\PHPUnit\Framework\Attributes\DataProvider('lots')]
@@ -145,6 +147,23 @@ class ImportLotTest extends TestCase
         $exception = $this->annonce('Appartement d\'exception 3 chambres · Almadies')->logements->first();
         $this->assertSame(30, $exception->nuits_minimum);
         $this->assertSame(2280000, PrixSejour::pour($exception->tarifs->first(), '2026-12-01', '2026-12-31')['montant']);
+    }
+
+    public function test_la_villa_de_saly_se_loue_au_mois_chez_jule(): void
+    {
+        $this->importer();
+        $this->assertSame(1, (new ImportLot(self::SALY))->executer()['annonces']);
+
+        $villa = $this->annonce('Villa 5 chambres avec piscine et jacuzzi · Saly');
+        $this->assertSame('Saly', $villa->ville);
+        $this->assertSame('associe', $villa->circuit);
+        $this->assertSame(User::where('email', 'jule@passetemps.sn')->value('id'), $villa->user_id);
+
+        // Au mois : 2 000 000 F demandés, 2 280 000 F pour trente nuits.
+        $logement = $villa->logements->first();
+        $this->assertSame(30, $logement->nuits_minimum);
+        $this->assertSame(2280000, PrixSejour::pour($logement->tarifs->first(), '2026-12-01', '2026-12-31')['montant']);
+        $this->assertNull((new ImportLot(self::SALY))->executer());
     }
 
     public function test_l_import_ne_se_rejoue_pas(): void

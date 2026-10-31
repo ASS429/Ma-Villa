@@ -72,6 +72,14 @@ const MAJ = '3 septembre 2026'
  *   — une annulation est définitive, même si un paiement arrive après.
  */
 const MAJ_RESERVATION = '31 octobre 2026'
+
+/**
+ * La politique de confidentialité, reprise le même jour sur une seconde
+ * autorisation de l'exploitant (« je t'autorise ») : les demandes de service
+ * (transport, repas), ouvertes le 20 octobre, n'y figuraient pas. La durée de
+ * douze mois est tenue par `passetemps:effacer-demandes-de-service`.
+ */
+const MAJ_CONFIDENTIALITE = '31 octobre 2026'
 const EXPLOITANT = 'PasseTemps'
 const CONTACT = 'contactptemps@gmail.com'
 const DIRECTEUR = 'Abdou Ndour'
@@ -228,7 +236,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
     cle: 'confidentialite',
     titre: 'Politique de confidentialité',
     description: `Données personnelles collectées par ${EXPLOITANT}, à quoi elles servent, combien de temps elles sont conservées et quels sont vos droits.`,
-    miseAJour: MAJ,
+    miseAJour: MAJ_CONFIDENTIALITE,
     chapeau:
       `Cette page décrit les données que nous conservons, ce que nous en faisons, et les droits dont vous disposez sur elles.`,
     sections: [
@@ -250,6 +258,8 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
           'Le numéro de téléphone que vous indiquez pour payer, qui n’est pas nécessairement celui de votre compte. Il est conservé afin de pouvoir vous rembourser sur le numéro réellement débité.',
           'Vos messages échangés avec un propriétaire au sujet d’une réservation, et le motif que vous indiquez en demandant une annulation.',
           'Vos avis, vos favoris, et les annonces que vous publiez si vous êtes propriétaire — y compris la position sur la carte, si vous choisissez de la renseigner.',
+          'Si vous demandez un service (transport, repas) : la prestation, la date et l’heure, le nombre de personnes, le lieu, le numéro de vol et la délégation le cas échéant, vos nom, téléphone et adresse électronique, vos précisions, et la langue de la page. Un compte n’est pas nécessaire.',
+          'Si vous touchez « Utiliser ma position actuelle » sur une demande de service : votre position (latitude, longitude et sa précision). Elle n’est demandée qu’à ce geste, jamais en arrière-plan.',
           'Si vous acceptez les notifications, l’identifiant technique de votre navigateur ou de votre téléphone, un par appareil.',
           'Un journal des décisions d’administration : qui a validé, refusé ou retiré une annonce, enregistré un versement ou un remboursement, et quand.',
         ],
@@ -257,7 +267,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
       {
         titre: '3. À quoi elles servent',
         paragraphes: [
-          `Vos données servent à fournir le service et à rien d'autre : créer et sécuriser votre compte, traiter vos réservations et vos paiements, vous permettre d'échanger avec l'autre partie, vous informer de l'avancement de votre séjour, et répondre à nos obligations comptables.`,
+          `Vos données servent à fournir le service et à rien d'autre : créer et sécuriser votre compte, traiter vos réservations et vos paiements, vous permettre d'échanger avec l'autre partie, vous informer de l'avancement de votre séjour, transmettre une demande de service au prestataire qui l'exécutera et vous rappeler pour la confirmer, et répondre à nos obligations comptables.`,
           `Le journal des décisions d'administration a une finalité propre : conserver la preuve de ce qui a été décidé, en cas de contestation.`,
         ],
       },
@@ -265,6 +275,8 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
         titre: '4. Qui les reçoit',
         paragraphes: [
           `Lorsqu'une réservation est confirmée ou réglée, le propriétaire et le client reçoivent réciproquement le nom et les coordonnées de l'autre. Cet échange est nécessaire à la réalisation du séjour, et il n'a pas lieu avant.`,
+          `Une demande de service est reçue par l'équipe ${EXPLOITANT}, puis transmise au partenaire qui l'exécute ou la coordonne (transporteur, restaurant), avec ce qu'il lui faut pour la réaliser : nom, téléphone, lieu, date, et position si vous l'avez jointe. De même, pour un hébergement réservé auprès de notre équipe, vos coordonnées sont transmises au partenaire qui le gère.`,
+          `Lorsque vous écrivez à l'équipe par WhatsApp, le message part de votre propre application ; WhatsApp, service de Meta, en assure l'acheminement.`,
           `Vos données sont par ailleurs confiées aux prestataires techniques ci-dessous, dans la stricte limite de leur mission. Nous ne vendons, ne cédons et ne louons vos coordonnées à personne, et nous ne les transmettons à aucun tiers à des fins de démarchage.`,
         ],
         liste: [
@@ -278,7 +290,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
       {
         titre: '5. Transfert hors du Sénégal',
         paragraphes: [
-          `Quatre de ces cinq prestataires sont établis aux États-Unis. Vos données y sont donc hébergées et traitées, hors du territoire sénégalais.`,
+          `Quatre de ces cinq prestataires sont établis aux États-Unis. Vos données y sont donc hébergées et traitées, hors du territoire sénégalais. WhatsApp, si vous l'employez, est lui aussi exploité hors du Sénégal.`,
           `Nous n'avons retenu que des prestataires proposant un engagement contractuel de protection des données. Si vous ne souhaitez pas que vos données soient traitées hors du Sénégal, vous ne pouvez pas utiliser la plateforme : ce transfert est inhérent à son fonctionnement.`,
         ],
       },
@@ -291,6 +303,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
           'Compte : tant qu’il est ouvert. Vous pouvez demander sa suppression à tout moment.',
           'Réservations, paiements, remboursements et numéro du payeur : dix ans, durée de conservation des pièces comptables. Ces données survivent à la suppression du compte, sous une forme réduite à ce qui est comptablement nécessaire.',
           'Messages échangés au sujet d’une réservation : trois ans après la fin du séjour.',
+          'Demandes de service : douze mois après la date du service, puis effacées.',
           'Journal des décisions d’administration : cinq ans, parce que c’est la seule pièce produisible en cas de litige.',
           'Abonnement aux notifications : jusqu’à ce que vous les désactiviez ou désinstalliez l’application.',
           'Avis publiés : tant que l’annonce concernée existe.',
@@ -300,7 +313,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
         titre: '7. Ce que nous ne faisons pas',
         paragraphes: [
           `Nous ne conservons aucune donnée de carte bancaire ni aucun code de paiement : le règlement est traité par PayDunya, qui ne nous transmet pas ces informations.`,
-          `Votre numéro de téléphone n'apparaît jamais publiquement. Il n'est communiqué à l'autre partie qu'une fois une réservation confirmée ou réglée entre vous.`,
+          `Votre numéro de téléphone n'apparaît jamais publiquement. Il n'est communiqué à l'autre partie qu'une fois une réservation confirmée ou réglée entre vous. Une demande de service fait exception : votre numéro est transmis tout de suite au prestataire, pour qu'il puisse vous joindre.`,
           `Nous n'utilisons aucun traceur publicitaire et ne mesurons pas votre navigation à des fins commerciales. Votre navigateur conserve seulement ce qui est nécessaire à votre connexion et à vos préférences d'affichage.`,
         ],
       },

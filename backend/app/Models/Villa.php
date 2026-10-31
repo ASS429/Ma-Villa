@@ -42,6 +42,9 @@ class Villa extends Model
             'latitude'        => 'float',
             'longitude'       => 'float',
             'majoration'      => 'float',
+            // Posée par `PositionApprochee`, hors `$fillable` : elle dit
+            // si la position est celle du quartier, pas celle du logement.
+            'position_approximative' => 'boolean',
         ];
     }
 

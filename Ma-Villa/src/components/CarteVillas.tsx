@@ -99,6 +99,11 @@ export default function CarteVillas({
       const nom = document.createElement('strong')
       nom.textContent = v.nom
       bulle.append(nom, document.createElement('br'), v.ville ?? '')
+      if (v.position_approximative) {
+        const approx = document.createElement('em')
+        approx.textContent = TEXTES_RECHERCHE[langue].liste.approximatif
+        bulle.append(document.createElement('br'), approx)
+      }
       marqueur.bindPopup(bulle, { closeButton: false })
       marqueur.on('click', () => navigate(cheminEn(langue, `/hebergements/${v.id}/`)))
       marqueur.addTo(g)

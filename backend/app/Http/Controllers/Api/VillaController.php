@@ -449,7 +449,14 @@ class VillaController extends Controller
     public function update(VillaRequest $request, Villa $villa): JsonResponse
     {
         $this->authorize('update', $villa);
-        $villa->update($request->validated());
+        $villa->fill($request->validated());
+
+        // Une position saisie à la main est celle du logement : elle remplace
+        // le centre du quartier posé par `PositionApprochee`.
+        if ($villa->isDirty(['latitude', 'longitude']) && $villa->latitude !== null && $villa->longitude !== null) {
+            $villa->position_approximative = false;
+        }
+        $villa->save();
 
         return response()->json($villa);
     }

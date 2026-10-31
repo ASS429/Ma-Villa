@@ -42,3 +42,12 @@ Schedule::command('passetemps:suivre-reversements')
     ->everyFiveMinutes()
     ->withoutOverlapping()
     ->runInBackground();
+
+/*
+ | La politique de confidentialité annonce douze mois de conservation pour
+ | une demande de service (31 octobre 2026). Une fois par jour suffit.
+ */
+Schedule::command('passetemps:effacer-demandes-de-service')
+    ->daily()
+    ->withoutOverlapping()
+    ->runInBackground();

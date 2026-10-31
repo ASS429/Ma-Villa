@@ -104,6 +104,7 @@ const fr = {
     voirListe: '☰ Voir la liste',
     voirCarte: '⌖ Voir sur la carte',
     aucuneLocalisee: 'Aucun des hébergements trouvés n’est encore placé sur la carte.',
+    approximatif: 'Emplacement approximatif',
   },
   categories: {
     villa: 'Toute la maison pour vous',
@@ -229,6 +230,7 @@ const en: typeof fr = {
     voirListe: '☰ Show the list',
     voirCarte: '⌖ Show on the map',
     aucuneLocalisee: 'None of the places found is located on the map yet.',
+    approximatif: 'Approximate location',
   },
   categories: {
     villa: 'The whole house to yourself',

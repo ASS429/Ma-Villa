@@ -136,6 +136,10 @@ class ImportLot
             }
         });
 
+        // Les annonces importées n'ont pas de coordonnées : sans position,
+        // elles n'apparaîtraient pas sur la carte des résultats.
+        PositionApprochee::placerCelles();
+
         return $bilan;
     }
 

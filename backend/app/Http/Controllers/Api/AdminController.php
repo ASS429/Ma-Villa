@@ -9,6 +9,7 @@ use App\Models\Paiement;
 use App\Models\Reservation;
 use App\Models\User;
 use App\Models\Villa;
+use App\Services\PositionApprochee;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -327,6 +328,11 @@ class AdminController extends Controller
 
         $avant = $villa->statut;
         $villa->update(['statut' => $donnees['statut']]);
+
+        // Publiée sans position, elle manquerait à la carte des résultats.
+        if ($donnees['statut'] === 'validee' && ($villa->latitude === null || $villa->longitude === null)) {
+            PositionApprochee::placerCelles();
+        }
 
         // « Retirée » et « rejetée » sont deux gestes différents dans le
         // journal, même s'ils mènent au même statut : refuser une annonce qui

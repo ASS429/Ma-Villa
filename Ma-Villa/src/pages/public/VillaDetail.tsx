@@ -450,7 +450,8 @@ export default function VillaDetail() {
           description: villa.description,
           address: { '@type': 'PostalAddress', streetAddress: villa.adresse, addressLocality: villa.ville, addressCountry: 'SN' },
           image: villa.photos.filter((p) => !estVideo(p.url)).map((p) => p.url),
-          ...(villa.latitude && villa.longitude
+          // Google ne reçoit pas une position approchée comme des coordonnées.
+          ...(villa.latitude && villa.longitude && !villa.position_approximative
             ? { geo: { '@type': 'GeoCoordinates', latitude: villa.latitude, longitude: villa.longitude } }
             : {}),
           ...(villa.prix_min != null
@@ -579,9 +580,16 @@ export default function VillaDetail() {
             {villa.latitude && villa.longitude && (
               <section className="mb-10">
                 <h2 className="text-lg font-medium mb-4">{t.localisation}</h2>
+                {/* Une position approchée (centre du quartier) n'a pas de
+                    marqueur : il désignerait une maison qui n'est pas la bonne. */}
+                {villa.position_approximative && (
+                  <p className="text-sm th-text-2 mb-3">{t.localisationApprochee([villa.quartier, villa.ville].filter(Boolean).join(", "))}</p>
+                )}
                 <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
                   <iframe
-                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${villa.longitude - 0.01}%2C${villa.latitude - 0.01}%2C${villa.longitude + 0.01}%2C${villa.latitude + 0.01}&layer=mapnik&marker=${villa.latitude}%2C${villa.longitude}`}
+                    src={villa.position_approximative
+                      ? `https://www.openstreetmap.org/export/embed.html?bbox=${villa.longitude - 0.025}%2C${villa.latitude - 0.02}%2C${villa.longitude + 0.025}%2C${villa.latitude + 0.02}&layer=mapnik`
+                      : `https://www.openstreetmap.org/export/embed.html?bbox=${villa.longitude - 0.01}%2C${villa.latitude - 0.01}%2C${villa.longitude + 0.01}%2C${villa.latitude + 0.01}&layer=mapnik&marker=${villa.latitude}%2C${villa.longitude}`}
                     width="100%" height="280" style={{ border: 0, display: 'block' }}
                     loading="lazy" title={t.localisationDe(villa.nom)}
                   />

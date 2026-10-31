@@ -80,6 +80,11 @@ interface VillaBase {
   nom: string
   ville: string
   /**
+   * Vrai quand la position est le centre du quartier, posée par PasseTemps
+   * faute de mieux (31 octobre 2026) : à ne jamais présenter comme l'adresse.
+   */
+  position_approximative?: boolean
+  /**
    * Ce que le propriétaire précise sous la ville — « Velingara », « derrière
    * RDC ». Le serveur l'extrait de la ville quand elle en contenait trop, pour
    * que « Saly velingara » et « Saly » ne fassent plus deux destinations.

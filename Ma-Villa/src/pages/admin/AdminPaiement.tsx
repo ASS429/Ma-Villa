@@ -141,6 +141,20 @@ export default function AdminPaiement() {
               {sonde.softpay?.ok && (
                 <Alerte ton="succes">
                   SoftPay répond. Lien : <code className="break-all">{sonde.softpay.url}</code>
+                  {/* Le paiement test de bout en bout, sans réservation ni
+                      boutique : le montant minimum, payé depuis son propre
+                      téléphone, arrive sur le solde PayDunya — c'est ce qu'on
+                      vérifie dans le tableau de bord du prestataire. */}
+                  <span className="block mt-2">
+                    <a
+                      href={sonde.softpay.url_application ?? sonde.softpay.url ?? undefined}
+                      target="_blank" rel="noopener noreferrer"
+                      className="underline underline-offset-2 font-medium"
+                    >
+                      Payer ce montant pour tester l’encaissement
+                    </a>
+                    {' '}— facultatif : l’argent arrive sur votre solde PayDunya.
+                  </span>
                 </Alerte>
               )}
               {sonde.softpay?.essaye && sonde.softpay.ok === false && (

@@ -48,6 +48,7 @@ function chargeTarif(f: FormulaireTarif) {
 interface Villa {
   id: number; nom: string; description: string; adresse: string; ville: string; quartier: string | null;
   telephone: string; latitude: string | null; longitude: string | null; statut: StatutVilla;
+  position_approximative?: boolean;
   photos: Photo[]; logements: Logement[]
 }
 
@@ -433,6 +434,12 @@ export default function GererVilla() {
 
             <div>
               <p className="text-xs mb-2" style={{ color: 'var(--text-3)' }}>Localisation — optionnel</p>
+              {villa.position_approximative && (
+                <p className="text-xs mb-2" style={{ color: 'var(--text-2)' }}>
+                  Position approximative, placée par PasseTemps au centre du quartier. Indiquez celle de votre logement :
+                  les voyageurs le trouveront plus facilement.
+                </p>
+              )}
               <button
                 type="button"
                 onClick={getLocation}

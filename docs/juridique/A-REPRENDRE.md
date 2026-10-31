@@ -12,7 +12,8 @@
 >
 > **31 octobre 2026 — CGU et politique d'annulation reprises**, sur son autorisation, pour
 > rouvrir la réservation en ligne. Les lignes appliquées sont retirées ci-dessous et
-> relevées en fin de page. La confidentialité et les mentions légales restent gelées.
+> relevées en fin de page. Le même jour, la **confidentialité** aussi (seconde autorisation). Les mentions légales
+> attendent les numéros RCCM et NINEA.
 
 Dernière mise à jour : 31 octobre 2026.
 
@@ -22,15 +23,8 @@ Dernière mise à jour : 31 octobre 2026.
 
 | § | Ce qui est devenu faux ou incomplet | Depuis | Origine |
 |---|---|---|---|
-| 2. Ce que nous conservons | « Nous n'en collectons pas d'autres » est faux : les **demandes de service** (transport, repas) gardent nom, téléphone, e-mail, lieu, numéro de vol, pays de l'athlète, précisions, langue — **sans compte**. | 20 oct. 2026 | Demandes JOJ |
-| 2. Ce que nous conservons | Ajouter la **position** (latitude, longitude, précision) que le visiteur peut joindre à une demande de service par « Utiliser ma position actuelle » : facultative, demandée seulement sur ce geste, transmise au prestataire dans le message WhatsApp. | 22 oct. 2026 | Position |
-| 3. À quoi elles servent | Ajouter : transmettre la demande au prestataire (transporteur, restaurant) et rappeler la famille. | 20 oct. 2026 | Demandes JOJ |
-| 4. Qui les reçoit | Ajouter les **prestataires partenaires** (transport, restauration) et le **partenaire** qui coordonne les JOJ. Ajouter **WhatsApp (Meta)** : la demande y est envoyée. | 20 oct. 2026 | Demandes JOJ |
-| 5. Transfert hors du Sénégal | WhatsApp / Meta s'ajoute aux prestataires établis hors du Sénégal. | 20 oct. 2026 | Demandes JOJ |
-| 6. Durée de conservation | Fixer une durée pour les demandes de service (proposition : 12 mois après la date du service). **À décider.** | 20 oct. 2026 | Demandes JOJ |
-| 7. Ce que nous ne faisons pas | « Votre numéro n'est communiqué à l'autre partie qu'une fois une réservation confirmée » : faux pour une demande de service, où le numéro part tout de suite chez l'équipe et le prestataire. | 20 oct. 2026 | Demandes JOJ |
 | 7. Ce que nous ne faisons pas | « Nous ne mesurons pas votre navigation à des fins commerciales » deviendrait faux **si** un compteur de clics est ajouté aux partenaires Bronze / Argent / Or. | si codé | Partenariats |
-| 4 et 5 | Si le **partenaire encaisse** : il devient destinataire des données de paiement — à nommer. | si adopté | Encaissement partenaire |
+| 4. Qui les reçoit | Si le **paiement en ligne des services** est construit : le prestataire de paiement et le partenaire qui encaisse, à nommer. | si codé | Paiement des services |
 | — | **Version anglaise** pour les clients étrangers (la version française fait foi). | si multilingue | Multilingue |
 
 ## 2. Conditions générales d'utilisation
@@ -92,3 +86,16 @@ leurs clauses aussi.
   **définitive**, un paiement arrivé après est rendu.
 - Lignes devenues sans objet : « circuit PayDunya suspendu » (réouverture) et « si le
   partenaire encaisse » (c'est nous qui encaissons depuis le 29 octobre).
+
+## Appliqué le 31 octobre 2026 (confidentialité)
+
+- § 2 : les **demandes de service** (prestation, date, heure, personnes, lieu, vol, délégation,
+  nom, téléphone, e-mail, précisions, langue — sans compte) et la **position** facultative.
+- § 3 : transmettre la demande au prestataire, rappeler pour confirmer.
+- § 4 : le partenaire qui exécute ou coordonne le service ; le partenaire qui gère un
+  hébergement réservé auprès de l'équipe ; WhatsApp (Meta) quand le visiteur l'emploie.
+- § 5 : WhatsApp exploité hors du Sénégal.
+- § 6 : demandes de service **effacées douze mois après la date du service** — tenu par
+  `passetemps:effacer-demandes-de-service`, chaque jour (durée proposée le 20 octobre,
+  retenue faute d'autre décision ; à changer dans la commande **et** le texte).
+- § 7 : le numéro part tout de suite chez le prestataire pour une demande de service.

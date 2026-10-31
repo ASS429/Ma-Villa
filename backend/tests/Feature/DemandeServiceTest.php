@@ -385,4 +385,22 @@ class DemandeServiceTest extends TestCase
 
         $this->assertSame('urgent', $this->ligneDesDemandes($admin)['gravite']);
     }
+
+    /* ── La conservation ─────────────────────────────────────────── */
+
+    /** Douze mois après la date du service, comme l'annonce la politique de confidentialité. */
+    public function test_une_demande_est_effacee_douze_mois_apres_le_service(): void
+    {
+        $ancienne = DemandeService::create($this->demande([
+            'date_service' => now()->subMonths(12)->subDay()->toDateString(), 'origine' => 'transport',
+        ]));
+        $recente = DemandeService::create($this->demande([
+            'date_service' => now()->subMonths(11)->toDateString(), 'origine' => 'transport',
+        ]));
+
+        $this->artisan('passetemps:effacer-demandes-de-service')->assertSuccessful();
+
+        $this->assertNull(DemandeService::find($ancienne->id));
+        $this->assertNotNull(DemandeService::find($recente->id));
+    }
 }
