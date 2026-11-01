@@ -61,6 +61,7 @@ const fr = {
   choisirService: 'Choisissez un service',
   requis: 'Ce champ est requis.',
   telephoneCourt: 'Ce numéro est trop court.',
+  telephoneLettres: 'Écrivez le numéro en chiffres, sans lettres.',
   envoyer: 'Envoyer ma demande',
 
   derniereEtape: 'Dernière étape : envoyez-la sur WhatsApp',
@@ -158,6 +159,7 @@ const en: typeof fr = {
   choisirService: 'Choose a service',
   requis: 'This field is required.',
   telephoneCourt: 'This number is too short.',
+  telephoneLettres: 'Write the number in digits, without letters.',
   envoyer: 'Send my request',
 
   derniereEtape: 'Last step: send it on WhatsApp',

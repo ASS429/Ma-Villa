@@ -1,3 +1,5 @@
+import { chiffresDuNumero } from './telephone'
+
 /**
  * Liens pour joindre quelqu'un depuis un numéro écrit pour être lu.
  *
@@ -7,7 +9,8 @@
  * partirait vers un numéro qui n'existe pas.
  */
 function international(numero: string): string {
-  const chiffres = numero.replace(/\D/g, '')
+  // « 00221 77 … » donnait « wa.me/00221… », que WhatsApp ne reconnaît pas.
+  const chiffres = chiffresDuNumero(numero)
   return chiffres.length === 9 ? `221${chiffres}` : chiffres
 }
 

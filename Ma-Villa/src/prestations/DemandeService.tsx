@@ -5,6 +5,7 @@ import { useConfig } from '../context/ConfigContext'
 import { erreursParChamp } from '../lib/erreurs'
 import { aujourdhui } from '../lib/format'
 import { lienAppel, lienWhatsApp } from '../lib/contact'
+import { chiffresDuNumero } from '../lib/telephone'
 import { useLangue } from '../i18n/langue'
 import { Champ, ChampSelection, ChampZoneTexte } from '../components/ui/Champ'
 import Button from '../components/ui/Button'
@@ -153,7 +154,11 @@ export default function DemandeService({
       if (!champs[champ].trim()) e[champ] = t.requis
     }
     if (!(Number(champs.personnes) >= 1)) e.personnes = t.requis
-    if (champs.telephone.trim() && champs.telephone.replace(/\D/g, '').length < 8) {
+    // Seules les lettres sont refusées : tous les préfixes passent (70, 71,
+    // 75, 76, 77, 78, 33…), écrits avec +221, 00221 ou sans indicatif.
+    if (/\p{L}/u.test(champs.telephone)) {
+      e.telephone = t.telephoneLettres
+    } else if (champs.telephone.trim() && chiffresDuNumero(champs.telephone).length < 8) {
       e.telephone = t.telephoneCourt
     }
     return e

@@ -61,12 +61,8 @@ class Deboursement
      */
     public function numeroPourApi(?string $telephone): ?string
     {
-        $chiffres = preg_replace('/\D+/', '', (string) $telephone) ?? '';
-        $indicatif = (string) config('paiement.reversement.indicatif');
-
-        if ($indicatif !== '' && str_starts_with($chiffres, $indicatif)) {
-            $chiffres = substr($chiffres, strlen($indicatif));
-        }
+        // « 00221 », « +221 » et « 221 » se valent : voir `Telephone`.
+        $chiffres = Telephone::local($telephone, (string) config('paiement.reversement.indicatif'));
 
         // Un numéro sénégalais fait neuf chiffres. En deçà, l'appel partirait
         // pour rien — et surtout, vers un compte que personne ne contrôle.

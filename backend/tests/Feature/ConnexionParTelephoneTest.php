@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -45,6 +46,8 @@ class ConnexionParTelephoneTest extends TestCase
             '771234567',
             '221771234567',
             '+221-77-123-45-67',
+            // L'écriture la plus ancienne, encore très courante au Sénégal.
+            '00221 77 123 45 67',
         ] as $saisie) {
             $this->postJson('/api/auth/login', [
                 'identifiant' => $saisie,
@@ -89,6 +92,57 @@ class ConnexionParTelephoneTest extends TestCase
 
         $this->assertSame('33612345678', $francais);
         $this->assertSame('771234567', $senegalais);
+    }
+
+    /**
+     * Toutes les plages s'inscrivent et se reconnectent, mobiles comme fixes :
+     * aucun préfixe n'est filtré.
+     */
+    public function test_chaque_operateur_s_inscrit_et_se_reconnecte(): void
+    {
+        // Créés par le mutateur, le chemin de l'inscription : passer par
+        // l'API buterait sur la limite de débit, partagée avec la connexion.
+        foreach (['70', '71', '75', '76', '77', '78', '33'] as $i => $prefixe) {
+            User::factory()->create([
+                'email'    => "compte{$i}@example.sn",
+                'phone'    => "00221 {$prefixe} 765 43 21",
+                'password' => Hash::make('motdepasse123'),
+            ]);
+
+            $this->postJson('/api/auth/login', [
+                'identifiant' => "{$prefixe} 765 43 21",
+                'password'    => 'motdepasse123',
+            ])->assertOk();
+        }
+    }
+
+    /**
+     * Les comptes enregistrés avec « 00221 » avant le 1er novembre 2026
+     * portaient « 00221… » en forme canonique. La reprise les ramène à neuf
+     * chiffres, sauf quand un autre compte détient déjà ce numéro.
+     */
+    public function test_la_reprise_relit_les_numeros_ecrits_avec_00(): void
+    {
+        $awa = $this->compte('00221 77 123 45 67');
+        $moussa = User::factory()->create(['email' => 'moussa@example.sn', 'phone' => '78 555 44 33']);
+        $double = User::factory()->create(['email' => 'double@example.sn', 'phone' => null]);
+
+        // L'état d'avant : la forme canonique gardait le préfixe.
+        DB::table('users')->where('id', $awa->id)->update(['phone_normalise' => '00221771234567']);
+        DB::table('users')->where('id', $double->id)
+            ->update(['phone' => '00221 78 555 44 33', 'phone_normalise' => '00221785554433']);
+
+        (require database_path('migrations/2026_11_01_000001_relit_les_numeros_ecrits_avec_00.php'))->up();
+
+        $this->assertSame('771234567', $awa->fresh()->getAttribute('phone_normalise'));
+        $this->assertSame('785554433', $moussa->fresh()->getAttribute('phone_normalise'));
+        // Le numéro de Moussa n'est pas pris à Moussa.
+        $this->assertSame('00221785554433', $double->fresh()->getAttribute('phone_normalise'));
+
+        $this->postJson('/api/auth/login', [
+            'identifiant' => '77 123 45 67',
+            'password'    => 'motdepasse123',
+        ])->assertOk();
     }
 
     public function test_une_saisie_sans_chiffres_utiles_ne_normalise_rien(): void

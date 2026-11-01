@@ -2,6 +2,7 @@ import { useState } from 'react'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import { messageErreur } from '../../lib/erreurs'
+import { numeroLocal } from '../../lib/telephone'
 import ReglageNotifications from '../../components/app/ReglageNotifications'
 import GrilleNotifications from '../../components/app/GrilleNotifications'
 
@@ -19,10 +20,11 @@ export default function Profil() {
 
   // L'adresse et le numéro permettent de reprendre le compte, et le numéro
   // reçoit les reversements : les changer demande le mot de passe actuel.
-  const chiffres = (n: string | null | undefined) => (n ?? '').replace(/\D+/g, '').replace(/^221(?=\d{9}$)/, '')
+  // Réécrire « 77… » en « 00221 77… » ne change pas de numéro : le serveur le
+  // lit pareil, l'écran ne doit pas réclamer le mot de passe pour autant.
   const identifiantChange =
     info.email.trim().toLowerCase() !== (user?.email ?? '').toLowerCase()
-    || chiffres(info.phone) !== chiffres(user?.phone)
+    || numeroLocal(info.phone) !== numeroLocal(user?.phone)
 
   const saveInfo = async (e: React.FormEvent) => {
     e.preventDefault()

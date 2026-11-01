@@ -11,6 +11,7 @@ import { fcfa, dateCourte } from '../../lib/format'
 import Button from '../../components/ui/Button'
 import CodeQR from '../../components/paiement/CodeQR'
 import { surAppareilMobile } from '../../lib/appareil'
+import { chiffresDuNumero } from '../../lib/telephone'
 import Seo from '../../components/Seo'
 import type { Reservation } from '../../types'
 import Marque from '../../components/Marque'
@@ -490,7 +491,7 @@ export default function Paiement() {
             variante="primaire"
             taille="lg"
             className="w-full mt-6"
-            disabled={!methode || telephone.replace(/\D/g, '').length < 9 || envoi}
+            disabled={!methode || chiffresDuNumero(telephone).length < 9 || envoi}
             onClick={lancer}
           >
             {envoi ? 'Ouverture…' : `Payer ${fcfa(reservation.montant_total)}`}

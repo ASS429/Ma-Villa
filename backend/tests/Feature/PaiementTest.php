@@ -467,6 +467,28 @@ class PaiementTest extends TestCase
             && $r['wave_senegal_phone'] === '771234567');
     }
 
+    /**
+     * « 00221 » partait tel quel jusqu'au 1er novembre 2026, et PayDunya
+     * refusait sans dire pourquoi. Le préfixe n'est jamais filtré : un 70 ou
+     * un 76 part comme un 77.
+     */
+    public function test_l_indicatif_ecrit_00221_est_compris_pour_tout_operateur(): void
+    {
+        Http::fake([
+            '*checkout-invoice/create' => Http::response(['response_code' => '00', 'response_text' => 'u', 'token' => 'T']),
+            '*softpay/wave-senegal' => Http::response(['success' => true, 'url' => 'https://pay.wave.com/c/a']),
+        ]);
+
+        $reservation = $this->reservation();
+        $this->actingAs($reservation->client, 'sanctum')
+            ->postJson("/api/reservations/{$reservation->id}/paiement", [
+                'methode' => 'wave', 'telephone' => '00221 70 765 43 21',
+            ])->assertOk();
+
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'wave-senegal')
+            && $r['wave_senegal_phone'] === '707654321');
+    }
+
     public function test_des_cles_de_test_visent_le_bac_a_sable_et_evitent_softpay(): void
     {
         // La base réelle répond « LIVE Private Key and Token combination is

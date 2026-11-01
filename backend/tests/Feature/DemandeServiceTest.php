@@ -273,6 +273,24 @@ class DemandeServiceTest extends TestCase
     }
 
     /**
+     * Un numéro collé depuis WhatsApp porte des marques invisibles et des
+     * espaces insécables. Refusé jusqu'au 1er novembre 2026 avec « que des
+     * chiffres », alors que l'écran n'en montrait pas d'autres.
+     */
+    public function test_un_numero_colle_depuis_whatsapp_est_accepte_et_nettoye(): void
+    {
+        $colle = "\u{202A}+221\u{00A0}76\u{00A0}123\u{00A0}45\u{00A0}67\u{202C}";
+
+        $this->postJson('/api/demandes-service', $this->demande(['telephone' => $colle]))
+            ->assertCreated();
+
+        $this->assertSame('+221 76 123 45 67', DemandeService::latest('id')->first()->telephone);
+
+        $this->postJson('/api/demandes-service', $this->demande(['telephone' => '00221 33 820 12 34']))
+            ->assertCreated();
+    }
+
+    /**
      * Le champ piège : un robot le remplit, un humain ne le voit pas. On lui
      * répond comme à tout le monde — un refus lui apprendrait à l'éviter.
      */

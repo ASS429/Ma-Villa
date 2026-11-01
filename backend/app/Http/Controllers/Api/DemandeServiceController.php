@@ -8,6 +8,7 @@ use App\Models\JournalAdmin;
 use App\Models\User;
 use App\Services\Prestations;
 use App\Services\Push;
+use App\Services\Telephone;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -83,6 +84,13 @@ class DemandeServiceController extends Controller
         $demandables = Prestations::clesDemandables();
         abort_if($demandables === [], 404);
 
+        // Un numéro collé depuis WhatsApp porte des marques invisibles et des
+        // espaces insécables : refusé jusqu'au 1er novembre 2026 avec « que
+        // des chiffres », alors qu'il n'y avait à l'écran que des chiffres.
+        if (is_string($request->input('telephone'))) {
+            $request->merge(['telephone' => Telephone::nettoyer($request->input('telephone'))]);
+        }
+
         $donnees = $request->validate([
             // Une prestation d'une famille fermée est refusée comme une
             // prestation inconnue : pour le public, elle n'existe pas.
@@ -98,10 +106,13 @@ class DemandeServiceController extends Controller
             'vol'          => 'nullable|string|max:20',
             'delegation'   => 'nullable|string|max:80',
             'nom'          => 'required|string|max:80',
-            'telephone'    => ['required', 'string', 'max:30', 'regex:/^\+?[0-9 ().-]+$/', function ($attribut, $valeur, $echec) {
+            // Seules les lettres sont refusées : « appelez-moi » n'est pas un
+            // numéro, mais « +221 78 123 45 67 », « 00221 70… » ou
+            // « 33 820 12 34 » en sont, quelle que soit la ponctuation.
+            'telephone'    => ['required', 'string', 'max:30', 'regex:/^[^\p{L}]+$/u', function ($attribut, $valeur, $echec) {
                 // Huit chiffres au moins : en deçà, ce n'est un numéro nulle part,
                 // et on ne pourrait pas rappeler la famille.
-                if (strlen(preg_replace('/\D/', '', (string) $valeur)) < 8) {
+                if (strlen(Telephone::chiffres((string) $valeur)) < 8) {
                     $echec('Ce numéro de téléphone est trop court.');
                 }
             }],
@@ -112,7 +123,7 @@ class DemandeServiceController extends Controller
         ], [
             'prestation.in'               => 'Ce service n’est pas proposé.',
             'date_service.after_or_equal' => 'La date ne peut pas être passée.',
-            'telephone.regex'             => 'Le numéro ne doit contenir que des chiffres, des espaces et le signe +.',
+            'telephone.regex'             => 'Écrivez le numéro en chiffres, sans lettres.',
         ]);
 
         $demande = DemandeService::create($donnees + [

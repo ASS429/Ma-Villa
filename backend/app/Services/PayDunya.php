@@ -412,16 +412,11 @@ class PayDunya
 
     /**
      * PayDunya attend un numéro local à neuf chiffres : « +221 77 123 45 67 »
-     * saisi par un client serait refusé tel quel.
+     * saisi par un client serait refusé tel quel, et « 00221 77 … » l'était
+     * jusqu'au 1er novembre 2026.
      */
     private function normaliserTelephone(string $telephone): string
     {
-        $chiffres = preg_replace('/\D+/', '', $telephone);
-
-        if (str_starts_with($chiffres, '221')) {
-            $chiffres = substr($chiffres, 3);
-        }
-
-        return $chiffres;
+        return Telephone::local($telephone, '221');
     }
 }
