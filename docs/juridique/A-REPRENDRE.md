@@ -51,6 +51,7 @@ Dernière mise à jour : 31 octobre 2026.
 |---|---|---|---|
 | Éditeur | Forme juridique, RCCM et NINEA : « en cours de formalisation ». Déposés le 21 oct. 2026, **numéros attendus le 2 ou le 3 novembre** : les reporter ici dès réception (et dans le bloc éditeur de la confidentialité si la dénomination change). | 22 août 2026 | Statut informel |
 | Éditeur | Si le **partenaire encaisse** : le nommer comme encaisseur. | si adopté | Encaissement partenaire |
+| Éditeur | Ajouter le **WhatsApp Business** de PasseTemps, +221 75 446 90 41, en même temps que les numéros RCCM et NINEA. Il est au pied de page depuis le 2 nov. 2026 (`src/coordonnees.json`). | 2 nov. 2026 | Demande de l'exploitant |
 | Propriété intellectuelle | « JOJ Dakar 2026 » : PasseTemps n'est ni partenaire ni fournisseur officiel — déjà dit sur la page, à dire aussi ici. | 20 oct. 2026 | Page JOJ |
 
 ## 5. Conditions générales de vente (boutique)
