@@ -3,7 +3,7 @@ import { chiffresDuNumero } from './telephone'
 /**
  * Liens pour joindre quelqu'un depuis un numéro écrit pour être lu.
  *
- * Le numéro arrive du serveur sous sa forme lisible (« +221 77 868 47 23 »).
+ * Le numéro arrive du serveur sous sa forme lisible (« +221 75 446 90 41 »).
  * `tel:` et WhatsApp veulent des chiffres seuls, indicatif compris : un numéro
  * local de neuf chiffres reçoit donc l'indicatif sénégalais, sans quoi l'appel
  * partirait vers un numéro qui n'existe pas.

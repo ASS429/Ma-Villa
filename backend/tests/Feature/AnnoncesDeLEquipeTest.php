@@ -37,7 +37,7 @@ class AnnoncesDeLEquipeTest extends TestCase
             'reservations.ouvertes'          => true,
             'reservations.associes_ouvertes' => false,
             'reservations.contact.nom'       => 'Abdou Ndour',
-            'reservations.contact.telephone' => '+221 77 868 47 23',
+            'reservations.contact.telephone' => '+221 75 446 90 41',
             'reservations.contact.email'     => 'ndourabdou011@gmail.com',
             'paiement.actif'                 => true,
         ]);
@@ -88,7 +88,7 @@ class AnnoncesDeLEquipeTest extends TestCase
         // Ni « suspendue » ni « bientôt » : la réservation est ouverte, cette
         // annonce-ci se réserve simplement autrement.
         $this->assertStringContainsString('auprès de notre équipe', $reponse->json('message'));
-        $this->assertStringContainsString('+221 77 868 47 23', $reponse->json('message'));
+        $this->assertStringContainsString('+221 75 446 90 41', $reponse->json('message'));
         $this->assertStringNotContainsString('suspendue', $reponse->json('message'));
 
         $this->assertDatabaseCount('reservations', 0);
