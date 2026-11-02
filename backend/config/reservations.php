@@ -59,7 +59,7 @@ return [
     'contact' => [
         'nom'       => env('RESERVATIONS_CONTACT_NOM', 'Abdou Ndour'),
         'telephone' => env('RESERVATIONS_CONTACT_TELEPHONE', '+221 75 446 90 41'),
-        'email'     => env('RESERVATIONS_CONTACT_EMAIL', 'ndourabdou011@gmail.com'),
+        'email'     => env('RESERVATIONS_CONTACT_EMAIL', 'contactptemps@gmail.com'),
     ],
 
     /*

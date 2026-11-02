@@ -1,7 +1,6 @@
 import FadeIn from './FadeIn'
 import BarreRecherche from './BarreRecherche'
 import { useConfig } from '../context/ConfigContext'
-import { lienAppel } from '../lib/contact'
 import { useLangue } from '../i18n/langue'
 import { TEXTES_ACCUEIL } from '../i18n/accueil'
 
@@ -58,16 +57,7 @@ export default function Hero() {
             </span>
             {/* Le paiement est annoncé mais inactif : le dire au futur tant que
                 c'est le cas, plutôt que de laisser croire qu'on peut régler ici. */}
-            {!reservations.ouvertes ? (
-              <>
-                {t.bientot(reservations.contact.nom)}
-                <a href={lienAppel(reservations.contact.telephone)} className="text-white underline underline-offset-4">
-                  {reservations.contact.telephone}
-                </a>.
-              </>
-            ) : paiement.actif
-              ? t.paiement(moyens)
-              : t.paiementBientot(moyens)}
+            {reservations.ouvertes && (paiement.actif ? t.paiement(moyens) : t.paiementBientot(moyens))}
           </p>
         </FadeIn>
       </div>

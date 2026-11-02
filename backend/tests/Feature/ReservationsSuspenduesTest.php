@@ -43,7 +43,7 @@ class ReservationsSuspenduesTest extends TestCase
             'reservations.ouvertes'          => false,
             'reservations.contact.nom'       => 'Abdou Ndour',
             'reservations.contact.telephone' => '+221 75 446 90 41',
-            'reservations.contact.email'     => 'ndourabdou011@gmail.com',
+            'reservations.contact.email'     => 'contactptemps@gmail.com',
             // Le paiement reste « actif » : la suspension doit fermer le
             // règlement d'elle-même, sans compter sur une seconde bascule.
             'paiement.actif'                 => true,
@@ -98,7 +98,7 @@ class ReservationsSuspenduesTest extends TestCase
         // Le message seul doit suffire : c'est tout ce que l'application
         // mobile déjà distribuée affichera.
         $this->assertStringContainsString('+221 75 446 90 41', $reponse->json('message'));
-        $this->assertStringContainsString('ndourabdou011@gmail.com', $reponse->json('message'));
+        $this->assertStringContainsString('contactptemps@gmail.com', $reponse->json('message'));
 
         $this->assertDatabaseCount('reservations', 0);
     }
@@ -128,7 +128,7 @@ class ReservationsSuspenduesTest extends TestCase
             ->assertOk()
             ->assertJsonPath('reservations.ouvertes', false)
             ->assertJsonPath('reservations.contact.telephone', '+221 75 446 90 41')
-            ->assertJsonPath('reservations.contact.email', 'ndourabdou011@gmail.com');
+            ->assertJsonPath('reservations.contact.email', 'contactptemps@gmail.com');
     }
 
     /* ── Ce qui reste ouvert ──────────────────────────────────────── */

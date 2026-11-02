@@ -38,7 +38,7 @@ class AnnoncesDeLEquipeTest extends TestCase
             'reservations.associes_ouvertes' => false,
             'reservations.contact.nom'       => 'Abdou Ndour',
             'reservations.contact.telephone' => '+221 75 446 90 41',
-            'reservations.contact.email'     => 'ndourabdou011@gmail.com',
+            'reservations.contact.email'     => 'contactptemps@gmail.com',
             'paiement.actif'                 => true,
         ]);
 

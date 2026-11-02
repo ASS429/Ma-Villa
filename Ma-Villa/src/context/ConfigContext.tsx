@@ -143,7 +143,7 @@ const DEFAUT: Configuration = {
   reservations: {
     ouvertes: false,
     associes_ouvertes: false,
-    contact: { nom: 'Abdou Ndour', telephone: '+221 75 446 90 41', email: 'ndourabdou011@gmail.com' },
+    contact: { nom: 'Abdou Ndour', telephone: '+221 75 446 90 41', email: 'contactptemps@gmail.com' },
   },
   // Fermés par défaut, comme la boutique : une API qui ne répond pas — ou qui
   // ne connaît pas encore ces clés — ne doit rien ouvrir.

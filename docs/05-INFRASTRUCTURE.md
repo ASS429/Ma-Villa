@@ -141,7 +141,7 @@ RESERVATIONS_OUVERTES=false
 RESERVATIONS_ASSOCIES_OUVERTES=false
 RESERVATIONS_CONTACT_NOM="Abdou Ndour"
 RESERVATIONS_CONTACT_TELEPHONE="+221 75 446 90 41"
-RESERVATIONS_CONTACT_EMAIL=ndourabdou011@gmail.com
+RESERVATIONS_CONTACT_EMAIL=contactptemps@gmail.com
 ```
 
 **Fermée le 14 septembre 2026** — compte PayDunya bloqué par la vérification
