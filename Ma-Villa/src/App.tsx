@@ -208,7 +208,7 @@ function CommentCaMarche() {
       ]
     : [
         cherchez,
-        { n: '2', ...t.contactez(reservations.contact.nom, reservations.contact.telephone) },
+        { n: '2', ...t.contactez(reservations.contact.telephone) },
         { n: '3', ...t.profitezFerme },
       ]
 

@@ -25,8 +25,9 @@ import BoutonWhatsApp from './BoutonWhatsApp'
  * redéployer le site.
  *
  * `equipe` : depuis le 31 octobre 2026, la réservation en ligne est rouverte,
- * mais les annonces des associés se réservent auprès de ce même contact. Ce
- * n'est ni une panne ni une attente : le texte ne dit donc pas « bientôt ».
+ * mais les annonces des associés se réservent auprès de ce même contact. Ni dans
+ * ce cas ni quand tout est suspendu le texte ne dit « bientôt » : depuis le
+ * 2 novembre 2026, il dit ce qui marche aujourd'hui.
  *
  * `children` : ce que l'écran peut demander de plus, ici les dates de la fiche.
  */
@@ -70,9 +71,9 @@ export default function ContactReservation({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <p className="th-text-1 font-medium mb-1">{equipe ? t.equipeTitre : t.bientot}</p>
+        <p className="th-text-1 font-medium mb-1">{t.equipeTitre}</p>
         <p className="th-text-2 text-sm leading-relaxed">
-          {equipe ? t.equipeTexte(nom) : t.enAttendant(nom)}
+          {equipe ? t.equipeTexte(nom) : t.equipeDemandes}
         </p>
       </div>
 

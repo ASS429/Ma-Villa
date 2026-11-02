@@ -146,8 +146,7 @@ const fr = {
   },
   contact: {
     suspenduCompact: (nom: string) => `Paiement en ligne momentanément suspendu. Pour finaliser, contactez ${nom} au`,
-    bientot: 'Réservation en ligne bientôt disponible',
-    enAttendant: (nom: string) => `En attendant, ${nom} prend vos demandes de réservation directement.`,
+    equipeDemandes: 'Notre équipe prend vos demandes de réservation directement.',
     equipeTitre: 'Réservation auprès de notre équipe',
     equipeTexte: (nom: string) => `Cet hébergement se réserve directement ${aupresDe(nom)}, de l’équipe PasseTemps, qui vous confirme les disponibilités et le règlement.`,
     equipeCompact: (nom: string) => `Cet hébergement se règle auprès de notre équipe : contactez ${nom} au`,
@@ -309,8 +308,7 @@ const en: typeof fr = {
   },
   contact: {
     suspenduCompact: (nom: string) => `Online payment is temporarily suspended. To complete your booking, contact ${nom} on`,
-    bientot: 'Online booking coming soon',
-    enAttendant: (nom: string) => `Meanwhile, ${nom} takes your booking requests directly.`,
+    equipeDemandes: 'Our team takes your booking requests directly.',
     equipeTitre: 'Book through our team',
     equipeTexte: (nom: string) => `This place is booked directly through ${nom}, from the PasseTemps team, who will confirm availability and payment.`,
     equipeCompact: (nom: string) => `This place is paid through our team: contact ${nom} on`,
