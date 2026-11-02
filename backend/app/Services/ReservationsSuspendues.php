@@ -73,9 +73,8 @@ final class ReservationsSuspendues
     {
         $contact = self::contact();
 
-        return 'Cet hébergement se réserve auprès de notre équipe. '
-            . "Contactez {$contact['nom']} au {$contact['telephone']} "
-            . "ou à {$contact['email']}.";
+        return 'Cet hébergement se réserve auprès de notre équipe, '
+            . "au {$contact['telephone']} ou à {$contact['email']}.";
     }
 
     /**

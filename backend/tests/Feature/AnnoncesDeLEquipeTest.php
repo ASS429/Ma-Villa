@@ -36,7 +36,7 @@ class AnnoncesDeLEquipeTest extends TestCase
         config([
             'reservations.ouvertes'          => true,
             'reservations.associes_ouvertes' => false,
-            'reservations.contact.nom'       => 'Abdou Ndour',
+            'reservations.contact.nom'       => 'notre équipe',
             'reservations.contact.telephone' => '+221 75 446 90 41',
             'reservations.contact.email'     => 'contactptemps@gmail.com',
             'paiement.actif'                 => true,
@@ -83,7 +83,7 @@ class AnnoncesDeLEquipeTest extends TestCase
             ->postJson('/api/reservations', $this->demande($this->logement('associe')))
             ->assertStatus(503)
             ->assertJsonPath('aupres_de_l_equipe', true)
-            ->assertJsonPath('contact.nom', 'Abdou Ndour');
+            ->assertJsonPath('contact.nom', 'notre équipe');
 
         // Ni « suspendue » ni « bientôt » : la réservation est ouverte, cette
         // annonce-ci se réserve simplement autrement.

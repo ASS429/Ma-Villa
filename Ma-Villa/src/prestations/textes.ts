@@ -65,8 +65,8 @@ const fr = {
   envoyer: 'Envoyer ma demande',
 
   derniereEtape: 'Dernière étape : envoyez-la sur WhatsApp',
-  derniereEtapeTexte: (ref: string | null, nom: string) =>
-    `${ref ? `Votre demande ${ref} est enregistrée. ` : ''}Envoyez le message préparé à ${nom}, qui vous répond et confirme le prix.`,
+  derniereEtapeTexte: (ref: string | null) =>
+    `${ref ? `Votre demande ${ref} est enregistrée. ` : ''}Envoyez le message préparé à notre équipe, qui vous répond et confirme le prix.`,
   envoyerWhatsApp: 'Envoyer sur WhatsApp',
   ouAppeler: (tel: string) => `ou appelez le ${tel}`,
   nouvelleDemande: 'Faire une autre demande',
@@ -163,8 +163,8 @@ const en: typeof fr = {
   envoyer: 'Send my request',
 
   derniereEtape: 'Last step: send it on WhatsApp',
-  derniereEtapeTexte: (ref: string | null, nom: string) =>
-    `${ref ? `Your request ${ref} is saved. ` : ''}Send the prepared message to ${nom}, who replies and confirms the price.`,
+  derniereEtapeTexte: (ref: string | null) =>
+    `${ref ? `Your request ${ref} is saved. ` : ''}Send the prepared message to our team, who replies and confirms the price.`,
   envoyerWhatsApp: 'Send on WhatsApp',
   ouAppeler: (tel: string) => `or call ${tel}`,
   nouvelleDemande: 'Make another request',

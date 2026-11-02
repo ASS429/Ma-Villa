@@ -196,7 +196,7 @@ d'API ouverte dans un onglet répond toujours 401, le jeton vivant dans
 Le compte PayDunya est bloqué par une vérification d'identité (KYC). Encaisser
 dessus prendrait l'argent d'un client sans savoir quand on pourrait le lui
 rendre : l'exploitant a **fermé la réservation en ligne**, et un contact humain
-la remplace — son associé, Abdou Ndour.
+la remplace — l'équipe PasseTemps, sur le numéro WhatsApp Business.
 
 | Où | Ce qui se passe quand elle est fermée |
 |---|---|

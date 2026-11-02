@@ -57,7 +57,7 @@ return [
     | rien de plus.
     */
     'contact' => [
-        'nom'       => env('RESERVATIONS_CONTACT_NOM', 'Abdou Ndour'),
+        'nom'       => env('RESERVATIONS_CONTACT_NOM', 'notre équipe'),
         'telephone' => env('RESERVATIONS_CONTACT_TELEPHONE', '+221 75 446 90 41'),
         'email'     => env('RESERVATIONS_CONTACT_EMAIL', 'contactptemps@gmail.com'),
     ],

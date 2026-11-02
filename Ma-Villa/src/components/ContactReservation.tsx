@@ -46,7 +46,7 @@ export default function ContactReservation({
   children?: ReactNode
 }) {
   const { reservations } = useConfig()
-  const { nom, telephone, email } = reservations.contact
+  const { telephone, email } = reservations.contact
   const { langue } = useLangue()
   const t = TEXTES_HEBERGEMENT[langue].contact
 
@@ -58,7 +58,7 @@ export default function ContactReservation({
     return (
       <div className="flex flex-col gap-2 w-full">
         <p className="text-xs th-text-2 leading-relaxed">
-          {equipe ? t.equipeCompact(nom) : t.suspenduCompact(nom)}{' '}
+          {equipe ? t.equipeCompact : t.suspenduCompact}{' '}
           <a href={lienAppel(telephone)} className="th-text-1 font-medium underline underline-offset-2">
             {telephone}
           </a>.
@@ -73,7 +73,7 @@ export default function ContactReservation({
       <div>
         <p className="th-text-1 font-medium mb-1">{t.equipeTitre}</p>
         <p className="th-text-2 text-sm leading-relaxed">
-          {equipe ? t.equipeTexte(nom) : t.equipeDemandes}
+          {equipe ? t.equipeTexte : t.equipeDemandes}
         </p>
       </div>
 

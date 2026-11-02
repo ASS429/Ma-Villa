@@ -254,7 +254,7 @@ export default function DemandeService({
       <section className="panneau" aria-live="polite">
         <h3 className="panneau-titre"><Send size={17} aria-hidden="true" /> {t.derniereEtape}</h3>
         <p className="th-text-2 text-sm leading-relaxed mb-4">
-          {t.derniereEtapeTexte(envoyee.reference, contact.nom)}
+          {t.derniereEtapeTexte(envoyee.reference)}
         </p>
         {!envoyee.enregistree && (
           <p className="console-erreur mb-4" role="status">{t.nonEnregistree}</p>

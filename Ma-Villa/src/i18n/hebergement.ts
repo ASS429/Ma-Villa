@@ -8,9 +8,6 @@ import type { DetailsDemande } from '../lib/demande'
  * langue : seule l'interface autour est traduite.
  */
 
-/** « auprès d’Abdou », « auprès de Moussa » : le contact se change sans redéployer. */
-const aupresDe = (nom: string) => (/^[aeiouyhàâéèêîïôû]/i.test(nom) ? `auprès d’${nom}` : `auprès de ${nom}`)
-
 /**
  * Le message prérempli : une ligne par détail connu. Une ligne vide ou « non
  * renseigné » obligerait le contact à deviner si la question a été posée.
@@ -145,11 +142,11 @@ const fr = {
     nonProposePour: (formule: string) => `${formule}, non proposé pour ce logement`,
   },
   contact: {
-    suspenduCompact: (nom: string) => `Paiement en ligne momentanément suspendu. Pour finaliser, contactez ${nom} au`,
+    suspenduCompact: 'Paiement en ligne momentanément suspendu. Pour finaliser, contactez notre équipe au',
     equipeDemandes: 'Notre équipe prend vos demandes de réservation directement.',
     equipeTitre: 'Réservation auprès de notre équipe',
-    equipeTexte: (nom: string) => `Cet hébergement se réserve directement ${aupresDe(nom)}, de l’équipe PasseTemps, qui vous confirme les disponibilités et le règlement.`,
-    equipeCompact: (nom: string) => `Cet hébergement se règle auprès de notre équipe : contactez ${nom} au`,
+    equipeTexte: 'Cet hébergement se réserve directement auprès de notre équipe, qui vous confirme les disponibilités et le règlement.',
+    equipeCompact: 'Cet hébergement se règle auprès de notre équipe, au',
     appeler: 'Appeler',
     reserverWhatsApp: 'Réserver sur WhatsApp',
     finaliserWhatsApp: 'Finaliser sur WhatsApp',
@@ -307,11 +304,11 @@ const en: typeof fr = {
     nonProposePour: (formule: string) => `${formule}, not offered for this unit`,
   },
   contact: {
-    suspenduCompact: (nom: string) => `Online payment is temporarily suspended. To complete your booking, contact ${nom} on`,
+    suspenduCompact: 'Online payment is temporarily suspended. To complete your booking, contact our team on',
     equipeDemandes: 'Our team takes your booking requests directly.',
     equipeTitre: 'Book through our team',
-    equipeTexte: (nom: string) => `This place is booked directly through ${nom}, from the PasseTemps team, who will confirm availability and payment.`,
-    equipeCompact: (nom: string) => `This place is paid through our team: contact ${nom} on`,
+    equipeTexte: 'This place is booked directly through our team, who will confirm availability and payment.',
+    equipeCompact: 'This place is paid through our team, on',
     appeler: 'Call',
     reserverWhatsApp: 'Book on WhatsApp',
     finaliserWhatsApp: 'Finish on WhatsApp',

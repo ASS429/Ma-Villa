@@ -41,7 +41,7 @@ class ReservationsSuspenduesTest extends TestCase
 
         config([
             'reservations.ouvertes'          => false,
-            'reservations.contact.nom'       => 'Abdou Ndour',
+            'reservations.contact.nom'       => 'notre équipe',
             'reservations.contact.telephone' => '+221 75 446 90 41',
             'reservations.contact.email'     => 'contactptemps@gmail.com',
             // Le paiement reste « actif » : la suspension doit fermer le
@@ -93,7 +93,7 @@ class ReservationsSuspenduesTest extends TestCase
             ->postJson('/api/reservations', $this->demande())
             ->assertStatus(503)
             ->assertJsonPath('suspendu', true)
-            ->assertJsonPath('contact.nom', 'Abdou Ndour');
+            ->assertJsonPath('contact.nom', 'notre équipe');
 
         // Le message seul doit suffire : c'est tout ce que l'application
         // mobile déjà distribuée affichera.
