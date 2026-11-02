@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Models\Villa;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class VillaTest extends TestCase
@@ -27,6 +28,59 @@ class VillaTest extends TestCase
         foreach ($data as $villa) {
             $this->assertEquals('validee', $villa['statut']);
         }
+    }
+
+    /**
+     * Un import crée ses annonces à la même seconde. Trier sur la seule date
+     * laissait Postgres ranger ces égalités à son idée, page par page : le
+     * 2 novembre 2026, deux annonces revenaient deux fois et deux autres ne
+     * sortaient jamais, ni de la liste ni du plan du site, que le pré-rendu
+     * construit en parcourant ces mêmes pages.
+     */
+    #[DataProvider('lesTris')]
+    public function test_une_annonce_importee_sort_une_fois_et_une_seule(string $tri): void
+    {
+        $importees = Villa::factory()->validee()->count(30)->create(['created_at' => now()->subDay()]);
+
+        $vues = [];
+        for ($page = 1; $page <= 3; $page++) {
+            array_push($vues, ...array_column(
+                $this->getJson("/api/villas?page={$page}{$tri}")->assertOk()->json('data'),
+                'id'
+            ));
+        }
+
+        // À égalité, le plus récent d'abord : un ordre écrit, donc le même à
+        // chaque page, quel que soit le moteur.
+        $this->assertSame($importees->pluck('id')->sortDesc()->values()->all(), $vues);
+    }
+
+    public static function lesTris(): array
+    {
+        return [
+            'par défaut'       => [''],
+            'prix croissant'   => ['&tri=prix_asc'],
+            'prix décroissant' => ['&tri=prix_desc'],
+            'note'             => ['&tri=note'],
+        ];
+    }
+
+    public function test_la_console_montre_aussi_chaque_annonce_importee(): void
+    {
+        $importees = Villa::factory()->validee()->count(12)->create(['created_at' => now()->subDay()]);
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $vues = [];
+        for ($page = 1; $page <= 3; $page++) {
+            array_push($vues, ...array_column(
+                $this->actingAs($admin, 'sanctum')
+                    ->getJson("/api/admin/villas?statut=validee&par_page=5&page={$page}")
+                    ->assertOk()->json('data'),
+                'id'
+            ));
+        }
+
+        $this->assertSame($importees->pluck('id')->sortDesc()->values()->all(), $vues);
     }
 
     public function test_public_listing_is_paginated(): void

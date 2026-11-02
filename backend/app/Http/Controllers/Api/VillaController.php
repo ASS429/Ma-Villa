@@ -120,6 +120,12 @@ class VillaController extends Controller
             default     => $query->latest('villas.created_at'),
         };
 
+        // Le départage, pour tous les tris. Un import crée ses annonces à la
+        // même seconde, et sans ordre écrit Postgres range ces égalités à son
+        // idée d'une page à l'autre : des annonces sortaient deux fois, d'autres
+        // jamais, ni de la liste ni du plan du site.
+        $query->orderByDesc('villas.id');
+
         return response()->json($query->paginate(12)->withQueryString());
     }
 

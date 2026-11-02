@@ -234,7 +234,10 @@ class AdminController extends Controller
                 $terme = '%'.$request->input('recherche').'%';
                 $q->where(fn ($s) => $s->where('nom', 'like', $terme)->orWhere('ville', 'like', $terme));
             })
+            // `id` départage les annonces importées à la même seconde : voir
+            // VillaController::index.
             ->latest()
+            ->latest('id')
             ->paginate($request->integer('par_page', 20));
 
         // Voir un brouillon ne sert à rien si on ne sait pas quoi dire au
