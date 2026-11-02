@@ -9,6 +9,8 @@ import { COMMUN } from '../i18n/commun'
 import Marque from './Marque'
 import IconeReseau from './IconeReseau'
 import RESEAUX from '../reseaux.json'
+import COORDONNEES from '../coordonnees.json'
+import { lienWhatsApp } from '../lib/contact'
 
 export default function Footer() {
   const { user } = useAuth()
@@ -59,11 +61,24 @@ export default function Footer() {
               <Link to={lien('/mentions-legales/')} className="th-text-2 hover:th-text-1 transition-colors">{t.mentions}</Link>
             </div>
 
-            {/* Icône et nom, pas l'icône seule : les deux liens WhatsApp (chaîne
-                et groupe) auraient le même pictogramme. `rel="me"` sur les
-                profils : il relie le site à ses comptes. */}
+            {/* Le numéro d'abord : écrire à PasseTemps n'est pas suivre ses
+                comptes. Icône et nom, pas l'icône seule : les deux liens
+                WhatsApp (chaîne et groupe) auraient le même pictogramme.
+                `rel="me"` sur les profils : il relie le site à ses comptes. */}
             <div className="flex flex-col gap-2.5">
-              <p className="font-semibold th-text-1">{t.suivre}</p>
+              <p className="font-semibold th-text-1">{t.ecrire}</p>
+              <a
+                href={lienWhatsApp(COORDONNEES.whatsapp)}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`WhatsApp ${COORDONNEES.whatsapp}`}
+                className="lien-reseau th-text-2 hover:th-text-1 transition-colors"
+              >
+                <IconeReseau icone="whatsapp" />
+                <span className="whitespace-nowrap">{COORDONNEES.whatsapp}</span>
+              </a>
+
+              <p className="font-semibold th-text-1 mt-4">{t.suivre}</p>
               {RESEAUX.map((r) => (
                 <a
                   key={r.cle}

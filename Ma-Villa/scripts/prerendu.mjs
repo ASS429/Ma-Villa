@@ -41,6 +41,7 @@ const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..')
 
 // Les comptes de PasseTemps (Instagram, TikTok…) : même fichier que le pied de page.
 const RESEAUX = JSON.parse(readFileSync(join(RACINE, 'src', 'reseaux.json'), 'utf8'))
+const COORDONNEES = JSON.parse(readFileSync(join(RACINE, 'src', 'coordonnees.json'), 'utf8'))
 const DIST = join(RACINE, 'dist')
 
 /**
@@ -559,6 +560,11 @@ const PAGES_FIXES = [
           url: SITE,
           logo: `${SITE}/logo.png`,
           sameAs: RESEAUX.filter((r) => r.profil).map((r) => r.url),
+          contactPoint: {
+            '@type': 'ContactPoint',
+            telephone: COORDONNEES.whatsapp.replace(/\s/g, ''),
+            contactType: 'customer service',
+          },
         },
       ],
     },
