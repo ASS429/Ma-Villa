@@ -274,7 +274,7 @@ export default function Paiement() {
     return (
       <EcranEtat>
         <div className="mb-6">
-          <ContactReservation hebergement={reservation.logement.villa.nom} equipe={mode === 'equipe'} />
+          <ContactReservation reservation={reservation} equipe={mode === 'equipe'} />
         </div>
         <Button variante="secondaire" taille="sm" onClick={() => navigate('/dashboard/reservations')}>
           Mes réservations

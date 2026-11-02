@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { LocateFixed, MapPin, MessageCircle, Phone, Send } from 'lucide-react'
+import { LocateFixed, MapPin, Phone, Send } from 'lucide-react'
 import api from '../services/api'
 import { useConfig } from '../context/ConfigContext'
 import { erreursParChamp } from '../lib/erreurs'
 import { aujourdhui } from '../lib/format'
 import { lienAppel, lienWhatsApp } from '../lib/contact'
+import BoutonWhatsApp from '../components/BoutonWhatsApp'
 import { chiffresDuNumero } from '../lib/telephone'
 import { useLangue } from '../i18n/langue'
 import { Champ, ChampSelection, ChampZoneTexte } from '../components/ui/Champ'
@@ -259,15 +260,7 @@ export default function DemandeService({
           <p className="console-erreur mb-4" role="status">{t.nonEnregistree}</p>
         )}
         <div className="flex flex-col gap-3">
-          <a
-            href={envoyee.lien}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-primaire btn-md w-full justify-center"
-          >
-            <MessageCircle size={16} aria-hidden="true" />
-            <span>{t.envoyerWhatsApp}</span>
-          </a>
+          <BoutonWhatsApp href={envoyee.lien} className="w-full">{t.envoyerWhatsApp}</BoutonWhatsApp>
           <a href={lienAppel(contact.telephone)} className="btn btn-secondaire btn-sm w-full justify-center">
             <Phone size={15} aria-hidden="true" />
             <span>{t.ouAppeler(contact.telephone)}</span>

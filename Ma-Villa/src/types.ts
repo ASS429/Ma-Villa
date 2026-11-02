@@ -169,6 +169,7 @@ export interface Reservation {
   logement: {
     nom: string
     villa: {
+      id?: number
       nom: string
       ville?: string
       adresse?: string
@@ -179,7 +180,7 @@ export interface Reservation {
       encaisse_par_la_plateforme?: boolean
     }
   }
-  tarif: { type_tarif: TypeTarif }
+  tarif: { type_tarif: TypeTarif; avec_clim?: boolean; avec_buffet?: boolean }
   paiement?: PaiementReservation | null
   /**
    * Un client qui a payé **demande** l'annulation, il ne l'impose plus : la

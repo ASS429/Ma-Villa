@@ -22,6 +22,7 @@ interface Metier {
   /** Une catégorie du catalogue, par sa clé : le serveur n'en sert que le nom français. */
   categorie: Record<string, { nom: string; pluriel: string }>
   personnes: (n: number) => string
+  duree: (nuits: number) => string
   pers: string
   options: (clim: boolean, buffet: boolean) => string
 }
@@ -34,6 +35,7 @@ const fr: Metier = {
   // Vide : en français, le nom servi par le serveur fait foi.
   categorie: {},
   personnes: (n) => `${n} personne${n > 1 ? 's' : ''}`,
+  duree: (n) => (n > 1 ? `${n} nuits` : '1 nuit'),
   pers: 'pers.',
   options: (clim, buffet) => {
     const o = [clim ? 'clim' : null, buffet ? 'buffet' : null].filter(Boolean)
@@ -71,6 +73,7 @@ const en: Metier = {
     auberge: { nom: 'Guesthouse', pluriel: 'Guesthouses' },
   },
   personnes: (n) => `${n} ${n > 1 ? 'people' : 'person'}`,
+  duree: (n) => (n > 1 ? `${n} nights` : '1 night'),
   pers: 'ppl',
   options: (clim, buffet) => {
     const o = [clim ? 'air conditioning' : null, buffet ? 'buffet' : null].filter(Boolean)

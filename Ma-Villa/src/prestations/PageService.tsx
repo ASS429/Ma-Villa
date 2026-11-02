@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Info, MessageCircle } from 'lucide-react'
+import { Info } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import Footer from '../components/Footer'
 import Seo from '../components/Seo'
@@ -8,6 +8,7 @@ import PageGardee from '../components/PageGardee'
 import { useConfig } from '../context/ConfigContext'
 import { useOuverture, estVisible } from '../lib/ouverture'
 import { lienWhatsApp } from '../lib/contact'
+import BoutonWhatsApp from '../components/BoutonWhatsApp'
 import Lien from '../i18n/Lien'
 import { useLangue } from '../i18n/langue'
 import DemandeService from './DemandeService'
@@ -90,15 +91,7 @@ function Contenu({ famille }: { famille: FamillePrestation }) {
               <div className="flex flex-wrap gap-3">
                 <Button variante="secondaire" onClick={catalogue.reessayer}>{t.reessayer}</Button>
                 {/* Même sans catalogue, le visiteur doit pouvoir joindre quelqu'un. */}
-                <a
-                  href={lienWhatsApp(reservations.contact.telephone, t.message.entete)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-primaire btn-md"
-                >
-                  <MessageCircle size={16} aria-hidden="true" />
-                  <span>WhatsApp</span>
-                </a>
+                <BoutonWhatsApp href={lienWhatsApp(reservations.contact.telephone, t.message.entete)}>WhatsApp</BoutonWhatsApp>
               </div>
             </div>
           ) : catalogue.chargement || !catalogue.donnees ? (

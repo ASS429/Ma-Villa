@@ -47,6 +47,11 @@
   --danger:        #C42020;
   --on-accent:     #FFFFFF;
   --on-danger:     #FFFFFF;
+  /* Le vert de WhatsApp, le même dans les deux thèmes : c'est sa marque.
+     Encre sombre, comme sur son propre site : du blanc y tombe à 2 pour 1. */
+  --whatsapp:       #25D366;
+  --whatsapp-hover: #1EBE5A;
+  --on-whatsapp:    #0B141A;
 
   /* Absents de la planche, déduits des tokens ci-dessus. */
   --bg-input:      rgba(0, 0, 0, 0.04);
@@ -354,6 +359,12 @@ body {
   color: var(--on-accent);
 }
 .btn-primaire:hover:not(:disabled) { background: var(--accent-hover); }
+
+.btn-whatsapp {
+  background: var(--whatsapp);
+  color: var(--on-whatsapp);
+}
+.btn-whatsapp:hover:not(:disabled) { background: var(--whatsapp-hover); }
 
 .btn-secondaire {
   background: var(--bg-surface);

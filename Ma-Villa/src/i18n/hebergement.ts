@@ -1,3 +1,5 @@
+import type { DetailsDemande } from '../lib/demande'
+
 /**
  * Les textes de la carte et de la fiche d'un hébergement, de sa grille de
  * tarifs et du contact de réservation, dans les deux langues.
@@ -8,6 +10,26 @@
 
 /** « auprès d’Abdou », « auprès de Moussa » : le contact se change sans redéployer. */
 const aupresDe = (nom: string) => (/^[aeiouyhàâéèêîïôû]/i.test(nom) ? `auprès d’${nom}` : `auprès de ${nom}`)
+
+/**
+ * Le message prérempli : une ligne par détail connu. Une ligne vide ou « non
+ * renseigné » obligerait le contact à deviner si la question a été posée.
+ */
+function composerMessage(
+  d: DetailsDemande,
+  { intro, question, libelles, deuxPoints }: {
+    intro: string
+    question?: string
+    libelles: Record<keyof DetailsDemande, string>
+    deuxPoints: string
+  },
+): string {
+  const lignes = (Object.keys(libelles) as (keyof DetailsDemande)[])
+    .filter((cle) => d[cle] !== undefined && d[cle] !== '')
+    .map((cle) => `${libelles[cle]}${deuxPoints}${d[cle]}`)
+
+  return [intro, ...(lignes.length ? ['', ...lignes] : []), ...(question ? ['', question] : [])].join('\n')
+}
 
 const fr = {
   carte: {
@@ -68,6 +90,9 @@ const fr = {
     aPartirDe: 'à partir de',
     reserver: 'Réserver',
     contacter: 'Contacter',
+    votreSejour: 'Votre séjour (facultatif)',
+    detailsDansMessage: 'Ces détails partiront dans votre message.',
+    choisissezPrix: 'Choisissez un prix dans « Logements et tarifs » pour le préciser.',
     apercuProprietaire: 'Aperçu de la fiche telle que la voient les clients.',
     reserveesAuxClients: 'Les réservations sont réservées aux clients.',
     demandeEnvoyee: 'Demande envoyée',
@@ -126,10 +151,36 @@ const fr = {
     equipeTitre: 'Réservation auprès de notre équipe',
     equipeTexte: (nom: string) => `Cet hébergement se réserve directement ${aupresDe(nom)}, de l’équipe PasseTemps, qui vous confirme les disponibilités et le règlement.`,
     equipeCompact: (nom: string) => `Cet hébergement se règle auprès de notre équipe : contactez ${nom} au`,
-    appeler: (tel: string) => `Appeler le ${tel}`,
-    message: (h?: string) => h
-      ? `Bonjour, je souhaite réserver « ${h} » vu sur PasseTemps.`
-      : 'Bonjour, je souhaite réserver un hébergement vu sur PasseTemps.',
+    appeler: 'Appeler',
+    reserverWhatsApp: 'Réserver sur WhatsApp',
+    finaliserWhatsApp: 'Finaliser sur WhatsApp',
+    message: (d: DetailsDemande) => composerMessage(d, {
+      intro: d.reference
+        ? 'Bonjour, je vous écris au sujet de ma réservation sur PasseTemps.'
+        : d.hebergement
+          ? 'Bonjour, je souhaite réserver cet hébergement vu sur PasseTemps.'
+          : 'Bonjour, je souhaite réserver un hébergement vu sur PasseTemps.',
+      question: d.reference
+        ? 'Comment puis-je la finaliser ?'
+        : d.arrivee
+          ? 'Est-il disponible à ces dates ?'
+          : d.hebergement ? 'Est-il disponible, et à quelles dates ?' : undefined,
+      deuxPoints: ' : ',
+      libelles: {
+        reference: 'Réservation',
+        hebergement: 'Hébergement',
+        ville: 'Lieu',
+        logement: 'Logement',
+        formule: 'Formule',
+        prix: 'Prix',
+        arrivee: 'Arrivée',
+        depart: 'Départ',
+        duree: 'Durée',
+        personnes: 'Personnes',
+        total: 'Total',
+        lien: 'Lien',
+      },
+    }),
     objet: (h?: string) => (h ? `Réservation — ${h}` : 'Réservation PasseTemps'),
     email: 'E-mail',
   },
@@ -202,6 +253,9 @@ const en: typeof fr = {
     aPartirDe: 'from',
     reserver: 'Book',
     contacter: 'Contact',
+    votreSejour: 'Your stay (optional)',
+    detailsDansMessage: 'These details will go in your message.',
+    choisissezPrix: 'Pick a price in the rates grid to include it.',
     apercuProprietaire: 'This is how guests see your listing.',
     reserveesAuxClients: 'Bookings are for guests only.',
     demandeEnvoyee: 'Request sent',
@@ -260,10 +314,36 @@ const en: typeof fr = {
     equipeTitre: 'Book through our team',
     equipeTexte: (nom: string) => `This place is booked directly through ${nom}, from the PasseTemps team, who will confirm availability and payment.`,
     equipeCompact: (nom: string) => `This place is paid through our team: contact ${nom} on`,
-    appeler: (tel: string) => `Call ${tel}`,
-    message: (h?: string) => h
-      ? `Hello, I would like to book "${h}", seen on PasseTemps.`
-      : 'Hello, I would like to book a place seen on PasseTemps.',
+    appeler: 'Call',
+    reserverWhatsApp: 'Book on WhatsApp',
+    finaliserWhatsApp: 'Finish on WhatsApp',
+    message: (d: DetailsDemande) => composerMessage(d, {
+      intro: d.reference
+        ? 'Hello, I am writing about my booking on PasseTemps.'
+        : d.hebergement
+          ? 'Hello, I would like to book this place, seen on PasseTemps.'
+          : 'Hello, I would like to book a place seen on PasseTemps.',
+      question: d.reference
+        ? 'How can I complete it?'
+        : d.arrivee
+          ? 'Is it available on these dates?'
+          : d.hebergement ? 'Is it available, and on which dates?' : undefined,
+      deuxPoints: ': ',
+      libelles: {
+        reference: 'Booking',
+        hebergement: 'Place',
+        ville: 'Location',
+        logement: 'Unit',
+        formule: 'Rate',
+        prix: 'Price',
+        arrivee: 'Check-in',
+        depart: 'Check-out',
+        duree: 'Length of stay',
+        personnes: 'Guests',
+        total: 'Total',
+        lien: 'Link',
+      },
+    }),
     objet: (h?: string) => (h ? `Booking — ${h}` : 'PasseTemps booking'),
     email: 'Email',
   },

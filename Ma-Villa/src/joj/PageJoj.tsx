@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Bus, CalendarDays, MapPin, MessageCircle, Ticket } from 'lucide-react'
+import { Bus, CalendarDays, MapPin, Ticket } from 'lucide-react'
 import api from '../services/api'
 import PageHeader from '../components/PageHeader'
 import Footer from '../components/Footer'
@@ -11,6 +11,7 @@ import PageGardee from '../components/PageGardee'
 import { useConfig } from '../context/ConfigContext'
 import { useRequete } from '../lib/useRequete'
 import { lienWhatsApp } from '../lib/contact'
+import BoutonWhatsApp from '../components/BoutonWhatsApp'
 import { enSlug } from '../lib/villes'
 import Lien from '../i18n/Lien'
 import { useLangue } from '../i18n/langue'
@@ -124,15 +125,7 @@ function Contenu() {
                 <div className="flex flex-wrap gap-3">
                   <Button variante="secondaire" onClick={catalogue.reessayer}>{t.reessayer}</Button>
                   {/* Même sans catalogue, une famille doit pouvoir joindre quelqu'un. */}
-                  <a
-                    href={lienWhatsApp(reservations.contact.telephone, `${tp.message.entete} (JOJ Dakar 2026)`)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-primaire btn-md"
-                  >
-                    <MessageCircle size={16} aria-hidden="true" />
-                    <span>WhatsApp</span>
-                  </a>
+                  <BoutonWhatsApp href={lienWhatsApp(reservations.contact.telephone, `${tp.message.entete} (JOJ Dakar 2026)`)}>WhatsApp</BoutonWhatsApp>
                 </div>
               </div>
             ) : catalogue.chargement || !catalogue.donnees ? (

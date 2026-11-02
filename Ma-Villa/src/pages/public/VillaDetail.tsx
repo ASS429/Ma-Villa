@@ -10,6 +10,9 @@ import Footer from '../../components/Footer'
 import Seo from '../../components/Seo'
 import MoyensPaiement from '../../components/MoyensPaiement'
 import ContactReservation from '../../components/ContactReservation'
+import BoutonWhatsApp from '../../components/BoutonWhatsApp'
+import { lienWhatsApp } from '../../lib/contact'
+import { formuleDe, lienDeLaFiche, prixDe, type DetailsDemande } from '../../lib/demande'
 import { GrilleTarifaire, ParcoursReservation } from '../../components/BlocTarifaire'
 import { useRequete } from '../../lib/useRequete'
 import { messageErreur } from '../../lib/erreurs'
@@ -440,6 +443,119 @@ export default function VillaDetail() {
     (villa.description ?? '').slice(0, 100),
   ].filter(Boolean).join(' ')
 
+  const enLigne = mode === 'en_ligne'
+  const nombrePersonnes = Number(reservation.nb_personnes) || undefined
+
+  // Ce que porte le message WhatsApp quand la réservation ne se fait pas en
+  // ligne : au moins l'hébergement, et tout ce que le visiteur a déjà précisé.
+  const details: DetailsDemande = {
+    hebergement: villa.nom,
+    ville: [...new Set([villa.quartier, villa.ville].filter(Boolean))].join(', '),
+    logement: logement?.nom,
+    formule: tarif ? formuleDe(tarif, langue) : undefined,
+    prix: tarif ? prixDe(tarif, langue) : undefined,
+    arrivee: reservation.date_debut ? dateCourte(reservation.date_debut, langue) : undefined,
+    depart: reservation.date_fin ? dateCourte(reservation.date_fin, langue) : undefined,
+    duree: recapitulatif && tarif
+      ? (tarif.type_tarif === 'nuitee' ? t.nuits(recapitulatif.unites) : t.jours(recapitulatif.unites))
+      : undefined,
+    // « 1 » est la valeur par défaut du champ : sans dates ni autre nombre,
+    // personne ne l'a réellement indiqué.
+    personnes: reservation.date_debut || (nombrePersonnes ?? 1) > 1 ? nombrePersonnes : undefined,
+    total: recapitulatif ? fcfa(recapitulatif.montant) : undefined,
+    lien: lienDeLaFiche(villa.id),
+  }
+
+  // Les mêmes champs pour le formulaire en ligne et pour le message WhatsApp.
+  const champsSejour = (
+    <>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label htmlFor="r-debut" className="text-xs th-text-2 mb-1.5 block">{t.arrivee}</label>
+          <input
+            id="r-debut" type="date" required={enLigne}
+            min={aujourdhui()}
+            value={reservation.date_debut}
+            onChange={(e) => setReservation({ ...reservation, date_debut: e.target.value, date_fin: '' })}
+            className={classeDate}
+          />
+        </div>
+        <div>
+          <label htmlFor="r-fin" className="text-xs th-text-2 mb-1.5 block">{t.depart}</label>
+          <input
+            id="r-fin" type="date" required={enLigne}
+            min={departAuPlusTot || aujourdhui()}
+            value={reservation.date_fin}
+            onChange={(e) => setReservation({ ...reservation, date_fin: e.target.value })}
+            className={classeDate}
+          />
+        </div>
+      </div>
+
+      {/* Périodes déjà prises, connues avant de soumettre */}
+      {logement && plagesPrises.length > 0 && (
+        <div className="text-xs th-text-3 leading-relaxed">
+          <p className="th-text-2 mb-1">{t.dejaReserve}</p>
+          <ul className="flex flex-wrap gap-x-3 gap-y-0.5">
+            {plagesPrises.slice(0, 6).map((p, i) => (
+              <li key={i}>{dateCourte(p.date_debut, langue)} → {dateCourte(p.date_fin, langue)}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {conflitDates && (
+        <p className="text-xs" style={{ color: 'var(--danger)' }} role="alert">
+          {t.chevauche}
+        </p>
+      )}
+
+      {nuitsMinimum > 1 && (
+        <p className="text-xs" style={{ color: tropCourt ? 'var(--danger)' : 'var(--text-3)' }} role={tropCourt ? 'alert' : undefined}>
+          {t.minimumNuits(nuitsMinimum)}
+        </p>
+      )}
+
+      <div>
+        <label htmlFor="r-personnes" className="text-xs th-text-2 mb-1.5 block">
+          {t.nbPersonnes}{logement ? t.max(logement.capacite) : ''}
+        </label>
+        <input
+          id="r-personnes" type="number" required={enLigne}
+          min={1} max={logement?.capacite}
+          value={reservation.nb_personnes}
+          onChange={(e) => setReservation({ ...reservation, nb_personnes: e.target.value })}
+          className="w-full rounded-xl px-4 py-2.5 text-sm th-input-field"
+        />
+      </div>
+
+      {/* Total calculé avant validation */}
+      {recapitulatif && tarif && (
+        <div className="rounded-xl px-4 py-3 flex flex-col gap-1.5 text-sm" style={{ background: 'var(--bg-elevated)' }}>
+          <div className="flex justify-between gap-3 th-text-2">
+            <span>
+              {recapitulatif.prixApplique === 'semaine'
+                ? t.prixSemaine(recapitulatif.unites)
+                : recapitulatif.prixApplique === 'mois'
+                  ? t.prixMois(recapitulatif.unites)
+                  : `${fcfa(tarif.prix)} × ${tarif.type_tarif === 'nuitee' ? t.nuits(recapitulatif.unites) : t.jours(recapitulatif.unites)}`}
+            </span>
+            <span className="text-right">
+              {fcfa(recapitulatif.montant)}
+              {recapitulatif.prixApplique !== 'unite' && (
+                <span className="block text-xs th-text-3 line-through">{t.auLieuDe(fcfa(recapitulatif.sansReduction))}</span>
+              )}
+            </span>
+          </div>
+          <div className="flex justify-between font-semibold th-text-1 pt-1.5" style={{ borderTop: '1px solid var(--border)' }}>
+            <span>{t.total}</span>
+            <span>{fcfa(recapitulatif.montant)}</span>
+          </div>
+        </div>
+      )}
+    </>
+  )
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text-1)' }}>
       {/* `chemin` déclarait `/villas/${villa.id}/`, l'ancienne route : elle
@@ -498,13 +614,23 @@ export default function VillaDetail() {
             )}
             <p className="text-xs th-text-3">{t.aPartirDe}</p>
           </div>
-          <button
-            onClick={() => document.getElementById('reserver')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-            className="px-6 py-3 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90"
-            style={{ background: 'var(--accent)', color: 'var(--on-accent)', minHeight: 44 }}
-          >
-            {mode === 'en_ligne' ? t.reserver : t.contacter}
-          </button>
+          {enLigne ? (
+            <button
+              onClick={() => document.getElementById('reserver')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              className="px-6 py-3 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90"
+              style={{ background: 'var(--accent)', color: 'var(--on-accent)', minHeight: 44 }}
+            >
+              {t.reserver}
+            </button>
+          ) : (
+            <BoutonWhatsApp
+              href={lienWhatsApp(reservations.contact.telephone, TEXTES_HEBERGEMENT[langue].contact.message(details))}
+              taille="sm"
+              className="shrink-0"
+            >
+              {t.contacter}
+            </BoutonWhatsApp>
+          )}
         </div>
       )}
 
@@ -721,10 +847,20 @@ export default function VillaDetail() {
                 // place du formulaire, que le serveur refuserait de toute façon.
                 // Les prix restent affichés au-dessus — ils servent toujours à
                 // choisir.
-                <ContactReservation
-                  hebergement={villa.nom}
-                  equipe={mode === 'equipe'}
-                />
+                <ContactReservation details={details} equipe={mode === 'equipe'}>
+                  <div className="flex flex-col gap-3">
+                    <div>
+                      <p className="text-sm th-text-1 font-medium">{t.votreSejour}</p>
+                      <p className="text-xs th-text-3 mt-0.5">{t.detailsDansMessage}</p>
+                    </div>
+                    <p className="text-sm th-text-2">
+                      {logement && tarif
+                        ? `${logement.nom} · ${formuleDe(tarif, langue)} · ${prixDe(tarif, langue)}`
+                        : t.choisissezPrix}
+                    </p>
+                    {champsSejour}
+                  </div>
+                </ContactReservation>
               ) : resaEnvoyee ? (
                 <div className="text-center py-6">
                   <p className="text-2xl mb-3" aria-hidden="true">✅</p>
@@ -783,90 +919,7 @@ export default function VillaDetail() {
                     onChoisirTarif={(t) => setReservation((r) => ({ ...r, tarif_id: String(t.id) }))}
                   />
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label htmlFor="r-debut" className="text-xs th-text-2 mb-1.5 block">{t.arrivee}</label>
-                      <input
-                        id="r-debut" type="date" required
-                        min={aujourdhui()}
-                        value={reservation.date_debut}
-                        onChange={(e) => setReservation({ ...reservation, date_debut: e.target.value, date_fin: '' })}
-                        className={classeDate}
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="r-fin" className="text-xs th-text-2 mb-1.5 block">{t.depart}</label>
-                      <input
-                        id="r-fin" type="date" required
-                        min={departAuPlusTot || aujourdhui()}
-                        value={reservation.date_fin}
-                        onChange={(e) => setReservation({ ...reservation, date_fin: e.target.value })}
-                        className={classeDate}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Périodes déjà prises, connues avant de soumettre */}
-                  {logement && plagesPrises.length > 0 && (
-                    <div className="text-xs th-text-3 leading-relaxed">
-                      <p className="th-text-2 mb-1">{t.dejaReserve}</p>
-                      <ul className="flex flex-wrap gap-x-3 gap-y-0.5">
-                        {plagesPrises.slice(0, 6).map((p, i) => (
-                          <li key={i}>{dateCourte(p.date_debut, langue)} → {dateCourte(p.date_fin, langue)}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {conflitDates && (
-                    <p className="text-xs" style={{ color: 'var(--danger)' }} role="alert">
-                      {t.chevauche}
-                    </p>
-                  )}
-
-                  {nuitsMinimum > 1 && (
-                    <p className="text-xs" style={{ color: tropCourt ? 'var(--danger)' : 'var(--text-3)' }} role={tropCourt ? 'alert' : undefined}>
-                      {t.minimumNuits(nuitsMinimum)}
-                    </p>
-                  )}
-
-                  <div>
-                    <label htmlFor="r-personnes" className="text-xs th-text-2 mb-1.5 block">
-                      {t.nbPersonnes}{logement ? t.max(logement.capacite) : ''}
-                    </label>
-                    <input
-                      id="r-personnes" type="number" required
-                      min={1} max={logement?.capacite}
-                      value={reservation.nb_personnes}
-                      onChange={(e) => setReservation({ ...reservation, nb_personnes: e.target.value })}
-                      className="w-full rounded-xl px-4 py-2.5 text-sm th-input-field"
-                    />
-                  </div>
-
-                  {/* Total calculé avant validation */}
-                  {recapitulatif && tarif && (
-                    <div className="rounded-xl px-4 py-3 flex flex-col gap-1.5 text-sm" style={{ background: 'var(--bg-elevated)' }}>
-                      <div className="flex justify-between gap-3 th-text-2">
-                        <span>
-                          {recapitulatif.prixApplique === 'semaine'
-                            ? t.prixSemaine(recapitulatif.unites)
-                            : recapitulatif.prixApplique === 'mois'
-                              ? t.prixMois(recapitulatif.unites)
-                              : `${fcfa(tarif.prix)} × ${tarif.type_tarif === 'nuitee' ? t.nuits(recapitulatif.unites) : t.jours(recapitulatif.unites)}`}
-                        </span>
-                        <span className="text-right">
-                          {fcfa(recapitulatif.montant)}
-                          {recapitulatif.prixApplique !== 'unite' && (
-                            <span className="block text-xs th-text-3 line-through">{t.auLieuDe(fcfa(recapitulatif.sansReduction))}</span>
-                          )}
-                        </span>
-                      </div>
-                      <div className="flex justify-between font-semibold th-text-1 pt-1.5" style={{ borderTop: '1px solid var(--border)' }}>
-                        <span>{t.total}</span>
-                        <span>{fcfa(recapitulatif.montant)}</span>
-                      </div>
-                    </div>
-                  )}
+                  {champsSejour}
 
                   <button
                     type="submit"

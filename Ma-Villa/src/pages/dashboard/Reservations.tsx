@@ -27,7 +27,7 @@ interface Reservation {
   statut: 'en_attente' | 'confirmee' | 'annulee'
   client?: { id: number; name: string; email: string }
   logement: { nom: string; villa: { id: number; nom: string; encaisse_par_la_plateforme?: boolean } }
-  tarif: { type_tarif: string }
+  tarif: { type_tarif: TypeTarif }
   paiement?: {
     statut: 'en_attente' | 'reussi' | 'echoue'
     reference: string | null
@@ -335,7 +335,7 @@ export default function Reservations() {
                     </Link>
                   )}
 
-                  {reglementSuspendu && <ContactReservation compact equipe={mode === 'equipe'} />}
+                  {reglementSuspendu && <ContactReservation compact reservation={r} equipe={mode === 'equipe'} />}
                 </div>
               </article>
             )
