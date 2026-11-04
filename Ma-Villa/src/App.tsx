@@ -17,6 +17,7 @@ import ChoixCategorie from './components/recherche/ChoixCategorie'
 import Destinations from './components/Destinations'
 import Footer from './components/Footer'
 import NavigationBasse from './components/app/NavigationBasse'
+import ContactFlottant from './components/app/ContactFlottant'
 import InvitationInstallation from './components/app/InvitationInstallation'
 import NouvelleVersion from './components/NouvelleVersion'
 import { ButtonLink } from './components/ui/Button'
@@ -570,6 +571,9 @@ export default function App() {
       {/* Châssis d'application : la destination est atteinte au pouce,
           sans remonter chercher un menu en haut d'écran. */}
       <NavigationBasse />
+
+      {/* Nous écrire, nous suivre : un rond en bas à droite, déplié à la demande. */}
+      <ContactFlottant />
 
       {/* Proposée seulement après quelques écrans, et jamais deux fois après
           un refus : le navigateur ne redonne pas de seconde chance. */}

@@ -52,6 +52,14 @@
   --whatsapp:       #25D366;
   --whatsapp-hover: #1EBE5A;
   --on-whatsapp:    #0B141A;
+  /* Les autres réseaux du bouton flottant : leurs couleurs, les mêmes dans les
+     deux thèmes. Le logo blanc n'est qu'un pictogramme (3 pour 1 suffisent). */
+  --marque-facebook:  #1877F2;
+  --marque-instagram: radial-gradient(circle at 30% 107%, #FDF497 0%, #FDF497 5%, #FD5949 45%, #D6249F 60%, #285AEB 90%);
+  --marque-tiktok:    #000000;
+  --marque-snapchat:  #FFFC00;
+  --on-marque:          #FFFFFF;
+  --on-marque-snapchat: #000000;
 
   /* Absents de la planche, déduits des tokens ci-dessus. */
   --bg-input:      rgba(0, 0, 0, 0.04);
@@ -127,6 +135,8 @@
 
   /* Châssis d'application. */
   --nav-h:  64px;
+  /* La barre « prix · Contacter » d'une fiche, sous 1 024 px. */
+  --barre-fiche-h: 69px;
   --safe-b: env(safe-area-inset-bottom, 0px);
   /* `viewport-fit=cover` étend la page sous la barre d'état : installée sur
      iPhone, l'application y glissait ses en-têtes, sous l'heure et la
@@ -2066,6 +2076,154 @@ footer nav a.lien-reseau[href] { display: inline-flex; align-items: center; gap:
   color: var(--danger);
   font: var(--t-body-sm);
 }
+
+/* ── Bouton flottant : nous écrire, nous suivre ───────────────────────────
+   Fermé, un rond en bas à droite ; ouvert, les liens montent au-dessus de lui,
+   sans voile : la page reste utilisable derrière. Sous les visionneuses (60)
+   et les feuilles (70, 80), au-dessus de la navigation basse et de la barre
+   de fiche. */
+.flottant {
+  position: fixed;
+  z-index: 45;
+  right: calc(var(--space-4) + env(safe-area-inset-right, 0px));
+  bottom: calc(var(--space-4) + var(--safe-b));
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: var(--space-3);
+  pointer-events: none;
+  transform: translateY(calc(-1 * var(--flottant-souleve, 0px)));
+  transition: transform var(--dur-slow) var(--ease-out),
+              opacity var(--dur) var(--ease),
+              visibility 0s linear var(--dur);
+}
+.flottant > * { pointer-events: auto; }
+
+.flottant-bouton {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 0;
+  border-radius: var(--r-full);
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-press),
+              background var(--dur-fast) var(--ease),
+              box-shadow var(--dur) var(--ease);
+}
+.flottant-bouton:hover { background: var(--accent-hover); box-shadow: var(--shadow-xl); }
+.flottant-bouton:active { transform: scale(.94); }
+.flottant-bouton:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.flottant-icone {
+  position: absolute;
+  transition: opacity var(--dur) var(--ease), transform var(--dur-slow) var(--ease-out);
+}
+.flottant-icone-fermer { opacity: 0; transform: rotate(-90deg) scale(.6); }
+.flottant.est-ouvert .flottant-icone-ouvrir { opacity: 0; transform: rotate(90deg) scale(.6); }
+.flottant.est-ouvert .flottant-icone-fermer { opacity: 1; transform: none; }
+
+.flottant-liste {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Replié, chaque lien est invisible **et** hors du parcours clavier. */
+.flottant-item {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px) scale(.92);
+  transform-origin: right center;
+  transition: opacity 140ms var(--ease), transform 160ms var(--ease), visibility 0s linear 160ms;
+}
+.flottant.est-ouvert .flottant-item {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: opacity 200ms var(--ease) calc(var(--i) * 30ms),
+              transform 260ms var(--ease-out) calc(var(--i) * 30ms),
+              visibility 0s;
+}
+
+.flottant-lien {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 44px;
+  text-decoration: none;
+}
+.flottant-nom {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  color: var(--text-1);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  box-shadow: var(--shadow-md);
+}
+.flottant-rond {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-full);
+  box-shadow: var(--shadow-md);
+  transition: transform var(--dur-fast) var(--ease);
+}
+.flottant-lien:hover .flottant-rond { transform: translateY(-2px); }
+.flottant-lien:focus-visible { outline: none; }
+.flottant-lien:focus-visible .flottant-rond { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.flottant-rond[data-ton='whatsapp']  { background: var(--whatsapp); color: var(--on-whatsapp); }
+.flottant-rond[data-ton='courriel']  { background: var(--accent); color: var(--on-accent); }
+.flottant-rond[data-ton='instagram'] { background: var(--marque-instagram); color: var(--on-marque); }
+.flottant-rond[data-ton='facebook']  { background: var(--marque-facebook); color: var(--on-marque); }
+.flottant-rond[data-ton='snapchat']  { background: var(--marque-snapchat); color: var(--on-marque-snapchat); }
+/* Noir sur le fond presque noir du thème sombre : un filet le détache. */
+.flottant-rond[data-ton='tiktok'] {
+  background: var(--marque-tiktok);
+  color: var(--on-marque);
+  box-shadow: var(--shadow-md), 0 0 0 1px var(--border-strong);
+}
+
+@media (min-width: 768px) {
+  .flottant {
+    right: calc(var(--space-6) + env(safe-area-inset-right, 0px));
+    bottom: calc(var(--space-6) + var(--safe-b));
+  }
+}
+@media (max-width: 767px) {
+  .flottant { bottom: calc(var(--nav-h) + var(--safe-b) + var(--space-4)); }
+  /* Au-dessus de la barre « prix · Contacter » d'une fiche, pas dessus. */
+  body:has(.barre-action-fiche) .flottant {
+    bottom: calc(var(--nav-h) + var(--safe-b) + var(--barre-fiche-h) + var(--space-3));
+  }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  body:has(.barre-action-fiche) .flottant { bottom: calc(var(--barre-fiche-h) + var(--space-3)); }
+}
+
+/* Un seul objet flottant à la fois : l'invitation à installer passe devant. */
+body:has(.invite-install) .flottant { opacity: 0; visibility: hidden; }
+
+@media (prefers-reduced-motion: reduce) {
+  .flottant-item,
+  .flottant.est-ouvert .flottant-item { transform: none; transition: opacity 1ms, visibility 0s; }
+  .flottant-icone { transition: none; }
+  .flottant { transition: opacity 1ms, visibility 0s; }
+}
+@media print { .flottant { display: none; } }
 
 /* Pile des messages passagers.
 

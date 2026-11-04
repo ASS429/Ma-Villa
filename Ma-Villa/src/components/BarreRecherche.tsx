@@ -92,6 +92,7 @@ export default function BarreRecherche({ variante = 'hero', valeursInitiales, on
       <button
         type="button"
         className={`recherche-compacte${surHero ? ' sur-hero' : ''}`}
+        data-evite-flottant
         onClick={() => setFeuilleOuverte(true)}
         aria-haspopup="dialog"
       >
@@ -116,6 +117,7 @@ export default function BarreRecherche({ variante = 'hero', valeursInitiales, on
       <form
         onSubmit={(e) => { e.preventDefault(); lancer(criteres) }}
         className="recherche-etendue rounded-2xl p-4 md:p-5"
+        data-evite-flottant
         style={
           surHero
             ? {

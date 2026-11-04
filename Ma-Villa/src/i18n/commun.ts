@@ -46,6 +46,17 @@ const fr = {
     compte: 'Compte',
     navigation: 'Navigation principale',
   },
+  flottant: {
+    ouvrir: 'Nous contacter et nous suivre',
+    fermer: 'Fermer les contacts',
+    region: 'Contacter PasseTemps',
+    ecrire: 'Écrire sur WhatsApp',
+    email: 'E-mail',
+    objet: 'Question à PasseTemps',
+    message: (page?: string) => (page
+      ? `Bonjour PasseTemps, j’ai une question au sujet de cette page : ${page}`
+      : 'Bonjour PasseTemps, j’ai une question.'),
+  },
   langue: {
     nom: { fr: 'Français', en: 'English' },
     court: { fr: 'FR', en: 'EN' },
@@ -98,6 +109,17 @@ const en: typeof fr = {
     reservations: 'Bookings',
     compte: 'Account',
     navigation: 'Main navigation',
+  },
+  flottant: {
+    ouvrir: 'Contact and follow us',
+    fermer: 'Close contacts',
+    region: 'Contact PasseTemps',
+    ecrire: 'Message on WhatsApp',
+    email: 'Email',
+    objet: 'Question for PasseTemps',
+    message: (page?: string) => (page
+      ? `Hello PasseTemps, I have a question about this page: ${page}`
+      : 'Hello PasseTemps, I have a question.'),
   },
   langue: fr.langue,
   commun: {

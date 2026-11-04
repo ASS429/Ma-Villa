@@ -5,6 +5,7 @@ import { useConfig } from '../../context/ConfigContext'
 import { useMessages } from '../../context/MessagesContext'
 import { cheminSansLangue, useLangue } from '../../i18n/langue'
 import { COMMUN } from '../../i18n/commun'
+import { sansChassis } from '../../lib/chassis'
 
 /**
  * Navigation basse — planche 09, « châssis d'application ».
@@ -40,13 +41,7 @@ export default function NavigationBasse() {
   // La console d'administration a son propre menu : « Explorer » ou
   // « Réservations » du voyageur y menaient hors de la console, et son
   // « Réservations » à elle se confondait avec celui-ci.
-  const masquee = (pathname.startsWith('/reservation/') && !pathname.endsWith('/confirmee'))
-    || pathname.startsWith('/admin')
-    || pathname.startsWith('/paiement')
-    || pathname.endsWith('/commander')
-    || /^\/boutique\/commandes\/\d+/.test(pathname)
-
-  if (masquee) return null
+  if (sansChassis(pathname)) return null
 
   const espace = user ? '/dashboard' : lien('/login')
 
