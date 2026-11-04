@@ -376,6 +376,20 @@ body {
 }
 .btn-whatsapp:hover:not(:disabled) { background: var(--whatsapp-hover); }
 
+/* Le devis de la fiche : un formulaire court, puis le lien du PDF. */
+.devis-formulaire,
+.devis-pret {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-elevated);
+}
+.devis-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
 .btn-secondaire {
   background: var(--bg-surface);
   border-color: var(--border-strong);
@@ -2097,7 +2111,10 @@ footer nav a.lien-reseau[href] { display: inline-flex; align-items: center; gap:
               opacity var(--dur) var(--ease),
               visibility 0s linear var(--dur);
 }
-.flottant > * { pointer-events: auto; }
+/* Seuls le rond et, dépliés, les liens prennent le doigt : la colonne qui
+   les porte reste transparente aux clics, sinon elle cachait la page même repliée. */
+.flottant-bouton,
+.flottant.est-ouvert .flottant-item { pointer-events: auto; }
 
 .flottant-bouton {
   position: relative;
