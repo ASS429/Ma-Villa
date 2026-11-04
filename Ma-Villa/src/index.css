@@ -2128,6 +2128,20 @@ footer nav a.lien-reseau[href] { display: inline-flex; align-items: center; gap:
   font: var(--t-body-sm);
 }
 
+/* Les contrôles dessinés par le navigateur — la liste d'un sélecteur, le
+   calendrier d'une date, les barres de défilement — suivent le thème. Sans
+   `color-scheme`, Chrome sous Windows ouvrait la liste d'un sélecteur sur fond
+   clair, avec le texte clair du thème sombre : illisible (signalé le 4 nov. 2026).
+   Le repli sur `option` sert aux navigateurs qui ignorent `color-scheme` pour elles. */
+:root { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+:root[data-theme="dark"] option,
+:root[data-theme="dark"] optgroup {
+  background-color: var(--bg-surface);
+  color: var(--text-1);
+}
+:root[data-theme="dark"] option:disabled { color: var(--text-3); }
+
 /* ── Bouton flottant : nous écrire, nous suivre ───────────────────────────
    Fermé, un rond en bas à droite ; ouvert, les liens montent au-dessus de lui,
    sans voile : la page reste utilisable derrière. Sous les visionneuses (60)
