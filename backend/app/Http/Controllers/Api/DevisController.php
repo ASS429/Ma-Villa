@@ -73,13 +73,21 @@ class DevisController extends Controller
             'nb_personnes' => 'required|integer|min:1|max:200',
             'client_nom'   => 'required|string|max:160',
             'occupant_nom' => 'nullable|string|max:160',
-            'telephone'    => ['nullable', 'string', 'max:30', 'regex:/^[^\p{L}]+$/u'],
+            // Obligatoire depuis le 4 novembre 2026 : le devis tient lieu de
+            // contact, et un devis sans numéro ne mène à personne.
+            'telephone'    => ['required', 'string', 'max:30', 'regex:/^[^\p{L}]+$/u', function ($champ, $valeur, $echec) {
+                // Huit chiffres au moins, espaces et indicatif mis à part.
+                if (is_string($valeur) && preg_match_all('/\d/', $valeur) < 8) {
+                    $echec('Ce numéro paraît incomplet.');
+                }
+            }],
             'email'        => 'nullable|email|max:160',
             'langue'       => 'sometimes|in:fr,en',
         ], [
             'date_debut.after_or_equal' => 'La date d’arrivée ne peut pas être passée.',
             'date_fin.after_or_equal'   => 'Le départ ne peut pas précéder l’arrivée.',
             'client_nom.required'       => 'Indiquez au nom de qui établir le devis.',
+            'telephone.required'        => 'Indiquez un numéro pour que notre équipe vous réponde.',
             'telephone.regex'           => 'Écrivez le numéro en chiffres, sans lettres.',
         ]);
 

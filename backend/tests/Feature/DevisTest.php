@@ -51,6 +51,7 @@ class DevisTest extends TestCase
             'nb_personnes' => 1,
             'client_nom'   => 'FAN MILK S/C LDB',
             'occupant_nom' => 'Mansour Sow',
+            'telephone'    => '77 123 45 67',
         ];
     }
 
@@ -191,6 +192,22 @@ class DevisTest extends TestCase
         $this->assertStringContainsString('cinquante mille francs CFA', $html);
         $this->assertStringContainsString('2 nuitées', $html);
         $this->assertStringNotContainsString('Rental', $html);
+    }
+
+    public function test_un_devis_en_ligne_garde_un_numero_pour_repondre(): void
+    {
+        [, $l, $t] = $this->annonce();
+
+        $sans = $this->demande($l, $t);
+        unset($sans['telephone']);
+        $this->postJson('/api/devis', $sans)->assertStatus(422)->assertJsonValidationErrors('telephone');
+        $this->postJson('/api/devis', $this->demande($l, $t, ['telephone' => '77 12']))
+            ->assertStatus(422)->assertJsonValidationErrors('telephone');
+        $this->assertSame(0, Devis::count());
+
+        // Un numéro étranger, collé depuis WhatsApp avec ses marques invisibles.
+        $this->postJson('/api/devis', $this->demande($l, $t, ['telephone' => "\u{202A}+44 7700 900123\u{202C}"]))->assertCreated();
+        $this->assertSame('+44 7700 900123', Devis::firstOrFail()->client_telephone);
     }
 
     public function test_le_champ_piege_ne_cree_rien(): void

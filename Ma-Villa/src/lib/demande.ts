@@ -11,6 +11,8 @@ export interface DetailsDemande {
   reference?: string
   /** Le devis établi depuis la fiche, s'il y en a un. */
   devis?: string
+  /** Son PDF : l'équipe l'ouvre depuis le message, sans chercher dans la console. */
+  pdf?: string
   hebergement?: string
   ville?: string
   logement?: string

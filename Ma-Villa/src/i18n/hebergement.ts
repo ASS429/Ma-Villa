@@ -87,8 +87,10 @@ const fr = {
     aPartirDe: 'à partir de',
     reserver: 'Réserver',
     contacter: 'Contacter',
-    votreSejour: 'Votre séjour (facultatif)',
+    obtenirDevis: 'Demander un devis',
+    votreSejour: 'Votre séjour',
     detailsDansMessage: 'Ces détails partiront dans votre message.',
+    detailsDansDevis: 'Votre devis est établi pour ce choix, puis vous nous l’envoyez sur WhatsApp.',
     choisissezPrix: 'Choisissez un prix dans « Logements et tarifs » pour le préciser.',
     apercuProprietaire: 'Aperçu de la fiche telle que la voient les clients.',
     reserveesAuxClients: 'Les réservations sont réservées aux clients.',
@@ -203,9 +205,16 @@ const fr = {
     aide: 'Il reprend le logement, la formule, les dates et le prix affichés. Notre équipe vous rappelle pour confirmer.',
     auNomDe: 'Au nom de (société ou personne)',
     occupant: 'Occupant (facultatif)',
-    telephone: 'Téléphone (facultatif)',
+    telephone: 'Téléphone (WhatsApp de préférence)',
     email: 'E-mail (facultatif)',
     etablir: 'Établir le devis',
+    // Sur une fiche fermée à la réservation en ligne, le devis est le contact.
+    contactTitre: 'Vos coordonnées',
+    contactAide: 'Votre devis en PDF est établi à votre nom. Envoyez-le-nous ensuite sur WhatsApp : notre équipe vous répond avec les disponibilités.',
+    votreNom: 'Votre nom (ou celui de la société)',
+    etablirContact: 'Établir mon devis',
+    quandPretContact: 'Choisissez un logement, une formule et vos dates : votre devis s’établit ici, puis vous nous l’envoyez sur WhatsApp.',
+    suiteContact: 'Dernière étape : envoyez-le-nous sur WhatsApp, le message est déjà rédigé.',
     annuler: 'Annuler',
     pret: (numero: string, total: string) => `Devis ${numero} prêt · ${total}`,
     telecharger: 'Télécharger le PDF',
@@ -222,21 +231,27 @@ const fr = {
     appeler: 'Appeler',
     reserverWhatsApp: 'Réserver sur WhatsApp',
     finaliserWhatsApp: 'Finaliser sur WhatsApp',
+    envoyerDevis: 'Envoyer mon devis sur WhatsApp',
     message: (d: DetailsDemande) => composerMessage(d, {
       intro: d.reference
         ? 'Bonjour, je vous écris au sujet de ma réservation sur PasseTemps.'
-        : d.hebergement
+        : d.devis
+          ? 'Bonjour, voici mon devis PasseTemps pour cet hébergement.'
+          : d.hebergement
           ? 'Bonjour, je souhaite réserver cet hébergement vu sur PasseTemps.'
           : 'Bonjour, je souhaite réserver un hébergement vu sur PasseTemps.',
       question: d.reference
         ? 'Comment puis-je la finaliser ?'
-        : d.arrivee
+        : d.devis
+          ? 'Pouvez-vous me confirmer la disponibilité ?'
+          : d.arrivee
           ? 'Est-il disponible à ces dates ?'
           : d.hebergement ? 'Est-il disponible, et à quelles dates ?' : undefined,
       deuxPoints: ' : ',
       libelles: {
         reference: 'Réservation',
         devis: 'Devis',
+        pdf: 'PDF',
         hebergement: 'Hébergement',
         ville: 'Lieu',
         logement: 'Logement',
@@ -322,8 +337,10 @@ const en: typeof fr = {
     aPartirDe: 'from',
     reserver: 'Book',
     contacter: 'Contact',
-    votreSejour: 'Your stay (optional)',
+    obtenirDevis: 'Get a quote',
+    votreSejour: 'Your stay',
     detailsDansMessage: 'These details will go in your message.',
+    detailsDansDevis: 'Your quote is prepared for this choice, then you send it to us on WhatsApp.',
     choisissezPrix: 'Pick a price in the rates grid to include it.',
     apercuProprietaire: 'This is how guests see your listing.',
     reserveesAuxClients: 'Bookings are for guests only.',
@@ -438,9 +455,15 @@ const en: typeof fr = {
     aide: 'It shows the unit, rate, dates and price displayed. Our team calls you back to confirm.',
     auNomDe: 'In the name of (company or person)',
     occupant: 'Guest (optional)',
-    telephone: 'Phone (optional)',
+    telephone: 'Phone (WhatsApp if possible)',
     email: 'Email (optional)',
     etablir: 'Prepare the quote',
+    contactTitre: 'Your details',
+    contactAide: 'Your PDF quote is prepared in your name. Then send it to us on WhatsApp: our team replies with availability.',
+    votreNom: 'Your name (or your company’s)',
+    etablirContact: 'Prepare my quote',
+    quandPretContact: 'Choose a unit, a rate and your dates: your quote is prepared here, then you send it to us on WhatsApp.',
+    suiteContact: 'Last step: send it to us on WhatsApp, the message is already written.',
     annuler: 'Cancel',
     pret: (numero: string, total: string) => `Quote ${numero} ready · ${total}`,
     telecharger: 'Download the PDF',
@@ -457,21 +480,27 @@ const en: typeof fr = {
     appeler: 'Call',
     reserverWhatsApp: 'Book on WhatsApp',
     finaliserWhatsApp: 'Finish on WhatsApp',
+    envoyerDevis: 'Send my quote on WhatsApp',
     message: (d: DetailsDemande) => composerMessage(d, {
       intro: d.reference
         ? 'Hello, I am writing about my booking on PasseTemps.'
-        : d.hebergement
+        : d.devis
+          ? 'Hello, here is my PasseTemps quote for this place.'
+          : d.hebergement
           ? 'Hello, I would like to book this place, seen on PasseTemps.'
           : 'Hello, I would like to book a place seen on PasseTemps.',
       question: d.reference
         ? 'How can I complete it?'
-        : d.arrivee
+        : d.devis
+          ? 'Can you confirm availability?'
+          : d.arrivee
           ? 'Is it available on these dates?'
           : d.hebergement ? 'Is it available, and on which dates?' : undefined,
       deuxPoints: ': ',
       libelles: {
         reference: 'Booking',
         devis: 'Quote',
+        pdf: 'PDF',
         hebergement: 'Place',
         ville: 'Location',
         logement: 'Unit',

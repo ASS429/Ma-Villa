@@ -470,7 +470,14 @@ export default function VillaDetail() {
   }
   if (devisEtabli?.pour === choixDuDevis(logement?.id, tarif?.id, reservation.date_debut, reservation.date_fin, nombrePersonnes ?? 1)) {
     details.devis = devisEtabli.numero
+    details.pdf = devisEtabli.pdf
   }
+
+  // Fermée à la réservation en ligne, la fiche ne donne notre contact qu'après
+  // un devis : il garde le nom, le numéro et le séjour voulu (4 novembre 2026).
+  // Une annonce sans aucun prix ne peut pas en avoir : contact direct, comme avant.
+  const devisPossible = villa.logements.some((l) => l.tarifs.length > 0)
+  const attendDevis = !enLigne && devisPossible && !details.devis
 
   const devis = (
     <DemandeDevis
@@ -481,6 +488,7 @@ export default function VillaDetail() {
       personnes={nombrePersonnes ?? 1}
       devis={devisEtabli}
       onEtabli={setDevisEtabli}
+      contact={!enLigne}
     />
   )
 
@@ -632,13 +640,13 @@ export default function VillaDetail() {
             )}
             <p className="text-xs th-text-3">{t.aPartirDe}</p>
           </div>
-          {enLigne ? (
+          {enLigne || attendDevis ? (
             <button
               onClick={() => document.getElementById('reserver')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
               className="px-6 py-3 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90"
               style={{ background: 'var(--accent)', color: 'var(--on-accent)', minHeight: 44 }}
             >
-              {t.reserver}
+              {enLigne ? t.reserver : t.obtenirDevis}
             </button>
           ) : (
             <BoutonWhatsApp
@@ -873,19 +881,30 @@ export default function VillaDetail() {
                 // place du formulaire, que le serveur refuserait de toute façon.
                 // Les prix restent affichés au-dessus — ils servent toujours à
                 // choisir.
-                <ContactReservation details={details} equipe={mode === 'equipe'}>
+                <ContactReservation details={details} equipe={mode === 'equipe'} attendDevis={attendDevis}>
                   <div className="flex flex-col gap-3">
                     <div>
                       <p className="text-sm th-text-1 font-medium">{t.votreSejour}</p>
-                      <p className="text-xs th-text-3 mt-0.5">{t.detailsDansMessage}</p>
+                      <p className="text-xs th-text-3 mt-0.5">{devisPossible ? t.detailsDansDevis : t.detailsDansMessage}</p>
                     </div>
-                    <p className="text-sm th-text-2">
-                      {logement && tarif
-                        ? `${logement.nom} · ${formuleDe(tarif, langue)} · ${prixDe(tarif, langue)}`
-                        : t.choisissezPrix}
-                    </p>
+                    {/* Le choix se fait ici, comme pour réserver : la barre du
+                        bas mène à ce bloc, il doit se suffire à lui-même. */}
+                    {devisPossible && (
+                      <ParcoursReservation
+                        logements={villa.logements}
+                        logementChoisi={logement ?? null}
+                        tarifChoisi={tarif ?? null}
+                        onChoisirLogement={(l) => setReservation((r) => ({
+                          ...r,
+                          logement_id: String(l.id),
+                          tarif_id: '',
+                          nb_personnes: Math.min(Number(r.nb_personnes) || 1, l.capacite).toString(),
+                        }))}
+                        onChoisirTarif={(choisi) => setReservation((r) => ({ ...r, tarif_id: String(choisi.id) }))}
+                      />
+                    )}
                     {champsSejour}
-                    {devis}
+                    {devisPossible && devis}
                     <a href="#demande-particuliere" className="text-sm th-text-2 underline underline-offset-4">
                       {TEXTES_HEBERGEMENT[langue].particuliere.lienBloc}
                     </a>

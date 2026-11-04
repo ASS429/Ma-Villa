@@ -30,12 +30,19 @@ import BoutonWhatsApp from './BoutonWhatsApp'
  * 2 novembre 2026, il dit ce qui marche aujourd'hui.
  *
  * `children` : ce que l'écran peut demander de plus, ici les dates de la fiche.
+ *
+ * `attendDevis` : depuis le 4 novembre 2026, sur une fiche, on ne nous joint
+ * qu'après avoir établi un devis. Sans compte, un client qui écrivait
+ * directement ne laissait rien : ni nom, ni numéro, ni ce qu'il voulait. Le
+ * devis les garde, et le message WhatsApp porte son numéro. Tant qu'il manque,
+ * ni bouton ni numéro : seul le formulaire (dans `children`) est proposé.
  */
 export default function ContactReservation({
   details,
   reservation,
   compact = false,
   equipe = false,
+  attendDevis = false,
   children,
 }: {
   details?: DetailsDemande
@@ -43,6 +50,7 @@ export default function ContactReservation({
   reservation?: ReservationDemandee
   compact?: boolean
   equipe?: boolean
+  attendDevis?: boolean
   children?: ReactNode
 }) {
   const { reservations } = useConfig()
@@ -52,7 +60,7 @@ export default function ContactReservation({
 
   const demande = reservation ? detailsDeLaReservation(reservation, langue) : (details ?? {})
   const whatsapp = lienWhatsApp(telephone, t.message(demande))
-  const libelle = reservation ? t.finaliserWhatsApp : t.reserverWhatsApp
+  const libelle = reservation ? t.finaliserWhatsApp : demande.devis ? t.envoyerDevis : t.reserverWhatsApp
 
   if (compact) {
     return (
@@ -79,22 +87,26 @@ export default function ContactReservation({
 
       {children}
 
-      <BoutonWhatsApp href={whatsapp} className="w-full">{libelle}</BoutonWhatsApp>
+      {attendDevis ? null : (
+        <>
+          <BoutonWhatsApp href={whatsapp} className="w-full">{libelle}</BoutonWhatsApp>
 
-      <div className="grid grid-cols-2 gap-2">
-        <a href={lienAppel(telephone)} className="btn btn-secondaire btn-sm justify-center">
-          <Phone size={15} aria-hidden="true" />
-          <span>{t.appeler}</span>
-        </a>
-        <a href={lienCourriel(email, t.objet(demande.hebergement))} className="btn btn-secondaire btn-sm justify-center">
-          <Mail size={15} aria-hidden="true" />
-          <span>{t.email}</span>
-        </a>
-      </div>
+          <div className="grid grid-cols-2 gap-2">
+            <a href={lienAppel(telephone)} className="btn btn-secondaire btn-sm justify-center">
+              <Phone size={15} aria-hidden="true" />
+              <span>{t.appeler}</span>
+            </a>
+            <a href={lienCourriel(email, t.objet(demande.hebergement))} className="btn btn-secondaire btn-sm justify-center">
+              <Mail size={15} aria-hidden="true" />
+              <span>{t.email}</span>
+            </a>
+          </div>
 
-      <p className="text-xs th-text-3 text-center break-all">
-        {telephone}<br />{email}
-      </p>
+          <p className="text-xs th-text-3 text-center break-all">
+            {telephone}<br />{email}
+          </p>
+        </>
+      )}
     </div>
   )
 }
