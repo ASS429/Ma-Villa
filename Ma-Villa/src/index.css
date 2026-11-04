@@ -390,6 +390,43 @@ body {
 }
 .devis-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 
+/* La demande particulière d'une fiche. */
+.particuliere { margin-bottom: var(--space-7); }
+.particuliere-formulaire,
+.particuliere-envoyee {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+}
+.particuliere-envoyee { gap: var(--space-3); }
+.particuliere-groupe { border: 0; margin: 0; padding: 0; min-width: 0; }
+.particuliere-puces { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.particuliere-puce {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-full);
+  color: var(--text-2);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.particuliere-puce input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.particuliere-puce:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.particuliere-puce.est-choisie { border-color: var(--accent); background: var(--accent-bg); color: var(--text-1); font-weight: 500; }
+.particuliere-deux { display: grid; grid-template-columns: 1fr; gap: var(--space-3); }
+@media (min-width: 560px) { .particuliere-deux { grid-template-columns: 1fr 1fr; } }
+.particuliere-coche { display: flex; align-items: center; gap: var(--space-2); min-height: 44px; font-size: 14px; color: var(--text-2); cursor: pointer; }
+.particuliere-coche input { width: 18px; height: 18px; accent-color: var(--accent); }
+.particuliere-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
 .btn-secondaire {
   background: var(--bg-surface);
   border-color: var(--border-strong);

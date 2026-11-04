@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutGrid, Building2, Users, MessageSquare, CreditCard,
-  Menu, X, Sun, Moon, LogOut, ArrowLeft, BellRing, ScrollText, Banknote, Undo2, Send, Palette, ShoppingBag, Inbox, Mail, FileText, ConciergeBell, CalendarCheck,
+  Menu, X, Sun, Moon, LogOut, ArrowLeft, BellRing, ScrollText, Banknote, Undo2, Send, Palette, ShoppingBag, Inbox, Mail, FileText, PartyPopper, ConciergeBell, CalendarCheck,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
@@ -27,6 +27,8 @@ const ENTREES: Entree[] = [
   // Transport et repas demandés par les voyageurs : une réponse promise sous deux heures.
   { to: '/admin/reservations', label: 'Réservations',   Icone: CalendarCheck,  attente: 'reservations' },
   { to: '/admin/demandes',     label: 'Demandes',        Icone: ConciergeBell,  attente: 'demandes' },
+  // Événements, séminaires, groupes : ce qu'une réservation ne sait pas dire.
+  { to: '/admin/demandes-particulieres', label: 'Demandes particulières', Icone: PartyPopper },
   // Les devis établis par l'équipe, et ceux que les clients téléchargent en ligne.
   { to: '/admin/devis',        label: 'Devis',           Icone: FileText },
   { to: '/admin/utilisateurs', label: 'Utilisateurs',    Icone: Users },

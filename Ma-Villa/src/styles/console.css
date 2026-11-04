@@ -2169,6 +2169,18 @@
 .reglement-note.est-douteux { color: var(--warning); }
 .reglement-note a { color: var(--accent); text-decoration: underline; }
 
+/* ── Demandes particulières : le texte du client, tel qu'il l'a écrit ── */
+.particuliere-message {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3) var(--space-4);
+  border-left: 3px solid var(--border-strong);
+  background: var(--bg-elevated);
+  border-radius: var(--r-md);
+  color: var(--text-1);
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
 /* ── Devis : l'éditeur de la console ─────────────────────────────────── */
 .devis-entete {
   display: flex;

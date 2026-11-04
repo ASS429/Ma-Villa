@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\RappelDeboursementController;
 use App\Http\Controllers\Api\RemboursementController;
 use App\Http\Controllers\Api\ReversementController;
 use App\Http\Controllers\Api\DevisController;
+use App\Http\Controllers\Api\DemandeParticuliereController;
 use App\Http\Controllers\Api\TarifController;
 use App\Http\Controllers\Api\VillaController;
 use Illuminate\Support\Facades\Route;
@@ -79,6 +80,9 @@ Route::post('/demandes-service', [DemandeServiceController::class, 'store'])->mi
 // demande pour payer), puis téléchargé par un lien qui porte sa clé.
 Route::post('/devis', [DevisController::class, 'store'])->middleware('throttle:5,1');
 Route::get('/devis/{numero}/pdf', [DevisController::class, 'pdf'])->middleware('throttle:30,1');
+
+// Événement, groupe, séminaire, long séjour : ce qu'une réservation ne sait pas dire.
+Route::post('/demandes-particulieres', [DemandeParticuliereController::class, 'store'])->middleware('throttle:5,1');
 
 // Protégées
 //
@@ -213,6 +217,9 @@ Route::middleware('auth:sanctum')->group(function () {
         // Demandes de service des voyageurs : la réponse se fait sur
         // WhatsApp, l'écran trace seulement qu'elle a été faite.
         Route::get('/demandes-service', [DemandeServiceController::class, 'indexAdmin']);
+        Route::get('/demandes-particulieres', [DemandeParticuliereController::class, 'index']);
+        Route::get('/demandes-particulieres/{demande}', [DemandeParticuliereController::class, 'show']);
+        Route::patch('/demandes-particulieres/{demande}', [DemandeParticuliereController::class, 'traiter']);
         Route::get('/devis', [DevisController::class, 'index']);
         Route::post('/devis', [DevisController::class, 'storeAdmin'])->middleware('throttle:30,1');
         Route::get('/devis/{devis}', [DevisController::class, 'show']);

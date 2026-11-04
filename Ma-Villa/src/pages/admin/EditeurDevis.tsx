@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Copy, Download, Plus, Trash2 } from 'lucide-react'
 import api from '../../services/api'
 import { useToast } from '../../context/ToastContext'
@@ -12,6 +12,7 @@ import {
   type Devis, type LigneDevis, type StatutDevis,
 } from '../../lib/devis'
 import type { VillaDetail } from '../../types'
+import type { DemandeParticuliere } from '../../lib/particuliere'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import { Champ, ChampSelection, ChampZoneTexte } from '../../components/ui/Champ'
@@ -71,6 +72,8 @@ function depuisDevis(d: Devis): Formulaire {
  */
 export default function EditeurDevis() {
   const { id } = useParams()
+  const [params] = useSearchParams()
+  const demandeId = params.get('demande')
   const navigate = useNavigate()
   const toast = useToast()
   const [form, setForm] = useState<Formulaire>(VIDE)
@@ -103,6 +106,29 @@ export default function EditeurDevis() {
       .catch((err) => toast.erreur(messageErreur(err, 'Ce devis n’a pas pu être chargé.')))
     return () => { actif = false }
   }, [id, toast])
+
+  // Depuis une demande particulière : l'annonce, le client et les dates suivent.
+  useEffect(() => {
+    if (id || !demandeId) return
+    let actif = true
+    api.get(`/admin/demandes-particulieres/${demandeId}`)
+      .then(({ data }: { data: DemandeParticuliere }) => {
+        if (!actif) return
+        setForm((f) => ({
+          ...f,
+          villa_id: data.villa_id ? String(data.villa_id) : '',
+          titre: data.villa?.nom ?? f.titre,
+          client_nom: data.nom,
+          client_telephone: data.telephone ?? '',
+          client_email: data.email ?? '',
+          date_arrivee: data.date_debut ?? '',
+          date_depart: data.date_fin ?? '',
+          personnes: data.personnes_sejour ? String(data.personnes_sejour) : '',
+        }))
+      })
+      .catch((err) => toast.erreur(messageErreur(err, 'La demande particulière n’a pas pu être reprise.')))
+    return () => { actif = false }
+  }, [id, demandeId, toast])
 
   useEffect(() => {
     if (!form.villa_id) return

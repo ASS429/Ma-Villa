@@ -14,6 +14,7 @@ import BoutonWhatsApp from '../../components/BoutonWhatsApp'
 import { lienWhatsApp } from '../../lib/contact'
 import { choixDuDevis, formuleDe, lienDeLaFiche, prixDe, type DetailsDemande } from '../../lib/demande'
 import DemandeDevis, { type DevisEtabli } from '../../components/DemandeDevis'
+import DemandeParticuliere from '../../components/DemandeParticuliere'
 import { GrilleTarifaire, ParcoursReservation } from '../../components/BlocTarifaire'
 import { useRequete } from '../../lib/useRequete'
 import { messageErreur } from '../../lib/erreurs'
@@ -770,6 +771,14 @@ export default function VillaDetail() {
               />
             </section>
 
+            {/* Ce qu'une réservation ne sait pas dire : un événement, un groupe. */}
+            <DemandeParticuliere
+              villa={villa}
+              debut={reservation.date_debut}
+              fin={reservation.date_fin}
+              personnes={nombrePersonnes}
+            />
+
             {/* Avis */}
             {/* `#avis` : « Donner votre avis » y mène depuis Mes réservations. */}
             <section id="avis" style={{ scrollMarginTop: 96 }}>
@@ -877,6 +886,9 @@ export default function VillaDetail() {
                     </p>
                     {champsSejour}
                     {devis}
+                    <a href="#demande-particuliere" className="text-sm th-text-2 underline underline-offset-4">
+                      {TEXTES_HEBERGEMENT[langue].particuliere.lienBloc}
+                    </a>
                   </div>
                 </ContactReservation>
               ) : resaEnvoyee ? (

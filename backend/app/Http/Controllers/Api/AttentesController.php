@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Avis;
 use App\Models\Commande;
 use App\Models\DemandeService;
+use App\Models\DemandeParticuliere;
 use App\Models\Devis;
 use App\Models\Paiement;
 use App\Models\Reservation;
@@ -52,6 +53,7 @@ class AttentesController extends Controller
             $this->demandesDeReservation(),
             $this->transmissionsDues(),
             $this->demandesDeService(),
+            $this->demandesParticulieres(),
             $this->devisEnLigne(),
             $this->annoncesAValider(),
             $this->brouillonsBloques(),
@@ -87,6 +89,37 @@ class AttentesController extends Controller
      * Et c'est la seule trace d'une demande dont le message WhatsApp n'est
      * jamais parti.
      */
+    /**
+     * Un événement, un groupe, un séminaire : le client attend une réponse
+     * qu'aucun écran ne lui donnera. Urgente après une journée.
+     */
+    private function demandesParticulieres(): ?array
+    {
+        $nouvelles = DemandeParticuliere::where('statut', 'nouvelle');
+        $compte = (clone $nouvelles)->count();
+
+        if ($compte === 0) {
+            return null;
+        }
+
+        $plusAncienne = (clone $nouvelles)->min('created_at');
+        $heures = $plusAncienne ? (int) Carbon::parse($plusAncienne)->diffInHours(now()) : 0;
+
+        return [
+            'cle'          => 'demandes_particulieres',
+            'gravite'      => $heures >= 24 ? 'urgent' : 'action',
+            'compte'       => $compte,
+            'titre'        => $compte === 1
+                ? 'Une demande particulière attend une réponse'
+                : "{$compte} demandes particulières attendent une réponse",
+            'detail'       => $heures >= 24
+                ? "La plus ancienne attend depuis {$heures} h."
+                : 'Événement, groupe ou long séjour : répondez sur WhatsApp ou par e-mail, puis établissez un devis.',
+            'lien'         => '/admin/demandes-particulieres',
+            'libelle_lien' => 'Répondre',
+        ];
+    }
+
     /**
      * Les devis établis en ligne : le client attend qu'on lui confirme les
      * disponibilités, et rien d'autre ne lui répondra.
