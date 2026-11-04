@@ -2205,6 +2205,126 @@
 }
 .fiche-lignes li:last-child { border-bottom: 0; }
 
+/* ── Pilotage ── */
+.pilotage-filtres { align-items: center; }
+.pilotage-dates { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.pilotage-dates label { display: inline-flex; align-items: center; gap: var(--space-2); font: var(--t-body-sm); color: var(--text-2); }
+.pilotage-dates input { width: auto; min-height: 40px; padding: 6px 10px; }
+.pilotage-exports { display: flex; gap: var(--space-2); margin-left: auto; }
+@media (max-width: 640px) { .pilotage-exports { margin-left: 0; } }
+
+/* Le changement de période garde l'écran en place : pas de saut, pas de squelette. */
+.pilotage-corps { display: flex; flex-direction: column; gap: var(--space-6); transition: opacity var(--dur) var(--ease-out); }
+.pilotage-corps.est-en-cours { opacity: 0.55; }
+.pilotage-groupe { margin: 0 0 var(--space-3); font: var(--t-h3); color: var(--text-1); }
+.pilotage-corps .chiffres { margin-bottom: 0; }
+.pilotage-chiffre .chiffre-valeur { font-size: clamp(1.5rem, 3vw, 2rem); }
+.pilotage-unite { font-family: var(--font-ui); font-size: 0.8125rem; font-weight: 500; letter-spacing: 0; color: var(--text-3); }
+.pilotage-ecart-neutre { color: var(--text-3); font-weight: 400; }
+.pilotage-panneau { min-width: 0; }
+.pilotage-compte { margin-left: auto; font: var(--t-caption); color: var(--text-3); font-variant-numeric: tabular-nums; }
+
+.pilotage-manquements { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.pilotage-manquement {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: start;
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--border);
+}
+.pilotage-manquement:first-child { border-top: 0; padding-top: 0; }
+.pilotage-manquement:last-child { padding-bottom: 0; }
+.pilotage-manquement-texte { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.pilotage-manquement-texte p { margin: 0; }
+.pilotage-gravite { display: inline-flex; align-items: center; gap: 5px; font: var(--t-caption); font-weight: 600; color: var(--text-3); }
+.pilotage-manquement.est-haute .pilotage-gravite { color: var(--danger); }
+.pilotage-manquement.est-moyenne .pilotage-gravite { color: var(--warning); }
+.pilotage-detail { margin: 0 0 var(--space-3); font: var(--t-body-sm); color: var(--text-2); }
+.pilotage-manquement-texte .pilotage-detail { margin: 0; }
+.pilotage-conseil { font: var(--t-body-sm); color: var(--text-1); }
+.pilotage-ouvrir { white-space: nowrap; }
+@media (max-width: 640px) {
+  .pilotage-manquement { grid-template-columns: minmax(0, 1fr); }
+  .pilotage-ouvrir { justify-self: start; }
+}
+
+.pilotage-atouts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.pilotage-atouts li { display: flex; align-items: flex-start; gap: var(--space-2); font: var(--t-body-sm); color: var(--text-1); }
+.pilotage-atouts svg { flex: none; margin-top: 2px; color: var(--success); }
+
+.pilotage-grille { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+.pilotage-grille > .panneau { min-width: 0; }
+.pilotage-pile { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
+.pilotage-pile > .panneau:last-child { flex: 1; }
+@media (min-width: 1024px) {
+  .pilotage-grille { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.pilotage-tableau th, .pilotage-tableau td { white-space: nowrap; }
+.pilotage-tableau td:last-child { white-space: normal; min-width: 160px; }
+.pilotage-nombre { text-align: right; font-variant-numeric: tabular-nums; }
+.pilotage-tri {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 32px;
+  padding: 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.pilotage-tri:hover { color: var(--text-1); }
+.pilotage-entete-tableau { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-3); }
+.pilotage-entete-tableau .panneau-titre { margin: 0; }
+.pilotage-details > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font: var(--t-h3); color: var(--text-1); }
+
+/* Les graphiques à plusieurs séries : légende en tête, axe discret, infobulle. */
+.graphique { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.graphique-zone { position: relative; width: 100%; border-radius: var(--r-md); }
+.graphique-zone:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.graphique-svg { display: block; max-width: 100%; overflow: visible; }
+.graphique-axe { font: 11px var(--font-ui); fill: var(--text-3); font-variant-numeric: tabular-nums; }
+.graphique-viseur { stroke: var(--border-strong); stroke-width: 1; }
+.graphique-point { stroke: var(--bg-surface); stroke-width: 2; }
+.graphique-legende { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); }
+.graphique-legende li { display: inline-flex; align-items: center; gap: 6px; font: var(--t-caption); color: var(--text-2); }
+.graphique-cle { display: inline-block; width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.graphique-cle.est-trait { width: 14px; height: 2px; border-radius: 1px; }
+.graphique-cle-valeur { color: var(--text-1); font-weight: 600; font-variant-numeric: tabular-nums; }
+.graphique-bulle {
+  position: absolute;
+  top: 8px;
+  z-index: 3;
+  min-width: 150px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--elev-2);
+  pointer-events: none;
+}
+.graphique-bulle-titre { margin: 0 0 4px; font: var(--t-caption); color: var(--text-3); }
+.graphique-bulle-ligne { margin: 0; display: flex; align-items: center; gap: 6px; font: var(--t-caption); color: var(--text-2); white-space: nowrap; }
+.graphique-bulle-ligne strong { color: var(--text-1); font-variant-numeric: tabular-nums; }
+
+.entonnoir { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+
+.chaleur { width: 100%; border-collapse: separate; border-spacing: 2px; font: var(--t-caption); }
+.chaleur th { padding: 4px 6px; font-weight: 500; color: var(--text-3); text-align: center; white-space: nowrap; }
+.chaleur tbody th { text-align: left; color: var(--text-2); }
+.chaleur td {
+  min-width: 34px;
+  height: 30px;
+  text-align: center;
+  border-radius: 4px;
+  background: var(--bg-elevated);
+  color: var(--text-1);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── Fichier clients ── */
 .clients-courriel { word-break: break-word; }
 .clients-historique { margin-top: var(--space-3); }

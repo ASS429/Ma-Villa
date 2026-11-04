@@ -108,7 +108,10 @@ final class FichierClients
             ]);
         }
 
-        foreach (Devis::with('villa:id,nom')->get() as $d) {
+        // Les essais faits en production n'ont pas leur place dans un fichier qu'on exporte.
+        $estTest = fn (?string $nom) => str_contains((string) $nom, Pilotage::MARQUE_TEST);
+
+        foreach (Devis::with('villa:id,nom')->get()->reject(fn ($d) => $estTest($d->client_nom)) as $d) {
             $traces[] = self::trace('devis', $d->created_at, [
                 'nom'         => $d->client_nom,
                 'telephone'   => $d->client_telephone,
@@ -123,7 +126,7 @@ final class FichierClients
             ]);
         }
 
-        foreach (DemandeParticuliere::with('villa:id,nom')->get() as $d) {
+        foreach (DemandeParticuliere::with('villa:id,nom')->get()->reject(fn ($d) => $estTest($d->nom)) as $d) {
             $traces[] = self::trace('demande', $d->created_at, [
                 'nom'         => $d->nom,
                 'telephone'   => $d->telephone,
@@ -137,7 +140,7 @@ final class FichierClients
             ]);
         }
 
-        foreach (DemandeService::get() as $d) {
+        foreach (DemandeService::get()->reject(fn ($d) => $estTest($d->nom)) as $d) {
             $traces[] = self::trace('service', $d->created_at, [
                 'nom'       => $d->nom,
                 'telephone' => $d->telephone,
@@ -161,7 +164,7 @@ final class FichierClients
                 'user_id'     => $r->user_id,
                 'libelle'     => "Réservation #{$r->id}".($villa ? " · {$villa}" : ''),
                 'montant'     => (int) $r->montant_total,
-                'statut'      => $r->statut,
+                'statut'      => ['en_attente' => 'En attente', 'confirmee' => 'Confirmée', 'annulee' => 'Annulée'][$r->statut] ?? $r->statut,
                 'lien'        => '/admin/reservations',
                 'hebergement' => $villa,
             ]);
@@ -174,7 +177,7 @@ final class FichierClients
                 'user_id'   => $c->user_id && isset($idsClients[$c->user_id]) ? $c->user_id : null,
                 'libelle'   => "Commande #{$c->id} · {$c->oeuvre_titre}",
                 'montant'   => (int) $c->montant_total,
-                'statut'    => $c->statut,
+                'statut'    => Commande::STATUTS[$c->statut] ?? $c->statut,
                 'lien'      => '/admin/commandes',
             ]);
         }

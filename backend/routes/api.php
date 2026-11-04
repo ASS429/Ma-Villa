@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AttentesController;
 use App\Http\Controllers\Api\AvisController;
 use App\Http\Controllers\Api\CircuitAssociesController;
 use App\Http\Controllers\Api\ClientsController;
+use App\Http\Controllers\Api\PilotageController;
 use App\Http\Controllers\Api\ConfigurationController;
 use App\Http\Controllers\Api\DemandeServiceController;
 use App\Http\Controllers\Api\DiagnosticCourrielController;
@@ -229,6 +230,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/devis/{devis}', [DevisController::class, 'show']);
         Route::patch('/devis/{devis}', [DevisController::class, 'update'])->middleware('throttle:30,1');
         Route::patch('/demandes-service/{demande}', [DemandeServiceController::class, 'traiter']);
+
+        // Ce que nous faisons, ce que nous réalisons, ce qui nous manque.
+        Route::get('/pilotage', PilotageController::class)->middleware('throttle:60,1');
 
         // Une ligne par personne, d'où qu'elle vienne : devis, demandes, comptes.
         Route::get('/clients', [ClientsController::class, 'index']);

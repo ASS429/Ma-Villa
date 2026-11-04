@@ -91,6 +91,8 @@ export function Courbe({ points, format = String, hauteur = 120, titreAccessible
 interface ProprietesBarres {
   lignes: { nom: string; valeur: number }[]
   format?: (v: number) => string
+  /** Ce qu'on dit quand il n'y a rien : chaque écran a sa phrase. */
+  vide?: string
 }
 
 /**
@@ -100,9 +102,9 @@ interface ProprietesBarres {
  * base, là où un camembert demande de comparer des angles — ce que l'œil fait
  * mal, surtout au-delà de quatre parts.
  */
-export function Barres({ lignes, format = String }: ProprietesBarres) {
+export function Barres({ lignes, format = String, vide = "Aucune annonce publiée pour l'instant." }: ProprietesBarres) {
   if (lignes.length === 0) {
-    return <p className="graphe-vide">Aucune annonce publiée pour l'instant.</p>
+    return <p className="graphe-vide">{vide}</p>
   }
 
   const max = Math.max(...lignes.map((l) => l.valeur), 1)

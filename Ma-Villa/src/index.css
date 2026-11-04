@@ -42,6 +42,13 @@
   --accent-soft:   #E8845A;   /* décoratif seulement — jamais sous du texte */
   --gold:          #8A6A12;
   --gold-soft:     #D4A843;   /* décoratif seulement */
+  /* Les séries des graphiques du pilotage, dans cet ordre. Validées contre le
+     fond clair : daltonisme (ΔE ≥ 16), vision normale (ΔE ≥ 24), contraste ≥ 3:1. */
+  --serie-1:       #C4622D;
+  --serie-2:       #1F7FA3;
+  --serie-3:       #B8860B;
+  --serie-4:       #7A5BC7;
+
   --success:       #1F7A4F;
   --warning:       #9A5203;
   --danger:        #C42020;
@@ -173,6 +180,12 @@
   --accent-hover:  #F09A75;
   --accent-bg:     rgba(232, 132, 90, 0.14);
   --gold:          #E8C060;
+  /* Les mêmes teintes, réglées pour ce fond et validées contre lui. */
+  --serie-1:       #D9703F;
+  --serie-2:       #2E8FBF;
+  --serie-3:       #B58A1A;
+  --serie-4:       #8F75DE;
+
   --success:       #34D399;
   --warning:       #FBBF24;
   --danger:        #F87171;

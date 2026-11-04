@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutGrid, Building2, Users, MessageSquare, CreditCard,
-  Menu, X, Sun, Moon, LogOut, ArrowLeft, BellRing, ScrollText, Banknote, Undo2, Send, Palette, ShoppingBag, Inbox, Mail, FileText, PartyPopper, ConciergeBell, CalendarCheck, Contact,
+  Menu, X, Sun, Moon, LogOut, ArrowLeft, BellRing, ScrollText, Banknote, Undo2, Send, Palette, ShoppingBag, Inbox, Mail, FileText, PartyPopper, ConciergeBell, CalendarCheck, Contact, ChartColumn,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
@@ -23,6 +23,8 @@ interface Entree {
 const ENTREES: Entree[] = [
   { to: '/admin',              label: 'Ce qui attend',   Icone: Inbox,          end: true, attente: 'total' },
   { to: '/admin/tableau-de-bord', label: 'Tableau de bord', Icone: LayoutGrid },
+  // Est-ce que ça marche, et où agir : courbes, tableaux, exports Excel et CSV.
+  { to: '/admin/pilotage',     label: 'Pilotage',        Icone: ChartColumn },
   { to: '/admin/villas',       label: 'Hébergements',    Icone: Building2,      attente: 'villas' },
   // Transport et repas demandés par les voyageurs : une réponse promise sous deux heures.
   { to: '/admin/reservations', label: 'Réservations',   Icone: CalendarCheck,  attente: 'reservations' },
