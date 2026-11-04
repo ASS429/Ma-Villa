@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Avis;
 use App\Models\Commande;
 use App\Models\DemandeService;
+use App\Models\Devis;
 use App\Models\Paiement;
 use App\Models\Reservation;
 use App\Models\Reversement;
@@ -51,6 +52,7 @@ class AttentesController extends Controller
             $this->demandesDeReservation(),
             $this->transmissionsDues(),
             $this->demandesDeService(),
+            $this->devisEnLigne(),
             $this->annoncesAValider(),
             $this->brouillonsBloques(),
             $this->annulationsDemandees(),
@@ -85,6 +87,31 @@ class AttentesController extends Controller
      * Et c'est la seule trace d'une demande dont le message WhatsApp n'est
      * jamais parti.
      */
+    /**
+     * Les devis établis en ligne : le client attend qu'on lui confirme les
+     * disponibilités, et rien d'autre ne lui répondra.
+     */
+    private function devisEnLigne(): ?array
+    {
+        $compte = Devis::where('origine', 'site')->whereNull('suivi_le')->count();
+
+        if ($compte === 0) {
+            return null;
+        }
+
+        return [
+            'cle'          => 'devis_en_ligne',
+            'gravite'      => 'action',
+            'compte'       => $compte,
+            'titre'        => $compte === 1
+                ? 'Un devis demandé en ligne attend votre appel'
+                : "{$compte} devis demandés en ligne attendent votre appel",
+            'detail'       => 'Le client attend qu’on lui confirme les disponibilités et le règlement.',
+            'lien'         => '/admin/devis?origine=site',
+            'libelle_lien' => 'Voir les devis',
+        ];
+    }
+
     private function demandesDeService(): ?array
     {
         $nouvelles = DemandeService::where('statut', 'nouvelle');

@@ -9,6 +9,8 @@ import type { Langue, Reservation, Tarif } from '../types'
  */
 export interface DetailsDemande {
   reference?: string
+  /** Le devis établi depuis la fiche, s'il y en a un. */
+  devis?: string
   hebergement?: string
   ville?: string
   logement?: string
@@ -26,6 +28,11 @@ export interface DetailsDemande {
 export type ReservationDemandee =
   Pick<Reservation, 'id' | 'date_debut' | 'date_fin' | 'nb_personnes' | 'montant_total' | 'tarif'>
   & { logement: { nom: string; villa: { id?: number; nom: string; ville?: string } } }
+
+/** Ce pour quoi un devis a été établi : changer de choix le rend caduc. */
+export function choixDuDevis(logementId?: number, tarifId?: number, debut = '', fin = '', personnes = 1): string {
+  return `${logementId}-${tarifId}-${debut}-${fin}-${personnes}`
+}
 
 /** Barre oblique finale obligatoire : sans elle, Render sert le gabarit générique. */
 export function lienDeLaFiche(id: number): string {

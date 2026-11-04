@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\RappelDeboursementController;
 use App\Http\Controllers\Api\RemboursementController;
 use App\Http\Controllers\Api\ReversementController;
+use App\Http\Controllers\Api\DevisController;
 use App\Http\Controllers\Api\TarifController;
 use App\Http\Controllers\Api\VillaController;
 use Illuminate\Support\Facades\Route;
@@ -73,6 +74,11 @@ Route::get('/logements/{logement}/disponibilites', [DisponibiliteController::cla
 // authentifiées.
 Route::get('/prestations', [DemandeServiceController::class, 'catalogue']);
 Route::post('/demandes-service', [DemandeServiceController::class, 'store'])->middleware('throttle:5,1');
+
+// Devis : établi en ligne depuis une fiche, sans compte (une entreprise le
+// demande pour payer), puis téléchargé par un lien qui porte sa clé.
+Route::post('/devis', [DevisController::class, 'store'])->middleware('throttle:5,1');
+Route::get('/devis/{numero}/pdf', [DevisController::class, 'pdf'])->middleware('throttle:30,1');
 
 // Protégées
 //
@@ -207,6 +213,10 @@ Route::middleware('auth:sanctum')->group(function () {
         // Demandes de service des voyageurs : la réponse se fait sur
         // WhatsApp, l'écran trace seulement qu'elle a été faite.
         Route::get('/demandes-service', [DemandeServiceController::class, 'indexAdmin']);
+        Route::get('/devis', [DevisController::class, 'index']);
+        Route::post('/devis', [DevisController::class, 'storeAdmin'])->middleware('throttle:30,1');
+        Route::get('/devis/{devis}', [DevisController::class, 'show']);
+        Route::patch('/devis/{devis}', [DevisController::class, 'update'])->middleware('throttle:30,1');
         Route::patch('/demandes-service/{demande}', [DemandeServiceController::class, 'traiter']);
 
         // Rendre l'argent au client. Comme les reversements, on enregistre

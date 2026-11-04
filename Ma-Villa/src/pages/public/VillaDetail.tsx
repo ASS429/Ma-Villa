@@ -12,7 +12,8 @@ import MoyensPaiement from '../../components/MoyensPaiement'
 import ContactReservation from '../../components/ContactReservation'
 import BoutonWhatsApp from '../../components/BoutonWhatsApp'
 import { lienWhatsApp } from '../../lib/contact'
-import { formuleDe, lienDeLaFiche, prixDe, type DetailsDemande } from '../../lib/demande'
+import { choixDuDevis, formuleDe, lienDeLaFiche, prixDe, type DetailsDemande } from '../../lib/demande'
+import DemandeDevis, { type DevisEtabli } from '../../components/DemandeDevis'
 import { GrilleTarifaire, ParcoursReservation } from '../../components/BlocTarifaire'
 import { useRequete } from '../../lib/useRequete'
 import { messageErreur } from '../../lib/erreurs'
@@ -240,6 +241,7 @@ export default function VillaDetail() {
   const [resaEnvoyee, setResaEnvoyee] = useState(false)
   const [reservationCreee, setReservationCreee] = useState<number | null>(null)
   const [envoiResa, setEnvoiResa] = useState(false)
+  const [devisEtabli, setDevisEtabli] = useState<DevisEtabli | null>(null)
 
   const [avisForm, setAvisForm] = useState({ note: '5', commentaire: '' })
   const [avisEnvoye, setAvisEnvoye] = useState(false)
@@ -465,6 +467,21 @@ export default function VillaDetail() {
     total: recapitulatif ? fcfa(recapitulatif.montant) : undefined,
     lien: lienDeLaFiche(villa.id),
   }
+  if (devisEtabli?.pour === choixDuDevis(logement?.id, tarif?.id, reservation.date_debut, reservation.date_fin, nombrePersonnes ?? 1)) {
+    details.devis = devisEtabli.numero
+  }
+
+  const devis = (
+    <DemandeDevis
+      logementId={logement?.id}
+      tarifId={tarif?.id}
+      debut={reservation.date_debut}
+      fin={reservation.date_fin}
+      personnes={nombrePersonnes ?? 1}
+      devis={devisEtabli}
+      onEtabli={setDevisEtabli}
+    />
+  )
 
   // Les mêmes champs pour le formulaire en ligne et pour le message WhatsApp.
   const champsSejour = (
@@ -859,6 +876,7 @@ export default function VillaDetail() {
                         : t.choisissezPrix}
                     </p>
                     {champsSejour}
+                    {devis}
                   </div>
                 </ContactReservation>
               ) : resaEnvoyee ? (
@@ -931,6 +949,8 @@ export default function VillaDetail() {
                   </button>
 
                   <MoyensPaiement plateforme={villa.encaisse_par_la_plateforme} />
+
+                  {devis}
 
                   <p className="text-xs th-text-3 text-center leading-relaxed">
                     {t.rienMaintenant}{' '}
