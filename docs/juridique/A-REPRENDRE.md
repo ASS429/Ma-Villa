@@ -26,6 +26,8 @@ Dernière mise à jour : 31 octobre 2026.
 | 7. Ce que nous ne faisons pas | « Nous ne mesurons pas votre navigation à des fins commerciales » deviendrait faux **si** un compteur de clics est ajouté aux partenaires Bronze / Argent / Or. | si codé | Partenariats |
 | 4. Qui les reçoit | Si le **paiement en ligne des services** est construit : le prestataire de paiement et le partenaire qui encaisse, à nommer. | si codé | Paiement des services |
 | — | **Version anglaise** pour les clients étrangers (la version française fait foi). | si multilingue | Multilingue |
+| 2. Ce que nous recueillons | Les **devis** (au nom de qui, occupant, téléphone et e-mail facultatifs, logement, dates, prix) et les **demandes particulières** (type, dates, personnes, invités, besoins, budget, message, nom, téléphone ou e-mail), sans compte. Durée de conservation à fixer, comme les demandes de service (douze mois après la date ?). | 4 nov. 2026 | Devis et demandes particulières |
+| 3. À quoi elles servent | Établir le devis, rappeler le client, répondre à la demande et la transformer en devis. La **fiche interne** d'un compte (PDF des coordonnées, noté au journal) est un usage d'administration à mentionner. | 4 nov. 2026 | Fiche utilisateur |
 
 ## 2. Conditions générales d'utilisation
 
