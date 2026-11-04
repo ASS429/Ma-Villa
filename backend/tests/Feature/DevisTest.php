@@ -156,6 +156,43 @@ class DevisTest extends TestCase
         $this->assertNotEmpty(DevisController::rendre($devis));
     }
 
+    public function test_un_client_venu_de_la_version_anglaise_recoit_son_devis_en_anglais(): void
+    {
+        [, $l, $t] = $this->annonce();
+        $lien = $this->postJson('/api/devis', $this->demande($l, $t, ['langue' => 'en']))->assertCreated()->json('pdf');
+        $devis = Devis::firstOrFail();
+
+        $this->assertSame('en', $devis->langue);
+        $this->assertSame('Rental · Chambre climatisée', $devis->lignes[0]['designation']);
+        $this->assertSame('Night, with air conditioning', $devis->lignes[0]['detail']);
+        $this->assertSame('night', $devis->lignes[0]['unite']);
+
+        $html = view('pdf.devis', DevisController::donnees($devis))->render();
+        foreach (['Rental quote', 'Prepared online', 'Total due', 'fifty thousand CFA francs', '2 nights',
+            'To be confirmed by the PasseTemps team', 'Quote prepared online at the customer'] as $attendu) {
+            $this->assertStringContainsString($attendu, $html);
+        }
+        foreach (['Devis de location', 'Total à payer', 'Arrêté le présent', 'nuitée', 'francs CFA'] as $absent) {
+            $this->assertStringNotContainsString($absent, $html);
+        }
+        $this->assertMatchesRegularExpression('/[A-Z][a-z]+day, \d{1,2} [A-Z][a-z]+ \d{4}/', $html, 'Les dates aussi, en anglais.');
+
+        $reponse = $this->get(parse_url($lien, PHP_URL_PATH).'?'.parse_url($lien, PHP_URL_QUERY))->assertOk();
+        $this->assertStringContainsString("Quote-{$devis->numero}.pdf", $reponse->headers->get('Content-Disposition'));
+    }
+
+    public function test_sans_langue_le_devis_reste_en_francais(): void
+    {
+        [, $l, $t] = $this->annonce();
+        $this->postJson('/api/devis', $this->demande($l, $t))->assertCreated();
+        $html = view('pdf.devis', DevisController::donnees(Devis::firstOrFail()))->render();
+
+        $this->assertStringContainsString('Devis de location', $html);
+        $this->assertStringContainsString('cinquante mille francs CFA', $html);
+        $this->assertStringContainsString('2 nuitées', $html);
+        $this->assertStringNotContainsString('Rental', $html);
+    }
+
     public function test_le_champ_piege_ne_cree_rien(): void
     {
         [, $l, $t] = $this->annonce();

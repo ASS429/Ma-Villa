@@ -45,6 +45,11 @@ class DevisController extends Controller
         'pass'         => 'Pass',
     ];
 
+    /** Les mêmes mots, pour un devis en anglais (client venu de /en/). */
+    private const UNITES_EN = ['nuitee' => 'night', 'journee' => 'day', 'demi_journee' => 'half-day', 'pass' => 'pass'];
+
+    private const FORMULES_EN = ['nuitee' => 'Night', 'journee' => 'Day', 'demi_journee' => 'Half-day', 'pass' => 'Pass'];
+
     public function __construct(private Push $push) {}
 
     /* ── Le site ───────────────────────────────────────────────── */
@@ -113,6 +118,7 @@ class DevisController extends Controller
         }
 
         $villa = $logement->villa;
+        $langue = $d['langue'] ?? 'fr';
         $devis = Devis::etablir('site', [
             'villa_id'         => $villa->id,
             'logement_id'      => $logement->id,
@@ -126,10 +132,10 @@ class DevisController extends Controller
             'date_depart'      => $d['date_fin'],
             'personnes'        => $d['nb_personnes'],
             'valable_jusqu_au' => now()->addDays((int) config('devis.validite_jours', 7))->toDateString(),
-            'conditions'       => config('devis.conditions.site'),
+            'conditions'       => config($langue === 'en' ? 'devis.conditions.site_en' : 'devis.conditions.site'),
             'cachet'           => false,
-            'langue'           => $d['langue'] ?? 'fr',
-        ], [$this->ligneDuSejour($logement, $tarif, $prix)]);
+            'langue'           => $langue,
+        ], [$this->ligneDuSejour($logement, $tarif, $prix, $langue)]);
 
         $this->prevenirLAdministration($devis);
 
@@ -151,7 +157,7 @@ class DevisController extends Controller
 
         return response(self::rendre($devis), 200, [
             'Content-Type'        => 'application/pdf',
-            'Content-Disposition' => "{$disposition}; filename=\"Devis-{$devis->numero}.pdf\"",
+            'Content-Disposition' => "{$disposition}; filename=\"".($devis->langue === 'en' ? 'Quote' : 'Devis')."-{$devis->numero}.pdf\"",
             'Cache-Control'       => 'private, no-store',
             'X-Robots-Tag'        => 'noindex, nofollow',
         ]);
@@ -159,20 +165,32 @@ class DevisController extends Controller
 
     public static function rendre(Devis $devis): string
     {
-        $villa = $devis->villa;
+        return DocumentPdf::depuisVue('pdf.devis', self::donnees($devis));
+    }
 
-        return DocumentPdf::depuisVue('pdf.devis', [
+    /**
+     * Ce que reçoit le gabarit, à part pour que les tests lisent le texte même du PDF.
+     *
+     * @return array<string, mixed>
+     */
+    public static function donnees(Devis $devis): array
+    {
+        $villa = $devis->villa;
+        $en = $devis->langue === 'en';
+
+        return [
             'devis'       => $devis,
-            'emetteur'    => config('devis.emetteur') + [
+            'en'          => $en,
+            'emetteur'    => ($en ? ['activite' => 'Booking platform · Places to stay in Senegal'] : []) + config('devis.emetteur') + [
                 'telephone' => (string) config('reservations.contact.telephone'),
                 'email'     => (string) config('reservations.contact.email'),
             ],
             'logo'        => DocumentPdf::imageLocale('logo.png'),
             'cachetImage' => DocumentPdf::imageLocale('cachet.png'),
-            'enLettres'   => MontantEnLettres::francsCfa((int) $devis->total),
+            'enLettres'   => $en ? MontantEnLettres::cfaFrancs((int) $devis->total) : MontantEnLettres::francsCfa((int) $devis->total),
             'sousTitre'   => $villa ? collect([$villa->quartier, $villa->ville])->filter()->unique()->implode(', ') : null,
             'duree'       => self::duree($devis),
-        ]);
+        ];
     }
 
     /* ── La console ────────────────────────────────────────────── */
@@ -212,7 +230,8 @@ class DevisController extends Controller
         $d = $this->valider($request, true);
 
         $devis = Devis::etablir('console', $this->attributs($d) + [
-            'conditions' => $d['conditions'] ?? config('devis.conditions.console'),
+            'conditions' => $d['conditions']
+                ?? config(($d['langue'] ?? 'fr') === 'en' ? 'devis.conditions.console_en' : 'devis.conditions.console'),
         ], $d['lignes'], $request->user());
 
         JournalAdmin::consigner($request->user(), 'devis.etabli', $devis, $devis->numero, [
@@ -277,7 +296,8 @@ class DevisController extends Controller
             'conditions'             => 'nullable|string|max:2000',
             'cachet'                 => 'sometimes|boolean',
             'statut'                 => 'sometimes|in:'.implode(',', array_keys(Devis::STATUTS)),
-            'lignes'                 => "{$requis}|array|min:1|max:30",
+            'langue'                 => 'sometimes|in:fr,en',
+            'lignes'               => "{$requis}|array|min:1|max:30",
             'lignes.*.designation'   => 'required_with:lignes|string|max:200',
             'lignes.*.detail'        => 'nullable|string|max:300',
             'lignes.*.quantite'      => 'required_with:lignes|integer|min:1|max:10000',
@@ -298,7 +318,7 @@ class DevisController extends Controller
     {
         $champs = array_intersect_key($d, array_flip([
             'titre', 'client_nom', 'occupant_nom', 'client_telephone', 'client_email',
-            'villa_id', 'logement_id', 'tarif_id', 'date_arrivee', 'date_depart', 'personnes', 'cachet',
+            'villa_id', 'logement_id', 'tarif_id', 'date_arrivee', 'date_depart', 'personnes', 'cachet', 'langue',
         ]));
 
         if (array_key_exists('validite_jours', $d) || ! $existant) {
@@ -323,30 +343,38 @@ class DevisController extends Controller
      * @param  array{unites: int, montant: int, sans_reduction: int, prix_applique: string}  $prix
      * @return array<string, mixed>
      */
-    private function ligneDuSejour(Logement $logement, Tarif $tarif, array $prix): array
+    private function ligneDuSejour(Logement $logement, Tarif $tarif, array $prix, string $langue = 'fr'): array
     {
-        $options = collect([$tarif->avec_clim ? 'avec clim' : null, $tarif->avec_buffet ? 'avec buffet' : null])
-            ->filter()->implode(' et ');
-        $formule = (self::FORMULES[$tarif->type_tarif] ?? $tarif->type_tarif).($options ? ", {$options}" : '');
-        $unite = self::UNITES[$tarif->type_tarif] ?? null;
+        $en = $langue === 'en';
+        $options = collect([
+            $tarif->avec_clim ? ($en ? 'with air conditioning' : 'avec clim') : null,
+            $tarif->avec_buffet ? ($en ? 'with buffet' : 'avec buffet') : null,
+        ])->filter()->implode($en ? ' and ' : ' et ');
+        $formule = (($en ? self::FORMULES_EN : self::FORMULES)[$tarif->type_tarif] ?? $tarif->type_tarif)
+            .($options ? ", {$options}" : '');
+        $unite = ($en ? self::UNITES_EN : self::UNITES)[$tarif->type_tarif] ?? null;
+        $designation = ($en ? 'Rental' : 'Location')." · {$logement->nom}";
 
         // Prix de la semaine ou du mois : le total n'est plus « prix × nuits ».
         // Une seule ligne, au montant réel, qui dit ce qui a été appliqué.
         if ($prix['prix_applique'] !== 'unite') {
-            $long = $prix['prix_applique'] === 'semaine' ? 'de la semaine' : 'du mois';
+            $semaine = $prix['prix_applique'] === 'semaine';
             $sans = number_format($prix['sans_reduction'], 0, ',', "\u{00A0}");
+            $detail = $en
+                ? "{$formule} · {$prix['unites']} {$unite}s at the ".($semaine ? 'weekly' : 'monthly')." price (instead of {$sans} FCFA)"
+                : "{$formule} · {$prix['unites']} {$unite}s au prix ".($semaine ? 'de la semaine' : 'du mois')." (au lieu de {$sans} FCFA)";
 
             return [
-                'designation'   => "Location · {$logement->nom}",
-                'detail'        => "{$formule} · {$prix['unites']} {$unite}s au prix {$long} (au lieu de {$sans} FCFA)",
+                'designation'   => $designation,
+                'detail'        => $detail,
                 'quantite'      => 1,
-                'unite'         => 'séjour',
+                'unite'         => $en ? 'stay' : 'séjour',
                 'prix_unitaire' => $prix['montant'],
             ];
         }
 
         return [
-            'designation'   => "Location · {$logement->nom}",
+            'designation'   => $designation,
             'detail'        => $formule,
             'quantite'      => $prix['unites'],
             'unite'         => $unite,
@@ -366,6 +394,10 @@ class DevisController extends Controller
 
         if ($n < 1) {
             return null;
+        }
+
+        if ($devis->langue === 'en') {
+            return ($type ?? 'nuitee') === 'nuitee' ? $n.' night'.($n > 1 ? 's' : '') : $n.' day'.($n > 1 ? 's' : '');
         }
 
         return ($type ?? 'nuitee') === 'nuitee'

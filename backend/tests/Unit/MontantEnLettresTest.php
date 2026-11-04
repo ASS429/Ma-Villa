@@ -52,6 +52,34 @@ class MontantEnLettresTest extends TestCase
         $this->assertSame($attendu, MontantEnLettres::nombre($nombre));
     }
 
+    /** @return array<string, array{int, string}> */
+    public static function nombresAnglais(): array
+    {
+        return [
+            'zéro'              => [0, 'zero'],
+            'treize'            => [13, 'thirteen'],
+            'vingt et un'       => [21, 'twenty-one'],
+            'cent'              => [100, 'one hundred'],
+            'cent cinq'         => [105, 'one hundred five'],
+            'le devis'          => [50000, 'fifty thousand'],
+            'cinq cents en fin' => [229500, 'two hundred twenty-nine thousand five hundred'],
+            'millions'          => [2280000, 'two million two hundred eighty thousand'],
+            'milliard'          => [1200000000, 'one billion two hundred million'],
+        ];
+    }
+
+    #[DataProvider('nombresAnglais')]
+    public function test_un_nombre_s_ecrit_aussi_en_anglais(int $nombre, string $attendu): void
+    {
+        $this->assertSame($attendu, MontantEnLettres::nombreAnglais($nombre));
+    }
+
+    public function test_les_cfa_francs_prennent_le_pluriel(): void
+    {
+        $this->assertSame('fifty thousand CFA francs', MontantEnLettres::cfaFrancs(50000));
+        $this->assertSame('one CFA franc', MontantEnLettres::cfaFrancs(1));
+    }
+
     public function test_les_francs_cfa_prennent_le_pluriel(): void
     {
         $this->assertSame('cinquante mille francs CFA', MontantEnLettres::francsCfa(50000));

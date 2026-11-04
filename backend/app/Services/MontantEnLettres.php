@@ -109,4 +109,57 @@ final class MontantEnLettres
             default => $base.'-'.self::UNITES[$unite],
         };
     }
+
+    /* ── En anglais, pour les devis d'un client de /en/ ───────────────── */
+
+    private const ONES = [
+        'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+        'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen',
+    ];
+
+    private const TENS = [2 => 'twenty', 3 => 'thirty', 4 => 'forty', 5 => 'fifty', 6 => 'sixty', 7 => 'seventy', 8 => 'eighty', 9 => 'ninety'];
+
+    public static function cfaFrancs(int $montant): string
+    {
+        return self::nombreAnglais($montant).(abs($montant) === 1 ? ' CFA franc' : ' CFA francs');
+    }
+
+    public static function nombreAnglais(int $n): string
+    {
+        if ($n < 0) {
+            return 'minus '.self::nombreAnglais(-$n);
+        }
+        if ($n === 0) {
+            return 'zero';
+        }
+
+        $parties = [];
+        foreach ([[1_000_000_000, 'billion'], [1_000_000, 'million'], [1000, 'thousand']] as [$valeur, $nom]) {
+            if ($n >= $valeur) {
+                $parties[] = self::moinsDeMille(intdiv($n, $valeur)).' '.$nom;
+                $n %= $valeur;
+            }
+        }
+        if ($n > 0) {
+            $parties[] = self::moinsDeMille($n);
+        }
+
+        return implode(' ', $parties);
+    }
+
+    private static function moinsDeMille(int $n): string
+    {
+        $mots = [];
+        if ($n >= 100) {
+            $mots[] = self::ONES[intdiv($n, 100)].' hundred';
+            $n %= 100;
+        }
+        if ($n > 0) {
+            $mots[] = $n < 20
+                ? self::ONES[$n]
+                : self::TENS[intdiv($n, 10)].($n % 10 ? '-'.self::ONES[$n % 10] : '');
+        }
+
+        return implode(' ', $mots);
+    }
 }

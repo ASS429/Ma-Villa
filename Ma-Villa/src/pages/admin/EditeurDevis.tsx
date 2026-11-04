@@ -11,7 +11,7 @@ import {
   LIBELLES_STATUT_DEVIS, ligneDuSejour, lienEnvoiDevis, totalDesLignes,
   type Devis, type LigneDevis, type StatutDevis,
 } from '../../lib/devis'
-import type { VillaDetail } from '../../types'
+import type { Langue, VillaDetail } from '../../types'
 import type { DemandeParticuliere } from '../../lib/particuliere'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
@@ -32,11 +32,13 @@ interface Formulaire {
   conditions: string
   cachet: boolean
   statut: StatutDevis
+  langue: Langue
 }
 
 const VIDE: Formulaire = {
   titre: '', villa_id: '', client_nom: '', occupant_nom: '', client_telephone: '', client_email: '',
   date_arrivee: '', date_depart: '', personnes: '', validite_jours: '7', conditions: '', cachet: true, statut: 'emis',
+  langue: 'fr',
 }
 
 const LIGNE_VIDE: LigneDevis = { designation: '', detail: '', quantite: 1, unite: '', prix_unitaire: 0 }
@@ -59,6 +61,7 @@ function depuisDevis(d: Devis): Formulaire {
     conditions: d.conditions ?? '',
     cachet: d.cachet,
     statut: d.statut,
+    langue: d.langue === 'en' ? 'en' : 'fr',
   }
 }
 
@@ -124,6 +127,7 @@ export default function EditeurDevis() {
           date_arrivee: data.date_debut ?? '',
           date_depart: data.date_fin ?? '',
           personnes: data.personnes_sejour ? String(data.personnes_sejour) : '',
+          langue: data.langue === 'en' ? 'en' : 'fr',
         }))
       })
       .catch((err) => toast.erreur(messageErreur(err, 'La demande particulière n’a pas pu être reprise.')))
@@ -162,7 +166,7 @@ export default function EditeurDevis() {
 
   const ajouterSejour = () => {
     if (!logement || !tarif || !form.date_arrivee || !form.date_depart) return
-    const ligne = ligneDuSejour(logement, tarif, form.date_arrivee, form.date_depart)
+    const ligne = ligneDuSejour(logement, tarif, form.date_arrivee, form.date_depart, form.langue)
     setLignes((ls) => (ls.length === 1 && !ls[0].designation.trim() ? [ligne] : [...ls, ligne]))
   }
 
@@ -190,6 +194,7 @@ export default function EditeurDevis() {
       validite_jours: Number(form.validite_jours) || 7,
       conditions: form.conditions.trim() || null,
       cachet: form.cachet,
+      langue: form.langue,
       ...(devis ? { statut: form.statut } : {}),
       lignes: lignes.map((l) => ({
         designation: l.designation.trim(),
@@ -356,15 +361,25 @@ export default function EditeurDevis() {
         </section>
 
         <section className="panneau" style={{ marginTop: 'var(--space-4)' }}>
-          <h2 className="panneau-titre">Conditions et cachet</h2>
+          <h2 className="panneau-titre">Langue, conditions et cachet</h2>
           <div className="devis-champs">
+            <ChampSelection
+              label="Langue du document"
+              value={form.langue}
+              onChange={(e) => setForm((f) => ({ ...f, langue: e.target.value === 'en' ? 'en' : 'fr' }))}
+              erreur={erreurs.langue}
+              aide="Les intitulés, les dates et le montant en lettres suivent. Les prestations déjà saisies ne sont pas traduites."
+            >
+              <option value="fr">Français</option>
+              <option value="en">Anglais</option>
+            </ChampSelection>
             <ChampZoneTexte
               label="Conditions et observations (facultatif)"
               rows={3}
               value={form.conditions}
               onChange={maj('conditions')}
               erreur={erreurs.conditions}
-              aide="Vide, le devis reprend la phrase habituelle : « La réservation sera confirmée selon les modalités convenues avec PasseTemps. »"
+              aide="Vide, le devis reprend la phrase habituelle, dans sa langue : « La réservation sera confirmée selon les modalités convenues avec PasseTemps. »"
             />
             <label className="devis-coche">
               <input type="checkbox" checked={form.cachet} onChange={(e) => setForm((f) => ({ ...f, cachet: e.target.checked }))} />

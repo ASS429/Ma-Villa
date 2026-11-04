@@ -42,6 +42,11 @@ return [
         'site'    => 'Devis établi en ligne à la demande du client, sous réserve de disponibilité aux dates '
             .'indiquées. La réservation n’est confirmée qu’après accord de l’équipe PasseTemps et '
             .'règlement selon les modalités convenues.',
+        'console_en' => 'Quote prepared for the service described above. The booking will be confirmed under '
+            .'the terms agreed with PasseTemps.',
+        'site_en'    => 'Quote prepared online at the customer’s request, subject to availability on the dates '
+            .'shown. The booking is only confirmed once the PasseTemps team has agreed and payment has been '
+            .'made under the agreed terms.',
     ],
 
 ];

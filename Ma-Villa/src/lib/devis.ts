@@ -2,7 +2,7 @@ import { fcfa } from './format'
 import { lienWhatsApp } from './contact'
 import { formuleDe } from './demande'
 import { prixSejour } from './prix'
-import type { Logement, Tarif } from '../types'
+import type { Langue, Logement, Tarif } from '../types'
 
 /** Une prestation du devis. Le montant est recalculé par le serveur. */
 export interface LigneDevis {
@@ -40,6 +40,7 @@ export interface Devis {
   valable_jusqu_au: string | null
   conditions: string | null
   cachet: boolean
+  langue: Langue
   suivi_le: string | null
   created_at: string
   pdf: string
@@ -51,11 +52,9 @@ export const LIBELLES_STATUT_DEVIS: Record<StatutDevis, string> = {
   refuse: 'Refusé',
 }
 
-const UNITES: Record<string, string> = {
-  nuitee: 'nuitée',
-  journee: 'journée',
-  demi_journee: 'demi-journée',
-  pass: 'pass',
+const UNITES: Record<Langue, Record<string, string>> = {
+  fr: { nuitee: 'nuitée', journee: 'journée', demi_journee: 'demi-journée', pass: 'pass' },
+  en: { nuitee: 'night', journee: 'day', demi_journee: 'half-day', pass: 'pass' },
 }
 
 /** Le total tel que le serveur le calculera : quantité × prix, ligne à ligne. */
@@ -67,24 +66,28 @@ export function totalDesLignes(lignes: LigneDevis[]): number {
  * La ligne d'un séjour, comptée comme la réservation : nuits ou jours, et le
  * prix de la semaine ou du mois quand il s'applique.
  */
-export function ligneDuSejour(logement: Logement, tarif: Tarif, debut: string, fin: string): LigneDevis {
+export function ligneDuSejour(logement: Logement, tarif: Tarif, debut: string, fin: string, langue: Langue = 'fr'): LigneDevis {
+  const en = langue === 'en'
   const prix = prixSejour(tarif, debut, fin)
-  const formule = formuleDe(tarif, 'fr')
-  const unite = UNITES[tarif.type_tarif] ?? null
+  const formule = formuleDe(tarif, langue)
+  const unite = UNITES[langue][tarif.type_tarif] ?? null
+  const designation = `${en ? 'Rental' : 'Location'} · ${logement.nom}`
 
   if (prix.prixApplique !== 'unite') {
-    const long = prix.prixApplique === 'semaine' ? 'de la semaine' : 'du mois'
+    const semaine = prix.prixApplique === 'semaine'
     return {
-      designation: `Location · ${logement.nom}`,
-      detail: `${formule} · ${prix.unites} ${unite}s au prix ${long} (au lieu de ${fcfa(prix.sansReduction)})`,
+      designation,
+      detail: en
+        ? `${formule} · ${prix.unites} ${unite}s at the ${semaine ? 'weekly' : 'monthly'} price (instead of ${fcfa(prix.sansReduction)})`
+        : `${formule} · ${prix.unites} ${unite}s au prix ${semaine ? 'de la semaine' : 'du mois'} (au lieu de ${fcfa(prix.sansReduction)})`,
       quantite: 1,
-      unite: 'séjour',
+      unite: en ? 'stay' : 'séjour',
       prix_unitaire: prix.montant,
     }
   }
 
   return {
-    designation: `Location · ${logement.nom}`,
+    designation,
     detail: formule,
     quantite: Math.max(1, prix.unites),
     unite,
@@ -97,6 +100,8 @@ export function lienEnvoiDevis(devis: Devis): string | null {
   if (!devis.client_telephone) return null
   return lienWhatsApp(
     devis.client_telephone,
-    `Bonjour ${devis.client_nom}, voici votre devis PasseTemps ${devis.numero} (${devis.titre}, ${fcfa(devis.total)}) : ${devis.pdf}`
+    devis.langue === 'en'
+      ? `Hello ${devis.client_nom}, here is your PasseTemps quote ${devis.numero} (${devis.titre}, ${fcfa(devis.total)}): ${devis.pdf}`
+      : `Bonjour ${devis.client_nom}, voici votre devis PasseTemps ${devis.numero} (${devis.titre}, ${fcfa(devis.total)}) : ${devis.pdf}`
   )
 }
