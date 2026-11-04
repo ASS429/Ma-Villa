@@ -89,5 +89,8 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "conflict": {
+        "nette/schema": ">=1.4.0"
+    }
 }
