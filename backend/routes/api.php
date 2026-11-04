@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\RemboursementController;
 use App\Http\Controllers\Api\ReversementController;
 use App\Http\Controllers\Api\DevisController;
 use App\Http\Controllers\Api\DemandeParticuliereController;
+use App\Http\Controllers\Api\FicheUtilisateurController;
 use App\Http\Controllers\Api\TarifController;
 use App\Http\Controllers\Api\VillaController;
 use Illuminate\Support\Facades\Route;
@@ -192,6 +193,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/villas/{villa}/statut', [AdminController::class, 'validerVilla']);
         Route::patch('/villas/{villa}/vedette', [AdminController::class, 'toggleVedette']);
         Route::get('/utilisateurs', [AdminController::class, 'utilisateurs']);
+        Route::get('/utilisateurs/{user}/fiche', [FicheUtilisateurController::class, 'show']);
+        Route::get('/utilisateurs/{user}/documents/{type}', [FicheUtilisateurController::class, 'document'])->middleware('throttle:20,1');
         Route::delete('/utilisateurs/{user}', [AdminController::class, 'supprimerUtilisateur']);
         Route::get('/avis', [AdminController::class, 'avis']);
         Route::delete('/avis/{avi}', [AdminController::class, 'supprimerAvis']);

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Search, Trash2, Users, ShieldCheck, ArrowRightLeft } from 'lucide-react'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
@@ -183,7 +184,9 @@ export default function AdminUtilisateurs() {
                         <span className="console-jeton" aria-hidden="true">{initiales(u.name)}</span>
                         <div style={{ minWidth: 0 }}>
                           <p style={{ margin: 0, fontWeight: 500, color: 'var(--text-1)' }}>
-                            {u.name}{estMoi && <span style={{ color: 'var(--text-3)', fontWeight: 400 }}> · vous</span>}
+                            {/* Le nom ouvre la fiche : annonces, réservations, versements, journal. */}
+                            <Link to={`/admin/utilisateurs/${u.id}`} className="underline-offset-2 hover:underline">{u.name}</Link>
+                            {estMoi && <span style={{ color: 'var(--text-3)', fontWeight: 400 }}> · vous</span>}
                           </p>
                           {/* Le numéro d'abord, l'adresse ensuite : c'est par
                               téléphone qu'on joint un propriétaire ici, et

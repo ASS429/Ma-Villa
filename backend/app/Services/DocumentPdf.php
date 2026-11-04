@@ -4,6 +4,8 @@ namespace App\Services;
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
+use Illuminate\Http\Client\Pool;
+use Illuminate\Support\Facades\Http;
 
 /**
  * Une vue Blade rendue en PDF : devis, fiche d'un compte, catalogue d'un
@@ -48,41 +50,79 @@ final class DocumentPdf
     }
 
     /**
-     * Une photo d'annonce, lue et réduite ici : les originaux pèsent plusieurs
-     * centaines de kilo-octets, et dompdf les embarquerait tels quels.
-     * `null` si elle ne se lit pas — le document se fait sans elle.
+     * Des photos d'annonce, lues **en parallèle** et réduites ici : les
+     * originaux pèsent plusieurs centaines de kilo-octets, et dompdf les
+     * embarquerait tels quels. Une photo qui ne se lit pas manque, sans plus :
+     * le document se fait sans elle.
+     *
+     * `$ratio` (largeur ÷ hauteur) recadre au centre : dompdf ne sait pas
+     * recadrer, et une hauteur imposée déformerait la photo.
+     *
+     * @param  array<string, string|null>  $urls
+     * @return array<string, string>
      */
-    public static function imageDistante(?string $url, int $largeur = 640): ?string
+    public static function imagesDistantes(array $urls, int $largeur = 640, ?float $ratio = null): array
     {
-        if (! $url || ! preg_match('#^https?://#', $url)) {
-            return null;
+        $valides = array_filter($urls, fn ($u) => is_string($u) && preg_match('#^https?://#', $u));
+        if ($valides === []) {
+            return [];
         }
 
         try {
-            $reponse = \Illuminate\Support\Facades\Http::timeout(6)->get($url);
-            if (! $reponse->successful()) {
-                return null;
-            }
-            $image = @imagecreatefromstring($reponse->body());
-            if ($image === false) {
-                return null;
-            }
-            $source = imagesx($image);
-            if ($source > $largeur) {
-                $reduite = imagescale($image, $largeur);
-                imagedestroy($image);
-                $image = $reduite ?: null;
-            }
-            if (! $image) {
-                return null;
-            }
-            ob_start();
-            imagejpeg($image, null, 72);
-            imagedestroy($image);
-
-            return 'data:image/jpeg;base64,'.base64_encode((string) ob_get_clean());
+            $reponses = Http::pool(fn (Pool $pool) => array_map(
+                fn ($cle) => $pool->as((string) $cle)->timeout(8)->get($valides[$cle]),
+                array_keys($valides),
+            ));
         } catch (\Throwable) {
+            return [];
+        }
+
+        $images = [];
+        foreach ($reponses as $cle => $reponse) {
+            if ($reponse instanceof \Illuminate\Http\Client\Response && $reponse->successful()
+                && ($image = self::reduire($reponse->body(), $largeur, $ratio))) {
+                $images[(string) $cle] = $image;
+            }
+        }
+
+        return $images;
+    }
+
+    /** Une seule photo : même traitement. */
+    public static function imageDistante(?string $url, int $largeur = 640): ?string
+    {
+        return self::imagesDistantes(['une' => $url], $largeur)['une'] ?? null;
+    }
+
+    private static function reduire(string $octets, int $largeur, ?float $ratio = null): ?string
+    {
+        $image = @imagecreatefromstring($octets);
+        if ($image === false) {
             return null;
         }
+        if ($ratio) {
+            $l = imagesx($image);
+            $h = imagesy($image);
+            [$cl, $ch] = $l / $h > $ratio ? [(int) round($h * $ratio), $h] : [$l, (int) round($l / $ratio)];
+            $recadree = imagecrop($image, ['x' => intdiv($l - $cl, 2), 'y' => intdiv($h - $ch, 2), 'width' => $cl, 'height' => $ch]);
+            imagedestroy($image);
+            if ($recadree === false) {
+                return null;
+            }
+            $image = $recadree;
+        }
+        if (imagesx($image) > $largeur) {
+            $reduite = imagescale($image, $largeur);
+            imagedestroy($image);
+            if ($reduite === false) {
+                return null;
+            }
+            $image = $reduite;
+        }
+        ob_start();
+        imagejpeg($image, null, 72);
+        imagedestroy($image);
+
+        return 'data:image/jpeg;base64,'.base64_encode((string) ob_get_clean());
     }
 }

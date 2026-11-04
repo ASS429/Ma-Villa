@@ -76,6 +76,7 @@ const AdminAttentes     = lazy(() => import('./pages/admin/AdminAttentes'))
 const AdminDashboard    = lazy(() => import('./pages/admin/AdminDashboard'))
 const AdminVillas       = lazy(() => import('./pages/admin/AdminVillas'))
 const AdminUtilisateurs = lazy(() => import('./pages/admin/AdminUtilisateurs'))
+const FicheUtilisateur = lazy(() => import('./pages/admin/FicheUtilisateur'))
 const AdminAvis         = lazy(() => import('./pages/admin/AdminAvis'))
 const AdminPaiement     = lazy(() => import('./pages/admin/AdminPaiement'))
 const AdminNotifications = lazy(() => import('./pages/admin/AdminNotifications'))
@@ -553,6 +554,7 @@ export default function App() {
         <Route path="tableau-de-bord" element={<AdminDashboard />} />
         <Route path="villas" element={<AdminVillas />} />
         <Route path="utilisateurs" element={<AdminUtilisateurs />} />
+        <Route path="utilisateurs/:id" element={<FicheUtilisateur />} />
         <Route path="avis" element={<AdminAvis />} />
         <Route path="paiement" element={<AdminPaiement />} />
         <Route path="notifications" element={<AdminNotifications />} />
