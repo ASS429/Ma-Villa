@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\DemandeParticuliere;
 use App\Models\Devis;
 use App\Models\Logement;
 use App\Models\Reservation;
@@ -208,6 +209,43 @@ class DevisTest extends TestCase
         // Un numéro étranger, collé depuis WhatsApp avec ses marques invisibles.
         $this->postJson('/api/devis', $this->demande($l, $t, ['telephone' => "\u{202A}+44 7700 900123\u{202C}"]))->assertCreated();
         $this->assertSame('+44 7700 900123', Devis::firstOrFail()->client_telephone);
+    }
+
+    public function test_les_durees_de_la_politique_de_confidentialite_sont_tenues(): void
+    {
+        $vieux = function (string $statut, int $ans) {
+            $d = Devis::etablir('console', ['titre' => 'Séjour', 'client_nom' => 'Awa'], [
+                ['designation' => 'Location', 'quantite' => 1, 'prix_unitaire' => 1000],
+            ]);
+            $d->statut = $statut;
+            $d->created_at = now()->subYears($ans)->subDay();
+            $d->save();
+
+            return $d;
+        };
+        $demande = function (int $ans) {
+            $d = DemandeParticuliere::create(['type' => 'groupe', 'message' => 'Dix personnes', 'nom' => 'Awa', 'langue' => 'fr']);
+            $d->created_at = now()->subYears($ans)->subDay();
+            $d->save();
+
+            return $d;
+        };
+
+        $garde = [$vieux('accepte', 9), $vieux('emis', 2), $vieux('refuse', 2)];
+        $efface = [$vieux('accepte', 10), $vieux('emis', 3), $vieux('refuse', 3)];
+        $demandeRecente = $demande(2);
+        $demandeAncienne = $demande(3);
+
+        $this->artisan('passetemps:effacer-devis-et-demandes')->assertSuccessful();
+
+        foreach ($garde as $d) {
+            $this->assertNotNull(Devis::find($d->id), "Le devis {$d->statut} doit rester.");
+        }
+        foreach ($efface as $d) {
+            $this->assertNull(Devis::find($d->id), "Le devis {$d->statut} doit partir.");
+        }
+        $this->assertNotNull(DemandeParticuliere::find($demandeRecente->id));
+        $this->assertNull(DemandeParticuliere::find($demandeAncienne->id));
     }
 
     public function test_le_champ_piege_ne_cree_rien(): void

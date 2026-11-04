@@ -15,7 +15,7 @@
 > relevées en fin de page. Le même jour, la **confidentialité** aussi (seconde autorisation). Les mentions légales
 > attendent les numéros RCCM et NINEA.
 
-Dernière mise à jour : 31 octobre 2026.
+Dernière mise à jour : 4 novembre 2026.
 
 ---
 
@@ -26,8 +26,6 @@ Dernière mise à jour : 31 octobre 2026.
 | 7. Ce que nous ne faisons pas | « Nous ne mesurons pas votre navigation à des fins commerciales » deviendrait faux **si** un compteur de clics est ajouté aux partenaires Bronze / Argent / Or. | si codé | Partenariats |
 | 4. Qui les reçoit | Si le **paiement en ligne des services** est construit : le prestataire de paiement et le partenaire qui encaisse, à nommer. | si codé | Paiement des services |
 | — | **Version anglaise** pour les clients étrangers (la version française fait foi). | si multilingue | Multilingue |
-| 2. Ce que nous recueillons | Les **devis** (au nom de qui, occupant, téléphone et e-mail facultatifs, logement, dates, prix) et les **demandes particulières** (type, dates, personnes, invités, besoins, budget, message, nom, téléphone ou e-mail), sans compte. Durée de conservation à fixer, comme les demandes de service (douze mois après la date ?). | 4 nov. 2026 | Devis et demandes particulières |
-| 3. À quoi elles servent | Établir le devis, rappeler le client, répondre à la demande et la transformer en devis. La **fiche interne** d'un compte (PDF des coordonnées, noté au journal) est un usage d'administration à mentionner. | 4 nov. 2026 | Fiche utilisateur |
 
 ## 2. Conditions générales d'utilisation
 
@@ -53,7 +51,6 @@ Dernière mise à jour : 31 octobre 2026.
 |---|---|---|---|
 | Éditeur | Forme juridique, RCCM et NINEA : « en cours de formalisation ». Déposés le 21 oct. 2026, **numéros attendus le 2 ou le 3 novembre** : les reporter ici dès réception (et dans le bloc éditeur de la confidentialité si la dénomination change). | 22 août 2026 | Statut informel |
 | Éditeur | Si le **partenaire encaisse** : le nommer comme encaisseur. | si adopté | Encaissement partenaire |
-| Éditeur | Ajouter le **WhatsApp Business** de PasseTemps, +221 75 446 90 41, en même temps que les numéros RCCM et NINEA. Il est au pied de page depuis le 2 nov. 2026 (`src/coordonnees.json`). | 2 nov. 2026 | Demande de l'exploitant |
 | Propriété intellectuelle | « JOJ Dakar 2026 » : PasseTemps n'est ni partenaire ni fournisseur officiel — déjà dit sur la page, à dire aussi ici. | 20 oct. 2026 | Page JOJ |
 
 ## 5. Conditions générales de vente (boutique)
@@ -70,6 +67,22 @@ Retirer toute mention des JOJ ajoutée aux textes. Les services (transport, repa
 leurs clauses aussi.
 
 ---
+
+## Appliqué le 4 novembre 2026 (devis, demandes particulières, fichier clients)
+
+Sur autorisation de l'exploitant (« tu as mon accord pour les textes juridiques »).
+
+- CGU art. 4 : le **devis en ligne** n'est pas une réservation (validité, disponibilité, accord
+  de l'équipe) ; quand une annonce ne se réserve pas en ligne, il est le moyen de nous joindre.
+- CGU art. 6 : on joint l'équipe « en établissant un devis » (« le contact figure sur la fiche »
+  était devenu faux).
+- Confidentialité § 2 : devis et demandes particulières. § 3 : y donner suite, **fichier interne
+  des clients**, fiche d'un compte, exports notés au journal, statistiques d'ensemble. § 4 : dates
+  et personnes communiquées au propriétaire pour vérifier la disponibilité. § 6 : devis acceptés
+  **dix ans**, devis sans suite et demandes particulières **trois ans**, tenu par
+  `passetemps:effacer-devis-et-demandes`, chaque jour (durées proposées, à changer dans la
+  commande **et** le texte). § 8 : les droits sans compte. § 9 : le lien personnel du devis.
+- Mentions légales : le WhatsApp Business de PasseTemps.
 
 ## Appliqué le 31 octobre 2026 (CGU et annulation)
 

@@ -26,6 +26,8 @@
  * la relecture.
  */
 
+import COORDONNEES from '../../coordonnees.json'
+
 export interface Section {
   titre: string
   paragraphes: string[]
@@ -40,8 +42,6 @@ export interface DocumentLegal {
   chapeau: string
   sections: Section[]
 }
-
-const MAJ = '3 septembre 2026'
 
 /*
  * Le taux élevé est passé de 20 à 14 % le 10 septembre 2026, pour que le taux
@@ -79,7 +79,19 @@ const MAJ_RESERVATION = '31 octobre 2026'
  * (transport, repas), ouvertes le 20 octobre, n'y figuraient pas. La durée de
  * douze mois est tenue par `passetemps:effacer-demandes-de-service`.
  */
-const MAJ_CONFIDENTIALITE = '31 octobre 2026'
+const MAJ_CONFIDENTIALITE = '4 novembre 2026'
+
+/**
+ * Reprises du 4 novembre 2026, sur autorisation de l'exploitant (« tu as mon
+ * accord pour les textes juridiques ») : les devis établis en ligne, devenus le
+ * moyen de nous joindre depuis une fiche fermée à la réservation, et les demandes
+ * particulières. Les durées de la confidentialité sont tenues par
+ * `passetemps:effacer-devis-et-demandes`. La politique d'annulation et les
+ * conditions de vente gardent leur date.
+ */
+const MAJ_CGU = '4 novembre 2026'
+const MAJ_MENTIONS = '4 novembre 2026'
+
 const EXPLOITANT = 'PasseTemps'
 const CONTACT = 'contactptemps@gmail.com'
 const DIRECTEUR = 'Abdou Ndour'
@@ -128,7 +140,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
     cle: 'cgu',
     titre: 'Conditions générales d\'utilisation',
     description: `Conditions générales d'utilisation de ${EXPLOITANT} : rôle de la plateforme, réservation, paiement, commission, services et responsabilités.`,
-    miseAJour: MAJ_RESERVATION,
+    miseAJour: MAJ_CGU,
     chapeau:
       `Les présentes conditions régissent l'utilisation de la plateforme ${EXPLOITANT}. En créant un compte, vous les acceptez.`,
     sections: [
@@ -168,6 +180,8 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
           `Une demande porte sur un séjour de six mois au plus, qui commence dans les dix-huit mois. Un client ne peut avoir plus de cinq demandes en attente de réponse à la fois.`,
           `Le nombre de personnes déclaré ne peut excéder la capacité du logement. Tout dépassement autorise le propriétaire à refuser l'accès, sans remboursement.`,
           `Les coordonnées du propriétaire vous sont communiquées une fois la réservation confirmée ou réglée. Avant cela, toutes vos questions passent par la messagerie rattachée à votre réservation, qui en conserve la trace.`,
+          `Depuis une fiche, vous pouvez établir un devis en PDF, sans compte. Il reprend le logement, la formule, les dates et le prix affichés. Un devis n'est pas une réservation : il vaut jusqu'à la date de validité qu'il indique, sous réserve de disponibilité, et la réservation n'est confirmée qu'après accord de l'équipe ${EXPLOITANT} et règlement selon les modalités convenues.`,
+          `Lorsqu'une annonce ne se réserve pas en ligne, ce devis est le moyen de nous joindre à son sujet : votre nom et un numéro de téléphone y sont demandés.`,
           `Les hébergements réservés auprès de notre équipe suivent l'article 6.`,
         ],
       },
@@ -175,7 +189,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
       {
         titre: '6. Les hébergements réservés auprès de notre équipe',
         paragraphes: [
-          `Certains hébergements sont présentés par ${EXPLOITANT} avec des partenaires qui les gèrent. Leur fiche l'indique : ils ne se réservent pas en ligne, mais auprès de l'équipe ${EXPLOITANT}, dont le contact figure sur la fiche.`,
+          `Certains hébergements sont présentés par ${EXPLOITANT} avec des partenaires qui les gèrent. Leur fiche l'indique : ils ne se réservent pas en ligne, mais auprès de l'équipe ${EXPLOITANT}, que vous joignez depuis la fiche en établissant un devis.`,
           `Le prix affiché sur ces annonces comprend la rémunération de ${EXPLOITANT} : aucun frais ne s'y ajoute.`,
           `Les disponibilités, le mode de règlement et les conditions d'annulation vous sont confirmés par écrit — message ou courriel — par l'équipe, avant tout paiement. Pour ces hébergements, ce qui est ainsi convenu remplace les articles 4 et 5 et la politique d'annulation.`,
         ],
@@ -260,6 +274,8 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
           'Vos avis, vos favoris, et les annonces que vous publiez si vous êtes propriétaire — y compris la position sur la carte, si vous choisissez de la renseigner.',
           'Si vous demandez un service (transport, repas) : la prestation, la date et l’heure, le nombre de personnes, le lieu, le numéro de vol et la délégation le cas échéant, vos nom, téléphone et adresse électronique, vos précisions, et la langue de la page. Un compte n’est pas nécessaire.',
           'Si vous touchez « Utiliser ma position actuelle » sur une demande de service : votre position (latitude, longitude et sa précision). Elle n’est demandée qu’à ce geste, jamais en arrière-plan.',
+          'Si vous établissez un devis depuis une annonce : au nom de qui il est établi, le nom de l’occupant le cas échéant, votre téléphone, votre adresse électronique si vous la donnez, le logement, la formule, les dates, le nombre de personnes, le prix et la langue de la page. Un compte n’est pas nécessaire.',
+          'Si vous faites une demande particulière (événement, séminaire, groupe, long séjour) : son type, les dates, le nombre de personnes et d’invités, vos besoins, votre budget si vous l’indiquez, votre message, vos nom, téléphone et adresse électronique, et la langue de la page. Un compte n’est pas nécessaire.',
           'Si vous acceptez les notifications, l’identifiant technique de votre navigateur ou de votre téléphone, un par appareil.',
           'Un journal des décisions d’administration : qui a validé, refusé ou retiré une annonce, enregistré un versement ou un remboursement, et quand.',
         ],
@@ -267,7 +283,9 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
       {
         titre: '3. À quoi elles servent',
         paragraphes: [
-          `Vos données servent à fournir le service et à rien d'autre : créer et sécuriser votre compte, traiter vos réservations et vos paiements, vous permettre d'échanger avec l'autre partie, vous informer de l'avancement de votre séjour, transmettre une demande de service au prestataire qui l'exécutera et vous rappeler pour la confirmer, et répondre à nos obligations comptables.`,
+          `Vos données servent à fournir le service et à rien d'autre : créer et sécuriser votre compte, traiter vos réservations et vos paiements, vous permettre d'échanger avec l'autre partie, vous informer de l'avancement de votre séjour, transmettre une demande de service au prestataire qui l'exécutera et vous rappeler pour la confirmer, établir un devis et y donner suite, répondre à une demande particulière, et répondre à nos obligations comptables.`,
+          `Pour reconnaître un client qui revient, l'équipe dispose d'un fichier interne qui rassemble ce que vous nous avez laissé — devis, demandes, compte, réservations — lorsque le numéro ou l'adresse sont les mêmes. Elle peut aussi éditer la fiche d'un compte, avec ses coordonnées et son activité. Ces documents ne sont accessibles qu'à l'équipe, et chaque export ou téléchargement est noté au journal.`,
+          `Nous en tirons des statistiques d'ensemble (nombre de demandes, délais de réponse, villes demandées) pour améliorer le service. Elles ne désignent aucun client.`,
           `Le journal des décisions d'administration a une finalité propre : conserver la preuve de ce qui a été décidé, en cas de contestation.`,
         ],
       },
@@ -276,6 +294,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
         paragraphes: [
           `Lorsqu'une réservation est confirmée ou réglée, le propriétaire et le client reçoivent réciproquement le nom et les coordonnées de l'autre. Cet échange est nécessaire à la réalisation du séjour, et il n'a pas lieu avant.`,
           `Une demande de service est reçue par l'équipe ${EXPLOITANT}, puis transmise au partenaire qui l'exécute ou la coordonne (transporteur, restaurant), avec ce qu'il lui faut pour la réaliser : nom, téléphone, lieu, date, et position si vous l'avez jointe. De même, pour un hébergement réservé auprès de notre équipe, vos coordonnées sont transmises au partenaire qui le gère.`,
+          `Un devis ou une demande particulière est reçu par l'équipe ${EXPLOITANT}, qui peut communiquer au propriétaire ou au partenaire concerné ce qu'il faut pour vérifier la disponibilité : les dates et le nombre de personnes.`,
           `Lorsque vous écrivez à l'équipe par WhatsApp, le message part de votre propre application ; WhatsApp, service de Meta, en assure l'acheminement.`,
           `Vos données sont par ailleurs confiées aux prestataires techniques ci-dessous, dans la stricte limite de leur mission. Nous ne vendons, ne cédons et ne louons vos coordonnées à personne, et nous ne les transmettons à aucun tiers à des fins de démarchage.`,
         ],
@@ -304,6 +323,9 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
           'Réservations, paiements, remboursements et numéro du payeur : dix ans, durée de conservation des pièces comptables. Ces données survivent à la suppression du compte, sous une forme réduite à ce qui est comptablement nécessaire.',
           'Messages échangés au sujet d’une réservation : trois ans après la fin du séjour.',
           'Demandes de service : douze mois après la date du service, puis effacées.',
+          'Devis acceptés : dix ans après leur date, comme les autres pièces commerciales, puis effacés.',
+          'Devis sans suite et demandes particulières : trois ans après leur date, puis effacés.',
+          'Fichier interne des clients : il n’a pas de durée propre, il ne fait que rassembler les données ci-dessus et disparaît avec elles.',
           'Journal des décisions d’administration : cinq ans, parce que c’est la seule pièce produisible en cas de litige.',
           'Abonnement aux notifications : jusqu’à ce que vous les désactiviez ou désinstalliez l’application.',
           'Avis publiés : tant que l’annonce concernée existe.',
@@ -321,7 +343,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
         titre: '8. Vos droits',
         paragraphes: [
           `Vous disposez d'un droit d'accès, de rectification et de suppression de vos données, ainsi que du droit de vous opposer à leur traitement. La plupart de ces opérations se font directement depuis votre espace personnel.`,
-          `Pour les autres, écrivez à ${CONTACT}. Nous répondons dans un délai d'un mois. Une demande de suppression est honorée sous réserve des données que nous devons conserver au titre de l'article 6.`,
+          `Pour les autres, et si vous n'avez pas de compte, écrivez à ${CONTACT} en indiquant votre numéro de téléphone ou le numéro de votre devis. Nous répondons dans un délai d'un mois. Une demande de suppression est honorée sous réserve des données que nous devons conserver au titre de l'article 6.`,
           `Si notre réponse ne vous satisfait pas, vous pouvez saisir la Commission de protection des données personnelles (CDP) du Sénégal.`,
         ],
       },
@@ -329,6 +351,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
         titre: '9. Sécurité',
         paragraphes: [
           `Les mots de passe sont conservés sous forme chiffrée et ne sont lisibles par personne, pas même par nous. Les échanges avec la plateforme sont chiffrés.`,
+          `Votre devis s'ouvre par un lien personnel, difficile à deviner : quiconque reçoit ce lien peut l'ouvrir. Ne le transmettez qu'aux personnes concernées.`,
           `Si un incident de sécurité venait à concerner vos données, vous en seriez informé.`,
         ],
       },
@@ -484,7 +507,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
     cle: 'mentions',
     titre: 'Mentions légales',
     description: `Éditeur, directeur de la publication, hébergement et contact de la plateforme ${EXPLOITANT}.`,
-    miseAJour: MAJ,
+    miseAJour: MAJ_MENTIONS,
     chapeau: `Informations relatives à l'éditeur et à l'hébergement de la plateforme.`,
     sections: [
       {
@@ -498,6 +521,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
           'Siège : Dakar, Sénégal',
           `Directeur de la publication : ${DIRECTEUR}`,
           `Contact : ${CONTACT}`,
+          `WhatsApp : ${COORDONNEES.whatsapp}`,
         ],
       },
       {

@@ -51,3 +51,12 @@ Schedule::command('passetemps:effacer-demandes-de-service')
     ->daily()
     ->withoutOverlapping()
     ->runInBackground();
+
+/*
+ | De même pour les devis (dix ans acceptés, trois ans sans suite) et les
+ | demandes particulières (trois ans), annoncés le 4 novembre 2026.
+ */
+Schedule::command('passetemps:effacer-devis-et-demandes')
+    ->daily()
+    ->withoutOverlapping()
+    ->runInBackground();
