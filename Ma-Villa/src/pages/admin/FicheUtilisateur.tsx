@@ -9,6 +9,7 @@ import { useToast } from '../../context/ToastContext'
 import { useRequete } from '../../lib/useRequete'
 import { messageErreur } from '../../lib/erreurs'
 import { dateCourte, fcfa } from '../../lib/format'
+import { enregistrerFichier } from '../../lib/telecharger'
 import { lienAppel, lienCourriel, lienWhatsApp } from '../../lib/contact'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
@@ -120,14 +121,7 @@ export default function FicheUtilisateur() {
     setEnCours(type)
     try {
       const { data } = await api.get(`/admin/utilisateurs/${id}/documents/${type}`, { responseType: 'blob' })
-      const url = URL.createObjectURL(data as Blob)
-      const lien = document.createElement('a')
-      lien.href = url
-      lien.download = `${type === 'fiche' ? 'Fiche' : 'Catalogue'}-${f.utilisateur.name.replace(/[^\p{L}\p{N}]+/gu, '-')}.pdf`
-      document.body.appendChild(lien)
-      lien.click()
-      lien.remove()
-      setTimeout(() => URL.revokeObjectURL(url), 60_000)
+      enregistrerFichier(data as Blob, `${type === 'fiche' ? 'Fiche' : 'Catalogue'}-${f.utilisateur.name.replace(/[^\p{L}\p{N}]+/gu, '-')}.pdf`)
     } catch (err) {
       toast.erreur(messageErreur(err, type === 'fiche' ? 'La fiche n’a pas pu être préparée.' : 'Le catalogue n’a pas pu être préparé.'))
     } finally {

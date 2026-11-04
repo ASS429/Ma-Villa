@@ -2205,6 +2205,24 @@
 }
 .fiche-lignes li:last-child { border-bottom: 0; }
 
+/* ── Fichier clients ── */
+.clients-courriel { word-break: break-word; }
+.clients-historique { margin-top: var(--space-3); }
+.clients-historique > summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: var(--text-2);
+  font: var(--t-body-sm);
+  font-weight: 600;
+}
+.clients-droite { flex-shrink: 0; text-align: right; }
+@media (max-width: 520px) {
+  .clients-historique .fiche-lignes li { flex-direction: column; gap: var(--space-1); }
+  .clients-droite { text-align: left; }
+}
+
 /* ── Demandes particulières : le texte du client, tel qu'il l'a écrit ── */
 .particuliere-message {
   margin: var(--space-3) 0 0;

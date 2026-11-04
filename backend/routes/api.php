@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AttentesController;
 use App\Http\Controllers\Api\AvisController;
 use App\Http\Controllers\Api\CircuitAssociesController;
+use App\Http\Controllers\Api\ClientsController;
 use App\Http\Controllers\Api\ConfigurationController;
 use App\Http\Controllers\Api\DemandeServiceController;
 use App\Http\Controllers\Api\DiagnosticCourrielController;
@@ -228,6 +229,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/devis/{devis}', [DevisController::class, 'show']);
         Route::patch('/devis/{devis}', [DevisController::class, 'update'])->middleware('throttle:30,1');
         Route::patch('/demandes-service/{demande}', [DemandeServiceController::class, 'traiter']);
+
+        // Une ligne par personne, d'où qu'elle vienne : devis, demandes, comptes.
+        Route::get('/clients', [ClientsController::class, 'index']);
+        Route::get('/clients/export', [ClientsController::class, 'export'])->middleware('throttle:20,1');
 
         // Rendre l'argent au client. Comme les reversements, on enregistre
         // ce qui a ete fait chez le prestataire -- rien ne part d'ici.

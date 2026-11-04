@@ -91,6 +91,7 @@ const AdminCommandes    = lazy(() => import('./pages/admin/AdminCommandes'))
 const AdminDemandes     = lazy(() => import('./pages/admin/AdminDemandes'))
 const AdminDevis        = lazy(() => import('./pages/admin/AdminDevis'))
 const AdminDemandesParticulieres = lazy(() => import('./pages/admin/AdminDemandesParticulieres'))
+const AdminClients = lazy(() => import('./pages/admin/AdminClients'))
 const EditeurDevis      = lazy(() => import('./pages/admin/EditeurDevis'))
 
 /* ─── Route guards ───────────────────────────────────────────── */
@@ -568,6 +569,7 @@ export default function App() {
         <Route path="commandes" element={<AdminCommandes />} />
         <Route path="demandes" element={<AdminDemandes />} />
         <Route path="demandes-particulieres" element={<AdminDemandesParticulieres />} />
+        <Route path="clients" element={<AdminClients />} />
         <Route path="devis" element={<AdminDevis />} />
         <Route path="devis/nouveau" element={<EditeurDevis />} />
         <Route path="devis/:id" element={<EditeurDevis />} />
