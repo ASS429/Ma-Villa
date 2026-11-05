@@ -19,8 +19,11 @@ _Écrit pour être lu sans connaître le code. Chaque point dit **ce que c'est**
 
 1. **Envoyer le message à PayDunya** (`18-DEMANDE-PAYDUNYA-KYC-PER-CARTE.md`) : KYC, déboursement,
    carte, frais, et accord écrit sur l'encaissement pour le compte des propriétaires.
-2. **Ouvrir un compte bancaire au nom de l'entreprise**, et y relier PayDunya. L'argent des
-   propriétaires ne doit pas se mêler au vôtre.
+2. **Le compte bancaire : votre compte personnel** (décidé le 5 novembre, un compte d'entreprise
+   n'étant pas possible). Pour une entreprise individuelle, c'est la même personne, et le nom concorde
+   avec le compte PayDunya. La règle qui protège l'argent des propriétaires : **laisser leur part sur
+   PayDunya et ne retirer que la commission**, sans jamais descendre sous le montant « Détenu pour les
+   propriétaires » de la console.
 3. **Rouvrir la réservation en ligne** une fois le KYC validé : `PAIEMENT_ACTIF` et
    `RESERVATIONS_OUVERTES` à `true` sur Railway, puis un paiement réel de 200 F.
 4. **Voir un comptable** : le régime fiscal de l'entreprise, la facture, et ce que veut dire, pour
