@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\JournalAdmin;
 use App\Models\Paiement;
+use App\Models\Reglement;
+use App\Notifications\ReservationAnnuleeParLEquipe;
 use App\Models\Remboursement;
 use App\Models\Reservation;
 use App\Services\Remboursement as CalculRemboursement;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Rendre l'argent au client — l'enregistrement, pas le virement.
@@ -27,7 +30,7 @@ class RemboursementController extends Controller
     public function index(): JsonResponse
     {
         $remboursements = Remboursement::with([
-            'reservation:id,date_debut,date_fin,statut,user_id',
+            'reservation:id,date_debut,date_fin,statut,user_id,client_nom,client_telephone,client_email',
             'reservation.client:id,name,email',
             'paiement:id,montant,montant_proprietaire,methode,reference',
         ])->latest()->paginate(30);
@@ -199,6 +202,16 @@ class RemboursementController extends Controller
                 'annulation_demandee_le' => null,
             ]);
 
+            // Après l'écriture seulement : un courrier ne doit jamais tenir ni défaire la transaction.
+            DB::afterCommit(function () use ($reservation) {
+                try {
+                    $reservation->loadMissing('logement.villa.proprietaire')->logement?->villa?->proprietaire
+                        ?->notify(new ReservationAnnuleeParLEquipe($reservation));
+                } catch (\Throwable $e) {
+                    Log::error('Courrier au propriétaire non envoyé', ['reservation' => $reservation->id, 'erreur' => $e->getMessage()]);
+                }
+            });
+
             JournalAdmin::consigner(
                 $moi,
                 'reservation.remboursee',
@@ -244,10 +257,16 @@ class RemboursementController extends Controller
             default                            => [null, null],
         };
 
+        // Reçu à la main : le moyen est sur les reçus, un dossier peut en compter plusieurs.
+        $parReglement = $paiement->hors_ligne
+            ? Reglement::where('reservation_id', $paiement->reservation_id)->valide()->orderBy('id')->get()
+                ->pluck('libelle_moyen')->unique()->implode(', ')
+            : null;
+
         return [
             'methode'           => $paiement->methode,
-            'methode_nom'       => collect(config('paiement.moyens', []))
-                ->firstWhere('cle', $paiement->methode)['nom'] ?? $paiement->methode,
+            'methode_nom'       => $parReglement ?: (collect(config('paiement.moyens', []))
+                ->firstWhere('cle', $paiement->methode)['nom'] ?? $paiement->methode),
             'telephone'         => $numero,
             'telephone_origine' => $origine,
             'reference'         => $paiement->reference,

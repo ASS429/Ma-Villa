@@ -18,6 +18,7 @@ import ConfirmModal from '../../components/ConfirmModal'
 import Badge from '../../components/ui/Badge'
 import { Champ, ChampSelection, ChampZoneTexte } from '../../components/ui/Champ'
 import BoutonWhatsApp from '../../components/BoutonWhatsApp'
+import ReglementsDevis from '../../components/console/ReglementsDevis'
 
 interface Formulaire {
   titre: string
@@ -107,6 +108,8 @@ export default function EditeurDevis() {
         setDevis(data)
         setForm(depuisDevis(data))
         setLignes(data.lignes)
+        // Sans cela, un devis déjà lié à un logement s'affichait sans logement choisi.
+        setChoix({ logement: data.logement_id ? String(data.logement_id) : '', tarif: data.tarif_id ? String(data.tarif_id) : '' })
       })
       .catch((err) => toast.erreur(messageErreur(err, 'Ce devis n’a pas pu être chargé.')))
     return () => { actif = false }
@@ -150,6 +153,8 @@ export default function EditeurDevis() {
   const tarif = logement?.tarifs.find((t) => String(t.id) === choix.tarif)
   const total = totalDesLignes(lignes)
   const envoiWhatsApp = devis ? lienEnvoiDevis(devis) : null
+  // De l'argent reçu fige le séjour et le montant : ils ont bloqué des dates et figurent sur un reçu.
+  const regle = (devis?.encaisse ?? 0) > 0
 
   const maj = (cle: keyof Formulaire) => (e: { target: { value: string } }) =>
     setForm((f) => ({ ...f, [cle]: e.target.value }))
@@ -220,6 +225,18 @@ export default function EditeurDevis() {
       toast.erreur(messageErreur(err, 'Le devis n’a pas pu être enregistré.'))
     } finally {
       setEnvoi(false)
+    }
+  }
+
+  /** L'argent change le statut et le verrou : on les relit, sans toucher à ce qui est en cours de saisie. */
+  const relireDevis = async () => {
+    if (!devis) return
+    try {
+      const { data } = await api.get(`/admin/devis/${devis.id}`)
+      setDevis(data)
+      setForm((f) => ({ ...f, statut: data.statut }))
+    } catch (err) {
+      toast.erreur(messageErreur(err, 'Ce devis n’a pas pu être relu.'))
     }
   }
 
@@ -296,24 +313,27 @@ export default function EditeurDevis() {
         )}
       </div>
 
+      {devis && <ReglementsDevis devis={devis} onChange={relireDevis} />}
+
       <form onSubmit={enregistrer} noValidate>
         <div className="console-grille console-grille-2">
           <section className="panneau">
             <h2 className="panneau-titre">Hébergement et séjour</h2>
+            {regle && <p className="tableau-second">Ce devis a reçu un règlement : son séjour et son montant ne changent plus. Pour les modifier, annulez d’abord le règlement.</p>}
             <div className="devis-champs">
-              <ChampSelection label="Annonce (facultatif)" value={form.villa_id} onChange={(e) => choisirAnnonce(e.target.value)}>
+              <ChampSelection label="Annonce (facultatif)" value={form.villa_id} onChange={(e) => choisirAnnonce(e.target.value)} disabled={regle}>
                 <option value="">— Aucune, prestation libre —</option>
                 {annonces.map((a) => <option key={a.id} value={a.id}>{a.nom}{a.ville ? ` · ${a.ville}` : ''}</option>)}
               </ChampSelection>
               <Champ label="Titre du devis" value={form.titre} onChange={maj('titre')} erreur={erreurs.titre} aide="En tête du document, en capitales : le nom de l’hébergement." required />
               {ficheActive && (
                 <>
-                  <ChampSelection label="Logement" value={choix.logement} onChange={(e) => setChoix({ logement: e.target.value, tarif: '' })}>
+                  <ChampSelection label="Logement" value={choix.logement} onChange={(e) => setChoix({ logement: e.target.value, tarif: '' })} disabled={regle}>
                     <option value="">— Choisir —</option>
                     {ficheActive.logements.map((l) => <option key={l.id} value={l.id}>{l.nom}</option>)}
                   </ChampSelection>
                   {logement && (
-                    <ChampSelection label="Formule" value={choix.tarif} onChange={(e) => setChoix((c) => ({ ...c, tarif: e.target.value }))}>
+                    <ChampSelection label="Formule" value={choix.tarif} onChange={(e) => setChoix((c) => ({ ...c, tarif: e.target.value }))} disabled={regle}>
                       <option value="">— Choisir —</option>
                       {logement.tarifs.map((t) => <option key={t.id} value={t.id}>{formuleDe(t, 'fr')} — {prixDe(t, 'fr')}</option>)}
                     </ChampSelection>
@@ -321,17 +341,17 @@ export default function EditeurDevis() {
                 </>
               )}
               <div className="devis-deux">
-                <Champ label="Arrivée" type="date" value={form.date_arrivee} onChange={maj('date_arrivee')} erreur={erreurs.date_arrivee} />
-                <Champ label="Départ" type="date" value={form.date_depart} onChange={maj('date_depart')} erreur={erreurs.date_depart} />
+                <Champ label="Arrivée" type="date" value={form.date_arrivee} onChange={maj('date_arrivee')} erreur={erreurs.date_arrivee} disabled={regle} />
+                <Champ label="Départ" type="date" value={form.date_depart} onChange={maj('date_depart')} erreur={erreurs.date_depart} disabled={regle} />
               </div>
-              <Champ label="Personnes" type="number" min={1} inputMode="numeric" value={form.personnes} onChange={maj('personnes')} erreur={erreurs.personnes} />
+              <Champ label="Personnes" type="number" min={1} inputMode="numeric" value={form.personnes} onChange={maj('personnes')} erreur={erreurs.personnes} disabled={regle} />
               {ficheActive && (
                 <Button
                   type="button"
                   variante="secondaire"
                   taille="sm"
                   iconeAvant={<Plus size={15} aria-hidden="true" />}
-                  disabled={!logement || !tarif || !form.date_arrivee || !form.date_depart}
+                  disabled={regle || !logement || !tarif || !form.date_arrivee || !form.date_depart}
                   onClick={ajouterSejour}
                 >
                   Ajouter la ligne du séjour
@@ -349,7 +369,7 @@ export default function EditeurDevis() {
               <Champ label="E-mail (facultatif)" type="email" value={form.client_email} onChange={maj('client_email')} erreur={erreurs.client_email} />
               <Champ label="Valable (jours)" type="number" min={1} inputMode="numeric" value={form.validite_jours} onChange={maj('validite_jours')} erreur={erreurs.validite_jours} />
               {devis && (
-                <ChampSelection label="Statut" value={form.statut} onChange={(e) => setForm((f) => ({ ...f, statut: e.target.value as StatutDevis }))}>
+                <ChampSelection label="Statut" value={form.statut} onChange={(e) => setForm((f) => ({ ...f, statut: e.target.value as StatutDevis }))} disabled={regle}>
                   {(Object.keys(LIBELLES_STATUT_DEVIS) as StatutDevis[]).map((s) => <option key={s} value={s}>{LIBELLES_STATUT_DEVIS[s]}</option>)}
                 </ChampSelection>
               )}
@@ -364,23 +384,23 @@ export default function EditeurDevis() {
             <div key={i} className="devis-ligne">
               <Champ label="Prestation" value={l.designation} onChange={(e) => majLigne(i, 'designation', e.target.value)} erreur={erreurs[`lignes.${i}.designation`]} />
               <Champ label="Détail (facultatif)" value={l.detail ?? ''} onChange={(e) => majLigne(i, 'detail', e.target.value)} />
-              <Champ label="Quantité" inputMode="numeric" value={String(l.quantite)} onChange={(e) => majLigne(i, 'quantite', e.target.value)} erreur={erreurs[`lignes.${i}.quantite`]} />
+              <Champ label="Quantité" inputMode="numeric" value={String(l.quantite)} onChange={(e) => majLigne(i, 'quantite', e.target.value)} erreur={erreurs[`lignes.${i}.quantite`]} disabled={regle} />
               <Champ label="Unité" placeholder="nuitée" value={l.unite ?? ''} onChange={(e) => majLigne(i, 'unite', e.target.value)} />
-              <Champ label="Prix unitaire (FCFA)" inputMode="numeric" value={String(l.prix_unitaire)} onChange={(e) => majLigne(i, 'prix_unitaire', e.target.value)} erreur={erreurs[`lignes.${i}.prix_unitaire`]} />
+              <Champ label="Prix unitaire (FCFA)" inputMode="numeric" value={String(l.prix_unitaire)} onChange={(e) => majLigne(i, 'prix_unitaire', e.target.value)} erreur={erreurs[`lignes.${i}.prix_unitaire`]} disabled={regle} />
               <p className="devis-ligne-montant">{fcfa((Number(l.quantite) || 1) * (Number(l.prix_unitaire) || 0))}</p>
               <Button
                 type="button"
                 variante="discret"
                 taille="sm"
                 aria-label={`Retirer la prestation ${i + 1}`}
-                disabled={lignes.length === 1}
+                disabled={regle || lignes.length === 1}
                 onClick={() => setLignes((ls) => ls.filter((_, j) => j !== i))}
                 iconeAvant={<Trash2 size={15} aria-hidden="true" />}
               />
             </div>
           ))}
           <div className="devis-pied">
-            <Button type="button" variante="discret" taille="sm" iconeAvant={<Plus size={15} aria-hidden="true" />} onClick={() => setLignes((ls) => [...ls, { ...LIGNE_VIDE }])}>
+            <Button type="button" variante="discret" taille="sm" disabled={regle} iconeAvant={<Plus size={15} aria-hidden="true" />} onClick={() => setLignes((ls) => [...ls, { ...LIGNE_VIDE }])}>
               Ajouter une prestation
             </Button>
             <p className="devis-total">Total à payer <strong>{fcfa(total)}</strong></p>
@@ -426,7 +446,11 @@ export default function EditeurDevis() {
       {devis && (
         <section className="panneau devis-suppression">
           <h2 className="panneau-titre">Supprimer ce devis</h2>
-          {devis.statut === 'accepte' ? (
+          {regle || devis.reservation_id ? (
+            <p className="tableau-second">
+              Des règlements sont enregistrés sur ce devis : c’est une pièce de caisse, il ne se supprime pas.
+            </p>
+          ) : devis.statut === 'accepte' ? (
             <p className="tableau-second">
               Un devis accepté est une pièce commerciale, gardée dix ans. S’il a été accepté par erreur,
               repassez-le en « Émis » ou « Refusé », enregistrez, et vous pourrez le supprimer.

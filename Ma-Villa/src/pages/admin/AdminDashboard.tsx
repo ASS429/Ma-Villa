@@ -34,6 +34,7 @@ interface Attentes {
   fonds: {
     exigible: number
     a_venir: number
+    retenu?: number
     detenus: number
     non_versable: number
     automatique: boolean
@@ -193,6 +194,7 @@ export default function AdminDashboard() {
             {fonds && (
               <p className="verdict-detail">
                 {fcfa(fonds.exigible)} exigibles · {fcfa(fonds.a_venir)} sur des séjours en cours
+                {(fonds.retenu ?? 0) > 0 && <> · {fcfa(fonds.retenu ?? 0)} en attente d’un solde client</>}
               </p>
             )}
           </div>

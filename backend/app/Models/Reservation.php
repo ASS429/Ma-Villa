@@ -16,6 +16,12 @@ class Reservation extends Model
         'annulation_demandee_le', 'annulation_motif',
     ];
 
+    /**
+     * Les coordonnées d'un client sans compte ne se lisent que par `client()`,
+     * pour que `revelerLesCoordonnees()` s'applique à lui comme aux autres.
+     */
+    protected $hidden = ['client_nom', 'client_telephone', 'client_email'];
+
     protected function casts(): array
     {
         return [
@@ -55,9 +61,33 @@ class Reservation extends Model
                 ->orWhereHas('paiement', fn (Builder $p) => $p->where('statut', 'reussi')));
     }
 
+    /**
+     * Le client d'un devis réglé hors du site n'a pas forcément de compte : on ne lui en
+     * crée pas à son insu. Il garde alors un nom et un numéro, pour que le propriétaire
+     * et l'équipe le lisent comme les autres. Ce modèle n'est pas enregistré
+     * (`exists` est faux) : pas d'e-mail de compte, pas de notification, pas de messagerie.
+     */
     public function client(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id')->withDefault(
+            fn (User $client, Reservation $reservation) => $client->forceFill([
+                'name'  => $reservation->client_nom ?: 'Client sans compte',
+                'email' => $reservation->client_email,
+                'phone' => $reservation->client_telephone,
+            ])
+        );
+    }
+
+    /** Le devis qui a donné lieu à cette réservation, quand elle vient d'un règlement. */
+    public function devis(): HasOne
+    {
+        return $this->hasOne(Devis::class);
+    }
+
+    /** L'argent reçu hors du site sur ce séjour. */
+    public function reglements(): HasMany
+    {
+        return $this->hasMany(Reglement::class);
     }
 
     public function logement(): BelongsTo

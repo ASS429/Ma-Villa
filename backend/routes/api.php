@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\OeuvreController;
 use App\Http\Controllers\Api\PreferencesNotificationController;
 use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\RappelDeboursementController;
+use App\Http\Controllers\Api\ReglementController;
 use App\Http\Controllers\Api\RemboursementController;
 use App\Http\Controllers\Api\ReversementController;
 use App\Http\Controllers\Api\DevisController;
@@ -83,6 +84,7 @@ Route::post('/demandes-service', [DemandeServiceController::class, 'store'])->mi
 // demande pour payer), puis téléchargé par un lien qui porte sa clé.
 Route::post('/devis', [DevisController::class, 'store'])->middleware('throttle:5,1');
 Route::get('/devis/{numero}/pdf', [DevisController::class, 'pdf'])->middleware('throttle:30,1');
+Route::get('/reglements/{numero}/pdf', [ReglementController::class, 'pdf'])->middleware('throttle:30,1');
 
 // Événement, groupe, séminaire, long séjour : ce qu'une réservation ne sait pas dire.
 Route::post('/demandes-particulieres', [DemandeParticuliereController::class, 'store'])->middleware('throttle:5,1');
@@ -233,6 +235,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/devis/{devis}', [DevisController::class, 'update'])->middleware('throttle:30,1');
         Route::delete('/devis/{devis}', [DevisController::class, 'destroy'])->middleware('throttle:30,1');
         Route::patch('/demandes-service/{demande}', [DemandeServiceController::class, 'traiter']);
+
+        // L'argent reçu hors du site. On constate une somme reçue : rien ne part d'ici.
+        Route::get('/reglements', [ReglementController::class, 'index']);
+        Route::get('/reglements/export', [ReglementController::class, 'export'])->middleware('throttle:20,1');
+        Route::post('/reglements/{reglement}/annuler', [ReglementController::class, 'annuler'])->middleware('throttle:20,1');
+        Route::get('/devis/{devis}/reglements', [ReglementController::class, 'pourDevis']);
+        Route::post('/devis/{devis}/reglements', [ReglementController::class, 'store'])->middleware('throttle:30,1');
+        Route::post('/devis/{devis}/clore-solde', [ReglementController::class, 'clore'])->middleware('throttle:20,1');
+        Route::post('/devis/{devis}/annulation', [ReglementController::class, 'annulation'])->middleware('throttle:20,1');
 
         // Ce que nous faisons, ce que nous réalisons, ce qui nous manque.
         Route::get('/pilotage', PilotageController::class)->middleware('throttle:60,1');

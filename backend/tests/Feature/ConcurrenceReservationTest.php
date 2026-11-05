@@ -44,6 +44,11 @@ class ConcurrenceReservationTest extends TestCase
 {
     use RefreshDatabase;
 
+    // Pas de transaction autour du test : elle cacherait le décor à la seconde session,
+    // qui ne trouverait aucune ligne à verrouiller. Le décor est donc écrit pour de bon,
+    // et retiré à la fin de chaque test (`setUp`).
+    protected $connectionsToTransact = [];
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -59,6 +64,9 @@ class ConcurrenceReservationTest extends TestCase
         // d'observer un verrou, qui par construction n'est visible que d'une
         // autre session.
         Config::set('database.connections.pgsql_concurrente', config('database.connections.pgsql'));
+
+        // Les comptes emportent annonces, logements et tarifs : les tests suivants repartent à vide.
+        $this->beforeApplicationDestroyed(fn () => DB::statement('TRUNCATE users CASCADE'));
     }
 
     private function decor(): array

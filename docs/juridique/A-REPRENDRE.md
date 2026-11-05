@@ -23,6 +23,9 @@ Dernière mise à jour : 5 novembre 2026.
 
 | § | Ce qui est devenu faux ou incomplet | Depuis | Origine |
 |---|---|---|---|
+| 2. Ce que nous recueillons | **Règlement auprès de l'équipe** : nom, numéro du payeur, référence de la transaction, somme et moyen, sur un reçu numéroté. Formulation proposée : « Si vous réglez auprès de notre équipe, nous gardons votre nom, le numéro qui a payé, la référence de la transaction et la somme reçue, et nous vous remettons un reçu. » | 5 nov. 2026 | Encaissement hors ligne |
+| 4. Qui les reçoit | **Le propriétaire reçoit le nom et le numéro du client** dès le premier règlement, sans que le client ait de compte. Formulation proposée : « Une fois votre séjour confirmé, le propriétaire de l'hébergement reçoit votre nom et votre numéro, pour préparer votre venue. » | 5 nov. 2026 | Encaissement hors ligne |
+| 6. Combien de temps | **Reçus** : dix ans comme les autres pièces comptables, coordonnées du client sans compte comprises. Le code l'applique déjà ; le texte ne cite pas les reçus. Ajouter « reçus » à la ligne « Réservations, paiements, remboursements et numéro du payeur ». | 5 nov. 2026 | Encaissement hors ligne |
 | 7. Ce que nous ne faisons pas | « Nous ne mesurons pas votre navigation à des fins commerciales » deviendrait faux **si** un compteur de clics est ajouté aux partenaires Bronze / Argent / Or. | si codé | Partenariats |
 | 4. Qui les reçoit | Si le **paiement en ligne des services** est construit : le prestataire de paiement et le partenaire qui encaisse, à nommer. | si codé | Paiement des services |
 | — | **Version anglaise** pour les clients étrangers (la version française fait foi). | si multilingue | Multilingue |
@@ -31,6 +34,8 @@ Dernière mise à jour : 5 novembre 2026.
 
 | Art. | Ce qui manque ou a changé | Depuis | Origine |
 |---|---|---|---|
+| 5. Argent | **Le règlement ne se fait pas qu'en ligne.** Le texte dit « s'effectue en ligne, par Wave, Orange Money ou… via PayDunya » : c'est faux tant que le paiement en ligne est fermé, et l'équipe encaisse déjà à la main. Formulation proposée : « Le règlement d'une réservation s'effectue en ligne (…) ou, lorsque le paiement en ligne n'est pas ouvert, auprès de l'équipe PasseTemps (Wave, Orange Money, espèces, virement), contre un reçu. Dans tous les cas, PasseTemps reçoit l'argent du client et verse sa part au propriétaire après le séjour. » | 5 nov. 2026 | Encaissement hors ligne |
+| 5. Argent | **Acompte et solde** : le premier règlement confirme le séjour et bloque les dates, le solde reste dû. Rien ne dit aujourd'hui quand le solde est exigible, ni ce qui arrive s'il n'est pas payé. **Décision à prendre** : solde avant l'arrivée ? à l'arrivée ? | 5 nov. 2026 | Encaissement hors ligne |
 | 7. Les services | **Règle d'annulation d'un service** (le partenaire propose « gratuite jusqu'à 24 h avant ») : le texte dit seulement qu'elle est « indiquée à la confirmation ». **À décider.** | 20 oct. 2026 | Demandes JOJ |
 | 6. Équipe | Si **`RESERVATIONS_ASSOCIES_OUVERTES`** passe à vrai : ces annonces se réservent en ligne. Réécrire l'article — prix du propriétaire **majoré de 14 %** (pas le barème prélevé), argent transmis **aux associés à chaque paiement** et non au propriétaire après le séjour, frais PayDunya sur leur part, remboursement par eux (engagement écrit à obtenir). **Avant** d'ouvrir. | 31 oct. 2026 | Circuit des associés |
 | commission | Si les taux du partenaire sont retenus (10 % sur les appartements, 5 % sur les services) : nouveau barème, à reporter aussi dans `config/paiement.php` et le pré-rendu. | si adopté | Offre du 19 oct. |

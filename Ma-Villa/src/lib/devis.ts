@@ -44,6 +44,10 @@ export interface Devis {
   suivi_le: string | null
   created_at: string
   pdf: string
+  /** Reçu hors du site, et ce qu'il reste à recevoir. */
+  encaisse?: number
+  solde?: number
+  reservation_id?: number | null
 }
 
 export const LIBELLES_STATUT_DEVIS: Record<StatutDevis, string> = {

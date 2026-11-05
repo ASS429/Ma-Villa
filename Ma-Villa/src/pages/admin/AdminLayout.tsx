@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutGrid, Building2, Users, MessageSquare, CreditCard,
-  Menu, X, Sun, Moon, LogOut, ArrowLeft, BellRing, ScrollText, Banknote, Undo2, Send, Palette, ShoppingBag, Inbox, Mail, FileText, PartyPopper, ConciergeBell, CalendarCheck, Contact, ChartColumn,
+  Menu, X, Sun, Moon, LogOut, ArrowLeft, BellRing, ScrollText, Banknote, Undo2, Send, Palette, Receipt, ShoppingBag, Inbox, Mail, FileText, PartyPopper, ConciergeBell, CalendarCheck, Contact, ChartColumn,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
@@ -33,6 +33,8 @@ const ENTREES: Entree[] = [
   { to: '/admin/demandes-particulieres', label: 'Demandes particulières', Icone: PartyPopper },
   // Les devis établis par l'équipe, et ceux que les clients téléchargent en ligne.
   { to: '/admin/devis',        label: 'Devis',           Icone: FileText },
+  // L'argent reçu hors du site, et ce qu'il reste à recevoir.
+  { to: '/admin/reglements',   label: 'Règlements',      Icone: Receipt },
   // Une ligne par personne, compte ou pas : celui qui a laissé son numéro sur un devis.
   { to: '/admin/clients',      label: 'Clients',         Icone: Contact },
   { to: '/admin/utilisateurs', label: 'Utilisateurs',    Icone: Users },

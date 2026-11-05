@@ -69,7 +69,7 @@ class CircuitAssociesController extends Controller
             'client'             => $p->reservation?->client?->name,
             'date_debut'         => $p->reservation?->date_debut,
             'date_fin'           => $p->reservation?->date_fin,
-            'methode'            => $p->methode,
+            'methode'            => $p->hors_ligne ? 'reçu par l’équipe' : $p->methode,
             'paye_le'            => $p->paye_le?->toIso8601String(),
             'montant'            => (int) $p->montant,
             'montant_proprietaire' => (int) $p->montant_proprietaire,
@@ -83,7 +83,7 @@ class CircuitAssociesController extends Controller
         ];
 
         $relations = [
-            'reservation:id,logement_id,user_id,date_debut,date_fin,statut',
+            'reservation:id,logement_id,user_id,date_debut,date_fin,statut,client_nom,client_telephone,client_email',
             'reservation.logement:id,villa_id,nom',
             'reservation.logement.villa:id,user_id,nom',
             'reservation.logement.villa.proprietaire:id,name',

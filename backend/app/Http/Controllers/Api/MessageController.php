@@ -50,6 +50,13 @@ class MessageController extends Controller
     {
         $this->authorize('view', $reservation);
 
+        // Personne ne lirait : ce client n'a pas de compte, donc pas de messagerie.
+        if (! $reservation->user_id) {
+            return response()->json([
+                'message' => 'Ce client n’a pas de compte sur le site : joignez-le à son numéro.',
+            ], 422);
+        }
+
         $donnees = $request->validate(
             ['corps' => 'required|string|max:2000'],
             ['corps.max' => 'Un message fait 2 000 caractères au maximum.']

@@ -2403,3 +2403,33 @@
 .devis-total strong { font-size: 1.3rem; color: var(--accent); font-variant-numeric: tabular-nums; }
 .devis-coche { display: flex; align-items: center; gap: var(--space-2); min-height: 44px; cursor: pointer; }
 .devis-coche input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+/* ── Règlements : l'argent reçu hors du site ─────────────── */
+.reglements { display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-4); }
+.reglements-tete { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.reglements-tete .panneau-titre { margin: 0; }
+.reglements-chiffres { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--space-3); }
+.reglements-chiffres > div { min-width: 0; }
+.reglements-chiffres dt { font: var(--t-caption); color: var(--text-3); }
+.reglements-chiffres dd { margin: 2px 0 0; font: var(--t-body); font-weight: 600; color: var(--text-1); font-variant-numeric: tabular-nums; }
+.reglements-chiffres dd.est-du { color: var(--warning); }
+.reglements-barre { height: 6px; border-radius: 999px; background: var(--bg-elevated); overflow: hidden; }
+.reglements-barre > span { display: block; height: 100%; border-radius: inherit; background: var(--success); }
+.reglements-note { margin: 0; padding: var(--space-3); border-radius: var(--r-md); background: var(--bg-elevated); color: var(--text-2); font: var(--t-body-sm); }
+.reglements-form { display: flex; flex-direction: column; gap: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--border); }
+.reglements-form > p { margin: 0; }
+.reglements-champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-3); align-items: start; }
+.reglements-liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.reglements-liste > li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); padding: var(--space-3) 0; border-top: 1px solid var(--border); }
+.reglements-liste > li.est-annule .reglements-somme { text-decoration: line-through; color: var(--text-3); }
+.reglements-ligne { flex: 1 1 260px; min-width: 0; }
+.reglements-ligne p { margin: 0; overflow-wrap: anywhere; }
+.reglements-somme { font-variant-numeric: tabular-nums; }
+.reglements-liste .reservation-actions { margin-top: 0; padding-top: 0; border-top: 0; }
+@media (max-width: 640px) {
+  .reglements-liste .reservation-actions { flex: 1 1 100%; }
+}
+.reglements-gestes { display: flex; flex-wrap: wrap; gap: var(--space-2); padding-top: var(--space-3); border-top: 1px solid var(--border); }
+.reglements-totaux, .reglements-soldes { margin-bottom: var(--space-4); display: flex; flex-direction: column; gap: var(--space-2); }
+.reglements-soldes .panneau-titre, .reglements-soldes > p { margin: 0; }
+.reservation-acompte { font: var(--t-caption); font-weight: 500; color: var(--warning); }

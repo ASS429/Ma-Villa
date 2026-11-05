@@ -7,6 +7,7 @@ use App\Models\Devis;
 use App\Models\DevisRefuse;
 use App\Models\JournalAdmin;
 use App\Models\Logement;
+use App\Models\Reglement;
 use App\Models\Reservation;
 use App\Models\Tarif;
 use App\Models\User;
@@ -195,15 +196,25 @@ class DevisController extends Controller
         return [
             'devis'       => $devis,
             'en'          => $en,
-            'emetteur'    => ($en ? ['activite' => 'Booking platform · Places to stay in Senegal'] : []) + config('devis.emetteur') + [
-                'telephone' => (string) config('reservations.contact.telephone'),
-                'email'     => (string) config('reservations.contact.email'),
-            ],
+            'emetteur'    => self::emetteur($en),
             'logo'        => DocumentPdf::imageLocale('logo.png'),
             'cachetImage' => DocumentPdf::imageLocale('cachet.png'),
             'enLettres'   => $en ? MontantEnLettres::cfaFrancs((int) $devis->total) : MontantEnLettres::francsCfa((int) $devis->total),
             'sousTitre'   => $villa ? collect([$villa->quartier, $villa->ville])->filter()->unique()->implode(', ') : null,
             'duree'       => self::duree($devis),
+        ];
+    }
+
+    /**
+     * Qui établit le document : le même sur un devis et sur un reçu.
+     *
+     * @return array<string, mixed>
+     */
+    public static function emetteur(bool $en): array
+    {
+        return ($en ? ['activite' => 'Booking platform · Places to stay in Senegal'] : []) + config('devis.emetteur') + [
+            'telephone' => (string) config('reservations.contact.telephone'),
+            'email'     => (string) config('reservations.contact.email'),
         ];
     }
 
@@ -217,7 +228,8 @@ class DevisController extends Controller
             'par_page'  => 'sometimes|integer|min:5|max:100',
         ]);
 
-        $page = Devis::with('villa:id,nom,ville')
+        $page = Devis::with('villa:id,nom,ville', 'reservation:id,montant_total,statut')
+            ->withSum(['reglements as encaisse' => fn ($q) => $q->valide()], 'montant')
             ->when($request->filled('origine'), fn ($q) => $q->where('origine', $request->input('origine')))
             ->when($request->filled('recherche'), function ($q) use ($request) {
                 $terme = '%'.$request->input('recherche').'%';
@@ -260,6 +272,10 @@ class DevisController extends Controller
     {
         $d = $this->valider($request, false);
 
+        if ($refus = $this->refusDeModifierUnDevisRegle($devis, $d)) {
+            return $refus;
+        }
+
         $devis->fill($this->attributs($d, $devis));
         if (array_key_exists('conditions', $d)) {
             $devis->conditions = $d['conditions'];
@@ -275,12 +291,73 @@ class DevisController extends Controller
         }
         $devis->save();
 
+        // Le client d'un dossier sans compte n'existe que là : une faute de frappe
+        // corrigée sur le devis doit aussi arriver chez le propriétaire.
+        if ($devis->reservation_id) {
+            Reservation::whereKey($devis->reservation_id)->whereNull('user_id')->update([
+                'client_nom'       => $devis->client_nom,
+                'client_telephone' => $devis->client_telephone,
+                'client_email'     => $devis->client_email,
+            ]);
+        }
+
         JournalAdmin::consigner($request->user(), 'devis.modifie', $devis, $devis->numero, [
             'statut' => $devis->statut,
             'total'  => $devis->total,
         ], $request->ip());
 
         return response()->json($this->pourLaConsole($devis->load('villa:id,nom,ville')));
+    }
+
+    /**
+     * Une fois de l'argent reçu, le séjour et le montant du devis ne bougent plus : ils
+     * ont bloqué des dates, fixé une commission et figuré sur un reçu remis au client.
+     * Les coordonnées, l'intitulé et les conditions se corrigent encore.
+     *
+     * @param  array<string, mixed>  $d
+     */
+    private function refusDeModifierUnDevisRegle(Devis $devis, array $d): ?JsonResponse
+    {
+        if (! Reglement::where('devis_id', $devis->id)->valide()->exists()) {
+            return null;
+        }
+
+        $actuels = [
+            'villa_id'     => $devis->villa_id,
+            'logement_id'  => $devis->logement_id,
+            'tarif_id'     => $devis->tarif_id,
+            'date_arrivee' => $devis->date_arrivee?->toDateString(),
+            'date_depart'  => $devis->date_depart?->toDateString(),
+            'personnes'    => $devis->personnes,
+        ];
+
+        $change = false;
+        foreach ($actuels as $champ => $valeur) {
+            if (array_key_exists($champ, $d)) {
+                $nouvelle = $d[$champ];
+                $nouvelle = $nouvelle ? (in_array($champ, ['date_arrivee', 'date_depart'], true) ? Carbon::parse($nouvelle)->toDateString() : (string) $nouvelle) : '';
+                $change = $change || $nouvelle !== (string) ($valeur ?? '');
+            }
+        }
+
+        if (isset($d['lignes'])) {
+            [, $total] = Devis::calculer($d['lignes']);
+            $change = $change || $total !== (int) $devis->total;
+        }
+
+        if ($change) {
+            return response()->json([
+                'message' => 'Ce devis a déjà reçu un règlement : son séjour et son montant ne changent plus. Annulez d’abord le règlement, ou établissez un nouveau devis.',
+            ], 409);
+        }
+
+        if (isset($d['statut']) && $d['statut'] !== 'accepte') {
+            return response()->json([
+                'message' => 'Ce devis a reçu un règlement : il reste accepté. Si le client renonce, passez par « Le client annule ».',
+            ], 409);
+        }
+
+        return null;
     }
 
     /**
@@ -292,6 +369,13 @@ class DevisController extends Controller
      */
     public function destroy(Request $request, Devis $devis): JsonResponse
     {
+        // Même annulé, un reçu reste au registre, et il renvoie à ce devis.
+        if (Reglement::where('devis_id', $devis->id)->exists()) {
+            return response()->json([
+                'message' => 'Des règlements sont enregistrés sur ce devis : c’est une pièce de caisse, il ne se supprime pas.',
+            ], 422);
+        }
+
         if ($devis->statut === 'accepte') {
             return response()->json([
                 'message' => 'Ce devis est accepté : c’est une pièce commerciale, gardée dix ans. S’il a été accepté par erreur, changez d’abord son statut.',
@@ -384,7 +468,18 @@ class DevisController extends Controller
     /** @return array<string, mixed> */
     private function pourLaConsole(Devis $devis): array
     {
-        return $devis->toArray() + [
+        // `encaisse` vient du `withSum` de la liste ; sur une fiche seule, on le lit ici.
+        $encaisse = array_key_exists('encaisse', $devis->getAttributes())
+            ? (int) $devis->encaisse
+            : (int) Reglement::where('devis_id', $devis->id)->valide()->sum('montant');
+
+        // Un dossier clos s'arrête à ce qui a été reçu : le solde se lit sur la réservation.
+        $reservation = $devis->loadMissing('reservation:id,montant_total,statut')->reservation;
+        $du = $reservation && $reservation->statut !== 'annulee'
+            ? (int) round((float) $reservation->montant_total)
+            : (int) $devis->total;
+
+        return ['encaisse' => $encaisse, 'solde' => max(0, $du - $encaisse)] + $devis->toArray() + [
             'pdf'            => $devis->urlPdf(),
             'libelle_statut' => Devis::STATUTS[$devis->statut] ?? $devis->statut,
         ];

@@ -6,6 +6,7 @@ use App\Models\Commande;
 use App\Models\DemandeParticuliere;
 use App\Models\DemandeService;
 use App\Models\Devis;
+use App\Models\Reglement;
 use App\Models\Reservation;
 use App\Models\User;
 use Illuminate\Support\Carbon;
@@ -123,6 +124,23 @@ final class FichierClients
                 'lien'        => "/admin/devis/{$d->id}",
                 'hebergement' => $d->villa?->nom ?? $d->titre,
                 'langue'      => $d->langue,
+            ]);
+        }
+
+        // Les coordonnées du devis, pas celles du payeur : un proche qui règle pour
+        // quelqu'un ne doit pas fondre deux personnes en une seule ligne.
+        foreach (Reglement::with('devis:id,client_telephone,client_email', 'villa:id,nom')->get()->reject(fn ($r) => $estTest($r->client_nom)) as $r) {
+            $valide = $r->statut === 'valide';
+            $traces[] = self::trace('reglement', $r->recu_le, [
+                'nom'         => $r->client_nom,
+                'telephone'   => $r->devis?->client_telephone,
+                'email'       => $r->devis?->client_email,
+                'libelle'     => "{$r->numero} · Règlement {$r->libelle_moyen}",
+                'montant'     => $r->montant,
+                'statut'      => $valide ? 'Reçu' : 'Annulé',
+                'lien'        => $r->devis_id ? "/admin/devis/{$r->devis_id}" : '/admin/reglements',
+                'hebergement' => $r->villa?->nom,
+                'langue'      => $r->langue,
             ]);
         }
 
@@ -291,8 +309,10 @@ final class FichierClients
                 'services'     => $types['service'] ?? 0,
                 'reservations' => $types['reservation'] ?? 0,
                 'commandes'    => $types['commande'] ?? 0,
+                'reglements'   => $types['reglement'] ?? 0,
             ],
             'montant_devis'   => (int) collect($traces)->where('type', 'devis')->sum('montant'),
+            'montant_regle'   => (int) collect($traces)->where('type', 'reglement')->where('statut', 'Reçu')->sum('montant'),
             'hebergements'    => collect($traces)->pluck('hebergement')->filter()->unique()->take(6)->values()->all(),
             'evenements'      => collect($traces)->take(self::EVENEMENTS_MAX)->map(fn (array $t) => [
                 'type'    => $t['type'],

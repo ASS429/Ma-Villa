@@ -9,6 +9,7 @@ use App\Models\DemandeService;
 use App\Models\Devis;
 use App\Models\DevisRefuse;
 use App\Models\Paiement;
+use App\Models\Reglement;
 use App\Models\Reservation;
 use App\Models\User;
 use App\Models\Villa;
@@ -32,6 +33,11 @@ use Illuminate\Support\Str;
  * confidentialité promet qu'aucune mesure commerciale de navigation n'est faite,
  * et aucun chiffre ici n'en dépend. Une réservation refusée en ligne ne laisse pas
  * de trace non plus ; seuls les devis refusés sont comptés (`DevisRefuse`).
+ *
+ * Un règlement reçu à la main crée une réservation et alimente un paiement, pour que
+ * le reversement fonctionne. Il ne doit pas compter deux fois ici : la réservation
+ * sans compte n'est pas une demande de plus (le devis en était une), et l'argent se
+ * lit au registre (`Reglement`), à la date de chaque somme, jamais sur le paiement cumulé.
  */
 final class Pilotage
 {
@@ -88,17 +94,24 @@ final class Pilotage
     {
         $estTest = fn (?string $nom) => Str::contains((string) $nom, self::MARQUE_TEST);
 
+        $paiements = Paiement::with('reservation:id,logement_id,statut,date_debut,date_fin,client_nom', 'reservation.logement:id,villa_id')
+            ->get(['id', 'reservation_id', 'statut', 'montant', 'commission', 'methode', 'paye_le', 'created_at', 'hors_ligne', 'solde'])
+            ->reject(fn ($p) => $estTest($p->reservation?->client_nom))->values();
+        $reglements = Reglement::valide()->get(['id', 'reservation_id', 'villa_id', 'montant', 'moyen', 'recu_le', 'client_nom'])
+            ->reject(fn ($r) => $estTest($r->client_nom))->values();
+
         return [
-            'devis' => Devis::get(['id', 'numero', 'origine', 'statut', 'total', 'suivi_le', 'created_at', 'valable_jusqu_au', 'villa_id', 'langue', 'client_nom'])
+            'devis' => Devis::get(['id', 'numero', 'origine', 'statut', 'total', 'suivi_le', 'created_at', 'valable_jusqu_au', 'villa_id', 'langue', 'client_nom', 'reservation_id', 'date_arrivee'])
                 ->reject(fn ($x) => $estTest($x->client_nom))->values(),
             'particulieres' => DemandeParticuliere::get(['id', 'type', 'statut', 'traitee_le', 'created_at', 'villa_id', 'langue', 'nom'])
                 ->reject(fn ($x) => $estTest($x->nom))->values(),
             'services' => DemandeService::get(['id', 'prestation', 'statut', 'traitee_le', 'created_at', 'langue', 'nom'])
                 ->reject(fn ($x) => $estTest($x->nom))->values(),
             'reservations' => Reservation::with('logement:id,villa_id')
-                ->get(['id', 'logement_id', 'statut', 'montant_total', 'created_at', 'date_debut', 'date_fin']),
-            'paiements' => Paiement::with('reservation:id,logement_id', 'reservation.logement:id,villa_id')
-                ->get(['id', 'reservation_id', 'statut', 'montant', 'commission', 'methode', 'paye_le', 'created_at']),
+                ->get(['id', 'user_id', 'logement_id', 'statut', 'montant_total', 'created_at', 'date_debut', 'date_fin', 'client_nom'])
+                ->reject(fn ($r) => $estTest($r->client_nom))->values(),
+            'paiements' => $paiements,
+            'encaissements' => self::encaissements($paiements, $reglements),
             'commandes' => Commande::get(['id', 'statut', 'statut_paiement', 'montant_total', 'created_at']),
             'refus' => DevisRefuse::get(['id', 'villa_id', 'motif', 'created_at']),
             'comptes' => User::get(['id', 'role', 'created_at']),
@@ -109,6 +122,44 @@ final class Pilotage
             ])->withCount('photos', 'avis')->withAvg('avis', 'note')
                 ->get(['id', 'nom', 'ville', 'quartier', 'statut', 'user_id', 'description', 'latitude', 'longitude', 'position_approximative', 'created_at']),
         ];
+    }
+
+    /**
+     * Tout l'argent reçu, une ligne par somme : paiements du site et registre.
+     *
+     * La commission d'un règlement est la part de sa somme dans le paiement du dossier :
+     * c'est elle qui est figée, arrondie sur l'ensemble du séjour.
+     *
+     * @return Collection<int, object{villa_id: ?int, montant: int, commission: int, date: mixed, moyen: string}>
+     */
+    private static function encaissements(Collection $paiements, Collection $reglements): Collection
+    {
+        $noms = collect(config('paiement.moyens', []))->pluck('nom', 'cle');
+        $dossiers = $paiements->where('hors_ligne', true)->keyBy('reservation_id');
+
+        $duSite = $paiements->where('statut', 'reussi')->where('hors_ligne', false)
+            ->map(fn (Paiement $p) => (object) [
+                'villa_id'   => $p->reservation?->logement?->villa_id,
+                'montant'    => (int) $p->montant,
+                'commission' => (int) $p->commission,
+                'date'       => $p->paye_le,
+                'moyen'      => (string) ($noms[$p->methode] ?? $p->methode),
+            ]);
+
+        $duRegistre = $reglements->map(function (Reglement $r) use ($dossiers) {
+            $dossier = $dossiers[$r->reservation_id] ?? null;
+            $part = $dossier && (float) $dossier->montant > 0 ? $r->montant / (float) $dossier->montant : 0;
+
+            return (object) [
+                'villa_id'   => $r->villa_id,
+                'montant'    => $r->montant,
+                'commission' => $dossier ? (int) floor((float) $dossier->commission * $part) : 0,
+                'date'       => $r->recu_le,
+                'moyen'      => $r->libelle_moyen,
+            ];
+        });
+
+        return $duSite->concat($duRegistre)->values();
     }
 
     private static function entre(Collection $lignes, string $champ, Carbon $a, Carbon $b): Collection
@@ -133,8 +184,8 @@ final class Pilotage
         $particulieres = self::entre($d['particulieres'], 'created_at', $a, $b);
         $services = self::entre($d['services'], 'created_at', $a, $b);
         $reservations = self::entre($d['reservations'], 'created_at', $a, $b);
-        $encaisse = self::entre($d['paiements']->where('statut', 'reussi'), 'paye_le', $a, $b);
-        $essais = self::entre($d['paiements'], 'created_at', $a, $b);
+        $encaisse = self::entre($d['encaissements'], 'date', $a, $b);
+        $essais = self::entre($d['paiements']->where('hors_ligne', false), 'created_at', $a, $b);
         $commandes = self::entre($d['commandes'], 'created_at', $a, $b)->where('statut', '!=', 'annulee');
         $comptes = self::entre($d['comptes'], 'created_at', $a, $b);
 
@@ -151,11 +202,14 @@ final class Pilotage
         }
         $aRepondre = $enLigne->count() + $particulieres->count() + $services->count();
         $confirmees = $reservations->where('statut', 'confirmee');
+        // Celles qu'un client a demandées sur le site. Les autres viennent d'un devis, déjà compté.
+        $duSite = $reservations->whereNotNull('user_id');
+        $confirmeesDuSite = $duSite->where('statut', 'confirmee');
         $payees = $d['paiements']->where('statut', 'reussi')->pluck('reservation_id')->flip();
         $decides = $devis->whereIn('statut', ['accepte', 'refuse'])->count();
 
         return [
-            'demandes'             => $aRepondre + $reservations->count(),
+            'demandes'             => $aRepondre + $duSite->count(),
             'demandes_a_repondre'  => $aRepondre,
             'devis_en_ligne'       => $enLigne->count(),
             'particulieres'        => $particulieres->count(),
@@ -182,8 +236,12 @@ final class Pilotage
             'delai_median'         => $delais->isEmpty() ? null : round((float) $delais->median(), 1),
             'repondues'            => $repondues,
             'taux_reponse'         => $aRepondre ? $repondues / $aRepondre : null,
-            'accords'              => $enLigne->where('statut', 'accepte')->count() + $confirmees->count(),
-            'payees'               => $reservations->filter(fn ($r) => isset($payees[$r->id]))->count(),
+            'accords'              => $devis->where('statut', 'accepte')->count() + $confirmeesDuSite->count(),
+            // L'entonnoir suit les demandes reçues : un devis fait par l'équipe n'y est pas entré.
+            'accords_sur_demandes' => $enLigne->where('statut', 'accepte')->count() + $confirmeesDuSite->count(),
+            'confirmees_du_site'   => $confirmeesDuSite->count(),
+            'payees'               => $duSite->filter(fn ($r) => isset($payees[$r->id]))->count()
+                + $enLigne->filter(fn ($x) => $x->reservation_id && isset($payees[$x->reservation_id]))->count(),
             'avis_nouveaux'        => Avis::whereBetween('created_at', [$a, $b])->count(),
             'devis_refuses'        => self::entre($d['refus'], 'created_at', $a, $b)->count(),
         ];
@@ -220,10 +278,10 @@ final class Pilotage
             $ligne('activite', 'devis_montant', 'Montant des devis', 'fcfa', 'haut', 'Ce qui a été proposé, pas ce qui est encaissé.'),
             $ligne('activite', 'nouveaux_clients', 'Nouveaux comptes clients', 'nombre', 'haut'),
 
-            $ligne('resultat', 'accords', 'Accords obtenus', 'nombre', 'haut', 'Devis en ligne acceptés et réservations confirmées.'),
+            $ligne('resultat', 'accords', 'Accords obtenus', 'nombre', 'haut', 'Devis acceptés et réservations en ligne confirmées.'),
             $ligne('resultat', 'volume_confirme', 'Réservations confirmées', 'fcfa', 'haut'),
-            $ligne('resultat', 'encaisse', 'Encaissé', 'fcfa', 'haut', 'Paiements réussis sur la période.'),
-            $ligne('resultat', 'commission', 'Commission', 'fcfa', 'haut', 'Ce qui nous revient sur ces paiements.'),
+            $ligne('resultat', 'encaisse', 'Encaissé', 'fcfa', 'haut', 'Paiements en ligne et règlements enregistrés, à la date où l’argent est entré.'),
+            $ligne('resultat', 'commission', 'Commission', 'fcfa', 'haut', 'Ce qui nous revient sur ces sommes, avant remboursement éventuel.'),
             $ligne('resultat', 'boutique', 'Boutique', 'fcfa', 'haut', 'Commandes non annulées.'),
 
             $ligne('qualite', 'taux_reponse', 'Demandes suivies', 'pourcent', 'haut', 'Part des demandes marquées suivies ou traitées dans la console.'),
@@ -237,7 +295,9 @@ final class Pilotage
             $etat('proprietaires', 'Propriétaires', 'nombre', $d['comptes']->where('role', 'proprietaire')->count()),
             $etat('clients', 'Comptes clients', 'nombre', $d['comptes']->where('role', 'client')->count()),
             $etat('devis_ouverts', 'Devis en cours de validité', 'fcfa', (int) $ouverts->sum('total'), "{$ouverts->count()} devis sans réponse du client."),
-            $etat('du_proprietaires', 'Dû aux propriétaires', 'fcfa', (int) Paiement::query()->exigible()->sum('montant_proprietaire'), 'Séjours terminés, pas encore reversés.'),
+            $etat('du_proprietaires', 'Dû aux propriétaires', 'fcfa', (int) Paiement::query()->exigible()->sum('montant_proprietaire'), 'Séjours terminés et soldés, pas encore reversés.'),
+            $etat('detenu', 'Détenu pour les propriétaires', 'fcfa', (int) (Paiement::query()->exigible()->sum('montant_proprietaire') + Paiement::query()->aVenir()->sum('montant_proprietaire') + Paiement::query()->retenuFauteDeSolde()->sum('montant_proprietaire')), 'Leur part de l’argent reçu : dû, à venir ou retenu en attendant un solde.'),
+            $etat('a_encaisser', 'Reste à encaisser', 'fcfa', (int) Paiement::query()->soldeOuvert()->sum('solde'), 'Soldes des dossiers où un acompte a été reçu.'),
         ];
     }
 
@@ -289,8 +349,8 @@ final class Pilotage
         $compter($d['devis'], 'created_at', function (&$l, $x) { $l['devis_montant'] += (int) $x->total; });
         $compter($d['particulieres'], 'created_at', function (&$l) { $l['particulieres']++; });
         $compter($d['services'], 'created_at', function (&$l) { $l['services']++; });
-        $compter($d['reservations'], 'created_at', function (&$l) { $l['reservations']++; });
-        $compter($d['paiements']->where('statut', 'reussi'), 'paye_le', function (&$l, $x) { $l['encaisse'] += (int) $x->montant; });
+        $compter($d['reservations']->whereNotNull('user_id'), 'created_at', function (&$l) { $l['reservations']++; });
+        $compter($d['encaissements'], 'date', function (&$l, $x) { $l['encaisse'] += (int) $x->montant; });
         $compter($d['comptes'], 'created_at', function (&$l) { $l['comptes']++; });
         $compter($d['refus'], 'created_at', function (&$l) { $l['refus']++; });
 
@@ -305,8 +365,8 @@ final class Pilotage
     {
         return [
             ['cle' => 'demandes', 'libelle' => 'Demandes reçues', 'valeur' => (int) $m['demandes']],
-            ['cle' => 'repondues', 'libelle' => 'Suivies par l’équipe', 'valeur' => (int) $m['repondues'] + (int) $m['reservations_confirmees']],
-            ['cle' => 'accords', 'libelle' => 'Accords obtenus', 'valeur' => (int) $m['accords']],
+            ['cle' => 'repondues', 'libelle' => 'Suivies par l’équipe', 'valeur' => (int) $m['repondues'] + (int) $m['confirmees_du_site']],
+            ['cle' => 'accords', 'libelle' => 'Accords sur ces demandes', 'valeur' => (int) $m['accords_sur_demandes']],
             ['cle' => 'payees', 'libelle' => 'Réservations payées', 'valeur' => (int) $m['payees']],
         ];
     }
@@ -332,6 +392,10 @@ final class Pilotage
             'statuts_devis' => $classer($devis->map(fn ($x) => Devis::STATUTS[$x->statut] ?? $x->statut)),
             'refus'       => $classer(self::entre($d['refus'], 'created_at', $du, $au)->map(fn ($x) => DevisRefuse::MOTIFS[$x->motif] ?? $x->motif)),
             'origines_devis' => $classer($devis->map(fn ($x) => $x->origine === 'site' ? 'En ligne' : 'Par l’équipe')),
+            // Des francs, pas des lignes : c'est ce qui dit quel canal porte la caisse.
+            'moyens'      => self::entre($d['encaissements'], 'date', $du, $au)->groupBy('moyen')
+                ->map(fn (Collection $l, $nom) => ['nom' => (string) $nom, 'valeur' => (int) $l->sum('montant')])
+                ->sortByDesc('valeur')->values()->all(),
             'langues'     => $classer(collect()
                 ->concat($enLigne->pluck('langue'))
                 ->concat($particulieres->pluck('langue'))
@@ -353,7 +417,7 @@ final class Pilotage
             ->concat(self::entre($d['devis']->where('origine', 'site'), 'created_at', $du, $au))
             ->concat(self::entre($d['particulieres'], 'created_at', $du, $au))
             ->concat(self::entre($d['services'], 'created_at', $du, $au))
-            ->concat(self::entre($d['reservations'], 'created_at', $du, $au));
+            ->concat(self::entre($d['reservations']->whereNotNull('user_id'), 'created_at', $du, $au));
 
         foreach ($lignes as $x) {
             $date = Carbon::parse($x->created_at);
@@ -375,8 +439,7 @@ final class Pilotage
         $particulieres = self::entre($d['particulieres'], 'created_at', $du, $au)->groupBy('villa_id');
         $reservations = self::entre($d['reservations'], 'created_at', $du, $au)
             ->groupBy(fn ($r) => $r->logement?->villa_id);
-        $encaisse = self::entre($d['paiements']->where('statut', 'reussi'), 'paye_le', $du, $au)
-            ->groupBy(fn ($p) => $p->reservation?->logement?->villa_id);
+        $encaisse = self::entre($d['encaissements'], 'date', $du, $au)->groupBy('villa_id');
         $refus = self::entre($d['refus'], 'created_at', $du, $au)->countBy('villa_id');
 
         $lignes = [];
@@ -385,7 +448,7 @@ final class Pilotage
             $sesDemandes = $particulieres[$v->id] ?? collect();
             $sesResas = $reservations[$v->id] ?? collect();
 
-            $demandes = $sesDevis->where('origine', 'site')->count() + $sesDemandes->count() + $sesResas->count();
+            $demandes = $sesDevis->where('origine', 'site')->count() + $sesDemandes->count() + $sesResas->whereNotNull('user_id')->count();
             $sesRefus = (int) ($refus[$v->id] ?? 0);
             if ($v->statut !== 'validee' && $demandes === 0 && $sesRefus === 0) {
                 continue;
@@ -522,6 +585,36 @@ final class Pilotage
                 "La moitié des demandes attendent plus de {$m['delai_median']} h, alors que le client compare plusieurs annonces en même temps.",
                 'Désigner une personne de permanence, et activer les notifications de la console sur son téléphone.',
                 '/admin/notifications');
+        }
+
+        // L'argent : ce qui manque se voit ici avant de manquer au propriétaire.
+        $ouverts = $d['paiements']->filter(fn ($p) => $p->hors_ligne && $p->statut === 'reussi' && (float) $p->solde > 0
+            && $p->reservation && $p->reservation->statut !== 'annulee');
+
+        $termines = $ouverts->filter(fn ($p) => $p->reservation->date_fin->lte(now()));
+        if ($termines->isNotEmpty()) {
+            $ajouter('haute', self::pluriel($termines->count(), 'séjour terminé avec un solde impayé', 'séjours terminés avec un solde impayé'),
+                'Reste dû : '.self::fcfa((int) $termines->sum('solde')).'. Tant que le dossier est ouvert, le propriétaire n’est pas payé.',
+                'Relancer le client, ou clore le dossier au montant reçu depuis le devis.',
+                '/admin/reglements');
+        }
+
+        $prochains = $ouverts->filter(fn ($p) => $p->reservation->date_fin->isFuture()
+            && $p->reservation->date_debut->lte(now()->addDays(3)));
+        if ($prochains->isNotEmpty()) {
+            $ajouter('haute', self::pluriel($prochains->count(), 'client attendu sous trois jours n’a pas tout réglé', 'clients attendus sous trois jours n’ont pas tout réglé'),
+                'Reste à recevoir : '.self::fcfa((int) $prochains->sum('solde')).'.',
+                'Demander le solde avant l’arrivée : c’est plus difficile une fois les clés remises.',
+                '/admin/reglements');
+        }
+
+        $sansArgent = $d['devis']->where('statut', 'accepte')->whereNull('reservation_id')
+            ->filter(fn ($x) => $x->date_arrivee && Carbon::parse($x->date_arrivee)->betweenIncluded(now()->startOfDay(), now()->addDays(7)));
+        if ($sansArgent->isNotEmpty()) {
+            $ajouter('moyenne', self::pluriel($sansArgent->count(), 'devis accepté sans règlement, arrivée sous sept jours', 'devis acceptés sans règlement, arrivée sous sept jours'),
+                'Un devis ne bloque aucune date : tant que rien n’est encaissé, un autre client peut les prendre.',
+                'Demander un acompte, et l’enregistrer sur le devis.',
+                '/admin/devis');
         }
 
         $expires = $d['devis']->where('statut', 'emis')

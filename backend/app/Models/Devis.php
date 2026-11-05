@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -51,6 +52,18 @@ class Devis extends Model
             'valable_jusqu_au' => 'date:Y-m-d',
             'suivi_le'         => 'datetime',
         ];
+    }
+
+    /** L'argent reçu sur ce devis, annulé compris : c'est un registre. */
+    public function reglements(): HasMany
+    {
+        return $this->hasMany(Reglement::class);
+    }
+
+    /** Posée par le premier règlement : un devis ne bloque aucune date avant cela. */
+    public function reservation(): BelongsTo
+    {
+        return $this->belongsTo(Reservation::class);
     }
 
     public function villa(): BelongsTo

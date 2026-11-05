@@ -470,6 +470,16 @@ class VillaController extends Controller
     public function destroy(Villa $villa): JsonResponse
     {
         $this->authorize('delete', $villa);
+
+        // La suppression emporte logements, réservations et paiements : l'argent reçu sur
+        // cette annonce disparaîtrait de ce qu'on doit au propriétaire ou au client.
+        if (\App\Models\Paiement::where('statut', 'reussi')
+            ->whereHas('reservation.logement', fn ($q) => $q->where('villa_id', $villa->id))->exists()) {
+            return response()->json([
+                'message' => 'Cette annonce a des réservations payées : elle ne se supprime pas. Retirez-la plutôt de la vente.',
+            ], 409);
+        }
+
         $villa->delete();
 
         return response()->json(['message' => 'Villa supprimée.']);

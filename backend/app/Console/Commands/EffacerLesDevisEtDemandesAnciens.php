@@ -5,6 +5,8 @@ namespace App\Console\Commands;
 use App\Models\DemandeParticuliere;
 use App\Models\Devis;
 use App\Models\DevisRefuse;
+use App\Models\Reglement;
+use App\Models\Reservation;
 use Illuminate\Console\Command;
 
 /**
@@ -41,6 +43,13 @@ class EffacerLesDevisEtDemandesAnciens extends Command
         $demandes = DemandeParticuliere::where('created_at', '<', now()->subYears(self::ANS_SANS_SUITE))->delete();
 
         DevisRefuse::where('created_at', '<', now()->subYears(self::ANS_SANS_SUITE))->delete();
+
+        // Les pièces de caisse suivent les devis acceptés, et le client sans compte aussi :
+        // ses coordonnées n'existent que sur sa réservation.
+        $limite = now()->subYears(self::ANS_ACCEPTES);
+        Reglement::whereDate('recu_le', '<', $limite->toDateString())->delete();
+        Reservation::whereNull('user_id')->whereDate('date_fin', '<', $limite->toDateString())
+            ->update(['client_nom' => null, 'client_telephone' => null, 'client_email' => null]);
 
         $this->info("{$acceptes} devis accepté(s), {$sansSuite} devis sans suite et {$demandes} demande(s) particulière(s) effacés.");
 

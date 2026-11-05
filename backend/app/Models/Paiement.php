@@ -27,6 +27,8 @@ class Paiement extends Model
             'part_passetemps'      => 'decimal:2',
             'transmis_le'          => 'datetime',
             'transmis_montant'     => 'decimal:2',
+            'hors_ligne'           => 'boolean',
+            'solde'                => 'decimal:2',
         ];
     }
 
@@ -89,12 +91,40 @@ class Paiement extends Model
         // Le circuit des associés ne doit jamais apparaître ici : son argent
         // leur est transmis à chaque paiement, le reverser aussi au
         // propriétaire après le séjour, ce serait payer deux fois.
+        //
+        // `solde` : un acompte reçu à la main ne déclenche rien. Un versement n'est lié
+        // qu'une fois à un paiement : verser sur l'acompte laisserait le reste dû pour toujours.
         return $query->abouti()
             ->where('circuit', 'direct')
             ->whereNull('reversement_id')
+            ->where('solde', '<=', 0)
             ->whereHas('reservation', fn (Builder $q) => $q
                 ->where('statut', '!=', 'annulee')
                 ->whereDate('date_fin', '<=', now()->toDateString()));
+    }
+
+    /**
+     * Séjour terminé, mais le client n'a pas tout payé : la part reçue reste chez nous,
+     * ni à venir ni exigible, jusqu'au solde ou à la clôture du dossier.
+     */
+    public function scopeRetenuFauteDeSolde(Builder $query): Builder
+    {
+        return $query->abouti()
+            ->where('circuit', 'direct')
+            ->whereNull('reversement_id')
+            ->where('solde', '>', 0)
+            ->whereHas('reservation', fn (Builder $q) => $q
+                ->where('statut', '!=', 'annulee')
+                ->whereDate('date_fin', '<=', now()->toDateString()));
+    }
+
+    /** Reçu à la main, et le client doit encore quelque chose. */
+    public function scopeSoldeOuvert(Builder $query): Builder
+    {
+        return $query->abouti()
+            ->where('hors_ligne', true)
+            ->where('solde', '>', 0)
+            ->whereHas('reservation', fn (Builder $q) => $q->where('statut', '!=', 'annulee'));
     }
 
     /** Encaissé et acquis au propriétaire, mais le séjour n'est pas fini. */
@@ -140,13 +170,15 @@ class Paiement extends Model
      * Encaissé sur une annonce du circuit des associés, et pas encore transmis.
      *
      * Une réservation annulée en sort : son argent attend la décision de
-     * remboursement (« Ce qui attend »), pas une transmission.
+     * remboursement (« Ce qui attend »), pas une transmission. Un acompte reçu à
+     * la main n'y entre qu'une fois soldé : une transmission est unique.
      */
     public function scopeATransmettre(Builder $query): Builder
     {
         return $query->abouti()
             ->where('circuit', 'associe')
             ->whereNull('transmis_le')
+            ->where('solde', '<=', 0)
             ->whereHas('reservation', fn (Builder $q) => $q->where('statut', '!=', 'annulee'));
     }
 

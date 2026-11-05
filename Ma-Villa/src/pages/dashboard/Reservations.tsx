@@ -12,6 +12,7 @@ import { useRequete } from '../../lib/useRequete'
 import ListeConsole from '../../components/console/ListeConsole'
 import { messageErreur } from '../../lib/erreurs'
 import { fcfa, dateCourte, nuits, aujourdhui } from '../../lib/format'
+import { lienAppel } from '../../lib/contact'
 import { unitesSejour } from '../../lib/prix'
 import type { TypeTarif } from '../../types'
 import Button, { ButtonLink } from '../../components/ui/Button'
@@ -25,13 +26,18 @@ interface Reservation {
   nb_personnes: number
   montant_total: number
   statut: 'en_attente' | 'confirmee' | 'annulee'
-  client?: { id: number; name: string; email: string }
+  /** Nul pour un client qui a réglé auprès de l'équipe sans avoir de compte. */
+  user_id?: number | null
+  client?: { id: number | null; name: string; email: string | null; phone?: string | null }
   logement: { nom: string; villa: { id: number; nom: string; encaisse_par_la_plateforme?: boolean } }
   tarif: { type_tarif: TypeTarif }
   paiement?: {
     statut: 'en_attente' | 'reussi' | 'echoue'
     reference: string | null
     paye_le: string | null
+    /** Reçu par l'équipe, et ce que le client doit encore. */
+    solde?: number | string
+    hors_ligne?: boolean
   } | null
   /**
    * Un client qui a payé **demande** l'annulation, il ne l'impose plus : la
@@ -239,19 +245,28 @@ export default function Reservations() {
                 <div className="reservation-bas">
                   {/* Le client n'a pas à relire son propre nom sur chaque carte. */}
                   {r.client && r.client.id !== user?.id ? (
-                    <p className="reservation-client">{r.client.name} · {r.client.email}</p>
+                    <p className="reservation-client">
+                      {r.client.name}
+                      {r.client.phone && <> · <a href={lienAppel(r.client.phone)} className="underline underline-offset-2">{r.client.phone}</a></>}
+                      {r.client.email && ` · ${r.client.email}`}
+                    </p>
                   ) : <span />}
 
                   <p className="reservation-montant">
                     {/* Le propriétaire doit voir aussi vite que le client si
                         l'argent est arrivé : c'est ce qui décide s'il remet
                         les clés. */}
-                    {r.paiement?.statut === 'reussi' && (
-                      <span className="reservation-paye">✓ Payé</span>
-                    )}
+                    {r.paiement?.statut === 'reussi' && (Number(r.paiement.solde ?? 0) > 0
+                      // Un acompte n'est pas « payé » : c'est ce qui décide des clés.
+                      ? <span className="reservation-acompte">Acompte reçu · reste {fcfa(Number(r.paiement.solde))}</span>
+                      : <span className="reservation-paye">✓ Payé</span>)}
                     {fcfa(r.montant_total)}
                   </p>
                 </div>
+
+                {estProprietaire && r.paiement?.hors_ligne && (
+                  <p className="reservation-logement">Réglé auprès de l’équipe PasseTemps, qui reçoit l’argent et vous verse votre part après le séjour.</p>
+                )}
 
                 {r.annulation_demandee_le && r.statut !== 'annulee' && (
                   <p className="reservation-demande">
@@ -267,16 +282,19 @@ export default function Reservations() {
                       publique, c'est par ici que tout se demande. Le lien est
                       donc present sur chaque carte, y compris annulee : un
                       remboursement se discute apres coup. */}
-                  <Link
-                    to={`/dashboard/reservations/${r.id}/messages`}
-                    className="btn btn-secondaire btn-sm"
-                  >
-                    <MessageSquare size={15} aria-hidden="true" />
-                    <span>Messages</span>
-                    {(parReservation[r.id] ?? 0) > 0 && (
-                      <span className="console-pastille">{parReservation[r.id]}</span>
-                    )}
-                  </Link>
+                  {/* Un client sans compte n'a pas de messagerie : on l'appelle. */}
+                  {r.user_id !== null && (
+                    <Link
+                      to={`/dashboard/reservations/${r.id}/messages`}
+                      className="btn btn-secondaire btn-sm"
+                    >
+                      <MessageSquare size={15} aria-hidden="true" />
+                      <span>Messages</span>
+                      {(parReservation[r.id] ?? 0) > 0 && (
+                        <span className="console-pastille">{parReservation[r.id]}</span>
+                      )}
+                    </Link>
+                  )}
 
                   {/* Le formulaire d'avis vit sur la fiche, réservé à qui a
                       séjourné : rien n'y menait depuis la réservation. */}

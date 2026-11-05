@@ -36,7 +36,7 @@ class ReservationController extends Controller
         //
         // Colonnes choisies une par une : le jeton du prestataire et la
         // répartition de commission n'ont rien à faire dans une liste.
-        $paiement = 'paiement:id,reservation_id,statut,reference,montant,paye_le';
+        $paiement = 'paiement:id,reservation_id,statut,reference,montant,paye_le,solde,hors_ligne';
 
         // Le client n'est chargé que par colonnes : son téléphone n'apparaît
         // qu'une fois la réservation confirmée, via `revelerLesCoordonnees()`.
@@ -315,6 +315,16 @@ class ReservationController extends Controller
 
         $reservation->update(['statut' => $request->statut]);
 
+        // Le propriétaire ou l'équipe annule un séjour déjà payé : l'argent est chez nous,
+        // et cette réservation sort du reversement. Sans cette ligne, plus aucun écran ne
+        // disait qu'il fallait le rendre.
+        if ($request->statut === 'annulee' && $aPaye && $reservation->annulation_demandee_le === null) {
+            $reservation->update([
+                'annulation_demandee_le' => now(),
+                'annulation_motif' => $request->input('motif') ?: 'Annulée par '.($request->user()->role === 'admin' ? 'l’équipe' : 'le propriétaire').', après paiement.',
+            ]);
+        }
+
         // Le client doit apprendre la décision autrement qu'en rouvrant le site.
         // Inutile de se notifier soi-même quand c'est lui qui annule.
         if ($request->user()->id !== $reservation->user_id) {
@@ -354,7 +364,9 @@ class ReservationController extends Controller
      */
     private function notifier(?object $destinataire, object $notification): void
     {
-        if (! $destinataire) {
+        // Un client sans compte n'est pas enregistré : une notification en file ne
+        // saurait pas le retrouver. L'équipe le joint par son numéro.
+        if (! $destinataire || ! $destinataire->exists) {
             return;
         }
 

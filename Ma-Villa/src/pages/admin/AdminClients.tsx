@@ -16,7 +16,7 @@ import Pagination from '../../components/console/Pagination'
 import ListeConsole from '../../components/console/ListeConsole'
 
 interface Evenement {
-  type: 'compte' | 'devis' | 'demande' | 'service' | 'reservation' | 'commande'
+  type: 'compte' | 'devis' | 'demande' | 'service' | 'reservation' | 'commande' | 'reglement'
   date: string | null
   libelle: string
   detail: string | null
@@ -35,7 +35,7 @@ interface Client {
   premier_contact: string | null
   dernier_contact: string | null
   langue: 'fr' | 'en' | null
-  nombres: { devis: number; demandes: number; services: number; reservations: number; commandes: number }
+  nombres: { devis: number; demandes: number; services: number; reservations: number; commandes: number; reglements?: number }
   montant_devis: number
   hebergements: string[]
   evenements: Evenement[]

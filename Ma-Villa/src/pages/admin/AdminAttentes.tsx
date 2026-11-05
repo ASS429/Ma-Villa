@@ -26,6 +26,7 @@ interface Ligne {
 interface Fonds {
   exigible: number
   a_venir: number
+  retenu?: number
   detenus: number
   non_versable: number
   automatique: boolean
@@ -145,6 +146,12 @@ export default function AdminAttentes() {
               <dt>Séjours en cours</dt>
               <dd>{fcfaCourt(fonds.a_venir)}</dd>
             </div>
+            {(fonds.retenu ?? 0) > 0 && (
+              <div>
+                <dt>Solde attendu</dt>
+                <dd>{fcfaCourt(fonds.retenu ?? 0)}</dd>
+              </div>
+            )}
           </dl>
 
           {fonds.non_versable > 0 && (

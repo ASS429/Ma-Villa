@@ -81,7 +81,9 @@ class ReversementController extends Controller
             ]);
 
         return response()->json([
-            'a_venir'            => $part('aVenir'),
+            // Ce qui est retenu en attendant un solde reste à venir pour lui : c'est
+            // déjà sa part, et ce n'est pas à lui de courir après le client.
+            'a_venir'            => $part('aVenir') + $part('retenuFauteDeSolde'),
             'du'                 => $part('exigible'),
             // Seuls les versements aboutis comptent : afficher un versement en
             // cours comme recu ferait chercher au proprietaire un argent qui
@@ -419,8 +421,11 @@ class ReversementController extends Controller
             return 'annule';
         }
 
-        return $paiement->reservation && $paiement->reservation->date_fin > now()->toDateString()
-            ? 'a_venir'
-            : 'du';
+        if ($paiement->reservation && $paiement->reservation->date_fin > now()->toDateString()) {
+            return 'a_venir';
+        }
+
+        // Séjour fini, mais le client n'a pas tout payé : rien n'est encore dû.
+        return (float) $paiement->solde > 0 ? 'solde' : 'du';
     }
 }

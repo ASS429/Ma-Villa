@@ -12,6 +12,9 @@ Rien d'urgent ; ce qu'on a vu passer et qu'il ne faut pas perdre.
 - **Les questions qui reviennent dans les demandes.** Événements autorisés, capacité en journée,
   traiteur extérieur : les clients les posent à chaque fois, et il faut rappeler le propriétaire.
   Des champs par annonce, remplis une fois, répondraient sans appel et rempliraient les fiches.
+- **Lier un règlement à un compte client existant.** Un client qui a déjà un compte et qui règle
+  auprès de l'équipe ne voit pas ce séjour dans son espace : on ne rapproche pas un compte sur un
+  simple numéro, l'identité n'étant pas vérifiée. Le dossier reste complet dans la console.
 - **Ouvrir le classeur du pilotage dans le vrai Excel.** Il est vérifié avec un lecteur
   indépendant (openpyxl), pas avec Excel, absent de la machine de développement.
 

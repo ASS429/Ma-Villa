@@ -58,6 +58,7 @@ class AttentesController extends Controller
             $this->annoncesAValider(),
             $this->brouillonsBloques(),
             $this->annulationsDemandees(),
+            $this->soldesAttendus(),
             $this->versementsDus(),
             $this->versementsEnPanne(),
             $this->commandesARembourser(),
@@ -328,6 +329,39 @@ class AttentesController extends Controller
         ];
     }
 
+    /**
+     * Des acomptes reçus à la main, et le reste qui n'arrive pas. Tant qu'un dossier reste
+     * ouvert, le propriétaire n'est pas payé : rien d'autre ne le rappellerait.
+     */
+    private function soldesAttendus(): ?array
+    {
+        $aujourdhui = now()->toDateString();
+        $dossiers = Paiement::query()->soldeOuvert()
+            ->whereHas('reservation', fn ($q) => $q->whereDate('date_debut', '<=', now()->addDays(3)->toDateString()))
+            ->with('reservation:id,date_fin')
+            ->get();
+
+        if ($dossiers->isEmpty()) {
+            return null;
+        }
+
+        $compte = $dossiers->count();
+        $termines = $dossiers->filter(fn (Paiement $p) => $p->reservation->date_fin->toDateString() <= $aujourdhui)->count();
+        $montant = number_format((float) $dossiers->sum('solde'), 0, ',', "\u{00A0}");
+
+        return [
+            'cle'          => 'soldes',
+            'gravite'      => $termines > 0 ? 'urgent' : 'action',
+            'compte'       => $compte,
+            'titre'        => $compte === 1
+                ? 'Un client doit encore le solde de son séjour'
+                : "{$compte} clients doivent encore le solde de leur séjour",
+            'detail'       => "{$montant}\u{00A0}FCFA à recevoir, pour des séjours commencés ou qui commencent sous trois jours. Tant que le dossier reste ouvert, le propriétaire n’est pas payé.",
+            'lien'         => '/admin/reglements',
+            'libelle_lien' => 'Voir les soldes',
+        ];
+    }
+
     private function versementsDus(): ?array
     {
         $du = (float) Paiement::query()->exigible()->sum('montant_proprietaire');
@@ -570,12 +604,14 @@ class AttentesController extends Controller
     {
         $exigible = (float) Paiement::query()->exigible()->sum('montant_proprietaire');
         $aVenir   = (float) Paiement::query()->aVenir()->sum('montant_proprietaire');
+        $retenu   = (float) Paiement::query()->retenuFauteDeSolde()->sum('montant_proprietaire');
         $automatique = (bool) config('paiement.reversement.automatique');
 
         return [
             'exigible'     => $exigible,
             'a_venir'      => $aVenir,
-            'detenus'      => $exigible + $aVenir,
+            'retenu'       => $retenu,
+            'detenus'      => $exigible + $aVenir + $retenu,
             'non_versable' => $automatique ? 0.0 : $exigible,
             'automatique'  => $automatique,
         ];

@@ -120,6 +120,9 @@ export default function AdminDevis() {
                     {d.origine === 'site' && !d.suivi_le && <Badge ton="warning">À rappeler</Badge>}
                     <Badge ton={d.origine === 'site' ? 'neutre' : 'success'}>{d.origine === 'site' ? 'En ligne' : 'Équipe'}</Badge>
                     <Badge ton={TON[d.statut]}>{LIBELLES_STATUT_DEVIS[d.statut]}</Badge>
+                    {(d.encaisse ?? 0) > 0 && (d.solde === 0
+                      ? <Badge ton="success">Réglé</Badge>
+                      : <Badge ton="warning">Acompte reçu</Badge>)}
                   </div>
                 </div>
 
@@ -135,6 +138,12 @@ export default function AdminDevis() {
                     <dt>Total</dt>
                     <dd className="tableau-fort">{fcfa(d.total)}</dd>
                   </div>
+                  {(d.encaisse ?? 0) > 0 && (
+                    <div>
+                      <dt>Encaissé</dt>
+                      <dd>{fcfa(d.encaisse ?? 0)}{(d.solde ?? 0) > 0 ? ` · reste ${fcfa(d.solde ?? 0)}` : ''}</dd>
+                    </div>
+                  )}
                   <div>
                     <dt>Contact</dt>
                     <dd>{[d.client_telephone, d.client_email].filter(Boolean).join(' · ') || '—'}</dd>

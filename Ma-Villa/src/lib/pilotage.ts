@@ -66,7 +66,7 @@ export interface Pilotage {
   indicateurs: Indicateur[]
   series: { pas: 'jour' | 'semaine' | 'mois'; lignes: LigneTemps[] }
   entonnoir: { cle: string; libelle: string; valeur: number }[]
-  repartitions: { prestations: Repartition; types: Repartition; statuts_devis: Repartition; origines_devis: Repartition; langues: Repartition; refus?: Repartition }
+  repartitions: { prestations: Repartition; types: Repartition; statuts_devis: Repartition; origines_devis: Repartition; langues: Repartition; refus?: Repartition; moyens?: Repartition }
   moments: { jours: string[]; creneaux: string[]; grille: number[][] }
   hebergements: LigneHebergement[]
   villes: LigneVille[]
@@ -200,6 +200,7 @@ export function feuillesDuPilotage(p: Pilotage): Feuille[] {
     lignes: ([
       ['Demandes de service', r.prestations], ['Demandes particulières', r.types], ['Devis par statut', r.statuts_devis],
       ['Devis par origine', r.origines_devis], ['Langue des demandes', r.langues], ['Devis refusés', r.refus ?? []],
+      ['Encaissé par moyen (FCFA)', r.moyens ?? []],
     ] as [string, Repartition][]).flatMap(([sujet, lignes]) => lignes.map((l) => [sujet, l.nom, l.valeur])),
   }
 

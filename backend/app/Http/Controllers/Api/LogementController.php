@@ -51,6 +51,15 @@ class LogementController extends Controller
     public function destroy(Villa $villa, Logement $logement): JsonResponse
     {
         $this->authorize('update', $villa);
+
+        // La suppression emporte réservations et paiements : l'argent reçu sur ce logement
+        // disparaîtrait de ce qu'on doit au propriétaire ou au client.
+        if ($logement->reservations()->whereHas('paiement', fn ($q) => $q->where('statut', 'reussi'))->exists()) {
+            return response()->json([
+                'message' => 'Ce logement a des réservations payées : il ne se supprime pas. Rendez-le indisponible.',
+            ], 409);
+        }
+
         $logement->delete();
 
         return response()->json(['message' => 'Logement supprimé.']);

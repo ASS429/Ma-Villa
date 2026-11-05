@@ -45,7 +45,7 @@ class Push
      */
     public function versUtilisateur(?User $utilisateur, array $charge): int
     {
-        if (! $utilisateur || ! $this->disponible()) {
+        if (! $utilisateur?->exists || ! $this->disponible()) {
             return 0;
         }
 

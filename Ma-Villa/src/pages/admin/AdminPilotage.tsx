@@ -431,6 +431,10 @@ export default function AdminPilotage() {
                 <h2 className="panneau-titre">Devis refusés par le site</h2>
                 <Barres lignes={p.repartitions.refus ?? []} vide="Aucun devis refusé sur cette période." />
               </section>
+              <section className="panneau">
+                <h2 className="panneau-titre">Encaissé par moyen (FCFA)</h2>
+                <Barres lignes={p.repartitions.moyens ?? []} vide="Rien d’encaissé sur cette période." />
+              </section>
             </div>
           </div>
 
