@@ -7,6 +7,7 @@ use App\Models\Commande;
 use App\Models\DemandeParticuliere;
 use App\Models\DemandeService;
 use App\Models\Devis;
+use App\Models\DevisRefuse;
 use App\Models\Paiement;
 use App\Models\Reservation;
 use App\Models\User;
@@ -29,8 +30,8 @@ use Illuminate\Support\Str;
  *
  * Une limite assumée : **on ne sait rien des visites**. La politique de
  * confidentialité promet qu'aucune mesure commerciale de navigation n'est faite,
- * et aucun chiffre ici n'en dépend. On ne connaît pas non plus les dates refusées
- * à un client : seul ce qui a abouti à un enregistrement est compté.
+ * et aucun chiffre ici n'en dépend. Une réservation refusée en ligne ne laisse pas
+ * de trace non plus ; seuls les devis refusés sont comptés (`DevisRefuse`).
  */
 final class Pilotage
 {
@@ -99,6 +100,7 @@ final class Pilotage
             'paiements' => Paiement::with('reservation:id,logement_id', 'reservation.logement:id,villa_id')
                 ->get(['id', 'reservation_id', 'statut', 'montant', 'commission', 'methode', 'paye_le', 'created_at']),
             'commandes' => Commande::get(['id', 'statut', 'statut_paiement', 'montant_total', 'created_at']),
+            'refus' => DevisRefuse::get(['id', 'villa_id', 'motif', 'created_at']),
             'comptes' => User::get(['id', 'role', 'created_at']),
             'villas' => Villa::with([
                 'proprietaire:id,name',
@@ -183,6 +185,7 @@ final class Pilotage
             'accords'              => $enLigne->where('statut', 'accepte')->count() + $confirmees->count(),
             'payees'               => $reservations->filter(fn ($r) => isset($payees[$r->id]))->count(),
             'avis_nouveaux'        => Avis::whereBetween('created_at', [$a, $b])->count(),
+            'devis_refuses'        => self::entre($d['refus'], 'created_at', $a, $b)->count(),
         ];
     }
 
@@ -227,6 +230,7 @@ final class Pilotage
             $ligne('qualite', 'delai_median', 'Délai de réponse médian', 'heures', 'bas', 'De la demande au geste « suivi » ou « traitée ». La moitié des réponses sont plus rapides.'),
             $ligne('qualite', 'taux_acceptation', 'Devis acceptés', 'pourcent', 'haut', 'Parmi les devis marqués acceptés ou refusés.'),
             $ligne('qualite', 'taux_annulation', 'Réservations annulées', 'pourcent', 'bas'),
+            $ligne('qualite', 'devis_refuses', 'Devis refusés par le site', 'nombre', 'bas', 'Dates prises, séjour trop court, trop de monde : des demandes que nous n’avons pas pu servir.'),
 
             $etat('annonces', 'Annonces en ligne', 'nombre', $villas->where('statut', 'validee')->count()),
             $etat('logements', 'Logements en ligne', 'nombre', $villas->where('statut', 'validee')->sum(fn ($v) => $v->logements->count())),
@@ -268,7 +272,7 @@ final class Pilotage
                     default   => Str::ucfirst($c->copy()->locale('fr')->isoFormat('MMM YY')),
                 },
                 'devis' => 0, 'particulieres' => 0, 'services' => 0, 'reservations' => 0,
-                'devis_montant' => 0, 'encaisse' => 0, 'comptes' => 0,
+                'devis_montant' => 0, 'encaisse' => 0, 'comptes' => 0, 'refus' => 0,
             ];
         }
 
@@ -288,6 +292,7 @@ final class Pilotage
         $compter($d['reservations'], 'created_at', function (&$l) { $l['reservations']++; });
         $compter($d['paiements']->where('statut', 'reussi'), 'paye_le', function (&$l, $x) { $l['encaisse'] += (int) $x->montant; });
         $compter($d['comptes'], 'created_at', function (&$l) { $l['comptes']++; });
+        $compter($d['refus'], 'created_at', function (&$l) { $l['refus']++; });
 
         return ['pas' => $pas, 'lignes' => array_values($lignes)];
     }
@@ -325,6 +330,7 @@ final class Pilotage
             'prestations' => $classer($services->map(fn ($x) => $x->libelle_prestation)),
             'types'       => $classer($particulieres->map(fn ($x) => $x->libelle_type)),
             'statuts_devis' => $classer($devis->map(fn ($x) => Devis::STATUTS[$x->statut] ?? $x->statut)),
+            'refus'       => $classer(self::entre($d['refus'], 'created_at', $du, $au)->map(fn ($x) => DevisRefuse::MOTIFS[$x->motif] ?? $x->motif)),
             'origines_devis' => $classer($devis->map(fn ($x) => $x->origine === 'site' ? 'En ligne' : 'Par l’équipe')),
             'langues'     => $classer(collect()
                 ->concat($enLigne->pluck('langue'))
@@ -371,6 +377,7 @@ final class Pilotage
             ->groupBy(fn ($r) => $r->logement?->villa_id);
         $encaisse = self::entre($d['paiements']->where('statut', 'reussi'), 'paye_le', $du, $au)
             ->groupBy(fn ($p) => $p->reservation?->logement?->villa_id);
+        $refus = self::entre($d['refus'], 'created_at', $du, $au)->countBy('villa_id');
 
         $lignes = [];
         foreach ($d['villas'] as $v) {
@@ -379,7 +386,8 @@ final class Pilotage
             $sesResas = $reservations[$v->id] ?? collect();
 
             $demandes = $sesDevis->where('origine', 'site')->count() + $sesDemandes->count() + $sesResas->count();
-            if ($v->statut !== 'validee' && $demandes === 0) {
+            $sesRefus = (int) ($refus[$v->id] ?? 0);
+            if ($v->statut !== 'validee' && $demandes === 0 && $sesRefus === 0) {
                 continue;
             }
 
@@ -395,6 +403,7 @@ final class Pilotage
                 'proprietaire' => $v->proprietaire?->name,
                 'statut'       => $v->statut,
                 'demandes'     => $demandes,
+                'refus'        => $sesRefus,
                 'devis'        => $sesDevis->count(),
                 'particulieres' => $sesDemandes->count(),
                 'reservations' => $sesResas->count(),
@@ -435,9 +444,10 @@ final class Pilotage
         $parVille = [];
         foreach ($hebergements as $h) {
             $nom = trim((string) $h['ville']) ?: 'Non précisée';
-            $parVille[$nom] ??= ['ville' => $nom, 'annonces' => 0, 'demandes' => 0, 'montant_devis' => 0, 'reservations' => 0, 'encaisse' => 0];
+            $parVille[$nom] ??= ['ville' => $nom, 'annonces' => 0, 'demandes' => 0, 'refus' => 0, 'montant_devis' => 0, 'reservations' => 0, 'encaisse' => 0];
             $parVille[$nom]['annonces'] += $h['statut'] === 'validee' ? 1 : 0;
             $parVille[$nom]['demandes'] += $h['demandes'];
+            $parVille[$nom]['refus'] += $h['refus'];
             $parVille[$nom]['montant_devis'] += $h['montant_devis'];
             $parVille[$nom]['reservations'] += $h['reservations'];
             $parVille[$nom]['encaisse'] += $h['encaisse'];
@@ -540,6 +550,14 @@ final class Pilotage
                 "{$m['paiements_echoues']} échecs sur {$m['paiements_tentes']} tentatives.",
                 'Lancer la sonde d’encaissement, et vérifier le moyen de paiement concerné.',
                 '/admin/paiement');
+        }
+
+        if ($m['devis_refuses'] >= 3) {
+            $parMotif = collect($hebergements)->sortByDesc('refus')->firstWhere('refus', '>', 0);
+            $ajouter('moyenne', "{$m['devis_refuses']} devis refusés par le site sur la période",
+                ($parMotif ? "Surtout sur {$parMotif['nom']}. " : '').'Ces clients voulaient séjourner chez nous et sont repartis sans rien.',
+                'Dates prises : prospecter sur ces périodes. Séjour trop court : revoir la durée minimale avec le propriétaire.',
+                null);
         }
 
         $enLigne = collect($hebergements)->where('statut', 'validee');

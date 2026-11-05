@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\DemandeParticuliere;
 use App\Models\Devis;
+use App\Models\DevisRefuse;
 use Illuminate\Console\Command;
 
 /**
@@ -27,15 +28,19 @@ class EffacerLesDevisEtDemandesAnciens extends Command
 
     public function handle(): int
     {
+        // `forceDelete` : avec les devis supprimés à la main (`withTrashed`), et pour de
+        // bon. Un simple `delete()` ne ferait que les marquer, coordonnées comprises.
         $acceptes = Devis::where('statut', 'accepte')
             ->where('created_at', '<', now()->subYears(self::ANS_ACCEPTES))
-            ->delete();
+            ->forceDelete();
 
-        $sansSuite = Devis::where('statut', '!=', 'accepte')
+        $sansSuite = Devis::withTrashed()->where('statut', '!=', 'accepte')
             ->where('created_at', '<', now()->subYears(self::ANS_SANS_SUITE))
-            ->delete();
+            ->forceDelete();
 
         $demandes = DemandeParticuliere::where('created_at', '<', now()->subYears(self::ANS_SANS_SUITE))->delete();
+
+        DevisRefuse::where('created_at', '<', now()->subYears(self::ANS_SANS_SUITE))->delete();
 
         $this->info("{$acceptes} devis accepté(s), {$sansSuite} devis sans suite et {$demandes} demande(s) particulière(s) effacés.");
 

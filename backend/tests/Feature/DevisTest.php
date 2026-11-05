@@ -4,6 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\DemandeParticuliere;
 use App\Models\Devis;
+use App\Models\DevisRefuse;
+use App\Models\JournalAdmin;
+use App\Services\FichierClients;
+use App\Services\Pilotage;
 use App\Models\Logement;
 use App\Models\Reservation;
 use App\Models\Tarif;
@@ -246,6 +250,205 @@ class DevisTest extends TestCase
         }
         $this->assertNotNull(DemandeParticuliere::find($demandeRecente->id));
         $this->assertNull(DemandeParticuliere::find($demandeAncienne->id));
+    }
+
+    /* ── Supprimer ────────────────────────────────────────────── */
+
+    private function devisEnLigne(?Logement $l = null, ?Tarif $t = null): Devis
+    {
+        if (! $l) {
+            [, $l, $t] = $this->annonce();
+        }
+        $this->postJson('/api/devis', $this->demande($l, $t, ['client_nom' => 'Awa Ndiaye', 'email' => 'awa@exemple.sn']))->assertCreated();
+
+        return Devis::latest('id')->firstOrFail();
+    }
+
+    public function test_supprimer_un_devis_efface_le_client_et_ferme_le_pdf(): void
+    {
+        $devis = $this->devisEnLigne();
+        $lien = $devis->urlPdf();
+        $chemin = parse_url($lien, PHP_URL_PATH).'?'.parse_url($lien, PHP_URL_QUERY);
+        $this->get($chemin)->assertOk();
+
+        $this->actingAs(User::factory()->create(['role' => 'admin']));
+        $this->deleteJson("/api/admin/devis/{$devis->id}")->assertOk();
+
+        $this->get($chemin)->assertNotFound();
+        $this->getJson('/api/admin/devis')->assertJsonPath('total', 0);
+        $this->getJson("/api/admin/devis/{$devis->id}")->assertNotFound();
+
+        $reste = Devis::withTrashed()->findOrFail($devis->id);
+        $this->assertNotNull($reste->deleted_at);
+        foreach (['Awa Ndiaye', 'awa@exemple.sn', '77 123 45 67', 'Mansour Sow', 'Kabrousse', 'Chambre'] as $trace) {
+            $this->assertStringNotContainsString($trace, json_encode($reste->getAttributes(), JSON_UNESCAPED_UNICODE), "« {$trace} » ne doit pas survivre.");
+        }
+    }
+
+    public function test_le_numero_d_un_devis_supprime_n_est_jamais_redonne(): void
+    {
+        [, $l, $t] = $this->annonce();
+        $devis = $this->devisEnLigne($l, $t);
+        $numero = $devis->numero;
+
+        $this->actingAs(User::factory()->create(['role' => 'admin']));
+        $this->deleteJson("/api/admin/devis/{$devis->id}")->assertOk();
+
+        $suivant = $this->devisEnLigne($l, $t);
+
+        $this->assertNotSame($numero, $suivant->numero);
+        $this->assertSame($devis->rang + 1, $suivant->rang);
+    }
+
+    public function test_un_devis_accepte_ne_se_supprime_pas_tant_qu_il_l_est(): void
+    {
+        $devis = $this->devisEnLigne();
+        $devis->statut = 'accepte';
+        $devis->save();
+
+        $this->actingAs(User::factory()->create(['role' => 'admin']));
+        $this->deleteJson("/api/admin/devis/{$devis->id}")->assertStatus(422);
+        $this->assertSame('Awa Ndiaye', $devis->fresh()->client_nom);
+
+        $this->patchJson("/api/admin/devis/{$devis->id}", ['statut' => 'refuse'])->assertOk();
+        $this->deleteJson("/api/admin/devis/{$devis->id}")->assertOk();
+        $this->assertNull(Devis::find($devis->id));
+    }
+
+    public function test_le_journal_garde_le_numero_et_oublie_le_client(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => 'admin']));
+        $id = $this->postJson('/api/admin/devis', [
+            'titre' => 'Séjour', 'client_nom' => 'Awa Ndiaye',
+            'lignes' => [['designation' => 'Location', 'quantite' => 1, 'prix_unitaire' => 1000]],
+        ])->assertCreated()->json('id');
+        $this->assertSame('Awa Ndiaye', JournalAdmin::where('action', 'devis.etabli')->firstOrFail()->details['client']);
+
+        $this->deleteJson("/api/admin/devis/{$id}")->assertOk();
+
+        $this->assertArrayNotHasKey('client', JournalAdmin::where('action', 'devis.etabli')->firstOrFail()->details ?? []);
+        $trace = JournalAdmin::where('action', 'devis.supprime')->firstOrFail();
+        $this->assertStringStartsWith('PT-', $trace->cible_libelle);
+        $this->assertSame(1000, $trace->details['total']);
+    }
+
+    public function test_seul_l_admin_supprime_un_devis(): void
+    {
+        $devis = $this->devisEnLigne();
+
+        $this->deleteJson("/api/admin/devis/{$devis->id}")->assertUnauthorized();
+        $this->actingAs(User::factory()->create(['role' => 'client']));
+        $this->deleteJson("/api/admin/devis/{$devis->id}")->assertForbidden();
+        $this->assertNotNull(Devis::find($devis->id));
+    }
+
+    public function test_un_devis_supprime_disparait_du_fichier_et_du_pilotage(): void
+    {
+        $devis = $this->devisEnLigne();
+        $this->assertCount(1, FichierClients::construire());
+
+        $this->actingAs(User::factory()->create(['role' => 'admin']));
+        $this->deleteJson("/api/admin/devis/{$devis->id}")->assertOk();
+
+        $this->assertSame([], FichierClients::construire());
+        $chiffres = collect(Pilotage::pour(now()->subDay(), now())['indicateurs'])->keyBy('cle');
+        $this->assertSame(0, $chiffres['devis']['valeur']);
+        $this->assertSame(0, $chiffres['demandes']['valeur']);
+    }
+
+    public function test_l_effacement_programme_retire_aussi_les_devis_supprimes_pour_de_bon(): void
+    {
+        $devis = $this->devisEnLigne();
+        $devis->effacer();
+        Devis::withTrashed()->whereKey($devis->id)->update(['created_at' => now()->subYears(3)->subDay()]);
+
+        $garde = $this->devisEnLigne();
+        Devis::whereKey($garde->id)->update(['created_at' => now()->subYears(3)->subDay()]);
+
+        $this->artisan('passetemps:effacer-devis-et-demandes')->assertSuccessful();
+
+        $this->assertNull(Devis::withTrashed()->find($devis->id));
+        $this->assertNull(Devis::withTrashed()->find($garde->id), 'Un simple delete() ne ferait que le marquer, coordonnées comprises.');
+    }
+
+    /* ── Compter ce que le site refuse ───────────────────────── */
+
+    public function test_chaque_refus_est_compte_avec_son_motif_sans_donnee_personnelle(): void
+    {
+        [$villa, $l, $t] = $this->annonce(['nuits_minimum' => 3]);
+
+        $this->postJson('/api/devis', $this->demande($l, $t))->assertStatus(422);
+        $this->assertSame('trop_court', DevisRefuse::latest('id')->firstOrFail()->motif);
+
+        $this->postJson('/api/devis', $this->demande($l, $t, ['date_fin' => now()->addDays(14)->toDateString(), 'nb_personnes' => 9]))->assertStatus(422);
+        $this->assertSame('trop_de_monde', DevisRefuse::latest('id')->firstOrFail()->motif);
+
+        Reservation::create([
+            'user_id' => User::factory()->create()->id, 'logement_id' => $l->id, 'tarif_id' => $t->id,
+            'date_debut' => now()->addDays(11)->toDateString(), 'date_fin' => now()->addDays(13)->toDateString(),
+            'nb_personnes' => 1, 'montant_total' => 50000, 'statut' => 'confirmee',
+        ]);
+        $this->postJson('/api/devis', $this->demande($l, $t, ['date_fin' => now()->addDays(15)->toDateString()]))->assertStatus(409);
+        $refus = DevisRefuse::latest('id')->firstOrFail();
+        $this->assertSame('dates_prises', $refus->motif);
+        $this->assertSame($villa->id, $refus->villa_id);
+
+        $villa->update(['statut' => 'rejetee']);
+        $this->postJson('/api/devis', $this->demande($l, $t, ['date_fin' => now()->addDays(16)->toDateString()]))->assertStatus(409);
+        $this->assertSame('retire', DevisRefuse::latest('id')->firstOrFail()->motif);
+
+        $this->assertSame(4, DevisRefuse::count());
+        $this->assertSame(0, Devis::count());
+        $brut = json_encode(DevisRefuse::get()->map->getAttributes(), JSON_UNESCAPED_UNICODE);
+        foreach (['FAN MILK', 'Mansour', '77 123'] as $trace) {
+            $this->assertStringNotContainsString($trace, $brut);
+        }
+    }
+
+    public function test_celui_qui_reessaie_les_memes_dates_ne_compte_qu_une_fois(): void
+    {
+        [, $l, $t] = $this->annonce(['nuits_minimum' => 3]);
+
+        $this->postJson('/api/devis', $this->demande($l, $t))->assertStatus(422);
+        $this->postJson('/api/devis', $this->demande($l, $t))->assertStatus(422);
+        $this->assertSame(1, DevisRefuse::count());
+
+        // D'autres dates, c'est une autre demande.
+        $this->postJson('/api/devis', $this->demande($l, $t, ['date_debut' => now()->addDays(20)->toDateString(), 'date_fin' => now()->addDays(21)->toDateString()]))->assertStatus(422);
+        $this->assertSame(2, DevisRefuse::count());
+    }
+
+    public function test_un_formulaire_incomplet_ou_un_robot_ne_compte_pas(): void
+    {
+        [, $l, $t] = $this->annonce(['nuits_minimum' => 3]);
+
+        $sansNom = $this->demande($l, $t);
+        unset($sansNom['client_nom']);
+        $this->postJson('/api/devis', $sansNom)->assertStatus(422);
+        $this->postJson('/api/devis', $this->demande($l, $t, ['site_web' => 'http://spam']))->assertCreated();
+
+        $this->assertSame(0, DevisRefuse::count());
+    }
+
+    public function test_le_pilotage_montre_les_devis_refuses(): void
+    {
+        config(['reservations.ouvertes' => true]);
+        [, $l, $t] = $this->annonce(['nuits_minimum' => 5]);
+        foreach ([20, 30, 40] as $jour) {
+            $this->postJson('/api/devis', $this->demande($l, $t, [
+                'date_debut' => now()->addDays($jour)->toDateString(),
+                'date_fin'   => now()->addDays($jour + 1)->toDateString(),
+            ]))->assertStatus(422);
+        }
+
+        $p = Pilotage::pour(now()->subDay(), now());
+
+        $this->assertSame(3, collect($p['indicateurs'])->firstWhere('cle', 'devis_refuses')['valeur']);
+        $this->assertSame([['nom' => 'Séjour trop court', 'valeur' => 3]], $p['repartitions']['refus']);
+        $this->assertSame(3, $p['hebergements'][0]['refus']);
+        $this->assertSame(3, $p['villes'][0]['refus']);
+        $this->assertSame(3, array_sum(array_column($p['series']['lignes'], 'refus')));
+        $this->assertContains('3 devis refusés par le site sur la période', array_column($p['manquements'], 'titre'));
     }
 
     public function test_le_champ_piege_ne_cree_rien(): void

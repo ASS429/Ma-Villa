@@ -12,10 +12,8 @@ Rien d'urgent ; ce qu'on a vu passer et qu'il ne faut pas perdre.
 - **Les questions qui reviennent dans les demandes.** Événements autorisés, capacité en journée,
   traiteur extérieur : les clients les posent à chaque fois, et il faut rappeler le propriétaire.
   Des champs par annonce, remplis une fois, répondraient sans appel et rempliraient les fiches.
-- **Supprimer un devis ou une demande depuis la console.** La confidentialité promet un droit de
-  suppression sous un mois ; aujourd'hui, seul un accès à la base le permet.
-- **Compter les devis refusés.** Quand des dates sont prises, le serveur refuse et rien n'est
-  enregistré : le pilotage ne voit donc pas la demande qu'on n'a pas pu servir.
+- **Supprimer une demande particulière depuis la console.** La confidentialité promet un droit de
+  suppression sous un mois. Les devis le permettent depuis le 5 novembre ; les demandes, pas encore.
 - **Ouvrir le classeur du pilotage dans le vrai Excel.** Il est vérifié avec un lecteur
   indépendant (openpyxl), pas avec Excel, absent de la machine de développement.
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Devis;
+use App\Models\DevisRefuse;
 use App\Models\JournalAdmin;
 use App\Models\Logement;
 use App\Models\Reservation;
@@ -98,9 +99,13 @@ class DevisController extends Controller
             return $this->refus('Cette formule n’appartient pas à ce logement.', 'tarif_id');
         }
         if (! $logement->disponible || $logement->villa?->statut !== 'validee') {
+            DevisRefuse::noter($request, $logement, 'retire', $d);
+
             return response()->json(['message' => 'Ce logement n’est plus proposé.'], 409);
         }
         if ($d['nb_personnes'] > $logement->capacite) {
+            DevisRefuse::noter($request, $logement, 'trop_de_monde', $d);
+
             return $this->refus("Ce logement accueille au maximum {$logement->capacite} personnes.", 'nb_personnes');
         }
 
@@ -110,6 +115,8 @@ class DevisController extends Controller
             return $this->refus('Choisissez une date de départ après l’arrivée.', 'date_fin');
         }
         if ($tarif->type_tarif === 'nuitee' && $prix['unites'] < $logement->nuits_minimum) {
+            DevisRefuse::noter($request, $logement, 'trop_court', $d);
+
             return $this->refus("Ce logement se réserve pour {$logement->nuits_minimum} nuits au moins.", 'date_fin');
         }
 
@@ -119,6 +126,8 @@ class DevisController extends Controller
                 ->where('date_debut', '<=', $d['date_fin'])
                 ->where('date_fin', '>=', $d['date_debut'])->exists();
         if ($pris) {
+            DevisRefuse::noter($request, $logement, 'dates_prises', $d);
+
             return response()->json([
                 'message' => 'Ce logement n’est pas disponible à ces dates.',
                 'errors'  => ['date_debut' => ['Ce logement n’est pas disponible à ces dates.']],
@@ -275,6 +284,43 @@ class DevisController extends Controller
         ], $request->ip());
 
         return response()->json($this->pourLaConsole($devis->load('villa:id,nom,ville')));
+    }
+
+    /**
+     * Supprimer un devis, à la demande d'un client ou pour retirer une erreur.
+     *
+     * Un devis accepté est une pièce commerciale, annoncée comme gardée dix ans :
+     * il faut d'abord dire qu'il ne l'était pas. Le journal garde le numéro, jamais
+     * le client : effacer quelqu'un partout sauf dans le journal ne l'effacerait pas.
+     */
+    public function destroy(Request $request, Devis $devis): JsonResponse
+    {
+        if ($devis->statut === 'accepte') {
+            return response()->json([
+                'message' => 'Ce devis est accepté : c’est une pièce commerciale, gardée dix ans. S’il a été accepté par erreur, changez d’abord son statut.',
+            ], 422);
+        }
+
+        $numero = $devis->numero;
+        $origine = $devis->origine;
+        $total = $devis->total;
+
+        $devis->effacer();
+
+        JournalAdmin::where('cible_type', 'Devis')->where('cible_id', $devis->id)->get()
+            ->each(function (JournalAdmin $ligne) {
+                $details = $ligne->details ?? [];
+                unset($details['client']);
+                $ligne->details = $details ?: null;
+                $ligne->save();
+            });
+
+        JournalAdmin::consigner($request->user(), 'devis.supprime', $devis, $numero, [
+            'origine' => $origine,
+            'total'   => $total,
+        ], $request->ip());
+
+        return response()->json(['message' => "Devis {$numero} supprimé."]);
     }
 
     /* ── Outils ────────────────────────────────────────────────── */

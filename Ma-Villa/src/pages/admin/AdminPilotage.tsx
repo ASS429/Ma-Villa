@@ -185,6 +185,7 @@ const COLONNES_HEBERGEMENTS: ColonneTri<LigneHebergement>[] = [
   },
   { cle: 'ville', titre: 'Ville' },
   { cle: 'demandes', titre: 'Demandes', nombre: true },
+  { cle: 'refus', titre: 'Refusés', nombre: true, rendu: (h) => (h.refus ? String(h.refus) : '—') },
   { cle: 'devis', titre: 'Devis', nombre: true },
   { cle: 'particulieres', titre: 'Particulières', nombre: true },
   { cle: 'reservations', titre: 'Résa.', nombre: true },
@@ -201,6 +202,7 @@ const COLONNES_VILLES: ColonneTri<LigneVille>[] = [
   { cle: 'ville', titre: 'Ville' },
   { cle: 'annonces', titre: 'Annonces', nombre: true },
   { cle: 'demandes', titre: 'Demandes', nombre: true },
+  { cle: 'refus', titre: 'Refusés', nombre: true, rendu: (v) => (v.refus ? String(v.refus) : '—') },
   { cle: 'demandes_par_annonce', titre: 'Par annonce', nombre: true, rendu: (v) => (v.demandes_par_annonce === null ? '—' : String(v.demandes_par_annonce).replace('.', ',')) },
   { cle: 'montant_devis', titre: 'Montant des devis', nombre: true, rendu: (v) => (v.montant_devis ? fcfa(v.montant_devis) : '—') },
   { cle: 'encaisse', titre: 'Encaissé', nombre: true, rendu: (v) => (v.encaisse ? fcfa(v.encaisse) : '—') },
@@ -213,6 +215,7 @@ const COLONNES_PERIODES: ColonneTri<LigneTemps>[] = [
   { cle: 'services', titre: 'Services', nombre: true },
   { cle: 'reservations', titre: 'Réservations', nombre: true },
   { cle: 'comptes', titre: 'Comptes', nombre: true },
+  { cle: 'refus', titre: 'Refusés', nombre: true },
   { cle: 'devis_montant', titre: 'Montant des devis', nombre: true, rendu: (l) => (Number(l.devis_montant) ? fcfa(Number(l.devis_montant)) : '—') },
   { cle: 'encaisse', titre: 'Encaissé', nombre: true, rendu: (l) => (Number(l.encaisse) ? fcfa(Number(l.encaisse)) : '—') },
 ]
@@ -422,6 +425,11 @@ export default function AdminPilotage() {
               <section className="panneau">
                 <h2 className="panneau-titre">Langue des demandes</h2>
                 <Barres lignes={p.repartitions.langues} vide="Aucune demande sur cette période." />
+              </section>
+              {/* `?? []` : le site peut être en ligne avant l'API qui compte les refus. */}
+              <section className="panneau">
+                <h2 className="panneau-titre">Devis refusés par le site</h2>
+                <Barres lignes={p.repartitions.refus ?? []} vide="Aucun devis refusé sur cette période." />
               </section>
             </div>
           </div>

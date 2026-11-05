@@ -229,6 +229,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/devis', [DevisController::class, 'storeAdmin'])->middleware('throttle:30,1');
         Route::get('/devis/{devis}', [DevisController::class, 'show']);
         Route::patch('/devis/{devis}', [DevisController::class, 'update'])->middleware('throttle:30,1');
+        Route::delete('/devis/{devis}', [DevisController::class, 'destroy'])->middleware('throttle:30,1');
         Route::patch('/demandes-service/{demande}', [DemandeServiceController::class, 'traiter']);
 
         // Ce que nous faisons, ce que nous réalisons, ce qui nous manque.

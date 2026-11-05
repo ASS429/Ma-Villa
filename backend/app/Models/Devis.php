@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -17,6 +18,8 @@ use Illuminate\Support\Str;
  */
 class Devis extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'devis';
 
     public const ORIGINES = ['console', 'site'];
@@ -113,7 +116,8 @@ class Devis extends Model
         for ($essai = 0; ; $essai++) {
             try {
                 return DB::transaction(function () use ($origine, $attributs, $lignes, $total, $annee, $auteur) {
-                    $dernier = self::where('origine', $origine)->where('annee', $annee)
+                    // `withTrashed` : le numéro d'un devis supprimé n'est jamais redonné.
+                    $dernier = self::withTrashed()->where('origine', $origine)->where('annee', $annee)
                         ->orderByDesc('rang')->lockForUpdate()->value('rang');
                     $depart = $origine === 'console' ? max(1, (int) config('devis.premier_numero', 1)) : 1;
                     $rang = $dernier ? $dernier + 1 : $depart;
@@ -138,6 +142,40 @@ class Devis extends Model
                 }
             }
         }
+    }
+
+    /**
+     * Supprime le devis : le client disparaît, le numéro reste pris.
+     *
+     * Une ligne vidée plutôt qu'une ligne retirée : le rang suivant se lit sur le
+     * plus grand existant, et l'ancien PDF circule peut-être encore. Redonner ce
+     * numéro à un autre client ferait deux documents pour un seul numéro. La clé
+     * est tirée à neuf : l'ancien lien ne mène plus à rien, même si la ligne revenait.
+     *
+     * Ce qui reste ne dit plus rien de personne, et la commande d'effacement
+     * retire la ligne au bout de la durée annoncée.
+     */
+    public function effacer(): void
+    {
+        $this->forceFill([
+            'titre'            => 'Supprimé',
+            'client_nom'       => 'Supprimé',
+            'occupant_nom'     => null,
+            'client_telephone' => null,
+            'client_email'     => null,
+            'villa_id'         => null,
+            'logement_id'      => null,
+            'tarif_id'         => null,
+            'date_arrivee'     => null,
+            'date_depart'      => null,
+            'personnes'        => null,
+            'lignes'           => [],
+            'total'            => 0,
+            'conditions'       => null,
+            'cle'              => Str::random(40),
+        ])->save();
+
+        $this->delete();
     }
 
     /** Remplace les lignes d'un devis existant ; le numéro ne bouge pas. */

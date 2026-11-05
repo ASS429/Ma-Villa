@@ -24,6 +24,7 @@ export interface LigneHebergement {
   proprietaire: string | null
   statut: string
   demandes: number
+  refus?: number
   devis: number
   particulieres: number
   reservations: number
@@ -42,6 +43,7 @@ export interface LigneVille {
   ville: string
   annonces: number
   demandes: number
+  refus?: number
   demandes_par_annonce: number | null
   montant_devis: number
   reservations: number
@@ -64,7 +66,7 @@ export interface Pilotage {
   indicateurs: Indicateur[]
   series: { pas: 'jour' | 'semaine' | 'mois'; lignes: LigneTemps[] }
   entonnoir: { cle: string; libelle: string; valeur: number }[]
-  repartitions: { prestations: Repartition; types: Repartition; statuts_devis: Repartition; origines_devis: Repartition; langues: Repartition }
+  repartitions: { prestations: Repartition; types: Repartition; statuts_devis: Repartition; origines_devis: Repartition; langues: Repartition; refus?: Repartition }
   moments: { jours: string[]; creneaux: string[]; grille: number[][] }
   hebergements: LigneHebergement[]
   villes: LigneVille[]
@@ -123,12 +125,13 @@ export function feuillesDuPilotage(p: Pilotage): Feuille[] {
       { titre: 'Comptes créés', format: 'nombre', largeur: 10 },
       { titre: 'Montant des devis', format: 'fcfa', largeur: 17 },
       { titre: 'Encaissé', format: 'fcfa', largeur: 17 },
+      { titre: 'Devis refusés', format: 'nombre', largeur: 10 },
     ],
     lignes: lignesTemps.map((l) => [
       String(l.libelle), nombre(l.devis), nombre(l.particulieres), nombre(l.services), nombre(l.reservations),
-      nombre(l.comptes), nombre(l.devis_montant), nombre(l.encaisse),
+      nombre(l.comptes), nombre(l.devis_montant), nombre(l.encaisse), nombre(l.refus),
     ]),
-    total: ['Total', somme('devis'), somme('particulieres'), somme('services'), somme('reservations'), somme('comptes'), somme('devis_montant'), somme('encaisse')],
+    total: ['Total', somme('devis'), somme('particulieres'), somme('services'), somme('reservations'), somme('comptes'), somme('devis_montant'), somme('encaisse'), somme('refus')],
   }
 
   const hebergements: Feuille = {
@@ -143,6 +146,7 @@ export function feuillesDuPilotage(p: Pilotage): Feuille[] {
       { titre: 'Demandes particulières', format: 'nombre', largeur: 13 },
       { titre: 'Réservations', format: 'nombre', largeur: 13 },
       { titre: 'Confirmées', format: 'nombre', largeur: 11 },
+      { titre: 'Devis refusés', format: 'nombre', largeur: 10 },
       { titre: 'Montant des devis', format: 'fcfa', barres: true, largeur: 17 },
       { titre: 'Encaissé', format: 'fcfa', largeur: 17 },
       { titre: 'Note', format: 'decimal', largeur: 7 },
@@ -154,7 +158,7 @@ export function feuillesDuPilotage(p: Pilotage): Feuille[] {
     ],
     lignes: p.hebergements.map((h) => [
       h.nom, h.ville, h.proprietaire, h.statut === 'validee' ? 'En ligne' : h.statut, h.demandes, h.devis, h.particulieres,
-      h.reservations, h.confirmees, h.montant_devis, h.encaisse, h.note, h.avis, h.photos, h.prix_min,
+      h.reservations, h.confirmees, h.refus ?? 0, h.montant_devis, h.encaisse, h.note, h.avis, h.photos, h.prix_min,
       dateFr(h.derniere_demande), h.defauts.join(', '),
     ]),
   }
@@ -167,12 +171,13 @@ export function feuillesDuPilotage(p: Pilotage): Feuille[] {
       { titre: 'Ville', largeur: 18 },
       { titre: 'Annonces en ligne', format: 'nombre', largeur: 11 },
       { titre: 'Demandes', format: 'nombre', barres: true, largeur: 11 },
+      { titre: 'Devis refusés', format: 'nombre', largeur: 10 },
       { titre: 'Demandes par annonce', format: 'decimal', largeur: 12 },
       { titre: 'Montant des devis', format: 'fcfa', largeur: 17 },
       { titre: 'Réservations', format: 'nombre', largeur: 13 },
       { titre: 'Encaissé', format: 'fcfa', largeur: 17 },
     ],
-    lignes: p.villes.map((v) => [v.ville, v.annonces, v.demandes, v.demandes_par_annonce, v.montant_devis, v.reservations, v.encaisse]),
+    lignes: p.villes.map((v) => [v.ville, v.annonces, v.demandes, v.refus ?? 0, v.demandes_par_annonce, v.montant_devis, v.reservations, v.encaisse]),
   }
 
   const manquements: Feuille = {
@@ -194,7 +199,7 @@ export function feuillesDuPilotage(p: Pilotage): Feuille[] {
     colonnes: [{ titre: 'Sujet', largeur: 26 }, { titre: 'Catégorie', largeur: 38 }, { titre: 'Nombre', format: 'nombre', barres: true, largeur: 10 }],
     lignes: ([
       ['Demandes de service', r.prestations], ['Demandes particulières', r.types], ['Devis par statut', r.statuts_devis],
-      ['Devis par origine', r.origines_devis], ['Langue des demandes', r.langues],
+      ['Devis par origine', r.origines_devis], ['Langue des demandes', r.langues], ['Devis refusés', r.refus ?? []],
     ] as [string, Repartition][]).flatMap(([sujet, lignes]) => lignes.map((l) => [sujet, l.nom, l.valeur])),
   }
 

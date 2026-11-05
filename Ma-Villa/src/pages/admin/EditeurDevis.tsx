@@ -14,6 +14,7 @@ import {
 import type { Langue, VillaDetail } from '../../types'
 import type { DemandeParticuliere } from '../../lib/particuliere'
 import Button from '../../components/ui/Button'
+import ConfirmModal from '../../components/ConfirmModal'
 import Badge from '../../components/ui/Badge'
 import { Champ, ChampSelection, ChampZoneTexte } from '../../components/ui/Champ'
 import BoutonWhatsApp from '../../components/BoutonWhatsApp'
@@ -83,6 +84,7 @@ export default function EditeurDevis() {
   const [lignes, setLignes] = useState<LigneDevis[]>([{ ...LIGNE_VIDE }])
   const [erreurs, setErreurs] = useState<Record<string, string>>({})
   const [envoi, setEnvoi] = useState(false)
+  const [aSupprimer, setASupprimer] = useState(false)
   const [devis, setDevis] = useState<Devis | null>(null)
   const [annonces, setAnnonces] = useState<{ id: number; nom: string; ville?: string | null }[]>([])
   const [fiche, setFiche] = useState<VillaDetail | null>(null)
@@ -233,6 +235,20 @@ export default function EditeurDevis() {
     }
   }
 
+  const supprimer = async () => {
+    if (!devis) return
+    try {
+      await api.delete(`/admin/devis/${devis.id}`)
+      toast.succes(`Devis ${devis.numero} supprimé.`)
+      relireAttentes()
+      navigate('/admin/devis', { replace: true })
+    } catch (err) {
+      // Un devis accepté est refusé par le serveur : son message dit quoi faire.
+      toast.erreur(messageErreur(err, 'Le devis n’a pas pu être supprimé.'))
+      setASupprimer(false)
+    }
+  }
+
   const copier = async () => {
     if (!devis) return
     try {
@@ -245,6 +261,17 @@ export default function EditeurDevis() {
 
   return (
     <div>
+      {aSupprimer && devis && (
+        <ConfirmModal
+          message={`Supprimer le devis ${devis.numero} ?`}
+          detail={`Les coordonnées de ${devis.client_nom} sont effacées et le PDF ne s’ouvrira plus, même pour qui a déjà le lien. Le numéro reste pris. Cette action est définitive.`}
+          confirmLabel="Supprimer"
+          danger
+          onConfirm={supprimer}
+          onCancel={() => setASupprimer(false)}
+        />
+      )}
+
       <div className="devis-entete">
         <div>
           <Link to="/admin/devis" className="text-sm th-text-2 inline-flex items-center gap-1">
@@ -394,6 +421,29 @@ export default function EditeurDevis() {
           </Button>
         </div>
       </form>
+
+      {/* En bas et à part : un geste définitif n'a pas sa place à côté d'« Envoyer ». */}
+      {devis && (
+        <section className="panneau devis-suppression">
+          <h2 className="panneau-titre">Supprimer ce devis</h2>
+          {devis.statut === 'accepte' ? (
+            <p className="tableau-second">
+              Un devis accepté est une pièce commerciale, gardée dix ans. S’il a été accepté par erreur,
+              repassez-le en « Émis » ou « Refusé », enregistrez, et vous pourrez le supprimer.
+            </p>
+          ) : (
+            <>
+              <p className="tableau-second">
+                Pour une erreur, ou quand un client demande l’effacement de ses données. Ses coordonnées
+                sont effacées, le PDF ne s’ouvre plus, et le numéro n’est jamais redonné.
+              </p>
+              <Button variante="danger" taille="sm" iconeAvant={<Trash2 size={15} aria-hidden="true" />} onClick={() => setASupprimer(true)}>
+                Supprimer le devis
+              </Button>
+            </>
+          )}
+        </section>
+      )}
     </div>
   )
 }
