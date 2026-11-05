@@ -17,7 +17,7 @@ class MailCasseTest extends TestCase
 
     private function transportInvalide(): void
     {
-        config(['mail.default' => 'sanarfang429@gmail.com', 'queue.default' => 'sync']);
+        config(['mail.default' => 'transport-inexistant', 'queue.default' => 'sync']);
     }
 
     public function test_inscription_aboutit_malgre_un_transport_email_casse(): void

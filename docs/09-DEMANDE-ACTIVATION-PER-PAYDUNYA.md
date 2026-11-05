@@ -89,7 +89,7 @@ Bien cordialement,
 
 **Arfang Souleymane Sané**
 Développeur — PasseTemps
-+221 78 157 10 09 · sanarfang429@gmail.com
+WhatsApp +221 75 446 90 41 · contactptemps@gmail.com
 https://mavilla-web.onrender.com
 
 ---

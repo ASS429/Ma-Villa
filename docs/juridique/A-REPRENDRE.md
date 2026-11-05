@@ -156,7 +156,5 @@ PASSE TEMPS, RCCM et NINEA reçus le 3 novembre 2026. Mentions légales (éditeu
 CGV art. 1 (le vendeur), confidentialité § 1 (qui traite vos données). Aussi : pied de page du site,
 schema.org, devis, reçu, catalogue, courriels, imprimés.
 
-**Restent à sa décision :** l'adresse du siège, qui est aussi son domicile, n'est publiée nulle part
-(« Dakar, Sénégal » seulement, à faire vérifier : un éditeur doit en principe donner son adresse) ; le
-directeur de la publication reste Abdou Ndour, alors que l'exploitant est désormais une personne
-identifiée.
+**Décidé par l'exploitant le 5 novembre :** l'adresse du siège, qui est aussi son domicile, **n'est pas
+publiée** (« Dakar, Sénégal » seulement) ; le directeur de la publication **reste Abdou Ndour**.
