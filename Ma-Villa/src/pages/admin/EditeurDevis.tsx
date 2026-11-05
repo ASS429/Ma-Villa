@@ -426,7 +426,7 @@ export default function EditeurDevis() {
               value={form.conditions}
               onChange={maj('conditions')}
               erreur={erreurs.conditions}
-              aide="Vide, le devis reprend la phrase habituelle, dans sa langue : « La réservation sera confirmée selon les modalités convenues avec PasseTemps. »"
+              aide="Vide, le devis reprend le texte habituel, dans sa langue : règlement contre reçu, solde avant l’arrivée, politique d’annulation."
             />
             <label className="devis-coche">
               <input type="checkbox" checked={form.cachet} onChange={(e) => setForm((f) => ({ ...f, cachet: e.target.checked }))} />

@@ -350,7 +350,7 @@ function FormulaireReglement({ devisId, solde, premier, moyens, onEnregistre }: 
           ? 'Ce premier règlement confirme la réservation : les dates sont bloquées et le propriétaire est prévenu.'
           : montantSaisi >= solde
             ? 'Ce règlement solde le dossier : la part du propriétaire lui sera due après le séjour.'
-            : `Il restera ${fcfa(Math.max(0, solde - montantSaisi))} à recevoir.`}
+            : `Il restera ${fcfa(Math.max(0, solde - montantSaisi))} à recevoir, avant l’arrivée du client.`}
       </p>
 
       <div>

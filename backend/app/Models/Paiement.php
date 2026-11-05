@@ -29,6 +29,8 @@ class Paiement extends Model
             'transmis_montant'     => 'decimal:2',
             'hors_ligne'           => 'boolean',
             'solde'                => 'decimal:2',
+            'part_avant_remboursement' => 'decimal:2',
+            'rendu_au_client'      => 'decimal:2',
         ];
     }
 
@@ -98,9 +100,23 @@ class Paiement extends Model
             ->where('circuit', 'direct')
             ->whereNull('reversement_id')
             ->where('solde', '<=', 0)
+            ->sejourMaintenuOuPartRestante()
             ->whereHas('reservation', fn (Builder $q) => $q
-                ->where('statut', '!=', 'annulee')
                 ->whereDate('date_fin', '<=', now()->toDateString()));
+    }
+
+    /**
+     * Une réservation annulée ne doit rien au propriétaire, sauf si un client a renoncé et
+     * que le barème ne lui a pas tout rendu : ce reste est sa part. La date de fin prévue
+     * continue de compter : on ne verse jamais avant, c'est la règle publiée.
+     */
+    public function scopeSejourMaintenuOuPartRestante(Builder $query): Builder
+    {
+        return $query->where(fn (Builder $p) => $p
+            ->whereHas('reservation', fn (Builder $r) => $r->where('statut', '!=', 'annulee'))
+            ->orWhere(fn (Builder $s) => $s
+                ->whereNotNull('part_avant_remboursement')
+                ->where('montant_proprietaire', '>', 0)));
     }
 
     /**
@@ -133,8 +149,8 @@ class Paiement extends Model
         return $query->abouti()
             ->where('circuit', 'direct')
             ->whereNull('reversement_id')
+            ->sejourMaintenuOuPartRestante()
             ->whereHas('reservation', fn (Builder $q) => $q
-                ->where('statut', '!=', 'annulee')
                 ->whereDate('date_fin', '>', now()->toDateString()));
     }
 
@@ -170,8 +186,9 @@ class Paiement extends Model
      * Encaissé sur une annonce du circuit des associés, et pas encore transmis.
      *
      * Une réservation annulée en sort : son argent attend la décision de
-     * remboursement (« Ce qui attend »), pas une transmission. Un acompte reçu à
-     * la main n'y entre qu'une fois soldé : une transmission est unique.
+     * remboursement (« Ce qui attend »), pas une transmission. Elle y revient si,
+     * la décision prise, il reste de quoi transmettre. Un acompte reçu à la main
+     * n'y entre qu'une fois soldé : une transmission est unique.
      */
     public function scopeATransmettre(Builder $query): Builder
     {
@@ -179,13 +196,17 @@ class Paiement extends Model
             ->where('circuit', 'associe')
             ->whereNull('transmis_le')
             ->where('solde', '<=', 0)
-            ->whereHas('reservation', fn (Builder $q) => $q->where('statut', '!=', 'annulee'));
+            ->where(fn (Builder $p) => $p
+                ->whereHas('reservation', fn (Builder $r) => $r->where('statut', '!=', 'annulee'))
+                ->orWhere(fn (Builder $s) => $s
+                    ->whereNotNull('part_avant_remboursement')
+                    ->whereRaw('montant - COALESCE(part_passetemps, 0) - rendu_au_client > 0')));
     }
 
-    /** Ce que les associés doivent recevoir : tout, sauf notre part. */
+    /** Ce que les associés doivent recevoir : tout, sauf notre part et ce qui a été rendu au client. */
     public function aTransmettre(): int
     {
-        return (int) round((float) $this->montant - (float) $this->part_passetemps);
+        return (int) round((float) $this->montant - (float) $this->part_passetemps - (float) $this->rendu_au_client);
     }
 
     public function estRegle(): bool

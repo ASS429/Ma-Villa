@@ -26,15 +26,23 @@ class ReservationAnnuleeParLEquipe extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $r = $this->reservation->loadMissing(['logement.villa']);
+        $r = $this->reservation->loadMissing(['logement.villa', 'paiement']);
+        $resteDu = $r->paiement?->circuit === 'direct'
+            && $r->paiement->part_avant_remboursement !== null
+            && (float) $r->paiement->montant_proprietaire > 0;
 
-        return (new MailMessage)
+        $mail = (new MailMessage)
             ->subject('Réservation annulée — '.$r->logement->villa->nom)
             ->greeting('Bonjour '.$notifiable->name.',')
             ->line('L’équipe PasseTemps a annulé cette réservation. Ces dates sont de nouveau libres.')
             ->line('**Annonce** : '.$r->logement->villa->nom)
             ->line('**Logement** : '.$r->logement->nom)
-            ->line('**Dates** : du '.$r->date_debut->format('d/m/Y').' au '.$r->date_fin->format('d/m/Y'))
-            ->action('Voir mes réservations', rtrim(config('app.frontend_url'), '/').'/dashboard/reservations');
+            ->line('**Dates** : du '.$r->date_debut->format('d/m/Y').' au '.$r->date_fin->format('d/m/Y'));
+
+        if ($resteDu) {
+            $mail->line('Le client a renoncé : une part du séjour vous reste due. Elle figure dans vos revenus et vous est versée après la date de fin prévue.');
+        }
+
+        return $mail->action('Voir mes réservations', rtrim(config('app.frontend_url'), '/').'/dashboard/reservations');
     }
 }

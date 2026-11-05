@@ -16,7 +16,7 @@ interface Ligne {
   montant_client: number
   commission: number
   montant_proprietaire: number
-  etat: 'du' | 'a_venir' | 'verse' | 'annule' | 'solde'
+  etat: 'du' | 'a_venir' | 'verse' | 'annule' | 'solde' | 'part_a_venir'
 }
 
 type StatutVersement = 'manuel' | 'en_cours' | 'reussi' | 'echoue'
@@ -55,6 +55,7 @@ const ETAT: Record<Ligne['etat'], { label: string; ton: 'warning' | 'success' | 
   du:      { label: 'À verser',   ton: 'warning' },
   a_venir: { label: 'Séjour à venir', ton: 'neutre' },
   solde:   { label: 'Solde du client attendu', ton: 'neutre' },
+  part_a_venir: { label: 'Annulée, votre part reste due', ton: 'neutre' },
   verse:   { label: 'Versé',      ton: 'success' },
   annule:  { label: 'Annulée',    ton: 'danger' },
 }

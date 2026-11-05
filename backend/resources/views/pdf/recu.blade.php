@@ -7,14 +7,14 @@
         'titre' => 'Receipt', 'type' => 'Payment receipt', 'annule' => 'Cancelled receipt', 'date' => 'Received on', 'moyen' => 'Payment method',
         'reference' => 'Reference', 'de' => 'Received from', 'somme' => 'Amount received', 'lettres' => 'That is:', 'pour' => 'For',
         'devis' => 'Quote', 'sejour' => 'Stay', 'du' => 'from', 'au' => 'to', 'recap' => 'Account', 'total' => 'Total of the quote',
-        'avant' => 'Already paid', 'recu' => 'This receipt', 'reste' => 'Balance due', 'solde' => 'Paid in full',
+        'avant' => 'Already paid', 'recu' => 'This receipt', 'reste' => 'Balance due', 'solde' => 'Paid in full', 'avant_arrivee' => 'The balance is due before your arrival.',
         'signature' => 'For PasseTemps', 'mention' => 'This receipt confirms the sum received. The booking is subject to the terms agreed with PasseTemps.',
         'annule_texte' => 'This receipt was cancelled and is no longer valid.',
     ] : [
         'titre' => 'Reçu', 'type' => 'Reçu de paiement', 'annule' => 'Reçu annulé', 'date' => 'Reçu le', 'moyen' => 'Moyen de paiement',
         'reference' => 'Référence', 'de' => 'Reçu de', 'somme' => 'Somme reçue', 'lettres' => 'Soit :', 'pour' => 'Pour',
         'devis' => 'Devis', 'sejour' => 'Séjour', 'du' => 'du', 'au' => 'au', 'recap' => 'État du dossier', 'total' => 'Total du devis',
-        'avant' => 'Déjà réglé', 'recu' => 'Ce reçu', 'reste' => 'Reste à payer', 'solde' => 'Entièrement réglé',
+        'avant' => 'Déjà réglé', 'recu' => 'Ce reçu', 'reste' => 'Reste à payer', 'solde' => 'Entièrement réglé', 'avant_arrivee' => 'Le solde est à régler avant votre arrivée.',
         'signature' => 'Pour PasseTemps', 'mention' => 'Ce reçu atteste de la somme reçue. La réservation suit les modalités convenues avec PasseTemps.',
         'annule_texte' => 'Ce reçu a été annulé et n’a plus de valeur.',
     ];
@@ -144,6 +144,9 @@
         <td class="nombre">{{ $reste > 0 ? $fcfa($reste) : '' }}</td>
     </tr>
 </table>
+@if ($reste > 0)
+<p class="mention">{{ $t['avant_arrivee'] }}</p>
+@endif
 @endunless
 
 <div class="signature"><div class="etiquette">{{ $t['signature'] }}</div></div>

@@ -85,9 +85,33 @@ interface Proposition {
   deja_rendu: number
   montant_encaisse: number
   part_proprietaire: number
+  commission?: number
+  circuit?: string
   proprietaire_deja_paye: boolean
   avertissement: string | null
   paiement: Reglement
+}
+
+/**
+ * Ce que le montant saisi laisse, et à qui : la règle tient en une phrase, et le montant
+ * se modifie. Le serveur fait le même calcul (`repartirCeQuiReste`).
+ */
+function ceQuiReste(p: Proposition, imputeA: Imputation, somme: number): string | null {
+  if (p.proprietaire_deja_paye) return null
+  const rendu = p.deja_rendu + somme
+  const commission = p.commission ?? 0
+
+  if (imputeA !== 'client') {
+    const garde = p.montant_encaisse - rendu
+    return garde > 0
+      ? `${fcfa(garde)} resteront chez PasseTemps : rien ne revient au propriétaire quand l’annulation ne vient pas du client.`
+      : null
+  }
+
+  const reste = Math.max(0, p.part_proprietaire - rendu)
+  const lui = p.circuit === 'associe' ? 'au propriétaire, par les associés' : 'au propriétaire, après la date de fin prévue'
+  const acquise = commission > 0 ? ` La commission de ${fcfa(commission)} reste acquise.` : ''
+  return (reste > 0 ? `${fcfa(reste)} reviendront ${lui}.` : 'Rien ne revient au propriétaire.') + acquise
 }
 
 const TON: Record<Imputation, 'danger' | 'warning' | 'neutre'> = {
@@ -507,6 +531,12 @@ export default function AdminRemboursements() {
                 inputMode="numeric"
                 onChange={(e) => setMontant(e.target.value.replace(/[^\d]/g, ''))}
               />
+
+              {proposition && Number.isFinite(somme) && ceQuiReste(proposition, imputeA, somme) && (
+                <p className="console-sous-titre" aria-live="polite" style={{ margin: 0 }}>
+                  {ceQuiReste(proposition, imputeA, somme)}
+                </p>
+              )}
 
               <ChampZoneTexte
                 label="Motif"

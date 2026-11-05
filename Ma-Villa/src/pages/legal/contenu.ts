@@ -88,8 +88,12 @@ const MAJ_CONFIDENTIALITE = '5 novembre 2026'
  * particulières. Les durées de la confidentialité sont tenues par
  * `passetemps:effacer-devis-et-demandes`. La politique d'annulation et les
  * conditions de vente gardent leur date.
+ *
+ * Reprises du 5 novembre 2026, sur la même autorisation : le règlement auprès de
+ * l'équipe contre un reçu (`App\\Services\\Encaissement`), le solde dû avant l'arrivée,
+ * et ce que le barème laisse au propriétaire quand un client renonce.
  */
-const MAJ_CGU = '4 novembre 2026'
+const MAJ_CGU = '5 novembre 2026'
 const MAJ_MENTIONS = '4 novembre 2026'
 
 const EXPLOITANT = 'PasseTemps'
@@ -115,7 +119,10 @@ const ARGENT: Section = {
   titre: '5. Ce que devient votre paiement',
   paragraphes: [
     `Le règlement d'une réservation s'effectue en ligne, par Wave, Orange Money ou, lorsqu'elle est proposée, par carte bancaire, via le prestataire de paiement PayDunya. La carte se saisit sur la page sécurisée de PayDunya : ${EXPLOITANT} n'en connaît jamais le numéro.`,
-    `Le montant est encaissé par ${EXPLOITANT}, et non par le propriétaire. ${EXPLOITANT} en retient une commission, puis reverse le solde au propriétaire après la fin du séjour. Entre l'encaissement et ce reversement, les fonds sont détenus par ${EXPLOITANT}.`,
+    `Lorsque le paiement en ligne n'est pas ouvert, ou pour un hébergement réservé auprès de notre équipe, le règlement se fait auprès de l'équipe ${EXPLOITANT} — Wave, Orange Money, espèces, virement ou chèque — contre un reçu numéroté.`,
+    `Un premier règlement, même partiel, confirme la réservation et bloque les dates. Le solde se règle avant l'arrivée. S'il ne l'est pas, ${EXPLOITANT} peut annuler la réservation : la somme déjà reçue suit alors la politique d'annulation.`,
+    `Le montant est encaissé par ${EXPLOITANT}, et non par le propriétaire. ${EXPLOITANT} en retient une commission, puis reverse le reste au propriétaire après la fin du séjour, une fois le séjour entièrement réglé. Entre l'encaissement et ce reversement, les fonds sont détenus par ${EXPLOITANT}.`,
+    `Si le client renonce à son séjour, ce que le barème de la politique d'annulation ne lui rend pas de la part du propriétaire revient au propriétaire, et lui est reversé après la date de fin prévue.`,
     `La commission est prélevée sur le montant affiché : le prix indiqué sur l'annonce est celui que vous réglez, et aucun supplément ne s'y ajoute.`,
   ],
   liste: [
@@ -270,6 +277,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
           'Votre compte : nom, adresse électronique, numéro de téléphone, mot de passe chiffré, photographie de profil si vous en ajoutez une.',
           'Vos réservations : dates, logement, nombre de personnes, montant, statut du paiement.',
           'Le numéro de téléphone que vous indiquez pour payer, qui n’est pas nécessairement celui de votre compte. Il est conservé afin de pouvoir vous rembourser sur le numéro réellement débité — ou, pour un paiement par carte, sur ce numéro.',
+          'Si vous réglez auprès de notre équipe : votre nom, le numéro qui a payé, la référence de la transaction, la somme, le moyen et la date, sur un reçu numéroté. Les coordonnées de votre devis sont alors reprises sur votre réservation, même sans compte.',
           'Vos messages échangés avec un propriétaire au sujet d’une réservation, et le motif que vous indiquez en demandant une annulation.',
           'Vos avis, vos favoris, et les annonces que vous publiez si vous êtes propriétaire — y compris la position sur la carte, si vous choisissez de la renseigner.',
           'Si vous demandez un service (transport, repas) : la prestation, la date et l’heure, le nombre de personnes, le lieu, le numéro de vol et la délégation le cas échéant, vos nom, téléphone et adresse électronique, vos précisions, et la langue de la page. Un compte n’est pas nécessaire.',
@@ -294,6 +302,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
         titre: '4. Qui les reçoit',
         paragraphes: [
           `Lorsqu'une réservation est confirmée ou réglée, le propriétaire et le client reçoivent réciproquement le nom et les coordonnées de l'autre. Cet échange est nécessaire à la réalisation du séjour, et il n'a pas lieu avant.`,
+          `Si vous réglez auprès de notre équipe sans avoir de compte, le propriétaire reçoit votre nom et vos coordonnées dès le premier règlement, pour préparer votre venue.`,
           `Une demande de service est reçue par l'équipe ${EXPLOITANT}, puis transmise au partenaire qui l'exécute ou la coordonne (transporteur, restaurant), avec ce qu'il lui faut pour la réaliser : nom, téléphone, lieu, date, et position si vous l'avez jointe. De même, pour un hébergement réservé auprès de notre équipe, vos coordonnées sont transmises au partenaire qui le gère.`,
           `Un devis ou une demande particulière est reçu par l'équipe ${EXPLOITANT}, qui peut communiquer au propriétaire ou au partenaire concerné ce qu'il faut pour vérifier la disponibilité : les dates et le nombre de personnes.`,
           `Lorsque vous écrivez à l'équipe par WhatsApp, le message part de votre propre application ; WhatsApp, service de Meta, en assure l'acheminement.`,
@@ -321,7 +330,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
         ],
         liste: [
           'Compte : tant qu’il est ouvert. Vous pouvez demander sa suppression à tout moment.',
-          'Réservations, paiements, remboursements et numéro du payeur : dix ans, durée de conservation des pièces comptables. Ces données survivent à la suppression du compte, sous une forme réduite à ce qui est comptablement nécessaire.',
+          'Réservations, paiements, reçus, remboursements et numéro du payeur : dix ans, durée de conservation des pièces comptables. Ces données survivent à la suppression du compte, sous une forme réduite à ce qui est comptablement nécessaire.',
           'Messages échangés au sujet d’une réservation : trois ans après la fin du séjour.',
           'Demandes de service : douze mois après la date du service, puis effacées.',
           'Devis acceptés : dix ans après leur date, comme les autres pièces commerciales, puis effacés.',

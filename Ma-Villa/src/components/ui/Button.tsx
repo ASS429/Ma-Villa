@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { ComponentPropsWithoutRef, ReactNode } from 'react'
+import { langueDuChemin } from '../../i18n/langue'
 
 /**
  * Emploi de l'accent, arrêté en revue de design : il signale la conversion du
@@ -46,12 +47,20 @@ function classes(variante: Variante, taille: Taille, bloc: boolean, sup?: string
   ].filter(Boolean).join(' ')
 }
 
+/**
+ * Lue dans l'adresse et non par `useLangue` : un bouton peut s'afficher hors du routeur
+ * (écran d'erreur), et le hook y planterait. Elle n'apparaît qu'au navigateur, après un clic.
+ */
+function attente() {
+  return typeof window !== 'undefined' && langueDuChemin(window.location.pathname) === 'en' ? 'Please wait…' : 'Patientez…'
+}
+
 function Contenu({ chargement, iconeAvant, iconeApres, children }: Pick<Commun, 'chargement' | 'iconeAvant' | 'iconeApres' | 'children'>) {
   if (chargement) {
     return (
       <>
         <span className="btn-spinner" aria-hidden="true" />
-        <span>Patientez…</span>
+        <span>{attente()}</span>
       </>
     )
   }

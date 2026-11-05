@@ -43,6 +43,7 @@ interface Transmission {
   commission: number
   part_passetemps: number
   a_transmettre: number
+  rendu_au_client?: number
   transmis_le: string | null
   transmis_montant: number | null
   transmis_reference: string | null
@@ -252,6 +253,7 @@ export default function AdminReservations() {
 
                 <dl className="commande-admin-faits">
                   <div><dt>Payé par le client</dt><dd>{fcfa(t.montant)} ({t.methode})</dd></div>
+                  {(t.rendu_au_client ?? 0) > 0 && <div><dt>Rendu au client</dt><dd>{fcfa(t.rendu_au_client ?? 0)} : séjour annulé, ceci est ce qui reste</dd></div>}
                   <div><dt>Prix du propriétaire</dt><dd>{fcfa(t.montant_proprietaire)}{t.proprietaire ? ` · ${t.proprietaire}` : ''}</dd></div>
                   <div><dt>Majoration</dt><dd>{fcfa(t.commission)}, dont {fcfa(t.part_passetemps)} pour PasseTemps</dd></div>
                   {t.transmis_le && (

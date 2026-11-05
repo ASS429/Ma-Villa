@@ -418,7 +418,11 @@ class ReversementController extends Controller
         }
 
         if ($paiement->reservation?->statut === 'annulee') {
-            return 'annule';
+            if ($paiement->part_avant_remboursement === null || (float) $paiement->montant_proprietaire <= 0) {
+                return 'annule';
+            }
+
+            return $paiement->reservation->date_fin > now()->toDateString() ? 'part_a_venir' : 'du';
         }
 
         if ($paiement->reservation && $paiement->reservation->date_fin > now()->toDateString()) {

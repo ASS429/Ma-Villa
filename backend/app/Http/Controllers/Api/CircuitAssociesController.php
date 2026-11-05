@@ -76,6 +76,7 @@ class CircuitAssociesController extends Controller
             'commission'         => (int) $p->commission,
             'part_passetemps'    => (int) $p->part_passetemps,
             'a_transmettre'      => $p->aTransmettre(),
+            'rendu_au_client'    => (int) $p->rendu_au_client,
             'transmis_le'        => $p->transmis_le?->toIso8601String(),
             'transmis_montant'   => $p->transmis_montant !== null ? (int) $p->transmis_montant : null,
             'transmis_reference' => $p->transmis_reference,

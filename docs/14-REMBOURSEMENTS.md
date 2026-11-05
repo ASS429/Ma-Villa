@@ -169,3 +169,20 @@ la liste des demandes.
 - **La publication du barème.** Il est appliqué mais n'est écrit nulle part côté
   client. Il doit passer par le juriste avec le reste des CGU — annoncer une règle
   de remboursement qu'on devra ensuite corriger est pire que de ne rien annoncer.
+
+---
+
+## Ce que le remboursement laisse (5 novembre 2026)
+
+**Le client renonce :** ce que le barème ne lui rend pas de la part du propriétaire **revient au
+propriétaire**. Exemple publié : 100 000 FCFA, annulés à trois jours, 44 000 rendus. Il reste 44 000 au
+propriétaire et 12 000 de commission à PasseTemps. Ces 44 000 entrent dans « à verser » après la date de
+fin prévue, et apparaissent dans ses revenus. La réservation reste annulée, les dates restent libres.
+
+**Sur le circuit des associés :** ils reçoivent tout, sauf notre part et ce qui a été rendu au client.
+
+**La faute vient de nous ou du propriétaire :** le remboursement est en principe intégral. Si vous en
+décidez autrement, le reste n'est attribué à personne d'office : l'écran le dit avant l'enregistrement.
+
+**Déjà versé ou déjà transmis :** rien ne change sur le paiement, et `a_recuperer_proprietaire` dit ce
+qu'il faut réclamer. Le cas des associés déjà servis n'était pas compté avant cette date.

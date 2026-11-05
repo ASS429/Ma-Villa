@@ -75,7 +75,7 @@ class RemboursementController extends Controller
                 'ville'                  => $r->logement?->villa?->ville,
                 'montant'                => (float) ($r->paiement?->montant ?? 0),
                 'part_proprietaire'      => (float) ($r->paiement?->montant_proprietaire ?? 0),
-                'proprietaire_deja_paye' => $r->paiement?->reversement_id !== null,
+                'proprietaire_deja_paye' => $r->paiement?->reversement_id !== null || $r->paiement?->transmis_le !== null,
                 // Sans ça, l'exploitant lit la demande puis quitte l'écran pour
                 // chercher où virer. Le renseignement doit être là où la
                 // décision se prend.
@@ -115,7 +115,10 @@ class RemboursementController extends Controller
             'explication'        => $calcul->explication,
             'deja_rendu'         => (float) Remboursement::where('paiement_id', $paiement->id)->sum('montant'),
             'montant_encaisse'   => (float) $paiement->montant,
-            'part_proprietaire'  => (float) $paiement->montant_proprietaire,
+            // La part d'origine : un second remboursement repart d'elle, pas de ce qui reste.
+            'part_proprietaire'  => (float) ($paiement->part_avant_remboursement ?? $paiement->montant_proprietaire),
+            'commission'         => (float) $paiement->commission,
+            'circuit'            => $paiement->circuit,
             'paiement'           => $this->commentIlAPaye($paiement),
         ] + $this->etatDuVersement($paiement));
     }
@@ -192,6 +195,8 @@ class RemboursementController extends Controller
                 : 0;
 
             $remboursement->save();
+
+            $this->repartirCeQuiReste($paiement, $remboursement, $dejaRendu + (float) $donnees['montant']);
 
             // Annuler la réservation coupe le versement à venir : sans cela,
             // la part du propriétaire resterait exigible sur un séjour rendu.
@@ -287,15 +292,55 @@ class RemboursementController extends Controller
      */
     private function etatDuVersement(Paiement $paiement): array
     {
-        $deja = $paiement->reversement_id !== null;
+        $verse = $paiement->reversement_id !== null;
+        $transmis = $paiement->transmis_le !== null;
 
         return [
-            'proprietaire_deja_paye' => $deja,
-            'avertissement' => $deja
-                ? 'Le propriétaire a déjà touché sa part sur cette réservation. Le remboursement '
-                  . 'sera enregistré, mais la somme est sortie : il faudra la lui réclamer. '
-                  . 'Le montant à récupérer est inscrit avec le remboursement.'
-                : null,
+            'proprietaire_deja_paye' => $verse || $transmis,
+            'avertissement' => match (true) {
+                $verse => 'Le propriétaire a déjà touché sa part sur cette réservation. Le remboursement '
+                    . 'sera enregistré, mais la somme est sortie : il faudra la lui réclamer. '
+                    . 'Le montant à récupérer est inscrit avec le remboursement.',
+                $transmis => 'Cet argent a déjà été transmis aux associés. Le remboursement sera enregistré, '
+                    . 'mais la somme est sortie : il faudra la leur réclamer. '
+                    . 'Le montant à récupérer est inscrit avec le remboursement.',
+                default => null,
+            },
         ];
+    }
+
+    /**
+     * Ce que le remboursement laisse, et à qui.
+     *
+     * Le client renonce : le barème porte sur la part du propriétaire, et la commission reste
+     * acquise. Ce qui n'est pas rendu de cette part revient donc au propriétaire : les dates
+     * étaient bloquées, il a refusé d'autres clients (décision du 5 novembre 2026). Annuler la
+     * réservation le faisait disparaître de tous les écrans, alors que l'argent restait chez nous.
+     *
+     * La faute vient de nous ou de lui : le remboursement est en principe intégral. Si l'équipe en
+     * décide autrement, le reste n'est attribué à personne d'office, surtout pas à celui qui a failli.
+     */
+    private function repartirCeQuiReste(Paiement $paiement, Remboursement $remboursement, float $rendu): void
+    {
+        // Déjà parti : `a_recuperer_proprietaire` dit ce qui est à réclamer, rien d'autre ne bouge.
+        if ($paiement->reversement_id !== null || $paiement->transmis_le !== null) {
+            return;
+        }
+
+        // `solde` : le dossier est fini, un solde attendu ne retient plus rien.
+        $champs = ['rendu_au_client' => $rendu, 'solde' => 0];
+
+        if ($remboursement->impute_a === 'client') {
+            $origine = (float) ($paiement->part_avant_remboursement ?? $paiement->montant_proprietaire);
+            $surSaPart = max(0, $rendu - ($remboursement->commission_rendue ? (float) $paiement->commission : 0));
+
+            $champs['part_avant_remboursement'] = $origine;
+            $champs['montant_proprietaire'] = max(0, $origine - $surSaPart);
+        } elseif ($paiement->part_avant_remboursement !== null) {
+            // Une première décision lui laissait une part ; la cause retenue a changé.
+            $champs['montant_proprietaire'] = 0;
+        }
+
+        $paiement->forceFill($champs)->save();
     }
 }
