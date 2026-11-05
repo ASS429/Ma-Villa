@@ -98,6 +98,9 @@ export default function Footer() {
         <p className="text-sm th-text-3 mt-10 pt-6" style={{ borderTop: '1px solid var(--border)' }}>
           © {new Date().getFullYear()} PasseTemps · {t.pays}
         </p>
+        <p className="text-xs th-text-3 mt-1">
+          RCCM {COORDONNEES.entreprise.rccm} · NINEA {COORDONNEES.entreprise.ninea}
+        </p>
       </div>
     </footer>
   )

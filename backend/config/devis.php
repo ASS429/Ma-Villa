@@ -30,10 +30,14 @@ return [
         'nom'      => 'PasseTemps',
         'activite' => 'Plateforme de réservation · Hébergements au Sénégal',
         'site'     => 'passetemps.sn',
-        // Vides tant que l'immatriculation n'est pas reçue : rien n'est imprimé.
+        // Immatriculée le 3 novembre 2026. Publics par nature, donc écrits ici : un document
+        // sans NINEA ne doit pas dépendre d'une variable oubliée. La même chose côté site :
+        // `Ma-Villa/src/coordonnees.json`, et un test vérifie qu'ils ne divergent pas.
+        'titulaire' => 'Arfang Souleymane Sane',
+        'ninea'    => env('ENTREPRISE_NINEA', '013512810'),
+        'rccm'     => env('ENTREPRISE_RCCM', 'SN.DKR.2026.A.43219'),
+        // Le siège est aussi un domicile : il ne s'imprime que si l'exploitant le pose sur Railway.
         'adresse'  => env('ENTREPRISE_ADRESSE'),
-        'ninea'    => env('ENTREPRISE_NINEA'),
-        'rccm'     => env('ENTREPRISE_RCCM'),
     ],
 
     'conditions' => [

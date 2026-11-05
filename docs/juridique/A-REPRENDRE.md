@@ -12,8 +12,9 @@
 >
 > **31 octobre 2026 — CGU et politique d'annulation reprises**, sur son autorisation, pour
 > rouvrir la réservation en ligne. Les lignes appliquées sont retirées ci-dessous et
-> relevées en fin de page. Le même jour, la **confidentialité** aussi (seconde autorisation). Les mentions légales
-> attendent les numéros RCCM et NINEA.
+> relevées en fin de page. Le même jour, la **confidentialité** aussi (seconde autorisation).
+>
+> **5 novembre 2026 — RCCM et NINEA reçus** : mentions légales, CGU, CGV et confidentialité les portent.
 
 Dernière mise à jour : 5 novembre 2026.
 
@@ -147,3 +148,15 @@ Demandé par l'exploitant (« vas-y pour ce qui te concerne ») après lecture d
 - Hors textes, mais c'est ce qui tient la promesse de l'art. 6 (« confirmés par écrit, avant tout
   paiement ») : les conditions par défaut des devis disent le règlement contre reçu, le solde avant
   l'arrivée et la politique d'annulation (`config/devis.php`). Les devis déjà établis gardent leur texte.
+
+## Appliqué le 5 novembre 2026 (immatriculation)
+
+Sur la demande de l'exploitant (« intègre-les partout ») : entreprise individuelle, nom commercial
+PASSE TEMPS, RCCM et NINEA reçus le 3 novembre 2026. Mentions légales (éditeur), CGU art. 1,
+CGV art. 1 (le vendeur), confidentialité § 1 (qui traite vos données). Aussi : pied de page du site,
+schema.org, devis, reçu, catalogue, courriels, imprimés.
+
+**Restent à sa décision :** l'adresse du siège, qui est aussi son domicile, n'est publiée nulle part
+(« Dakar, Sénégal » seulement, à faire vérifier : un éditeur doit en principe donner son adresse) ; le
+directeur de la publication reste Abdou Ndour, alors que l'exploitant est désormais une personne
+identifiée.

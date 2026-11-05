@@ -559,6 +559,12 @@ const PAGES_FIXES = [
           name: 'PasseTemps',
           url: SITE,
           logo: `${SITE}/logo.png`,
+          legalName: COORDONNEES.entreprise.titulaire,
+          taxID: COORDONNEES.entreprise.ninea,
+          identifier: [
+            { '@type': 'PropertyValue', propertyID: 'RCCM', value: COORDONNEES.entreprise.rccm },
+            { '@type': 'PropertyValue', propertyID: 'NINEA', value: COORDONNEES.entreprise.ninea },
+          ],
           sameAs: RESEAUX.filter((r) => r.profil).map((r) => r.url),
           contactPoint: {
             '@type': 'ContactPoint',

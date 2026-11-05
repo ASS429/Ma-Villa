@@ -1,9 +1,34 @@
-# Ce qui reste — état au 22 août 2026 (soir)
+# Ce qui reste — état au 5 novembre 2026
 
 _Écrit pour être lu sans connaître le code. Chaque point dit **ce que c'est**, **pourquoi
-ça compte**, et **ce que ça coûte**._
+ça compte**, et **ce que ça coûte**. L'ancien état du 22 août est plus bas, pour mémoire._
 
 ---
+
+## En un coup d'œil, au 5 novembre 2026
+
+| | |
+|---|---|
+| **Le site est en ligne** | passetemps.sn, 59 annonces, en français et en anglais |
+| **On encaisse déjà, à la main** | devis, règlement auprès de l'équipe, reçu numéroté, reversement suivi |
+| **La réservation en ligne est prête mais fermée** | elle attend le KYC PayDunya, désormais possible |
+| **L'immatriculation est faite** | RCCM SN.DKR.2026.A.43219, NINEA 013512810, depuis le 3 novembre |
+| **Ce qui manque n'est presque plus du code** | PayDunya, une banque, un comptable, des accords écrits |
+
+## Dans l'ordre où le faire
+
+1. **Envoyer le message à PayDunya** (`18-DEMANDE-PAYDUNYA-KYC-PER-CARTE.md`) : KYC, déboursement,
+   carte, frais, et accord écrit sur l'encaissement pour le compte des propriétaires.
+2. **Ouvrir un compte bancaire au nom de l'entreprise**, et y relier PayDunya. L'argent des
+   propriétaires ne doit pas se mêler au vôtre.
+3. **Rouvrir la réservation en ligne** une fois le KYC validé : `PAIEMENT_ACTIF` et
+   `RESERVATIONS_OUVERTES` à `true` sur Railway, puis un paiement réel de 200 F.
+4. **Voir un comptable** : le régime fiscal de l'entreprise, la facture, et ce que veut dire, pour
+   une entreprise individuelle, détenir l'argent de tiers.
+5. **Faire préciser l'activité au registre** si le comptable ou PayDunya le demandent : la liste
+   déposée ne cite ni l'hébergement, ni la réservation, ni l'intermédiation.
+6. **Les accords écrits des propriétaires** (Clé d'Or, Modou Sene, vidéos) et de vrais comptes pour
+   ceux qui n'en ont pas.
 
 ## À faire plus tard (noté le 4 novembre 2026)
 
@@ -20,7 +45,9 @@ Rien d'urgent ; ce qu'on a vu passer et qu'il ne faut pas perdre.
 
 ---
 
-## En un coup d'œil
+## État au 22 août 2026, pour mémoire
+
+### En un coup d'œil
 
 | | |
 |---|---|

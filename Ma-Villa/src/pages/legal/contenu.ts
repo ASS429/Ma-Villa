@@ -94,11 +94,25 @@ const MAJ_CONFIDENTIALITE = '5 novembre 2026'
  * et ce que le barème laisse au propriétaire quand un client renonce.
  */
 const MAJ_CGU = '5 novembre 2026'
-const MAJ_MENTIONS = '4 novembre 2026'
+const MAJ_MENTIONS = '5 novembre 2026'
+
+/**
+ * La boutique suivait la date de la réouverture des réservations. Le vendeur y est
+ * identifié depuis l'immatriculation du 3 novembre 2026 : seul ce texte change de date.
+ */
+const MAJ_VENTE = '5 novembre 2026'
 
 const EXPLOITANT = 'PasseTemps'
 const CONTACT = 'contactptemps@gmail.com'
 const DIRECTEUR = 'Abdou Ndour'
+
+/**
+ * Qui se trouve derrière le nom commercial. RCCM et NINEA reçus le 3 novembre 2026 : ils sont
+ * publics par nature. L'adresse du siège est aussi un domicile : elle n'est pas ici, voir
+ * `ENTREPRISE_ADRESSE` côté API, et le choix qui reste à l'exploitant.
+ */
+const { titulaire: TITULAIRE, rccm: RCCM, ninea: NINEA } = COORDONNEES.entreprise
+const IDENTITE = `l'entreprise individuelle d'${TITULAIRE} (RCCM ${RCCM}, NINEA ${NINEA})`
 
 /**
  * Les textes ne sont plus provisoires depuis le 3 septembre 2026.
@@ -154,6 +168,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
       {
         titre: '1. Ce qu’est PasseTemps',
         paragraphes: [
+          `${EXPLOITANT} est le nom commercial de ${IDENTITE}, dont le siège est à Dakar, Sénégal.`,
           `${EXPLOITANT} met en relation des propriétaires de villas, résidences, appartements et chambres situés au Sénégal avec des clients souhaitant les louer pour un séjour. Elle transmet aussi des demandes de services aux voyageurs — transport, repas — à des prestataires partenaires (article 7).`,
           `Le séjour lui-même est fourni par le propriétaire, qui reste responsable de l'état du bien, de sa conformité à l'annonce et du déroulement du séjour. ${EXPLOITANT} n'est ni propriétaire, ni gestionnaire, ni loueur des biens présentés. De même, un service est exécuté par le prestataire qui l'accepte, et qui en répond.`,
           `${EXPLOITANT} exerce en revanche deux activités qui lui sont propres : elle encaisse le prix des séjours réservés en ligne et en détient les fonds jusqu'au reversement (article 5), et elle vend pour son propre compte les articles d'artisanat de sa boutique, régis par des conditions de vente distinctes.`,
@@ -264,7 +279,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
       {
         titre: '1. Qui traite vos données',
         paragraphes: [
-          `Les données collectées sur cette plateforme sont traitées par ${EXPLOITANT}, dont le siège est à Dakar, Sénégal. Le directeur de la publication est ${DIRECTEUR}.`,
+          `Les données collectées sur cette plateforme sont traitées par ${EXPLOITANT}, nom commercial de ${IDENTITE}, dont le siège est à Dakar, Sénégal. Le directeur de la publication est ${DIRECTEUR}.`,
           `Pour toute question relative à vos données, écrivez à ${CONTACT}.`,
         ],
       },
@@ -447,13 +462,14 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
     cle: 'vente',
     titre: 'Conditions générales de vente',
     description: `Conditions de vente de la boutique ${EXPLOITANT} : commande, prix, livraison, paiement et retours des articles d'artisanat.`,
-    miseAJour: MAJ_RESERVATION,
+    miseAJour: MAJ_VENTE,
     chapeau:
       `Ces conditions régissent les achats effectués dans la boutique d'artisanat. Elles sont distinctes des conditions générales d'utilisation, qui régissent la location de logements.`,
     sections: [
       {
         titre: '1. Le vendeur',
         paragraphes: [
+          `Le vendeur est ${EXPLOITANT}, nom commercial de ${IDENTITE}, dont le siège est à Dakar, Sénégal.`,
           `Contrairement à la location, où ${EXPLOITANT} se borne à mettre en relation, la boutique est une activité de vente : ${EXPLOITANT} est le vendeur des articles proposés, et le contrat de vente est conclu directement entre vous et elle.`,
           `Les artisans dont le nom accompagne un article en sont les auteurs. Ils ne sont pas parties au contrat de vente et ne disposent pas de compte sur la plateforme.`,
         ],
@@ -524,10 +540,11 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
         titre: 'Éditeur',
         paragraphes: [],
         liste: [
-          `Dénomination : ${EXPLOITANT}`,
-          'Forme juridique : en cours de formalisation',
-          'Registre du commerce (RCCM) : en cours de formalisation',
-          'NINEA : en cours de formalisation',
+          `Exploitant : ${TITULAIRE}`,
+          'Forme juridique : entreprise individuelle',
+          `Nom commercial : ${EXPLOITANT} (« PASSE TEMPS » au registre)`,
+          `Registre du commerce (RCCM) : ${RCCM}, immatriculée le 3 novembre 2026`,
+          `NINEA : ${NINEA}`,
           'Siège : Dakar, Sénégal',
           `Directeur de la publication : ${DIRECTEUR}`,
           `Contact : ${CONTACT}`,

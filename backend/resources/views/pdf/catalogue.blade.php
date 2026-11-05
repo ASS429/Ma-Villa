@@ -39,6 +39,7 @@
 
 <div class="pied">
     Réservations et renseignements : PasseTemps · passetemps.sn · WhatsApp {{ $contact['telephone'] }} · {{ $contact['email'] }}
+    <br>{{ config('devis.emetteur.titulaire') }}, entreprise individuelle · NINEA {{ config('devis.emetteur.ninea') }} · RCCM {{ config('devis.emetteur.rccm') }}
 </div>
 
 <table class="entete">

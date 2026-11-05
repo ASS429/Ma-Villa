@@ -1,4 +1,10 @@
 {
   "whatsapp": "+221 75 446 90 41",
-  "email": "contactptemps@gmail.com"
+  "email": "contactptemps@gmail.com",
+  "entreprise": {
+    "titulaire": "Arfang Souleymane Sane",
+    "forme": "Entreprise individuelle",
+    "rccm": "SN.DKR.2026.A.43219",
+    "ninea": "013512810"
+  }
 }

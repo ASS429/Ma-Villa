@@ -62,10 +62,11 @@
 <body>
 
 <div class="pied">
-    {{ $emetteur['nom'] }} · {{ $emetteur['site'] }} · WhatsApp {{ $emetteur['telephone'] }} · {{ $emetteur['email'] }}
-    @if ($emetteur['adresse']) · {{ $emetteur['adresse'] }} @endif
+    {{ $emetteur['nom'] }} · {{ $emetteur['titulaire'] }}, {{ $en ? 'sole proprietorship' : 'entreprise individuelle' }}
     @if ($emetteur['ninea']) · NINEA {{ $emetteur['ninea'] }} @endif
     @if ($emetteur['rccm']) · RCCM {{ $emetteur['rccm'] }} @endif
+    <br>{{ $emetteur['site'] }} · WhatsApp {{ $emetteur['telephone'] }} · {{ $emetteur['email'] }}
+    @if ($emetteur['adresse']) · {{ $emetteur['adresse'] }} @endif
 </div>
 
 <table class="entete">
