@@ -3,6 +3,9 @@
 _Rédigés le 5 novembre 2026. Font suite à la demande du 20 août (`09-DEMANDE-ACTIVATION-PER-PAYDUNYA.md`),
 restée sans réponse, et à la carte refusée le 31 octobre._
 
+**Fait le 5 novembre 2026 par l'exploitant :** KYC déposé, courriel et WhatsApp envoyés. Sans réponse
+le 20 novembre, relancer, puis chercher un second prestataire agréé (voir la liste de la BCEAO).
+
 ## Dans quel ordre
 
 1. **Déposer le KYC dans le tableau de bord PayDunya**, onglet « Retirer de l'argent ». Leur FAQ demande
