@@ -134,7 +134,7 @@ const ARGENT: Section = {
   paragraphes: [
     `Le règlement d'une réservation s'effectue en ligne, par Wave, Orange Money ou, lorsqu'elle est proposée, par carte bancaire, via le prestataire de paiement PayDunya. La carte se saisit sur la page sécurisée de PayDunya : ${EXPLOITANT} n'en connaît jamais le numéro.`,
     `Lorsque le paiement en ligne n'est pas ouvert, ou pour un hébergement réservé auprès de notre équipe, le règlement se fait auprès de l'équipe ${EXPLOITANT} — Wave, Orange Money, espèces, virement ou chèque — contre un reçu numéroté.`,
-    `Un premier règlement, même partiel, confirme la réservation et bloque les dates. Le solde se règle avant l'arrivée. S'il ne l'est pas, ${EXPLOITANT} peut annuler la réservation : la somme déjà reçue suit alors la politique d'annulation.`,
+    `Un premier règlement, même partiel, confirme la réservation et bloque les dates. Le solde se règle avant l'arrivée. S'il ne l'est pas après un rappel de notre part, ${EXPLOITANT} peut annuler la réservation : la somme déjà reçue suit alors la politique d'annulation.`,
     `Le montant est encaissé par ${EXPLOITANT}, et non par le propriétaire. ${EXPLOITANT} en retient une commission, puis reverse le reste au propriétaire après la fin du séjour, une fois le séjour entièrement réglé. Entre l'encaissement et ce reversement, les fonds sont détenus par ${EXPLOITANT}.`,
     `Si le client renonce à son séjour, ce que le barème de la politique d'annulation ne lui rend pas de la part du propriétaire revient au propriétaire, et lui est reversé après la date de fin prévue.`,
     `La commission est prélevée sur le montant affiché : le prix indiqué sur l'annonce est celui que vous réglez, et aucun supplément ne s'y ajoute.`,

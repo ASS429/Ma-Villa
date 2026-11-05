@@ -139,8 +139,8 @@ Demandé par l'exploitant (« vas-y pour ce qui te concerne ») après lecture d
 
 - CGU art. 5 : le règlement auprès de l'équipe contre un reçu ; un premier règlement confirme et bloque
   les dates ; **le solde se règle avant l'arrivée** (son choix), et s'il ne l'est pas, PasseTemps peut
-  annuler, la somme reçue suivant alors la politique d'annulation (**cette dernière phrase est de moi** :
-  à relire) ; reversement une fois le séjour entièrement réglé ; ce que le barème ne rend pas au client
+  annuler **après un rappel**, la somme reçue suivant alors la politique d'annulation (phrase proposée par
+  moi, validée avec ce rappel le 5 novembre) ; reversement une fois le séjour entièrement réglé ; ce que le barème ne rend pas au client
   de la part du propriétaire lui revient (`RemboursementController::repartirCeQuiReste`).
 - Confidentialité § 2 : ce que garde un règlement reçu par l'équipe. § 4 : le propriétaire reçoit nom et
   coordonnées dès le premier règlement, même sans compte. § 6 : les reçus, dix ans
