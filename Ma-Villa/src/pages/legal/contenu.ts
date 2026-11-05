@@ -79,7 +79,7 @@ const MAJ_RESERVATION = '31 octobre 2026'
  * (transport, repas), ouvertes le 20 octobre, n'y figuraient pas. La durée de
  * douze mois est tenue par `passetemps:effacer-demandes-de-service`.
  */
-const MAJ_CONFIDENTIALITE = '4 novembre 2026'
+const MAJ_CONFIDENTIALITE = '5 novembre 2026'
 
 /**
  * Reprises du 4 novembre 2026, sur autorisation de l'exploitant (« tu as mon
@@ -276,6 +276,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
           'Si vous touchez « Utiliser ma position actuelle » sur une demande de service : votre position (latitude, longitude et sa précision). Elle n’est demandée qu’à ce geste, jamais en arrière-plan.',
           'Si vous établissez un devis depuis une annonce : au nom de qui il est établi, le nom de l’occupant le cas échéant, votre téléphone, votre adresse électronique si vous la donnez, le logement, la formule, les dates, le nombre de personnes, le prix et la langue de la page. Un compte n’est pas nécessaire.',
           'Si vous faites une demande particulière (événement, séminaire, groupe, long séjour) : son type, les dates, le nombre de personnes et d’invités, vos besoins, votre budget si vous l’indiquez, votre message, vos nom, téléphone et adresse électronique, et la langue de la page. Un compte n’est pas nécessaire.',
+          'Si les dates que vous demandez sont prises et que vous nous demandez de vous rappeler : vos nom, téléphone et adresse électronique si vous la donnez, l’hébergement et les dates. Sans cette demande de votre part, nous ne gardons rien de ce que vous avez saisi.',
           'Si vous acceptez les notifications, l’identifiant technique de votre navigateur ou de votre téléphone, un par appareil.',
           'Un journal des décisions d’administration : qui a validé, refusé ou retiré une annonce, enregistré un versement ou un remboursement, et quand.',
         ],
@@ -324,7 +325,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
           'Messages échangés au sujet d’une réservation : trois ans après la fin du séjour.',
           'Demandes de service : douze mois après la date du service, puis effacées.',
           'Devis acceptés : dix ans après leur date, comme les autres pièces commerciales, puis effacés.',
-          'Devis sans suite et demandes particulières : trois ans après leur date, puis effacés.',
+          'Devis sans suite, demandes particulières et demandes de rappel : trois ans après leur date, puis effacés.',
           'Fichier interne des clients : il n’a pas de durée propre, il ne fait que rassembler les données ci-dessus et disparaît avec elles.',
           'Journal des décisions d’administration : cinq ans, parce que c’est la seule pièce produisible en cas de litige.',
           'Abonnement aux notifications : jusqu’à ce que vous les désactiviez ou désinstalliez l’application.',

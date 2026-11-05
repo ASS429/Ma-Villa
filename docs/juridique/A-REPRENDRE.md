@@ -15,7 +15,7 @@
 > relevées en fin de page. Le même jour, la **confidentialité** aussi (seconde autorisation). Les mentions légales
 > attendent les numéros RCCM et NINEA.
 
-Dernière mise à jour : 4 novembre 2026.
+Dernière mise à jour : 5 novembre 2026.
 
 ---
 
@@ -67,6 +67,13 @@ Retirer toute mention des JOJ ajoutée aux textes. Les services (transport, repa
 leurs clauses aussi.
 
 ---
+
+## Appliqué le 5 novembre 2026 (demande de rappel)
+
+Sur demande de l'exploitant (« Clients refusés faute de dates, règle ça »), qui a aussi **confirmé les durées**
+proposées le 4 novembre : dix ans pour un devis accepté, trois ans pour un devis sans suite et une demande.
+
+- Confidentialité § 2 : la demande de rappel, et le fait que rien n'est gardé sans elle. § 6 : sa durée.
 
 ## Appliqué le 4 novembre 2026 (devis, demandes particulières, fichier clients)
 

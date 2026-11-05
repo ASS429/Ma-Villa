@@ -23,6 +23,8 @@ class DemandeParticuliere extends Model
         'seminaire'   => 'Séminaire ou entreprise',
         'groupe'      => 'Groupe ou famille',
         'long_sejour' => 'Long séjour',
+        // Posé par le client refusé faute de dates, quand il demande à être rappelé.
+        'rappel_dates' => 'Dates prises, à rappeler',
         'autre'       => 'Autre demande',
     ];
 

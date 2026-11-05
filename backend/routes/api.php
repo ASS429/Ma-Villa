@@ -86,6 +86,7 @@ Route::get('/devis/{numero}/pdf', [DevisController::class, 'pdf'])->middleware('
 
 // Événement, groupe, séminaire, long séjour : ce qu'une réservation ne sait pas dire.
 Route::post('/demandes-particulieres', [DemandeParticuliereController::class, 'store'])->middleware('throttle:5,1');
+Route::post('/demandes-particulieres/rappel', [DemandeParticuliereController::class, 'rappel'])->middleware('throttle:5,1');
 
 // Protégées
 //
@@ -225,6 +226,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/demandes-particulieres', [DemandeParticuliereController::class, 'index']);
         Route::get('/demandes-particulieres/{demande}', [DemandeParticuliereController::class, 'show']);
         Route::patch('/demandes-particulieres/{demande}', [DemandeParticuliereController::class, 'traiter']);
+        Route::delete('/demandes-particulieres/{demande}', [DemandeParticuliereController::class, 'destroy']);
         Route::get('/devis', [DevisController::class, 'index']);
         Route::post('/devis', [DevisController::class, 'storeAdmin'])->middleware('throttle:30,1');
         Route::get('/devis/{devis}', [DevisController::class, 'show']);

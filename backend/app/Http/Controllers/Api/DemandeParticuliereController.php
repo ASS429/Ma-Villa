@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\DemandeParticuliere;
 use App\Models\JournalAdmin;
+use App\Models\Logement;
 use App\Models\User;
 use App\Models\Villa;
 use App\Services\Push;
@@ -71,6 +72,73 @@ class DemandeParticuliereController extends Controller
             'langue'  => $d['langue'] ?? 'fr',
         ]));
 
+        $this->prevenirLAdministration($demande, $villa);
+
+        return response()->json(['id' => $demande->id, 'reference' => $demande->reference], 201);
+    }
+
+    /**
+     * Le client dont les dates sont prises demande à être rappelé.
+     *
+     * Quand le site refuse un devis faute de dates, rien de ce que le client a tapé
+     * n'est gardé : il repartait sans suite, et on perdait quelqu'un qui voulait
+     * séjourner chez nous. Il peut maintenant le demander, d'un geste. C'est ce geste
+     * qui autorise à garder son nom et son numéro : sans lui, on ne garde rien
+     * (`DevisRefuse` ne compte qu'un chiffre anonyme).
+     *
+     * Rangé parmi les demandes particulières : la réponse se fait de la même façon,
+     * sur WhatsApp ou par un devis, et elle a déjà sa file, son journal et sa durée.
+     */
+    public function rappel(Request $request): JsonResponse
+    {
+        if (filled($request->input('site_web'))) {
+            return response()->json(['id' => null, 'reference' => null], 201);
+        }
+
+        if (is_string($request->input('telephone'))) {
+            $request->merge(['telephone' => Telephone::nettoyer($request->input('telephone'))]);
+        }
+
+        $d = $request->validate([
+            'logement_id'  => 'required|integer|exists:logements,id',
+            'date_debut'   => 'required|date|after_or_equal:today|before:'.now()->addMonths(18)->toDateString(),
+            'date_fin'     => 'required|date|after_or_equal:date_debut',
+            'nb_personnes' => 'required|integer|min:1|max:200',
+            'nom'          => 'required|string|max:160',
+            'telephone'    => ['required', 'string', 'max:30', 'regex:/^[^\p{L}]+$/u', Telephone::assezDeChiffres()],
+            'email'        => 'nullable|email|max:160',
+            'langue'       => 'sometimes|in:fr,en',
+            // Le consentement ne se déduit pas : il doit être envoyé, et vrai.
+            'consentement' => 'accepted',
+        ]);
+
+        $logement = Logement::with('villa')->findOrFail($d['logement_id']);
+        if ($logement->villa?->statut !== 'validee') {
+            return response()->json(['message' => 'Cet hébergement n’est plus proposé.'], 409);
+        }
+
+        $demande = DemandeParticuliere::create([
+            'villa_id'         => $logement->villa_id,
+            'user_id'          => auth('sanctum')->id(),
+            'type'             => 'rappel_dates',
+            'date_debut'       => $d['date_debut'],
+            'date_fin'         => $d['date_fin'],
+            'personnes_sejour' => $d['nb_personnes'],
+            'besoins'          => [],
+            'message'          => "Les dates demandées pour « {$logement->nom} » étaient prises. Le client demande à être rappelé pour une autre date ou un hébergement proche.",
+            'nom'              => $d['nom'],
+            'telephone'        => $d['telephone'],
+            'email'            => $d['email'] ?? null,
+            'langue'           => $d['langue'] ?? 'fr',
+        ]);
+
+        $this->prevenirLAdministration($demande, $logement->villa);
+
+        return response()->json(['id' => $demande->id, 'reference' => $demande->reference], 201);
+    }
+
+    private function prevenirLAdministration(DemandeParticuliere $demande, Villa $villa): void
+    {
         foreach (User::where('role', 'admin')->get() as $admin) {
             $this->push->versUtilisateur($admin, [
                 'titre'  => "Demande particulière — {$demande->libelle_type}",
@@ -79,8 +147,23 @@ class DemandeParticuliereController extends Controller
                 'groupe' => "demande-particuliere-{$demande->id}",
             ]);
         }
+    }
 
-        return response()->json(['id' => $demande->id, 'reference' => $demande->reference], 201);
+    /**
+     * Supprimer une demande, à la demande de son auteur ou pour retirer une erreur.
+     * Elle part pour de bon : sa référence vient de son identifiant, jamais redonné.
+     * Le journal garde la référence, pas le nom.
+     */
+    public function destroy(Request $request, DemandeParticuliere $demande): JsonResponse
+    {
+        $reference = $demande->reference;
+        $type = $demande->libelle_type;
+
+        JournalAdmin::consigner($request->user(), 'demande_particuliere.supprimee', $demande, "{$reference} — {$type}", [], $request->ip());
+
+        $demande->delete();
+
+        return response()->json(['message' => "Demande {$reference} supprimée."]);
     }
 
     public function index(Request $request): JsonResponse

@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
-import { Download, FileText } from 'lucide-react'
+import axios from 'axios'
+import { Download, FileText, PhoneCall } from 'lucide-react'
 import api from '../services/api'
 import Button from './ui/Button'
 import { Champ } from './ui/Champ'
@@ -55,6 +56,10 @@ export default function DemandeDevis({ logementId, tarifId, debut, fin, personne
   const [erreurs, setErreurs] = useState<Record<string, string>>({})
   const [erreur, setErreur] = useState('')
   const [envoi, setEnvoi] = useState(false)
+  // Pour quel choix le serveur a dit « dates prises », et si le rappel est demandé.
+  const [refuseSur, setRefuseSur] = useState<string | null>(null)
+  const [rappel, setRappel] = useState<{ pour: string; reference: string } | null>(null)
+  const [envoiRappel, setEnvoiRappel] = useState(false)
 
   const pour = choixDuDevis(logementId, tarifId, debut, fin, personnes)
   const pret = Boolean(logementId && tarifId && debut && fin)
@@ -81,6 +86,11 @@ export default function DemandeDevis({ logementId, tarifId, debut, fin, personne
       if (data.numero) onEtabli({ ...data, pour })
       setOuvert(false)
     } catch (err) {
+      // Les dates sont prises : pas une erreur à corriger, une proposition à faire.
+      if (axios.isAxiosError(err) && err.response?.data?.motif === 'dates_prises') {
+        setRefuseSur(pour)
+        return
+      }
       const parChamp = erreursParChamp(err)
       setErreurs(parChamp)
       // Une erreur sur les dates ou la formule concerne les champs du dessus.
@@ -91,8 +101,59 @@ export default function DemandeDevis({ logementId, tarifId, debut, fin, personne
     }
   }
 
+  /**
+   * Ses dates sont prises : on lui propose d'être rappelé. Rien de ce qu'il a tapé
+   * n'est gardé tant qu'il n'a pas appuyé, et le bouton dit ce qu'il autorise.
+   */
+  const demanderRappel = async () => {
+    setEnvoiRappel(true)
+    setErreur('')
+    try {
+      const { data } = await api.post('/demandes-particulieres/rappel', {
+        logement_id: logementId,
+        date_debut: debut,
+        date_fin: fin,
+        nb_personnes: personnes,
+        nom: champs.client_nom,
+        telephone: champs.telephone,
+        email: champs.email,
+        langue,
+        site_web: champs.site_web,
+        consentement: true,
+      })
+      setRappel({ pour, reference: data.reference ?? '' })
+    } catch (err) {
+      setErreur(messageErreur(err, t.rappelImpossible))
+    } finally {
+      setEnvoiRappel(false)
+    }
+  }
+
   if (!pret) {
     return <p className="text-xs th-text-3 leading-relaxed">{contact ? t.quandPretContact : t.quandPret}</p>
+  }
+
+  if (rappel?.pour === pour) {
+    return (
+      <div className="devis-pret" role="status">
+        <p className="text-sm th-text-1 font-medium">{t.rappelFait}</p>
+        <p className="text-xs th-text-3 leading-relaxed">{t.rappelSuite(rappel.reference)}</p>
+      </div>
+    )
+  }
+
+  if (refuseSur === pour) {
+    return (
+      <div className="devis-pret" role="alert">
+        <p className="text-sm th-text-1 font-medium">{t.datesPrisesTitre}</p>
+        <p className="text-xs th-text-2 leading-relaxed">{t.datesPrisesTexte}</p>
+        <Button variante="primaire" taille="sm" bloc chargement={envoiRappel} iconeAvant={<PhoneCall size={15} aria-hidden="true" />} onClick={demanderRappel}>
+          {t.rappelBouton}
+        </Button>
+        <p className="text-xs th-text-3 leading-relaxed">{t.rappelAccord}</p>
+        {erreur && <p className="text-xs" style={{ color: 'var(--danger)' }}>{erreur}</p>}
+      </div>
+    )
   }
 
   if (actuel) {

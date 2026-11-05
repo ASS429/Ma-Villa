@@ -57,6 +57,19 @@ final class Telephone
      * Le numéro reste écrit comme la personne l'a écrit — on ne le reformate
      * pas : c'est ce qu'elle reconnaîtra en le relisant.
      */
+    /**
+     * Règle de validation : huit chiffres au moins, espaces et indicatif compris.
+     * Un devis ou un rappel sans numéro joignable ne mène à personne.
+     */
+    public static function assezDeChiffres(): \Closure
+    {
+        return function (string $champ, mixed $valeur, \Closure $echec) {
+            if (is_string($valeur) && preg_match_all('/\d/', $valeur) < 8) {
+                $echec('Ce numéro paraît incomplet.');
+            }
+        };
+    }
+
     public static function nettoyer(?string $numero): ?string
     {
         if ($numero === null) {

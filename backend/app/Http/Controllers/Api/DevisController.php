@@ -76,12 +76,7 @@ class DevisController extends Controller
             'occupant_nom' => 'nullable|string|max:160',
             // Obligatoire depuis le 4 novembre 2026 : le devis tient lieu de
             // contact, et un devis sans numéro ne mène à personne.
-            'telephone'    => ['required', 'string', 'max:30', 'regex:/^[^\p{L}]+$/u', function ($champ, $valeur, $echec) {
-                // Huit chiffres au moins, espaces et indicatif mis à part.
-                if (is_string($valeur) && preg_match_all('/\d/', $valeur) < 8) {
-                    $echec('Ce numéro paraît incomplet.');
-                }
-            }],
+            'telephone'    => ['required', 'string', 'max:30', 'regex:/^[^\p{L}]+$/u', Telephone::assezDeChiffres()],
             'email'        => 'nullable|email|max:160',
             'langue'       => 'sometimes|in:fr,en',
         ], [
@@ -129,6 +124,8 @@ class DevisController extends Controller
             DevisRefuse::noter($request, $logement, 'dates_prises', $d);
 
             return response()->json([
+                // Le site propose alors au client d'être rappelé : voir `DemandeParticuliereController::rappel`.
+                'motif'   => 'dates_prises',
                 'message' => 'Ce logement n’est pas disponible à ces dates.',
                 'errors'  => ['date_debut' => ['Ce logement n’est pas disponible à ces dates.']],
             ], 409);

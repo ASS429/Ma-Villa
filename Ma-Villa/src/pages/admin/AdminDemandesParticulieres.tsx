@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FileText, Mail, PartyPopper } from 'lucide-react'
+import { FileText, Mail, PartyPopper, Trash2 } from 'lucide-react'
 import api from '../../services/api'
 import { useToast } from '../../context/ToastContext'
 import { useRequete } from '../../lib/useRequete'
@@ -14,6 +14,7 @@ import { TEXTES_HEBERGEMENT } from '../../i18n/hebergement'
 import Button, { ButtonLink } from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import BoutonWhatsApp from '../../components/BoutonWhatsApp'
+import ConfirmModal from '../../components/ConfirmModal'
 import Pagination from '../../components/console/Pagination'
 import ListeConsole from '../../components/console/ListeConsole'
 
@@ -40,6 +41,7 @@ export default function AdminDemandesParticulieres() {
   const [filtre, setFiltre] = useState('nouvelle')
   const [page, setPage] = useState(1)
   const [enCours, setEnCours] = useState<number | null>(null)
+  const [aSupprimer, setASupprimer] = useState<DemandeParticuliere | null>(null)
 
   const query = `${filtre ? `statut=${filtre}&` : ''}page=${page}`
   const { donnees, chargement, erreur, reessayer } = useRequete<Page<DemandeParticuliere> | DemandeParticuliere[]>(
@@ -64,8 +66,32 @@ export default function AdminDemandesParticulieres() {
     }
   }
 
+  const supprimer = async (d: DemandeParticuliere) => {
+    try {
+      await api.delete(`/admin/demandes-particulieres/${d.id}`)
+      toast.succes(`Demande ${d.reference} supprimée.`)
+      reessayer()
+      relireAttentes()
+    } catch (err) {
+      toast.erreur(messageErreur(err, 'La demande n’a pas pu être supprimée.'))
+    } finally {
+      setASupprimer(null)
+    }
+  }
+
   return (
     <div>
+      {aSupprimer && (
+        <ConfirmModal
+          message={`Supprimer la demande ${aSupprimer.reference} ?`}
+          detail={`Les coordonnées et le message de ${aSupprimer.nom} sont effacés. Cette action est définitive.`}
+          confirmLabel="Supprimer"
+          danger
+          onConfirm={() => supprimer(aSupprimer)}
+          onCancel={() => setASupprimer(null)}
+        />
+      )}
+
       <ListeConsole
         titre="Demandes particulières"
         sousTitre={<>
@@ -152,6 +178,7 @@ export default function AdminDemandesParticulieres() {
                   ) : (
                     <Button variante="discret" taille="sm" chargement={enCours === d.id} onClick={() => changer(d, 'nouvelle')}>Remettre à traiter</Button>
                   )}
+                  <Button variante="discret" taille="sm" iconeAvant={<Trash2 size={15} aria-hidden="true" />} onClick={() => setASupprimer(d)}>Supprimer</Button>
                 </div>
               </article>
             )
