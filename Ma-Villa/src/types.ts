@@ -376,6 +376,8 @@ export interface Vehicule {
   horaires: Traduit
   reservation: Traduit
   annulation: Traduit
+  /** À qui le client règle (depuis le 6 nov. 2026 : PasseTemps, qui paie le chauffeur). */
+  reglement?: Traduit
 }
 
 export interface CataloguePrestations {
@@ -400,6 +402,8 @@ export interface DemandeService {
   libelle_prestation: string
   /** Console seulement : ce qui revient au prestataire et à nous. */
   repartition?: { prestataire: string; prix: number; prix_prestataire: number; commission: number } | null
+  /** Console seulement : ce que le client a payé à PasseTemps, et le reversement au prestataire. */
+  encaissement?: EncaissementService | null
   date_service: string
   heure: string | null
   personnes: number
@@ -420,6 +424,19 @@ export interface DemandeService {
   traitee_le: string | null
   traitee_par?: { id: number; name: string } | null
   created_at: string
+}
+
+export interface EncaissementService {
+  montant: number
+  part_prestataire: number
+  commission: number
+  prestataire: string
+  moyen: string
+  libelle_moyen: string
+  reference: string | null
+  encaisse_le: string
+  reverse_le: string | null
+  reference_reversement: string | null
 }
 
 export const LIBELLES_STATUT_DEMANDE: Record<StatutDemandeService, string> = {

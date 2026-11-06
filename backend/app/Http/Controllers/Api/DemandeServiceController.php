@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\DemandeService;
 use App\Models\JournalAdmin;
+use App\Models\Reglement;
 use App\Models\User;
 use App\Services\Prestations;
 use App\Services\Push;
@@ -12,14 +13,15 @@ use App\Services\Telephone;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Les services aux voyageurs : transport et repas.
  *
  * Une demande, pas une réservation : le visiteur dit ce dont il a besoin, la
- * demande est gardée ici, et la réponse se fait sur WhatsApp. Rien n'est
- * encaissé, aucun prestataire n'est engagé — c'est ce qui permet d'ouvrir en
- * quelques jours, avant que les prix soient négociés avec chacun.
+ * demande est gardée ici, et la réponse se fait sur WhatsApp. Rien n'est payé
+ * en ligne : le client règle PasseTemps une fois le service confirmé, l'équipe
+ * l'enregistre dans la console, puis y note le reversement au prestataire.
  *
  * Chaque famille s'ouvre par sa variable ; fermée, elle n'existe que pour
  * l'administration, en aperçu (`App\Services\Prestations`).
@@ -55,7 +57,7 @@ class DemandeServiceController extends Controller
         $vehicules = collect(config('prestations.vehicules', []))
             ->only($catalogue->pluck('vehicule')->filter()->unique()->values()->all())
             ->map(fn (array $v) => array_intersect_key($v, array_flip([
-                'nom', 'photos', 'atouts', 'horaires', 'reservation', 'annulation',
+                'nom', 'photos', 'atouts', 'horaires', 'reservation', 'annulation', 'reglement',
             ])));
 
         $ouvertes = Prestations::famillesOuvertes();
@@ -195,6 +197,8 @@ class DemandeServiceController extends Controller
     {
         $request->validate([
             'statut'   => 'sometimes|nullable|in:'.implode(',', array_keys(DemandeService::STATUTS)),
+            // « À reverser » : payées par le client, la part du prestataire pas encore versée.
+            'argent'   => 'sometimes|nullable|in:a_reverser',
             'par_page' => 'sometimes|integer|min:5|max:100',
         ]);
 
@@ -202,6 +206,7 @@ class DemandeServiceController extends Controller
             DemandeService::query()
                 ->with('traiteePar:id,name')
                 ->when($request->filled('statut'), fn ($q) => $q->where('statut', $request->input('statut')))
+                ->when($request->input('argent') === 'a_reverser', fn ($q) => $q->aReverser())
                 // La plus proche du service d'abord : c'est l'urgence réelle,
                 // pas l'ordre d'arrivée.
                 ->orderByRaw("case when statut = 'nouvelle' then 0 else 1 end")
@@ -243,7 +248,161 @@ class DemandeServiceController extends Controller
         return response()->json($demande->fresh()->load('traiteePar:id,name'));
     }
 
+    /* ══ L'argent du service ══════════════════════════════════════ */
+
+    /**
+     * Le client a payé PasseTemps : on le constate, rien ne part d'ici.
+     *
+     * La part du prestataire est figée maintenant, parce que le prix confirmé au client
+     * peut différer du prix affiché (une autre ville, 35 000 F au minimum). Par défaut,
+     * la somme reçue moins notre commission habituelle sur cette prestation.
+     */
+    public function encaisser(Request $request, DemandeService $demande): JsonResponse
+    {
+        $d = $request->validate([
+            'montant'          => 'required|integer|min:1000|max:10000000',
+            'part_prestataire' => 'nullable|integer|min:0|lte:montant',
+            'prestataire'      => 'nullable|string|max:80',
+            'moyen'            => 'required|in:'.implode(',', array_keys(Reglement::MOYENS)),
+            'recu_le'          => 'required|date|before_or_equal:today',
+            'reference'        => 'nullable|string|max:80',
+        ], [
+            'part_prestataire.lte' => 'La part du prestataire ne peut pas dépasser la somme reçue.',
+        ]);
+
+        $repartition = $demande->repartition;
+        $prestataire = trim((string) ($d['prestataire'] ?? '')) ?: ($repartition['prestataire'] ?? '');
+        $part = $d['part_prestataire'] ?? ($repartition ? max(0, $d['montant'] - $repartition['commission']) : null);
+
+        if ($part === null || $prestataire === '') {
+            return response()->json([
+                'message' => 'Cette prestation n’a pas de prestataire attitré : dites qui l’assure et ce qui lui revient.',
+                'errors'  => ['part_prestataire' => ['Indiquez la part du prestataire.']],
+            ], 422);
+        }
+
+        $faite = DB::transaction(function () use ($demande, $d, $part, $prestataire, $request) {
+            $verrouillee = DemandeService::query()->lockForUpdate()->findOrFail($demande->id);
+            if ($verrouillee->encaisse_le !== null) {
+                return false;
+            }
+
+            $verrouillee->forceFill([
+                'montant_encaisse'       => $d['montant'],
+                'part_prestataire'       => $part,
+                'prestataire'            => $prestataire,
+                'moyen_encaissement'     => $d['moyen'],
+                'reference_encaissement' => filled($d['reference'] ?? null) ? trim($d['reference']) : null,
+                'encaisse_le'            => $d['recu_le'],
+                'encaisse_par'           => $request->user()->id,
+            ]);
+            // Un service payé est un service confirmé : il sort de la file des réponses à faire.
+            if ($verrouillee->statut === 'nouvelle') {
+                $verrouillee->statut = 'traitee';
+                $verrouillee->traitee_le = now();
+                $verrouillee->traitee_par = $request->user()->id;
+            }
+            $verrouillee->save();
+
+            return true;
+        });
+
+        if (! $faite) {
+            return response()->json(['message' => 'Le paiement de cette demande est déjà enregistré.'], 409);
+        }
+
+        $this->consignerArgent($request, $demande, 'demande_service.encaissement', [
+            'montant' => $d['montant'], 'part_prestataire' => $part, 'moyen' => $d['moyen'],
+        ]);
+
+        return response()->json($demande->fresh()->load('traiteePar:id,name'));
+    }
+
+    /** Une erreur de saisie se défait, tant que la part n'a pas été reversée. */
+    public function annulerEncaissement(Request $request, DemandeService $demande): JsonResponse
+    {
+        if ($demande->encaisse_le === null) {
+            return response()->json(['message' => 'Aucun paiement n’est enregistré sur cette demande.'], 409);
+        }
+        if ($demande->reverse_le !== null) {
+            return response()->json(['message' => 'La part a déjà été reversée : annulez d’abord le reversement.'], 409);
+        }
+
+        $avant = $demande->encaissement;
+        $demande->forceFill([
+            'montant_encaisse' => null, 'part_prestataire' => null, 'prestataire' => null,
+            'moyen_encaissement' => null, 'reference_encaissement' => null,
+            'encaisse_le' => null, 'encaisse_par' => null,
+        ])->save();
+
+        $this->consignerArgent($request, $demande, 'demande_service.encaissement_annule', $avant ?? []);
+
+        return response()->json($demande->fresh()->load('traiteePar:id,name'));
+    }
+
+    /** La part a été versée au prestataire : elle cesse d'être à garder. */
+    public function reverser(Request $request, DemandeService $demande): JsonResponse
+    {
+        $d = $request->validate([
+            'reverse_le' => 'required|date|before_or_equal:today',
+            'reference'  => 'nullable|string|max:80',
+        ]);
+
+        if ($demande->encaisse_le === null) {
+            return response()->json(['message' => 'Le client n’a pas encore payé : il n’y a rien à reverser.'], 409);
+        }
+        if ($demande->reverse_le !== null) {
+            return response()->json(['message' => 'Cette part est déjà reversée.'], 409);
+        }
+        if (Carbon::parse($d['reverse_le'])->lt($demande->encaisse_le)) {
+            return response()->json([
+                'message' => 'Le reversement ne peut pas précéder le paiement du client.',
+                'errors'  => ['reverse_le' => ['Le reversement ne peut pas précéder le paiement du client.']],
+            ], 422);
+        }
+
+        $demande->forceFill([
+            'reverse_le'            => $d['reverse_le'],
+            'reference_reversement' => filled($d['reference'] ?? null) ? trim($d['reference']) : null,
+            'reverse_par'           => $request->user()->id,
+        ])->save();
+
+        $this->consignerArgent($request, $demande, 'demande_service.reversement', [
+            'part_prestataire' => $demande->part_prestataire, 'prestataire' => $demande->prestataire,
+        ]);
+
+        return response()->json($demande->fresh()->load('traiteePar:id,name'));
+    }
+
+    public function annulerReversement(Request $request, DemandeService $demande): JsonResponse
+    {
+        if ($demande->reverse_le === null) {
+            return response()->json(['message' => 'Aucun reversement n’est enregistré sur cette demande.'], 409);
+        }
+
+        $demande->forceFill(['reverse_le' => null, 'reference_reversement' => null, 'reverse_par' => null])->save();
+
+        $this->consignerArgent($request, $demande, 'demande_service.reversement_annule', [
+            'part_prestataire' => $demande->part_prestataire,
+        ]);
+
+        return response()->json($demande->fresh()->load('traiteePar:id,name'));
+    }
+
     /* ══ Interne ══════════════════════════════════════════════════ */
+
+    /** @param  array<string, mixed>  $details */
+    private function consignerArgent(Request $request, DemandeService $demande, string $action, array $details): void
+    {
+        JournalAdmin::consigner(
+            $request->user(),
+            $action,
+            $demande,
+            "{$demande->reference} — {$demande->libelle_prestation}",
+            $details,
+            $request->ip(),
+        );
+    }
 
     private function prevenirLAdministration(DemandeService $demande): void
     {

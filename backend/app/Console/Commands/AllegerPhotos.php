@@ -23,9 +23,13 @@ use Illuminate\Support\Facades\Storage;
 class AllegerPhotos extends Command
 {
     protected $signature = 'passetemps:alleger-photos
-                            {--appliquer : écrire les photos allégées (sinon, simulation)}';
+                            {--appliquer : écrire les photos allégées (sinon, simulation)}
+                            {--duree-max=0 : s’arrêter après tant de secondes (0 : sans limite)}';
 
     protected $description = 'Réduit les photos déjà en ligne trop lourdes, en gardant l’original de côté';
+
+    /** En deçà, une photo ne coûte rien à personne : on ne la télécharge même pas. */
+    private const POIDS_NEGLIGEABLE = 250 * 1024;
 
     public function handle(ReductionImage $reduction): int
     {
@@ -34,13 +38,24 @@ class AllegerPhotos extends Command
         $this->info($appliquer ? 'Allègement des photos.' : 'Simulation : rien ne sera écrit. Ajoutez --appliquer pour le faire.');
 
         $vues = $reprises = $echecs = 0;
+        $dureeMax = max(0, (int) $this->option('duree-max'));
+        $debut = microtime(true);
+        $interrompue = false;
         $avant = $apres = 0;
         $dejaVus = [];
 
         Photo::query()->orderBy('id')->chunkById(100, function ($photos) use (
-            $disque, $appliquer, $reduction, &$vues, &$reprises, &$echecs, &$avant, &$apres, &$dejaVus
+            $disque, $appliquer, $reduction, &$vues, &$reprises, &$echecs, &$avant, &$apres, &$dejaVus,
+            $dureeMax, $debut, &$interrompue
         ) {
             foreach ($photos as $photo) {
+                // Lancée au démarrage du serveur, elle ne doit jamais le retarder au-delà du raisonnable.
+                if ($dureeMax > 0 && microtime(true) - $debut > $dureeMax) {
+                    $interrompue = true;
+
+                    return false;
+                }
+
                 $chemin = $this->cheminDepuisUrl((string) $photo->url);
                 // Une même image peut servir à l'annonce et à un logement : une fois suffit.
                 if ($chemin === null || isset($dejaVus[$chemin])) {
@@ -55,6 +70,11 @@ class AllegerPhotos extends Command
                         $this->warn("  introuvable : {$chemin} (photo #{$photo->id})");
                         $echecs++;
 
+                        continue;
+                    }
+
+                    // Le poids se lit sans télécharger : la plupart des photos s'arrêtent là.
+                    if ($disque->size($chemin) <= self::POIDS_NEGLIGEABLE) {
                         continue;
                     }
 
@@ -102,6 +122,9 @@ class AllegerPhotos extends Command
         });
 
         $this->newLine();
+        if ($interrompue) {
+            $this->warn("Arrêtée après {$dureeMax} s : relancez pour la suite, ce qui est fait ne sera pas refait.");
+        }
         $this->info(sprintf(
             '%d photo(s) examinée(s), %d %s : %.1f Mo → %.1f Mo. Échecs : %d.',
             $vues, $reprises, $appliquer ? 'allégée(s)' : 'à alléger',

@@ -98,8 +98,8 @@ return [
                 'en' => 'per car, one way',
             ],
             'description' => [
-                'fr' => 'Thiès ↔ Dakar, péage et carburant compris. Pour une autre ville, le prix vous est confirmé avant le départ.',
-                'en' => 'Thiès ↔ Dakar, tolls and fuel included. For another city, the price is confirmed before you leave.',
+                'fr' => 'Thiès ↔ Dakar, péage et carburant compris. Pour une autre ville, 35 000 F au minimum : le prix vous est confirmé avant le départ.',
+                'en' => 'Thiès ↔ Dakar, tolls and fuel included. For another city, 35,000 F minimum: the price is confirmed before you leave.',
             ],
         ],
 
@@ -119,44 +119,8 @@ return [
                 'en' => 'per day',
             ],
             'description' => [
-                'fr' => 'Le véhicule pour vous, à la journée. Permis de conduire, caution et carburant : les conditions vous sont confirmées à la réservation.',
-                'en' => 'The car is yours for the day. Driving licence, deposit and fuel: the terms are confirmed when you book.',
-            ],
-        ],
-
-        'trajets_sites' => [
-            'famille' => 'transport',
-            'prix_a_partir_de' => 5000,
-            'vol' => false,
-            'libelle' => [
-                'fr' => 'Trajets vers les sites des épreuves',
-                'en' => 'Rides to the competition venues',
-            ],
-            'unite' => [
-                'fr' => 'par personne et par jour, aller-retour',
-                'en' => 'per person per day, return',
-            ],
-            'description' => [
-                'fr' => "Aller-retour entre votre logement et le site, avec dépose au point autorisé le plus proche de l'entrée.",
-                'en' => 'Return trip between your accommodation and the venue, dropped at the authorised point nearest the entrance.',
-            ],
-        ],
-
-        'chauffeur' => [
-            'famille' => 'transport',
-            'prix_a_partir_de' => 45000,
-            'vol' => false,
-            'libelle' => [
-                'fr' => 'Voiture avec chauffeur',
-                'en' => 'Car with driver',
-            ],
-            'unite' => [
-                'fr' => 'la journée, véhicule 7 places',
-                'en' => 'per day, 7-seat vehicle',
-            ],
-            'description' => [
-                'fr' => 'Une voiture et un chauffeur pour votre famille seule, à la demi-journée ou à la journée.',
-                'en' => 'A car and driver for your family only, by the half-day or the day.',
+                'fr' => 'Le véhicule pour vous, à la journée. Permis de conduire exigé, caution demandée à la remise des clés, carburant à votre charge, assurance comprise.',
+                'en' => 'The car is yours for the day. Driving licence required, deposit taken when you collect the keys, fuel at your expense, insurance included.',
             ],
         ],
 
@@ -242,7 +206,19 @@ return [
             'horaires' => ['fr' => 'De 6 h à minuit', 'en' => 'From 6 am to midnight'],
             'reservation' => ['fr' => "Au moins 2 h à l'avance, idéalement la veille", 'en' => 'At least 2 hours ahead, ideally the day before'],
             'annulation' => ['fr' => "Gratuite jusqu'à 24 h avant", 'en' => 'Free up to 24 hours before'],
+            // Décidé le 6 novembre 2026 : PasseTemps encaisse et reverse au transporteur.
+            'reglement' => ['fr' => 'Auprès de PasseTemps, qui paie le chauffeur', 'en' => 'To PasseTemps, which pays the driver'],
         ],
+    ],
+
+    /*
+    | Les prestations retirées du catalogue, pour que leurs anciennes demandes restent
+    | lisibles dans la console. Elles ne se demandent plus.
+    */
+    'retirees' => [
+        // Retirées le 6 novembre 2026, à la demande de l'exploitant.
+        'trajets_sites' => 'Trajets vers les sites des épreuves',
+        'chauffeur'     => 'Voiture avec chauffeur',
     ],
 
     /*

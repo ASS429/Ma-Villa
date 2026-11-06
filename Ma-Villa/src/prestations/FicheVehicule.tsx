@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { CalendarClock, CarFront, Check, Clock, Undo2 } from 'lucide-react'
+import { CalendarClock, CarFront, Check, Clock, Undo2, Wallet } from 'lucide-react'
 import { useLangue } from '../i18n/langue'
 import { TEXTES_PRESTATIONS } from './textes'
 import type { Vehicule } from '../types'
 
 /**
  * Le véhicule qu'on propose, tel qu'il est : ses photos (plaques floutées), ce qu'il offre,
- * et les trois règles du chauffeur — horaires, délai, annulation — dites avant la demande
+ * et les règles du chauffeur — horaires, délai, annulation, règlement — dites avant la demande
  * plutôt qu'apprises au téléphone.
  */
 export default function FicheVehicule({ vehicule }: { vehicule: Vehicule }) {
@@ -61,6 +61,9 @@ export default function FicheVehicule({ vehicule }: { vehicule: Vehicule }) {
           <div><dt><Clock size={15} aria-hidden="true" /> {t.horaires}</dt><dd>{vehicule.horaires[langue]}</dd></div>
           <div><dt><CalendarClock size={15} aria-hidden="true" /> {t.reservation}</dt><dd>{vehicule.reservation[langue]}</dd></div>
           <div><dt><Undo2 size={15} aria-hidden="true" /> {t.annulation}</dt><dd>{vehicule.annulation[langue]}</dd></div>
+          {vehicule.reglement && (
+            <div><dt><Wallet size={15} aria-hidden="true" /> {t.reglement}</dt><dd>{vehicule.reglement[langue]}</dd></div>
+          )}
         </dl>
 
         <p className="fiche-vehicule-note">{t.note}</p>

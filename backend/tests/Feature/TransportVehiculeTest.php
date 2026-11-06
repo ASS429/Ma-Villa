@@ -99,7 +99,27 @@ class TransportVehiculeTest extends TestCase
 
     public function test_un_service_sans_vehicule_garde_ses_regles(): void
     {
-        $this->demande(['prestation' => 'chauffeur', 'heure' => '04:00'])->assertCreated();
+        config(['prestations.familles.restauration.actif' => true]);
+
+        $this->demande(['prestation' => 'petit_dejeuner', 'heure' => '04:00'])->assertCreated();
+    }
+
+    public function test_les_deux_anciennes_lignes_ne_se_demandent_plus_mais_restent_lisibles(): void
+    {
+        $this->demande(['prestation' => 'chauffeur'])->assertStatus(422)->assertJsonValidationErrors('prestation');
+        $this->demande(['prestation' => 'trajets_sites'])->assertStatus(422)->assertJsonValidationErrors('prestation');
+
+        $cles = collect($this->getJson('/api/prestations')->json('catalogue'))->pluck('cle')->all();
+        $this->assertSame(['transfert_aibd', 'trajet_villes', 'location_sans_chauffeur'], $cles);
+
+        $ancienne = new DemandeService(['prestation' => 'chauffeur']);
+        $this->assertSame('Voiture avec chauffeur', $ancienne->libelle_prestation);
+    }
+
+    public function test_le_vehicule_dit_a_qui_l_on_regle(): void
+    {
+        $this->getJson('/api/prestations')
+            ->assertJsonPath('vehicules.outlander.reglement.fr', 'Auprès de PasseTemps, qui paie le chauffeur');
     }
 
     public function test_la_console_dit_ce_qui_revient_au_prestataire_et_a_nous(): void

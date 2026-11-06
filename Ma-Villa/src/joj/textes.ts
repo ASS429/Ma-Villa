@@ -33,7 +33,7 @@ const fr = {
   deplacement: {
     titre: 'Se déplacer pendant les Jeux',
     intro: 'Les restrictions de circulation entrent en vigueur le 30 octobre. Autour des sites, seuls les véhicules accrédités circulent : '
-      + 'nos chauffeurs vous déposent au point autorisé le plus proche de l’entrée. Les transports publics sont renforcés pendant toute la durée des Jeux.',
+      + 'on est déposé au point autorisé le plus proche de l’entrée. Les transports publics sont renforcés pendant toute la durée des Jeux.',
     allerAuxSites: 'Pour aller aux sites',
     poles: [
       {
@@ -96,7 +96,7 @@ const fr = {
 
   seo: {
     titre: 'JOJ Dakar 2026 : le séjour des familles d’athlètes',
-    description: 'Vous accompagnez un athlète aux JOJ Dakar 2026 ? Logements à Dakar et à Saly, transfert depuis l’aéroport AIBD, trajets vers les sites et repas, confirmés sur WhatsApp.',
+    description: 'Vous accompagnez un athlète aux JOJ Dakar 2026 ? Logements à Dakar et à Saly, transfert depuis l’aéroport AIBD, trajets entre les villes et repas, confirmés sur WhatsApp.',
   },
 
   bandeau: {
@@ -134,7 +134,7 @@ const en: typeof fr = {
   deplacement: {
     titre: 'Getting around during the Games',
     intro: 'Traffic restrictions come into force on 30 October. Around the venues, only accredited vehicles may drive: '
-      + 'our drivers drop you at the authorised point nearest the entrance. Public transport runs extra services throughout the Games.',
+      + 'cars drop you at the authorised point nearest the entrance. Public transport runs extra services throughout the Games.',
     allerAuxSites: 'Getting to the venues',
     poles: [
       {
@@ -197,7 +197,7 @@ const en: typeof fr = {
 
   seo: {
     titre: 'Dakar 2026: a stay for athletes’ families',
-    description: 'Supporting an athlete at the Dakar 2026 Youth Olympic Games? Places to stay in Dakar and Saly, airport transfers, rides to the venues and meals, confirmed on WhatsApp.',
+    description: 'Supporting an athlete at the Dakar 2026 Youth Olympic Games? Places to stay in Dakar and Saly, airport transfers, city-to-city rides and meals, confirmed on WhatsApp.',
   },
 
   bandeau: {

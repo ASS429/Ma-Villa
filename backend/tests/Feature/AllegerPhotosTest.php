@@ -30,11 +30,15 @@ class AllegerPhotosTest extends TestCase
     /** Une photo de téléphone en portrait, enregistrée comme avant la correction. */
     private function photoEnLigne(string $nom, int $largeur, int $hauteur): Photo
     {
-        $image = imagecreatetruecolor($largeur, $hauteur);
-        // Du bruit, pour qu'elle pèse ce que pèse une vraie photo.
-        for ($i = 0; $i < 4000; $i++) {
-            imagefilledrectangle($image, random_int(0, $largeur), random_int(0, $hauteur), random_int(0, $largeur), random_int(0, $hauteur), random_int(0, 0xFFFFFF));
+        // Du bruit agrandi, pour qu'elle pèse ce que pèse une vraie photo (plusieurs centaines de Ko).
+        $grain = imagecreatetruecolor(intdiv($largeur, 3), intdiv($hauteur, 3));
+        for ($x = 0; $x < imagesx($grain); $x++) {
+            for ($y = 0; $y < imagesy($grain); $y++) {
+                imagesetpixel($grain, $x, $y, mt_rand(0, 0xFFFFFF));
+            }
         }
+        $image = imagecreatetruecolor($largeur, $hauteur);
+        imagecopyresized($image, $grain, 0, 0, 0, 0, $largeur, $hauteur, imagesx($grain), imagesy($grain));
         ob_start();
         imagejpeg($image, null, 95);
         Storage::disk('public')->put("uploads/{$nom}", (string) ob_get_clean());

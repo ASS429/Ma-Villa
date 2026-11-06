@@ -53,6 +53,7 @@ class AttentesController extends Controller
             $this->demandesDeReservation(),
             $this->transmissionsDues(),
             $this->demandesDeService(),
+            $this->servicesAReverser(),
             $this->demandesParticulieres(),
             $this->devisEnLigne(),
             $this->annoncesAValider(),
@@ -205,6 +206,39 @@ class AttentesController extends Controller
             'detail'       => "Sans réponse, elle s'annule seule : la plus ancienne dans {$restant} h.",
             'lien'         => '/admin/reservations',
             'libelle_lien' => 'Répondre',
+        ];
+    }
+
+    /**
+     * Le client a payé un trajet, le transporteur attend sa part. Elle lui est due une
+     * fois le trajet fait : avant, c'est de l'argent à garder, pas encore à envoyer.
+     */
+    private function servicesAReverser(): ?array
+    {
+        $dus = DemandeService::query()->aReverser()
+            ->whereDate('date_service', '<=', now()->toDateString())
+            ->get(['id', 'part_prestataire', 'prestataire', 'date_service']);
+
+        if ($dus->isEmpty()) {
+            return null;
+        }
+
+        $compte = $dus->count();
+        $qui = $dus->pluck('prestataire')->filter()->unique()->values();
+        $vieux = $dus->filter(fn (DemandeService $d) => $d->date_service->lt(now()->subDays(2)->startOfDay()))->count();
+
+        return [
+            'cle'          => 'services_a_reverser',
+            'gravite'      => $vieux > 0 ? 'urgent' : 'action',
+            'compte'       => $compte,
+            'montant'      => (int) $dus->sum('part_prestataire'),
+            'titre'        => $compte === 1
+                ? 'Un trajet fait, sa part à reverser'
+                : "{$compte} trajets faits, leur part à reverser",
+            'detail'       => ($qui->count() === 1 ? "À {$qui->first()}. " : '')
+                .($vieux > 0 ? 'Le plus ancien a eu lieu il y a plus de deux jours.' : 'Le trajet a eu lieu : la part n’est plus à nous.'),
+            'lien'         => '/admin/demandes?argent=a_reverser',
+            'libelle_lien' => 'Reverser',
         ];
     }
 

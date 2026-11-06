@@ -69,7 +69,7 @@ function Contenu({ famille }: { famille: FamillePrestation }) {
         <p className="th-text-2 leading-relaxed max-w-2xl mb-8">{page.intro}</p>
 
         <ol className="grid gap-4 md:grid-cols-3">
-          {t.etapes(delai).map((etape, i) => (
+          {t.etapes(delai, famille).map((etape, i) => (
             <li key={i} className="rounded-2xl px-5 py-5 th-card flex gap-4">
               <span
                 className="w-9 h-9 rounded-xl flex items-center justify-center font-semibold flex-none"
@@ -117,7 +117,7 @@ function Contenu({ famille }: { famille: FamillePrestation }) {
       <section id="demande" className="px-6 py-14" style={{ borderTop: '1px solid var(--border)', scrollMarginTop: '5rem' }}>
         <div className="max-w-2xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-normal th-text-1 mb-2" style={{ letterSpacing: '-0.02em' }}>{t.formulaire}</h2>
-          <p className="th-text-2 mb-6">{t.formulaireSous(delai)}</p>
+          <p className="th-text-2 mb-6">{t.formulaireSous(delai, famille)}</p>
           {catalogue.donnees && (
             <DemandeService
               catalogue={catalogue.donnees}

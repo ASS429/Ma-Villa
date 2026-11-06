@@ -24,10 +24,13 @@ const fr = {
   erreurServices: 'Impossible de charger les services.',
 
   commentCaMarche: 'Comment ça marche',
-  etapes: (h: number) => [
+  etapes: (h: number, famille?: FamillePrestation) => [
     'Choisissez un service et dites-nous la date.',
     `Nous vous confirmons le prestataire et le prix sur WhatsApp, sous ${h} heures en journée.`,
-    'Rien n’est payé en ligne : le règlement vous est indiqué à la confirmation.',
+    // Le transport se règle à PasseTemps, qui paie le chauffeur (décision du 6 novembre 2026).
+    famille === 'transport'
+      ? 'Vous réglez PasseTemps une fois le trajet confirmé, et nous payons le chauffeur. Rien n’est payé en ligne.'
+      : 'Rien n’est payé en ligne : le règlement vous est indiqué à la confirmation.',
   ],
 
   vehicule: {
@@ -36,12 +39,15 @@ const fr = {
     horaires: 'Horaires',
     reservation: 'Réservation',
     annulation: 'Annulation',
+    reglement: 'Règlement',
     note: 'Il assure les trajets de cette page. Le prix est celui de la voiture, quel que soit le nombre de passagers.',
     heure: (horaires: string, reservation: string) => `${horaires} · ${reservation}.`,
   },
 
   formulaire: 'Votre demande',
-  formulaireSous: (h: number) => `Rien n’est payé en ligne. Nous vous confirmons le prestataire et le prix sur WhatsApp, sous ${h} heures en journée.`,
+  formulaireSous: (h: number, famille?: FamillePrestation) => famille === 'transport'
+    ? `Rien n’est payé en ligne. Nous vous confirmons le trajet et le prix sur WhatsApp, sous ${h} heures en journée ; vous réglez ensuite PasseTemps.`
+    : `Rien n’est payé en ligne. Nous vous confirmons le prestataire et le prix sur WhatsApp, sous ${h} heures en journée.`,
   champs: {
     prestation: 'Service',
     date: 'Date',
@@ -103,11 +109,11 @@ const fr = {
     transport: {
       eyebrow: 'Transport',
       titre: 'Un chauffeur, de l’aéroport jusqu’à votre logement',
-      intro: 'Transfert avec l’aéroport AIBD, trajets d’une ville à l’autre, location sans chauffeur, voiture avec chauffeur à la journée : dites-nous ce dont vous avez besoin.',
+      intro: 'Transfert avec l’aéroport AIBD, trajets d’une ville à l’autre ou location sans chauffeur à la journée : dites-nous ce dont vous avez besoin.',
       conseil: 'Le TER relie Dakar, Diamniadio et l’aéroport AIBD. Pour Saly, la Somone ou Thiès, prévoyez une voiture.',
       seo: {
         titre: 'Transport au Sénégal : transfert aéroport AIBD et chauffeur',
-        description: 'Transfert depuis l’aéroport AIBD, trajets quotidiens et voiture avec chauffeur à Dakar, Saly et sur la Petite Côte. Prix confirmé sur WhatsApp.',
+        description: 'Transfert depuis l’aéroport AIBD, trajets d’une ville à l’autre et location de voiture à Dakar, Thiès, Saly et sur la Petite Côte. Prix confirmé sur WhatsApp.',
       },
     },
     restauration: {
@@ -132,10 +138,12 @@ const en: typeof fr = {
   erreurServices: 'Services could not be loaded.',
 
   commentCaMarche: 'How it works',
-  etapes: (h: number) => [
+  etapes: (h: number, famille?: FamillePrestation) => [
     'Choose a service and tell us the date.',
     `We confirm the provider and the price on WhatsApp, within ${h} hours during the day.`,
-    'Nothing is paid online: you are told how to pay when we confirm.',
+    famille === 'transport'
+      ? 'You pay PasseTemps once the ride is confirmed, and we pay the driver. Nothing is paid online.'
+      : 'Nothing is paid online: you are told how to pay when we confirm.',
   ],
 
   vehicule: {
@@ -144,12 +152,15 @@ const en: typeof fr = {
     horaires: 'Hours',
     reservation: 'Booking',
     annulation: 'Cancellation',
+    reglement: 'Payment',
     note: 'It covers the rides on this page. The price is per car, whatever the number of passengers.',
     heure: (horaires: string, reservation: string) => `${horaires} · ${reservation}.`,
   },
 
   formulaire: 'Your request',
-  formulaireSous: (h: number) => `Nothing is paid online. We confirm the provider and the price on WhatsApp, within ${h} hours during the day.`,
+  formulaireSous: (h: number, famille?: FamillePrestation) => famille === 'transport'
+    ? `Nothing is paid online. We confirm the ride and the price on WhatsApp, within ${h} hours during the day; you then pay PasseTemps.`
+    : `Nothing is paid online. We confirm the provider and the price on WhatsApp, within ${h} hours during the day.`,
   champs: {
     prestation: 'Service',
     date: 'Date',
@@ -210,11 +221,11 @@ const en: typeof fr = {
     transport: {
       eyebrow: 'Transport',
       titre: 'A driver, from the airport to your door',
-      intro: 'AIBD airport transfers, city-to-city rides, car hire without driver, a car with driver by the day: tell us what you need.',
+      intro: 'AIBD airport transfers, city-to-city rides or car hire without driver by the day: tell us what you need.',
       conseil: 'The TER train links Dakar, Diamniadio and AIBD airport. For Saly, Somone or Thiès, plan on a car.',
       seo: {
         titre: 'Transport in Senegal: AIBD airport transfer and private driver',
-        description: 'AIBD airport transfers, daily rides and a car with driver in Dakar, Saly and on the Petite Côte. Price confirmed on WhatsApp.',
+        description: 'AIBD airport transfers, city-to-city rides and car hire in Dakar, Thiès, Saly and on the Petite Côte. Price confirmed on WhatsApp.',
       },
     },
     restauration: {

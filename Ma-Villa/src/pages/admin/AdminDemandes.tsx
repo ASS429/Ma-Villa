@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { ConciergeBell, MessageCircle } from 'lucide-react'
 import api from '../../services/api'
 import { useToast } from '../../context/ToastContext'
@@ -15,6 +15,7 @@ import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import Pagination from '../../components/console/Pagination'
 import ListeConsole from '../../components/console/ListeConsole'
+import ArgentDuService from '../../components/console/ArgentDuService'
 
 const TON: Record<StatutDemandeService, 'success' | 'warning' | 'neutre'> = {
   nouvelle: 'warning',
@@ -32,6 +33,8 @@ const FILTRES = [
   { valeur: 'nouvelle', label: 'À traiter' },
   { valeur: 'traitee', label: 'Traitées' },
   { valeur: 'abandonnee', label: 'Abandonnées' },
+  // Payées par le client, la part du transporteur pas encore reversée.
+  { valeur: 'a_reverser', label: 'À reverser' },
   { valeur: '', label: 'Toutes' },
 ]
 
@@ -42,14 +45,19 @@ const FILTRES = [
  * oublier. Une demande dont le message n'est jamais parti n'existe que dans
  * cette liste, d'où le bouton qui ouvre la conversation avec la famille.
  * « Traitée » la sort de la file d'attente, et c'est tout ce que le geste fait.
+ *
+ * Depuis le 6 novembre 2026, PasseTemps encaisse le transport et reverse sa part au
+ * transporteur : le bloc d'argent de chaque demande le note (`ArgentDuService`).
  */
 export default function AdminDemandes() {
   const toast = useToast()
-  const [filtre, setFiltre] = useState('nouvelle')
+  // « Ce qui attend » envoie ici avec `?argent=a_reverser`.
+  const [parametres] = useSearchParams()
+  const [filtre, setFiltre] = useState(parametres.get('argent') === 'a_reverser' ? 'a_reverser' : 'nouvelle')
   const [page, setPage] = useState(1)
   const [enCours, setEnCours] = useState<number | null>(null)
 
-  const query = `${filtre ? `statut=${filtre}&` : ''}page=${page}`
+  const query = `${filtre === 'a_reverser' ? 'argent=a_reverser&' : filtre ? `statut=${filtre}&` : ''}page=${page}`
 
   const { donnees, chargement, erreur, reessayer } = useRequete<Page<DemandeService> | DemandeService[]>(
     async (signal) => (await api.get(`/admin/demandes-service?${query}`, { signal })).data,
@@ -81,7 +89,8 @@ export default function AdminDemandes() {
         sousTitre={<>
           Transport et repas demandés par les voyageurs. La réponse se fait sur
           WhatsApp, sous deux heures comme la page le promet ; marquez la demande traitée
-          une fois le prestataire confirmé. Pages, ouvertes ou en aperçu :{' '}
+          une fois le prestataire confirmé. Le client règle PasseTemps : notez-le ici, puis
+          le reversement au transporteur. Pages, ouvertes ou en aperçu :{' '}
           <Link to="/transport/" className="underline">Transport</Link> ·{' '}
           <Link to="/restauration/" className="underline">Repas</Link> ·{' '}
           <Link to="/joj-dakar-2026/" className="underline">JOJ</Link>.
@@ -93,7 +102,9 @@ export default function AdminDemandes() {
         videIcone={ConciergeBell}
         videTexte={filtre === 'nouvelle'
           ? 'Aucune demande en attente.'
-          : 'Aucune demande dans cet état.'}
+          : filtre === 'a_reverser'
+            ? 'Rien à reverser : chaque part payée a été versée.'
+            : 'Aucune demande dans cet état.'}
         outils={<div className="console-filtres">
           <div className="console-onglets" role="tablist">
             {FILTRES.map((f) => (
@@ -161,7 +172,8 @@ export default function AdminDemandes() {
                 {d.message && (
                   <div><dt>Précisions</dt><dd>{d.message}</dd></div>
                 )}
-                {d.repartition && (
+                {/* Une fois payé, le bloc d'argent dit ce qui a vraiment été reçu : l'estimation se tait. */}
+                {d.repartition && !d.encaissement && (
                   <div>
                     <dt>Répartition</dt>
                     <dd>
@@ -177,6 +189,8 @@ export default function AdminDemandes() {
                   </div>
                 )}
               </dl>
+
+              <ArgentDuService demande={d} onChange={reessayer} />
 
               <div className="reservation-actions">
                 <a

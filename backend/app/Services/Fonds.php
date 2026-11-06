@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\DemandeService;
 use App\Models\Paiement;
 use App\Models\Reservation;
 
@@ -18,7 +19,7 @@ use App\Models\Reservation;
 final class Fonds
 {
     /**
-     * @return array{proprietaires: int, associes: int, remboursements: int, total: int}
+     * @return array{proprietaires: int, associes: int, remboursements: int, transporteurs: int, total: int}
      */
     public static function aGarder(bool $horsLigne): array
     {
@@ -53,11 +54,16 @@ final class Fonds
 
         $proprietaires = (int) round($proprietaires);
 
+        // La part du transporteur d'un trajet que le client nous a payé, tant qu'elle ne lui
+        // est pas reversée. Un service se règle toujours à la main : jamais sur PayDunya.
+        $transporteurs = $horsLigne ? (int) DemandeService::query()->aReverser()->sum('part_prestataire') : 0;
+
         return [
             'proprietaires'  => $proprietaires,
             'associes'       => (int) $associes,
             'remboursements' => (int) $remboursements,
-            'total'          => $proprietaires + (int) $associes + (int) $remboursements,
+            'transporteurs'  => $transporteurs,
+            'total'          => $proprietaires + (int) $associes + (int) $remboursements + $transporteurs,
         ];
     }
 }

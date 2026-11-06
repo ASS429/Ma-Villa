@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Une demande de service d'un accompagnant (transport, repas).
  *
- * Elle ne réserve rien et n'encaisse rien : elle trace qu'une famille a demandé,
- * pour que personne ne l'oublie si le message WhatsApp ne part pas.
+ * Elle ne réserve rien : elle trace qu'une famille a demandé, pour que personne
+ * ne l'oublie si le message WhatsApp ne part pas. Depuis le 6 novembre 2026,
+ * PasseTemps encaisse le service et reverse sa part au prestataire : l'équipe
+ * l'enregistre ici, à la main (`encaissement`).
  */
 class DemandeService extends Model
 {
@@ -40,7 +43,13 @@ class DemandeService extends Model
         'origine',
     ];
 
-    protected $appends = ['reference', 'libelle_prestation', 'repartition'];
+    protected $appends = ['reference', 'libelle_prestation', 'repartition', 'encaissement'];
+
+    /** Le détail vit dans `encaissement` ; les colonnes brutes n'apportent rien à l'écran. */
+    protected $hidden = [
+        'montant_encaisse', 'part_prestataire', 'prestataire', 'moyen_encaissement', 'reference_encaissement',
+        'encaisse_le', 'encaisse_par', 'reverse_le', 'reference_reversement', 'reverse_par',
+    ];
 
     protected function casts(): array
     {
@@ -51,6 +60,10 @@ class DemandeService extends Model
             'longitude'    => 'float',
             'precision_m'  => 'integer',
             'traitee_le'   => 'datetime',
+            'montant_encaisse' => 'integer',
+            'part_prestataire' => 'integer',
+            'encaisse_le'  => 'date:Y-m-d',
+            'reverse_le'   => 'date:Y-m-d',
         ];
     }
 
@@ -62,6 +75,40 @@ class DemandeService extends Model
     public function traiteePar(): BelongsTo
     {
         return $this->belongsTo(User::class, 'traitee_par');
+    }
+
+    /** Encaissée et pas encore reversée : la part du prestataire est à lui, pas à nous. */
+    public function scopeAReverser(Builder $query): Builder
+    {
+        return $query->whereNotNull('encaisse_le')->whereNull('reverse_le')->where('part_prestataire', '>', 0);
+    }
+
+    /**
+     * L'argent de la demande, pour la console : null tant que le client n'a rien payé.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getEncaissementAttribute(): ?array
+    {
+        if ($this->encaisse_le === null) {
+            return null;
+        }
+
+        $montant = (int) $this->montant_encaisse;
+        $part = (int) $this->part_prestataire;
+
+        return [
+            'montant'               => $montant,
+            'part_prestataire'      => $part,
+            'commission'            => $montant - $part,
+            'prestataire'           => (string) $this->prestataire,
+            'moyen'                 => (string) $this->moyen_encaissement,
+            'libelle_moyen'         => Reglement::MOYENS[$this->moyen_encaissement] ?? (string) $this->moyen_encaissement,
+            'reference'             => $this->reference_encaissement,
+            'encaisse_le'           => $this->encaisse_le?->toDateString(),
+            'reverse_le'            => $this->reverse_le?->toDateString(),
+            'reference_reversement' => $this->reference_reversement,
+        ];
     }
 
     /** Ce qu'on cite au téléphone : court, et sans ambiguïté avec une réservation. */
@@ -100,6 +147,8 @@ class DemandeService extends Model
      */
     public function getLibellePrestationAttribute(): string
     {
-        return config("prestations.catalogue.{$this->prestation}.libelle.fr") ?? $this->prestation;
+        return config("prestations.catalogue.{$this->prestation}.libelle.fr")
+            ?? config("prestations.retirees.{$this->prestation}")
+            ?? $this->prestation;
     }
 }

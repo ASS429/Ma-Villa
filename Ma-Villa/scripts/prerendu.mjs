@@ -442,7 +442,7 @@ const FIXES_EN = {
   },
   transport: {
     titre: 'Transport in Senegal: AIBD airport transfer and private driver — PasseTemps',
-    description: 'AIBD airport transfers, daily rides and a car with driver in Dakar, Saly and on the Petite Côte. '
+    description: 'AIBD airport transfers, city-to-city rides and car hire in Dakar, Thiès, Saly and on the Petite Côte. '
       + 'Price confirmed on WhatsApp.',
   },
   restauration: {
@@ -453,7 +453,7 @@ const FIXES_EN = {
   'joj-dakar-2026': {
     titre: 'Dakar 2026: a stay for athletes’ families — PasseTemps',
     description: 'Supporting an athlete at the Dakar 2026 Youth Olympic Games? Places to stay in Dakar and Saly, '
-      + 'airport transfers, rides to the venues and meals, confirmed on WhatsApp.',
+      + 'airport transfers, city-to-city rides and meals, confirmed on WhatsApp.',
     texte: 'Your athlete stays in the Olympic village; you stay in Dakar or on the Petite Côte. PasseTemps finds you '
       + 'a place to stay in Dakar or Saly, near the venues, a driver from the airport and meals. '
       + 'Getting around: traffic restrictions come into force on 30 October; official shuttles run from 6:30 am '
@@ -613,8 +613,8 @@ const PAGES_FIXES = [
     si: 'transport',
     chemin: 'transport',
     titre: 'Transport au Sénégal : transfert aéroport AIBD et chauffeur — PasseTemps',
-    description: 'Transfert depuis l’aéroport AIBD, trajets quotidiens et voiture avec chauffeur à Dakar, Saly et sur '
-      + 'la Petite Côte. Prix confirmé sur WhatsApp.',
+    description: 'Transfert depuis l’aéroport AIBD, trajets d’une ville à l’autre et location de voiture à Dakar, '
+      + 'Thiès, Saly et sur la Petite Côte. Prix confirmé sur WhatsApp.',
   },
   {
     si: 'restauration',
@@ -630,7 +630,7 @@ const PAGES_FIXES = [
     chemin: 'joj-dakar-2026',
     titre: 'JOJ Dakar 2026 : le séjour des familles d’athlètes — PasseTemps',
     description: 'Vous accompagnez un athlète aux JOJ Dakar 2026 ? Logements à Dakar et à Saly, transfert depuis '
-      + 'l’aéroport AIBD, trajets vers les sites et repas, confirmés sur WhatsApp. Page en français et en anglais.',
+      + 'l’aéroport AIBD, trajets entre les villes et repas, confirmés sur WhatsApp. Page en français et en anglais.',
     texte: 'Votre athlète loge au village olympique ; vous, à Dakar ou sur la Petite Côte. PasseTemps vous trouve '
       + 'un logement à Dakar ou à Saly, près des sites, un chauffeur depuis l’aéroport et des repas. '
       + 'Se déplacer : les restrictions de circulation entrent en vigueur le 30 octobre ; les navettes officielles '

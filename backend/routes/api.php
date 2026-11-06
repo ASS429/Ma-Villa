@@ -238,6 +238,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/devis/{devis}', [DevisController::class, 'update'])->middleware('throttle:30,1');
         Route::delete('/devis/{devis}', [DevisController::class, 'destroy'])->middleware('throttle:30,1');
         Route::patch('/demandes-service/{demande}', [DemandeServiceController::class, 'traiter']);
+        // L'argent d'un service : PasseTemps encaisse, puis reverse au prestataire.
+        Route::post('/demandes-service/{demande}/encaissement', [DemandeServiceController::class, 'encaisser'])->middleware('throttle:30,1');
+        Route::delete('/demandes-service/{demande}/encaissement', [DemandeServiceController::class, 'annulerEncaissement'])->middleware('throttle:30,1');
+        Route::post('/demandes-service/{demande}/reversement', [DemandeServiceController::class, 'reverser'])->middleware('throttle:30,1');
+        Route::delete('/demandes-service/{demande}/reversement', [DemandeServiceController::class, 'annulerReversement'])->middleware('throttle:30,1');
 
         // L'argent reçu hors du site. On constate une somme reçue : rien ne part d'ici.
         Route::get('/reglements', [ReglementController::class, 'index']);

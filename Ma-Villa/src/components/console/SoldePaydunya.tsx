@@ -9,6 +9,8 @@ interface Part {
   proprietaires: number
   associes: number
   remboursements: number
+  /** La part des transporteurs, pas encore reversée (reçu à la main seulement). */
+  transporteurs?: number
   total: number
 }
 
@@ -34,6 +36,7 @@ function detail(p: Part): string {
     p.proprietaires > 0 ? `propriétaires ${fcfa(p.proprietaires)}` : null,
     p.associes > 0 ? `associés ${fcfa(p.associes)}` : null,
     p.remboursements > 0 ? `remboursements à décider ${fcfa(p.remboursements)}` : null,
+    (p.transporteurs ?? 0) > 0 ? `transporteurs ${fcfa(p.transporteurs ?? 0)}` : null,
   ].filter(Boolean).join(' · ')
 }
 

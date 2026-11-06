@@ -28,9 +28,8 @@ _Écrit pour être lu sans connaître le code. Chaque point dit **ce que c'est**
    `RESERVATIONS_OUVERTES` à `true` sur Railway, puis un paiement réel de 200 F.
 4. **Voir un comptable** avec `19-QUESTIONS-AU-COMPTABLE.md` : régime fiscal, facture, et ce que
    veut dire, pour une entreprise individuelle, détenir l'argent de tiers.
-5. **Répondre aux quatre questions du transport** : qui encaisse (recommandé : PasseTemps
-   reçoit 35 000 F et reverse 30 000 F), les conditions de la location sans chauffeur, le prix
-   pour les autres villes, et le sort des deux anciennes lignes JOJ.
+5. **Valider la phrase des CGU sur le transport** (article 7) : PasseTemps encaisse et reverse
+   au transporteur depuis le 6 novembre. Proposition dans `juridique/A-REPRENDRE.md`.
 6. **Les accords écrits des propriétaires** (Clé d'Or, Modou Sene, vidéos) et de vrais comptes pour
    ceux qui n'en ont pas.
 7. **Faire préciser l'activité au registre** si le comptable ou PayDunya le demandent : la liste
@@ -56,11 +55,18 @@ rien pu lire, trois listes « Aucun… » affichées avant la réponse, un table
 des boutons trop petits au doigt, un « 0 FCFA » qui se lisait « o FCFA », et **les photos en
 portrait qui n'étaient pas réduites à l'envoi** (seule la largeur était plafonnée).
 
-**Les photos déjà en ligne, à alléger sur votre accord.** 25 photos de 8 annonces (31, 32, 33,
-36, 53, 54, 56, 64) pèsent 33 Mo, la moitié du site : la fiche 32 coûte 11 Mo au téléphone,
-contre 3 pour une fiche ordinaire. La commande `passetemps:alleger-photos` les réduit en gardant
-la même adresse et l'original de côté (`originaux/`) ; sans `--appliquer`, elle ne fait que
-simuler.
+**Les photos déjà en ligne, allégées sur votre accord (6 novembre).** 25 photos de 8 annonces
+(31, 32, 33, 36, 53, 54, 56, 64) pesaient 33 Mo, la moitié du site : la fiche 32 coûtait 11 Mo
+au téléphone, contre 3 pour une fiche ordinaire. Une migration lance une fois
+`passetemps:alleger-photos` en production : même adresse, original gardé sous `originaux/`.
+
+**Le transport, tranché le 6 novembre.** PasseTemps encaisse et reverse au transporteur
+(Mamadou pour l'instant) : la console Demandes note le paiement du client, la part du
+transporteur (prix moins 5 000 F), puis le reversement ; tant qu'elle n'est pas reversée, cette
+part compte dans l'argent à garder et, une fois le trajet fait, dans « Ce qui attend ». Une
+autre ville : 35 000 F au minimum. Location sans chauffeur : permis exigé, caution, carburant à
+la charge du client, assurance comprise. « Trajets vers les sites » et « Voiture avec chauffeur »
+sont retirés.
 
 **Pas testable aujourd'hui** : le paiement en ligne et la réponse d'un propriétaire à une
 demande en ligne (la réservation est fermée), et les écrans d'administration de production
