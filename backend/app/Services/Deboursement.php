@@ -205,6 +205,7 @@ class Deboursement
         $code = $corps['response_code'] ?? null;
 
         $message = match (true) {
+            is_string($raison) && self::tfaRefuse($raison) => self::MESSAGE_TFA,
             is_string($raison) && $raison !== '' => 'PayDunya répond : '.$raison.($code !== null ? " (code {$code})" : ''),
             $corps === [] => "PayDunya a répondu {$reponse->status()}, sans données lisibles, à {$chemin}",
             default => "PayDunya a répondu {$reponse->status()} sans solde du Sénégal (champs reçus : "
@@ -225,6 +226,19 @@ class Deboursement
      * comme dans la documentation, en chaîne (« 738612.00 XOF ») ou en nombre, à la racine ou
      * sous `data`. Sans compte du Sénégal mais avec un solde unique, on prend celui-là.
      */
+    /**
+     * Vu en production le 6 novembre 2026 : « Transfert Automatique (TFA) Not Allowed. You must
+     * explicitly allow that by updating your integration setup. » (code 4002). Le solde et le
+     * déboursement passent par la même autorisation, à ouvrir dans les réglages de l'application.
+     */
+    public const MESSAGE_TFA = 'le transfert automatique (TFA) n’est pas autorisé sur votre application PayDunya. '
+        .'Il s’active dans les réglages de l’application, ou se demande au support';
+
+    private static function tfaRefuse(string $texte): bool
+    {
+        return (bool) preg_match('/\bTFA\b|transfert automatique/i', $texte);
+    }
+
     private static function lireSolde(array $corps): ?int
     {
         $champs = $corps + (isset($corps['data']) && is_array($corps['data']) ? $corps['data'] : []);
@@ -284,8 +298,9 @@ class Deboursement
         return match ($code) {
             '401'  => "PayDunya refuse l'initiation : l'option Paiement Et Redistribution "
                      ."(PER / déboursement) n'est pas activée sur le compte marchand.",
-            '4002' => $texte !== '' ? $texte
-                     : "Solde insuffisant sur le compte PayDunya, ou URL de rappel injoignable.",
+            // Trois causes vues derrière le même code : l'autorisation TFA, le solde, l'URL de rappel.
+            '4002' => self::tfaRefuse($texte) ? ucfirst(self::MESSAGE_TFA).'.'
+                     : ($texte !== '' ? $texte : "Solde insuffisant sur le compte PayDunya, ou URL de rappel injoignable."),
             '1001' => "Ce moyen de retrait n'est pas pris en charge par PayDunya.",
             '5000' => $texte !== '' ? $texte
                      : 'PayDunya signale une erreur de son côté, ou une référence déjà employée.',

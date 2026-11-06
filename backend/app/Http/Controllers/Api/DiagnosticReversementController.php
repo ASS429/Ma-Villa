@@ -104,8 +104,9 @@ class DiagnosticReversementController extends Controller
         return match ($initiation['code'] ?? '') {
             '401'  => 'L\'option « Paiement Et Redistribution » (PER / déboursement) n\'est toujours pas '
                      .'activée sur le compte marchand. À demander au support PayDunya, pour WebPay et MobPay.',
-            '4002' => 'Initiation autorisée, mais refusée : soit le solde du compte marchand est insuffisant, '
-                     .'soit PayDunya n\'arrive pas à joindre notre URL de rappel. Vérifier d\'abord que '
+            '4002' => 'Initiation refusée : soit le transfert automatique (TFA) n\'est pas autorisé dans les réglages '
+                     .'de l\'application PayDunya, soit le solde du compte marchand est insuffisant, soit PayDunya '
+                     .'n\'arrive pas à joindre notre URL de rappel. Vérifier d\'abord que '
                      .$this->urlAtteignable().'.',
             default => $initiation['message'] ?? 'Réponse inattendue de PayDunya.',
         };

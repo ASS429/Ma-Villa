@@ -165,6 +165,18 @@ class SoldePaydunyaTest extends TestCase
         $this->assertStringNotContainsString('cle-maitresse-de-test', $message);
     }
 
+    public function test_le_refus_tfa_se_dit_en_francais_et_dit_ou_l_activer(): void
+    {
+        Http::fake(['*disburse/check-balance*' => Http::response([
+            'response_code' => '4002',
+            'response_text' => 'Transfert Automatique (TFA) Not Allowed. You must explicitly allow that by updating your integration setup.',
+        ])]);
+
+        $message = $this->lire()->json('message');
+        $this->assertStringContainsString('transfert automatique (TFA) n’est pas autorisé', $message);
+        $this->assertStringContainsString('réglages de l’application', $message);
+    }
+
     public function test_sans_cles_on_n_appelle_personne(): void
     {
         config(['paiement.paydunya.cle_maitre' => null, 'paiement.paydunya.cle_privee' => null, 'paiement.paydunya.token' => null]);

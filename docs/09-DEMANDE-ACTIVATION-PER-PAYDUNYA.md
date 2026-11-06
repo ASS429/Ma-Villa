@@ -103,6 +103,7 @@ https://mavilla-web.onrender.com
 3. Faire un premier versement réel de faible montant vers un numéro que vous
    contrôlez, puis vérifier qu'il apparaît « Versé » dans la file d'attente.
 
-⚠️ Un code **`4002`** après activation ne signifie pas un refus d'autorisation :
-c'est soit un **solde insuffisant** sur le compte marchand, soit une **URL de
-rappel injoignable**. Vérifier le solde en premier.
+⚠️ Un code **`4002`** a trois causes possibles. Vue en production le 6 novembre 2026 :
+« Transfert Automatique (TFA) Not Allowed », l'autorisation à ouvrir dans les réglages
+de l'application PayDunya. Les deux autres : un **solde insuffisant** sur le compte
+marchand, ou une **URL de rappel injoignable**. Lire le texte qui accompagne le code.
