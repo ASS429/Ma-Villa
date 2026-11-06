@@ -2028,6 +2028,8 @@
 }
 .fonds-alerte svg { flex: none; margin-top: 2px; color: var(--warning); }
 .fonds-alerte strong { color: var(--text-1); font-weight: 600; }
+.fonds-note { flex-basis: 100%; margin: 0; font: var(--t-caption); color: var(--text-3); }
+.fonds-note strong { color: var(--text-1); font-weight: 600; }
 
 /* ══════════════════════════════════════════════════════════════
    Tableau de bord — la seule question

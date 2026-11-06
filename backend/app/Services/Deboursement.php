@@ -167,6 +167,46 @@ class Deboursement
      * sans elle, n'importe qui annoncerait « versement réussi » et solderait
      * une dette qui n'a jamais été payée.
      */
+    /**
+     * Le solde du compte au Sénégal. PayDunya le donne lui-même pour « une approximation » :
+     * il sert à décider d'un retrait, pas à tenir une comptabilité.
+     *
+     * Une lecture : aucun argent ne bouge. Une erreur rend un message, jamais une exception,
+     * pour que « Ce qui attend » s'affiche même quand PayDunya ne répond pas.
+     *
+     * @return array{lu: bool, montant: ?int, message: ?string}
+     */
+    public function solde(): array
+    {
+        try {
+            $reponse = Http::withHeaders($this->paydunya->entetesPubliques())
+                ->timeout(10)
+                ->get($this->base().'/disburse/check-balance');
+
+            $corps = $reponse->json() ?? [];
+            $brut = is_array($corps) ? ($corps['Balance SN'] ?? null) : null;
+
+            if ($reponse->successful() && ($corps['success'] ?? false) && is_string($brut)
+                && preg_match('/^\s*(-?[\d\s]+(?:[.,]\d+)?)/u', $brut, $m)) {
+                return ['lu' => true, 'montant' => (int) floor((float) str_replace([' ', ','], ['', '.'], $m[1])), 'message' => null];
+            }
+
+            Log::warning('Solde PayDunya illisible', ['http' => $reponse->status()]);
+
+            return [
+                'lu'      => false,
+                'montant' => null,
+                'message' => is_array($corps) && isset($corps['message'])
+                    ? 'PayDunya répond : '.$corps['message']
+                    : "PayDunya a répondu {$reponse->status()}",
+            ];
+        } catch (\Throwable $e) {
+            Log::warning('Solde PayDunya injoignable', ['erreur' => $e->getMessage()]);
+
+            return ['lu' => false, 'montant' => null, 'message' => 'PayDunya ne répond pas'];
+        }
+    }
+
     public function rappelAuthentique(?string $hash): bool
     {
         return $this->paydunya->notificationAuthentique($hash);

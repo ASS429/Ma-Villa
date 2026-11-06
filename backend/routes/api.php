@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AttentesController;
+use App\Http\Controllers\Api\FondsController;
 use App\Http\Controllers\Api\AvisController;
 use App\Http\Controllers\Api\CircuitAssociesController;
 use App\Http\Controllers\Api\ClientsController;
@@ -188,6 +189,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // Ce qui attend une décision. Première entrée du châssis : sans elle,
         // savoir s'il y a du travail coûte l'ouverture de neuf pages.
         Route::get('/attentes', AttentesController::class);
+        // Ce qu'on peut retirer de PayDunya sans toucher à l'argent des autres. Lecture seule.
+        Route::get('/fonds/paydunya', FondsController::class)->middleware('throttle:30,1');
 
         Route::get('/stats', [AdminController::class, 'stats']);
         // Séries de trente jours et fil d'activité : ce que les chiffres

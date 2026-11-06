@@ -7,6 +7,7 @@ import api from '../../services/api'
 import { useRequete } from '../../lib/useRequete'
 import { fcfa, fcfaCourt } from '../../lib/format'
 import Button from '../../components/ui/Button'
+import SoldePaydunya from '../../components/console/SoldePaydunya'
 
 /* ── Ce que renvoie l'API ────────────────────────────────────── */
 
@@ -166,6 +167,9 @@ export default function AdminAttentes() {
           )}
         </section>
       )}
+
+      {/* Juste sous ce qu'on doit : la question qui suit est « que puis-je retirer ? ». */}
+      <SoldePaydunya />
 
       {chargement ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
