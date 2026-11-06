@@ -13,6 +13,7 @@ import Lien from '../i18n/Lien'
 import { useLangue } from '../i18n/langue'
 import DemandeService from './DemandeService'
 import ListePrestations from './ListePrestations'
+import FicheVehicule from './FicheVehicule'
 import { allerAuFormulaire } from './defilement'
 import { useCatalogue } from './useCatalogue'
 import { CHEMIN_FAMILLE, TEXTES_PRESTATIONS, VARIABLE_FAMILLE } from './textes'
@@ -97,7 +98,13 @@ function Contenu({ famille }: { famille: FamillePrestation }) {
           ) : catalogue.chargement || !catalogue.donnees ? (
             <div className="skeleton" style={{ height: 320, borderRadius: 'var(--r-lg)' }} />
           ) : (
-            <ListePrestations catalogue={catalogue.donnees} familles={[famille]} onChoisir={choisir} />
+            <>
+              {/* Le véhicule d'abord : on choisit mieux un trajet en voyant la voiture. */}
+              {Object.entries(catalogue.donnees.vehicules ?? {})
+                .filter(([cle]) => catalogue.donnees?.catalogue.some((p) => p.famille === famille && p.vehicule === cle))
+                .map(([cle, v]) => <FicheVehicule key={cle} vehicule={v} />)}
+              <ListePrestations catalogue={catalogue.donnees} familles={[famille]} onChoisir={choisir} />
+            </>
           )}
 
           <p className="text-sm th-text-2 leading-relaxed mt-6 flex gap-2 items-start">

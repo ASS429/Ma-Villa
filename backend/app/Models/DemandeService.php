@@ -40,7 +40,7 @@ class DemandeService extends Model
         'origine',
     ];
 
-    protected $appends = ['reference', 'libelle_prestation'];
+    protected $appends = ['reference', 'libelle_prestation', 'repartition'];
 
     protected function casts(): array
     {
@@ -68,6 +68,28 @@ class DemandeService extends Model
     public function getReferenceAttribute(): string
     {
         return 'S-'.str_pad((string) $this->id, 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Ce qui revient au prestataire et à nous, pour la console seulement : une demande ne
+     * sort jamais vers le public. Rien quand la prestation n'a pas de prestataire attitré.
+     *
+     * @return array{prestataire: string, prix: int, prix_prestataire: int, commission: int}|null
+     */
+    public function getRepartitionAttribute(): ?array
+    {
+        $p = config("prestations.catalogue.{$this->prestation}");
+
+        if (! $p || ! isset($p['prix_prestataire'])) {
+            return null;
+        }
+
+        return [
+            'prestataire'      => (string) ($p['prestataire'] ?? ''),
+            'prix'             => (int) $p['prix_a_partir_de'],
+            'prix_prestataire' => (int) $p['prix_prestataire'],
+            'commission'       => (int) $p['prix_a_partir_de'] - (int) $p['prix_prestataire'],
+        ];
     }
 
     /**

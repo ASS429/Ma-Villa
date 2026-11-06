@@ -5,7 +5,7 @@ import api from '../../services/api'
 import { useToast } from '../../context/ToastContext'
 import { useRequete } from '../../lib/useRequete'
 import { messageErreur } from '../../lib/erreurs'
-import { dateCourte, depuis } from '../../lib/format'
+import { dateCourte, depuis, fcfa } from '../../lib/format'
 import { lienWhatsApp } from '../../lib/contact'
 import { relireAttentes } from '../../lib/attentes'
 import { dateDuService, lienCarte } from '../../prestations/format'
@@ -160,6 +160,15 @@ export default function AdminDemandes() {
                 </div>
                 {d.message && (
                   <div><dt>Précisions</dt><dd>{d.message}</dd></div>
+                )}
+                {d.repartition && (
+                  <div>
+                    <dt>Répartition</dt>
+                    <dd>
+                      {fcfa(d.repartition.prix_prestataire)} pour {d.repartition.prestataire || 'le prestataire'} · {fcfa(d.repartition.commission)} de commission
+                      {' '}(prix affiché {fcfa(d.repartition.prix)}, à confirmer avec le client)
+                    </dd>
+                  </div>
                 )}
                 {d.statut !== 'nouvelle' && d.traitee_le && (
                   <div>

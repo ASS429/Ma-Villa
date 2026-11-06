@@ -364,12 +364,25 @@ export interface Prestation {
   libelle: Traduit
   unite: Traduit
   description: Traduit
+  /** Le véhicule qui assure la prestation, s'il est présenté (`CataloguePrestations.vehicules`). */
+  vehicule?: string | null
+}
+
+/** Un véhicule présenté sur la page, avec les règles de son chauffeur. */
+export interface Vehicule {
+  nom: string
+  photos: { src: string; alt: Traduit }[]
+  atouts: Record<'fr' | 'en', string[]>
+  horaires: Traduit
+  reservation: Traduit
+  annulation: Traduit
 }
 
 export interface CataloguePrestations {
   /** Les familles visibles par l'appelant — fermées comprises pour l'administration. */
   familles: Partial<Record<FamillePrestation, Traduit>>
   catalogue: Prestation[]
+  vehicules?: Record<string, Vehicule>
   delai_reponse_heures: number
   /** Celles que seul l'administrateur voit, en aperçu. */
   en_apercu?: FamillePrestation[]
@@ -385,6 +398,8 @@ export interface DemandeService {
   reference: string
   prestation: string
   libelle_prestation: string
+  /** Console seulement : ce qui revient au prestataire et à nous. */
+  repartition?: { prestataire: string; prix: number; prix_prestataire: number; commission: number } | null
   date_service: string
   heure: string | null
   personnes: number

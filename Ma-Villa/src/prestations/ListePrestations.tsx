@@ -58,6 +58,9 @@ export default function ListePrestations({
                       <span className="th-text-3">{t.aPartirDe} </span>
                       <strong className="font-semibold">{fcfa(p.prix_a_partir_de)}</strong>
                       <span className="th-text-3"> · {p.unite[langue]}</span>
+                      {p.vehicule && catalogue.vehicules?.[p.vehicule] && (
+                        <span className="th-text-3"> · {catalogue.vehicules[p.vehicule].nom}</span>
+                      )}
                     </p>
                   </div>
                   <Button

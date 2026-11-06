@@ -97,6 +97,7 @@ export default function DemandeService({
     .filter((f) => !seulement || seulement.includes(f))
   const proposees = catalogue.catalogue.filter((p) => familles.includes(p.famille))
   const choisie = proposees.find((p) => p.cle === prestation)
+  const vehicule = choisie?.vehicule ? catalogue.vehicules?.[choisie.vehicule] : undefined
 
   const maj = (champ: keyof Champs) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -310,6 +311,7 @@ export default function DemandeService({
             value={champs.heure}
             onChange={maj('heure')}
             erreur={erreurs.heure}
+            aide={vehicule ? t.vehicule.heure(vehicule.horaires[langue], vehicule.reservation[langue]) : undefined}
           />
           <Champ
             label={t.champs.personnes}

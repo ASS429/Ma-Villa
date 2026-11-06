@@ -43,10 +43,20 @@ class DemandeServiceController extends Controller
         $familles = Prestations::famillesVisibles();
         abort_if($familles === [], 404);
 
+        // Des champs nommés, jamais la configuration telle quelle : elle porte la part du
+        // prestataire et son nom, qui n'ont rien à faire chez le client.
         $catalogue = collect(config('prestations.catalogue'))
             ->filter(fn (array $p) => in_array($p['famille'], $familles, true))
-            ->map(fn (array $p, string $cle) => ['cle' => $cle] + $p)
+            ->map(fn (array $p, string $cle) => ['cle' => $cle] + array_intersect_key($p, array_flip([
+                'famille', 'prix_a_partir_de', 'vol', 'libelle', 'unite', 'description', 'vehicule',
+            ])))
             ->values();
+
+        $vehicules = collect(config('prestations.vehicules', []))
+            ->only($catalogue->pluck('vehicule')->filter()->unique()->values()->all())
+            ->map(fn (array $v) => array_intersect_key($v, array_flip([
+                'nom', 'photos', 'atouts', 'horaires', 'reservation', 'annulation',
+            ])));
 
         $ouvertes = Prestations::famillesOuvertes();
 
@@ -54,6 +64,7 @@ class DemandeServiceController extends Controller
             'familles' => collect($familles)
                 ->mapWithKeys(fn (string $f) => [$f => config("prestations.familles.{$f}.libelle")]),
             'catalogue' => $catalogue,
+            'vehicules' => $vehicules->isEmpty() ? new \stdClass : $vehicules,
             'delai_reponse_heures' => (int) config('prestations.delai_reponse_heures'),
             // Les familles que l'administration voit sans que le public les
             // voie : l'écran le dit, pour qu'on ne prenne pas un aperçu pour
@@ -126,6 +137,10 @@ class DemandeServiceController extends Controller
             'telephone.regex'             => 'Écrivez le numéro en chiffres, sans lettres.',
         ]);
 
+        if ($refus = $this->refusDHoraire($donnees)) {
+            return $refus;
+        }
+
         $demande = DemandeService::create($donnees + [
             'user_id' => auth('sanctum')->id(),
             'langue'  => $donnees['langue'] ?? 'fr',
@@ -137,6 +152,43 @@ class DemandeServiceController extends Controller
             'id'        => $demande->id,
             'reference' => $demande->reference,
         ], 201);
+    }
+
+    /**
+     * Un véhicule a ses heures et son délai. Une demande hors de ses heures, ou trop
+     * tardive pour qu'on trouve le chauffeur, se refuse ici plutôt qu'au téléphone.
+     * Sans heure, on ne peut rien juger : l'équipe la fixe avec le client.
+     *
+     * @param  array<string, mixed>  $d
+     */
+    private function refusDHoraire(array $d): ?JsonResponse
+    {
+        $cle = config("prestations.catalogue.{$d['prestation']}.vehicule");
+        $vehicule = $cle ? config("prestations.vehicules.{$cle}") : null;
+
+        if (! $vehicule || empty($d['heure'])) {
+            return null;
+        }
+
+        $langue = ($d['langue'] ?? 'fr') === 'en' ? 'en' : 'fr';
+
+        if ($d['heure'] < $vehicule['heure_debut'] || $d['heure'] > $vehicule['heure_fin']) {
+            return response()->json([
+                'message' => $langue === 'en' ? 'This car runs from 6 am to midnight.' : 'Ce véhicule roule de 6 h à minuit.',
+                'errors'  => ['heure' => [$langue === 'en' ? 'Choose a time between 6 am and midnight.' : 'Choisissez une heure entre 6 h et minuit.']],
+            ], 422);
+        }
+
+        $depart = Carbon::parse($d['date_service'].' '.$d['heure']);
+        if ($depart->lt(now()->addHours((int) $vehicule['delai_min_heures']))) {
+            $texte = $langue === 'en'
+                ? 'This ride must be booked at least 2 hours ahead, ideally the day before.'
+                : 'Ce trajet se réserve au moins 2 h à l’avance, idéalement la veille.';
+
+            return response()->json(['message' => $texte, 'errors' => ['heure' => [$texte]]], 422);
+        }
+
+        return null;
     }
 
     public function indexAdmin(Request $request): JsonResponse

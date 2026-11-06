@@ -2435,3 +2435,25 @@
 .reglements-totaux, .reglements-soldes { margin-bottom: var(--space-4); display: flex; flex-direction: column; gap: var(--space-2); }
 .reglements-soldes .panneau-titre, .reglements-soldes > p { margin: 0; }
 .reservation-acompte { font: var(--t-caption); font-weight: 500; color: var(--warning); }
+
+/* ── Le véhicule d'une page de service ───────────────────── */
+.fiche-vehicule { display: grid; gap: var(--space-5); margin-bottom: var(--space-6); grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 860px) { .fiche-vehicule { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: start; } }
+.fiche-vehicule-galerie { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+.fiche-vehicule-photo { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--r-md); background: var(--bg-elevated); }
+.fiche-vehicule-vignettes { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-2); }
+.fiche-vehicule-vignette { padding: 0; border: 2px solid transparent; border-radius: var(--r-sm); overflow: hidden; background: none; cursor: pointer; min-height: 44px; }
+.fiche-vehicule-vignette img { display: block; width: 100%; height: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.fiche-vehicule-vignette.est-active { border-color: var(--accent); }
+.fiche-vehicule-vignette:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.fiche-vehicule-texte { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.fiche-vehicule-surtitre { margin: 0; display: flex; align-items: center; gap: var(--space-2); font: var(--t-caption); font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: .06em; }
+.fiche-vehicule-nom { margin: 0; font: var(--t-h3); color: var(--text-1); }
+.fiche-vehicule-atouts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.fiche-vehicule-atouts li { display: flex; align-items: flex-start; gap: var(--space-2); font: var(--t-body-sm); color: var(--text-2); }
+.fiche-vehicule-atouts svg { flex: none; margin-top: 3px; color: var(--success); }
+.fiche-vehicule-regles { margin: 0; display: flex; flex-direction: column; gap: var(--space-2); padding-top: var(--space-3); border-top: 1px solid var(--border); }
+.fiche-vehicule-regles > div { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); }
+.fiche-vehicule-regles dt { display: flex; align-items: center; gap: var(--space-2); min-width: 130px; font: var(--t-body-sm); color: var(--text-3); }
+.fiche-vehicule-regles dd { margin: 0; font: var(--t-body-sm); font-weight: 600; color: var(--text-1); }
+.fiche-vehicule-note { margin: 0; font: var(--t-caption); color: var(--text-3); }

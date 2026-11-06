@@ -55,21 +55,72 @@ return [
     */
     'catalogue' => [
 
+        /*
+        | Les trois prestations de l'Outlander (offre reçue le 6 novembre 2026). Le prix
+        | affiché est celui du prestataire **plus 5 000 F**, notre commission sur le transport.
+        | `prix_prestataire` et `prestataire` ne quittent jamais le serveur : le catalogue
+        | public ne sert que ses champs nommés (`DemandeServiceController::catalogue`).
+        */
         'transfert_aibd' => [
             'famille' => 'transport',
-            'prix_a_partir_de' => 25000,
+            'prix_a_partir_de' => 35000,
+            'prix_prestataire' => 30000,
+            'prestataire' => 'Mamadou',
+            'vehicule' => 'outlander',
             'vol' => true,
             'libelle' => [
-                'fr' => "Transfert depuis l'aéroport AIBD",
+                'fr' => "Transfert avec l'aéroport AIBD",
                 'en' => 'AIBD airport transfer',
             ],
             'unite' => [
-                'fr' => 'le trajet, voiture 4 places',
-                'en' => 'per trip, 4-seat car',
+                'fr' => 'la voiture, aller simple',
+                'en' => 'per car, one way',
             ],
             'description' => [
-                'fr' => 'Votre chauffeur vous attend à la sortie avec une pancarte à votre nom, même si le vol a du retard.',
-                'en' => 'Your driver waits at arrivals with a sign bearing your name, even if your flight is late.',
+                'fr' => "De l'aéroport à votre destination, ou l'inverse. Votre chauffeur vous attend à la sortie, même si le vol a du retard.",
+                'en' => 'From the airport to your destination, or the other way. Your driver waits at arrivals, even if your flight is late.',
+            ],
+        ],
+
+        'trajet_villes' => [
+            'famille' => 'transport',
+            'prix_a_partir_de' => 35000,
+            'prix_prestataire' => 30000,
+            'prestataire' => 'Mamadou',
+            'vehicule' => 'outlander',
+            'vol' => false,
+            'libelle' => [
+                'fr' => "D'une ville à l'autre",
+                'en' => 'City to city',
+            ],
+            'unite' => [
+                'fr' => 'la voiture, aller simple',
+                'en' => 'per car, one way',
+            ],
+            'description' => [
+                'fr' => 'Thiès ↔ Dakar, péage et carburant compris. Pour une autre ville, le prix vous est confirmé avant le départ.',
+                'en' => 'Thiès ↔ Dakar, tolls and fuel included. For another city, the price is confirmed before you leave.',
+            ],
+        ],
+
+        'location_sans_chauffeur' => [
+            'famille' => 'transport',
+            'prix_a_partir_de' => 40000,
+            'prix_prestataire' => 35000,
+            'prestataire' => 'Mamadou',
+            'vehicule' => 'outlander',
+            'vol' => false,
+            'libelle' => [
+                'fr' => 'Location sans chauffeur',
+                'en' => 'Car hire without driver',
+            ],
+            'unite' => [
+                'fr' => 'la journée',
+                'en' => 'per day',
+            ],
+            'description' => [
+                'fr' => 'Le véhicule pour vous, à la journée. Permis de conduire, caution et carburant : les conditions vous sont confirmées à la réservation.',
+                'en' => 'The car is yours for the day. Driving licence, deposit and fuel: the terms are confirmed when you book.',
             ],
         ],
 
@@ -161,6 +212,36 @@ return [
                 'fr' => 'Un menu fixe près des sites ; halal, végétarien ou sans allergènes sur demande.',
                 'en' => 'A set menu near the venues; halal, vegetarian or allergen-free on request.',
             ],
+        ],
+    ],
+
+    /*
+    | Les véhicules qu'on peut montrer. Les photos sont servies par le site
+    | (`Ma-Villa/public/images/vehicules/`), plaques et passants floutés.
+    |
+    | `heure_debut`, `heure_fin` et `delai_min_heures` sont tenus par le serveur à la
+    | demande : un trajet qu'on ne peut pas assurer ne doit pas pouvoir se demander.
+    */
+    'vehicules' => [
+        'outlander' => [
+            'nom' => 'Mitsubishi Outlander Sport',
+            'heure_debut' => '06:00',
+            'heure_fin' => '23:59',
+            'delai_min_heures' => 2,
+            'photos' => [
+                ['src' => '/images/vehicules/outlander-cote.jpg', 'alt' => ['fr' => 'Le Mitsubishi Outlander Sport blanc, de profil', 'en' => 'The white Mitsubishi Outlander Sport, side view']],
+                ['src' => '/images/vehicules/outlander-trois-quarts.jpg', 'alt' => ['fr' => 'Vue de trois quarts arrière', 'en' => 'Three-quarter rear view']],
+                ['src' => '/images/vehicules/outlander-avant.jpg', 'alt' => ['fr' => "Vue de l'avant", 'en' => 'Front view']],
+                ['src' => '/images/vehicules/outlander-interieur.jpg', 'alt' => ['fr' => "L'intérieur, sièges en cuir et toit ouvrant", 'en' => 'The interior, leather seats and sunroof']],
+                ['src' => '/images/vehicules/outlander-arriere.jpg', 'alt' => ['fr' => "Vue de l'arrière", 'en' => 'Rear view']],
+            ],
+            'atouts' => [
+                'fr' => ['Blanc, climatisé', '4 passagers, 3 valises au moins', 'Toit ouvrant, sièges en cuir'],
+                'en' => ['White, air-conditioned', '4 passengers, room for 3 suitcases or more', 'Sunroof, leather seats'],
+            ],
+            'horaires' => ['fr' => 'De 6 h à minuit', 'en' => 'From 6 am to midnight'],
+            'reservation' => ['fr' => "Au moins 2 h à l'avance, idéalement la veille", 'en' => 'At least 2 hours ahead, ideally the day before'],
+            'annulation' => ['fr' => "Gratuite jusqu'à 24 h avant", 'en' => 'Free up to 24 hours before'],
         ],
     ],
 

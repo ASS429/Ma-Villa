@@ -30,6 +30,16 @@ const fr = {
     'Rien n’est payé en ligne : le règlement vous est indiqué à la confirmation.',
   ],
 
+  vehicule: {
+    surtitre: 'Notre véhicule',
+    photos: 'Photos du véhicule',
+    horaires: 'Horaires',
+    reservation: 'Réservation',
+    annulation: 'Annulation',
+    note: 'Il assure les trajets de cette page. Le prix est celui de la voiture, quel que soit le nombre de passagers.',
+    heure: (horaires: string, reservation: string) => `${horaires} · ${reservation}.`,
+  },
+
   formulaire: 'Votre demande',
   formulaireSous: (h: number) => `Rien n’est payé en ligne. Nous vous confirmons le prestataire et le prix sur WhatsApp, sous ${h} heures en journée.`,
   champs: {
@@ -93,7 +103,7 @@ const fr = {
     transport: {
       eyebrow: 'Transport',
       titre: 'Un chauffeur, de l’aéroport jusqu’à votre logement',
-      intro: 'Transfert depuis l’aéroport AIBD, trajets au quotidien, voiture avec chauffeur à la journée : dites-nous ce dont vous avez besoin.',
+      intro: 'Transfert avec l’aéroport AIBD, trajets d’une ville à l’autre, location sans chauffeur, voiture avec chauffeur à la journée : dites-nous ce dont vous avez besoin.',
       conseil: 'Le TER relie Dakar, Diamniadio et l’aéroport AIBD. Pour Saly, la Somone ou Thiès, prévoyez une voiture.',
       seo: {
         titre: 'Transport au Sénégal : transfert aéroport AIBD et chauffeur',
@@ -127,6 +137,16 @@ const en: typeof fr = {
     `We confirm the provider and the price on WhatsApp, within ${h} hours during the day.`,
     'Nothing is paid online: you are told how to pay when we confirm.',
   ],
+
+  vehicule: {
+    surtitre: 'Our car',
+    photos: 'Photos of the car',
+    horaires: 'Hours',
+    reservation: 'Booking',
+    annulation: 'Cancellation',
+    note: 'It covers the rides on this page. The price is per car, whatever the number of passengers.',
+    heure: (horaires: string, reservation: string) => `${horaires} · ${reservation}.`,
+  },
 
   formulaire: 'Your request',
   formulaireSous: (h: number) => `Nothing is paid online. We confirm the provider and the price on WhatsApp, within ${h} hours during the day.`,
@@ -190,7 +210,7 @@ const en: typeof fr = {
     transport: {
       eyebrow: 'Transport',
       titre: 'A driver, from the airport to your door',
-      intro: 'AIBD airport transfers, daily rides, a car with driver by the day: tell us what you need.',
+      intro: 'AIBD airport transfers, city-to-city rides, car hire without driver, a car with driver by the day: tell us what you need.',
       conseil: 'The TER train links Dakar, Diamniadio and AIBD airport. For Saly, Somone or Thiès, plan on a car.',
       seo: {
         titre: 'Transport in Senegal: AIBD airport transfer and private driver',
