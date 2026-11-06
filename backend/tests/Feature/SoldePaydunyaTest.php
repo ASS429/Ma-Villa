@@ -141,6 +141,30 @@ class SoldePaydunyaTest extends TestCase
             ->assertJsonPath('a_garder.total', 88000);
     }
 
+    public function test_le_solde_se_lit_aussi_en_nombre_ou_sous_data(): void
+    {
+        foreach ([['success' => true, 'Balance SN' => 42000], ['data' => ['balance_sn' => '42000.00 XOF']], ['balance' => '42 000']] as $i => $corps) {
+            \Illuminate\Support\Facades\Cache::flush();
+            Http::fake(['*disburse/check-balance*' => Http::response($corps)]);
+            $this->lire(['rafraichir' => 1])->assertJsonPath('solde', 42000, "forme {$i}");
+            Http::fake([]);
+        }
+    }
+
+    public function test_une_reponse_inattendue_dit_ce_que_paydunya_a_envoye(): void
+    {
+        Http::fake(['*disburse/check-balance*' => Http::sequence()
+            ->push(['response_code' => '1001', 'response_text' => 'Option non activée'])
+            ->push(['success' => true, 'soldes' => ['SN' => 1]])
+            ->push('<html>connexion</html>', 200)]);
+
+        $this->lire(['rafraichir' => 1])->assertJsonPath('message', 'PayDunya répond : Option non activée (code 1001)');
+        $this->lire(['rafraichir' => 1])->assertJsonPath('message', 'PayDunya a répondu 200 sans solde du Sénégal (champs reçus : success, soldes)');
+        $message = $this->lire(['rafraichir' => 1])->json('message');
+        $this->assertStringContainsString('sans données lisibles, à /sandbox-api/v2/disburse/check-balance', $message);
+        $this->assertStringNotContainsString('cle-maitresse-de-test', $message);
+    }
+
     public function test_sans_cles_on_n_appelle_personne(): void
     {
         config(['paiement.paydunya.cle_maitre' => null, 'paiement.paydunya.cle_privee' => null, 'paiement.paydunya.token' => null]);

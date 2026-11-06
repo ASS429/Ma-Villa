@@ -178,33 +178,80 @@ class Deboursement
      */
     public function solde(): array
     {
+        $adresse = $this->base().'/disburse/check-balance';
+
         try {
             $reponse = Http::withHeaders($this->paydunya->entetesPubliques())
                 ->timeout(10)
-                ->get($this->base().'/disburse/check-balance');
-
-            $corps = $reponse->json() ?? [];
-            $brut = is_array($corps) ? ($corps['Balance SN'] ?? null) : null;
-
-            if ($reponse->successful() && ($corps['success'] ?? false) && is_string($brut)
-                && preg_match('/^\s*(-?[\d\s]+(?:[.,]\d+)?)/u', $brut, $m)) {
-                return ['lu' => true, 'montant' => (int) floor((float) str_replace([' ', ','], ['', '.'], $m[1])), 'message' => null];
-            }
-
-            Log::warning('Solde PayDunya illisible', ['http' => $reponse->status()]);
-
-            return [
-                'lu'      => false,
-                'montant' => null,
-                'message' => is_array($corps) && isset($corps['message'])
-                    ? 'PayDunya répond : '.$corps['message']
-                    : "PayDunya a répondu {$reponse->status()}",
-            ];
+                ->get($adresse);
         } catch (\Throwable $e) {
             Log::warning('Solde PayDunya injoignable', ['erreur' => $e->getMessage()]);
 
             return ['lu' => false, 'montant' => null, 'message' => 'PayDunya ne répond pas'];
         }
+
+        $corps = $reponse->json();
+        $corps = is_array($corps) ? $corps : [];
+        $montant = self::lireSolde($corps);
+
+        if ($reponse->successful() && $montant !== null && ($corps['success'] ?? true) !== false) {
+            return ['lu' => true, 'montant' => $montant, 'message' => null];
+        }
+
+        // Ce qu'il faut pour comprendre sans ouvrir les journaux de Railway : la raison donnée
+        // par PayDunya, ou les noms des champs reçus et l'adresse appelée. Jamais une clé.
+        $chemin = parse_url($adresse, PHP_URL_PATH);
+        $raison = $corps['message'] ?? $corps['response_text'] ?? $corps['description'] ?? null;
+        $code = $corps['response_code'] ?? null;
+
+        $message = match (true) {
+            is_string($raison) && $raison !== '' => 'PayDunya répond : '.$raison.($code !== null ? " (code {$code})" : ''),
+            $corps === [] => "PayDunya a répondu {$reponse->status()}, sans données lisibles, à {$chemin}",
+            default => "PayDunya a répondu {$reponse->status()} sans solde du Sénégal (champs reçus : "
+                .implode(', ', array_slice(array_map('strval', array_keys($corps)), 0, 8)).')',
+        };
+
+        Log::warning('Solde PayDunya illisible', [
+            'http'   => $reponse->status(),
+            'champs' => array_keys($corps),
+            'chemin' => $chemin,
+        ]);
+
+        return ['lu' => false, 'montant' => null, 'message' => $message];
+    }
+
+    /**
+     * Le solde du Sénégal, dans les formes qu'on peut raisonnablement recevoir : « Balance SN »
+     * comme dans la documentation, en chaîne (« 738612.00 XOF ») ou en nombre, à la racine ou
+     * sous `data`. Sans compte du Sénégal mais avec un solde unique, on prend celui-là.
+     */
+    private static function lireSolde(array $corps): ?int
+    {
+        $champs = $corps + (isset($corps['data']) && is_array($corps['data']) ? $corps['data'] : []);
+
+        $valeur = null;
+        $unique = null;
+        foreach ($champs as $cle => $v) {
+            $nom = strtolower(preg_replace('/[^a-z]/i', '', (string) $cle));
+            if ($nom === 'balancesn' || $nom === 'soldesn') {
+                $valeur = $v;
+                break;
+            }
+            if ($nom === 'balance' || $nom === 'solde') {
+                $unique = $v;
+            }
+        }
+        $valeur ??= $unique;
+
+        if (is_int($valeur) || is_float($valeur)) {
+            return (int) floor($valeur);
+        }
+
+        if (is_string($valeur) && preg_match('/^\s*(-?[\d\s]+(?:[.,]\d+)?)/u', $valeur, $m)) {
+            return (int) floor((float) str_replace([' ', ','], ['', '.'], $m[1]));
+        }
+
+        return null;
     }
 
     public function rappelAuthentique(?string $hash): bool
