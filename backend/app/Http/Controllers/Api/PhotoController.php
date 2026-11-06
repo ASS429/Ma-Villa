@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Logement;
 use App\Models\Oeuvre;
 use App\Models\Villa;
+use App\Services\ReductionImage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -166,7 +167,7 @@ class PhotoController extends Controller
                 ], 422);
             }
 
-            $this->reduireImage($fichier->getRealPath());
+            app(ReductionImage::class)->reduire($fichier->getRealPath());
         }
 
         $disque = config('filesystems.media');
@@ -190,70 +191,6 @@ class PhotoController extends Controller
         $url = Storage::disk($disque)->url($chemin);
 
         return str_starts_with($url, 'http') ? $url : url($url);
-    }
-
-    /**
-     * Redimensionne à 2000 px de large maximum et réencode en JPEG qualité 82,
-     * sur place. Sur ce marché la data mobile est payée au volume : servir une
-     * photo de smartphone brute coûte réellement quelque chose au visiteur.
-     */
-    private function reduireImage(string $chemin, int $largeurMax = 2000): void
-    {
-        if (! extension_loaded('gd')) {
-            return;
-        }
-
-        // Une photo de 50 Mpx décodée occupe 200 Mo : plus que la limite par
-        // défaut, et l'envoi échouait sur une erreur fatale, que rien ne
-        // rattrape. Relevée ici seulement, le temps du décodage — les
-        // dimensions sont déjà plafonnées à l'entrée.
-        $limite = ini_get('memory_limit');
-        ini_set('memory_limit', '512M');
-        $source = $cible = null;
-
-        try {
-            $infos = @getimagesize($chemin);
-            if ($infos === false) {
-                return;
-            }
-
-            [$largeur, $hauteur] = $infos;
-            $source = match ($infos['mime']) {
-                'image/jpeg' => @imagecreatefromjpeg($chemin),
-                'image/png'  => @imagecreatefrompng($chemin),
-                'image/webp' => @imagecreatefromwebp($chemin),
-                default      => null,
-            };
-
-            if (! $source) {
-                return;
-            }
-
-            // Une image déjà raisonnable est simplement réencodée.
-            $ratio = $largeur > $largeurMax ? $largeurMax / $largeur : 1.0;
-            $cible = imagecreatetruecolor((int) round($largeur * $ratio), (int) round($hauteur * $ratio));
-
-            imagefill($cible, 0, 0, imagecolorallocate($cible, 255, 255, 255));
-            imagecopyresampled(
-                $cible, $source,
-                0, 0, 0, 0,
-                imagesx($cible), imagesy($cible),
-                $largeur, $hauteur
-            );
-
-            imagejpeg($cible, $chemin, 82);
-            // Pas d'imagedestroy() : déprécié depuis PHP 8.5, et les objets
-            // GdImage sont libérés par le ramasse-miettes.
-        } catch (\Throwable $e) {
-            // L'original reste servi tel quel : mieux vaut une photo lourde
-            // qu'une annonce sans photo.
-            report($e);
-        } finally {
-            // Libérer avant de redescendre : sous la mémoire déjà occupée, la
-            // limite refuserait de baisser.
-            $source = $cible = null;
-            ini_set('memory_limit', (string) $limite);
-        }
     }
 
     public function destroy(Villa $villa, int $photo): JsonResponse

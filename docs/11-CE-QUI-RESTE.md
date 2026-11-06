@@ -1,37 +1,71 @@
-# Ce qui reste — état au 5 novembre 2026
+# Ce qui reste — état au 6 novembre 2026
 
 _Écrit pour être lu sans connaître le code. Chaque point dit **ce que c'est**, **pourquoi
 ça compte**, et **ce que ça coûte**. L'ancien état du 22 août est plus bas, pour mémoire._
 
 ---
 
-## En un coup d'œil, au 5 novembre 2026
+## En un coup d'œil, au 6 novembre 2026
 
 | | |
 |---|---|
 | **Le site est en ligne** | passetemps.sn, 59 annonces, en français et en anglais |
 | **On encaisse déjà, à la main** | devis, règlement auprès de l'équipe, reçu numéroté, reversement suivi |
-| **La réservation en ligne est prête mais fermée** | elle attend le KYC PayDunya, désormais possible |
-| **L'immatriculation est faite** | RCCM SN.DKR.2026.A.43219, NINEA 013512810, depuis le 3 novembre |
-| **Ce qui manque n'est presque plus du code** | PayDunya, une banque, un comptable, des accords écrits |
+| **La réservation en ligne est prête mais fermée** | KYC PayDunya envoyé le 5 novembre, relance le 20 |
+| **L'immatriculation est faite** | RCCM SN.DKR.2026.A.43219, NINEA 013512810, partout sur le site, les devis, les reçus et les courriels |
+| **Le transport a un vrai véhicule** | l'Outlander, trois trajets au prix du chauffeur + 5 000 F de commission |
+| **Le site a été testé de bout en bout le 6 novembre** | quatre rôles, toutes les pages, 21 formulaires, au téléphone et à l'ordinateur |
 
 ## Dans l'ordre où le faire
 
-1. **Envoyer le message à PayDunya** (`18-DEMANDE-PAYDUNYA-KYC-PER-CARTE.md`) : KYC, déboursement,
-   carte, frais, et accord écrit sur l'encaissement pour le compte des propriétaires.
-2. **Le compte bancaire : votre compte personnel** (décidé le 5 novembre, un compte d'entreprise
-   n'étant pas possible). Pour une entreprise individuelle, c'est la même personne, et le nom concorde
-   avec le compte PayDunya. La règle qui protège l'argent des propriétaires : **laisser leur part sur
-   PayDunya et ne retirer que la commission**, sans jamais descendre sous le montant « Détenu pour les
-   propriétaires » de la console.
+1. **Autoriser le « Transfert Automatique (TFA) » chez PayDunya** (réglages de l'intégration).
+   Sans lui, la console ne peut pas lire le solde (code 4002), et le déboursement automatique
+   ne pourra pas partir.
+2. **Le 20 novembre, relancer PayDunya** si le KYC n'a pas de réponse
+   (`18-DEMANDE-PAYDUNYA-KYC-PER-CARTE.md`), puis chercher un second prestataire agréé
+   sur la liste de la BCEAO.
 3. **Rouvrir la réservation en ligne** une fois le KYC validé : `PAIEMENT_ACTIF` et
    `RESERVATIONS_OUVERTES` à `true` sur Railway, puis un paiement réel de 200 F.
-4. **Voir un comptable** : le régime fiscal de l'entreprise, la facture, et ce que veut dire, pour
-   une entreprise individuelle, détenir l'argent de tiers.
-5. **Faire préciser l'activité au registre** si le comptable ou PayDunya le demandent : la liste
-   déposée ne cite ni l'hébergement, ni la réservation, ni l'intermédiation.
+4. **Voir un comptable** avec `19-QUESTIONS-AU-COMPTABLE.md` : régime fiscal, facture, et ce que
+   veut dire, pour une entreprise individuelle, détenir l'argent de tiers.
+5. **Répondre aux quatre questions du transport** : qui encaisse (recommandé : PasseTemps
+   reçoit 35 000 F et reverse 30 000 F), les conditions de la location sans chauffeur, le prix
+   pour les autres villes, et le sort des deux anciennes lignes JOJ.
 6. **Les accords écrits des propriétaires** (Clé d'Or, Modou Sene, vidéos) et de vrais comptes pour
    ceux qui n'en ont pas.
+7. **Faire préciser l'activité au registre** si le comptable ou PayDunya le demandent : la liste
+   déposée ne cite ni l'hébergement, ni la réservation, ni l'intermédiation.
+
+Décidé le 5 novembre : le compte bancaire est **le compte personnel** de l'exploitant (même
+personne que l'entreprise individuelle). La règle qui protège l'argent des propriétaires :
+**laisser leur part sur PayDunya et ne retirer que la commission**, sans jamais descendre sous
+le montant « À laisser sur PayDunya » de la console.
+
+## Ce que le test du 6 novembre a vérifié, et ce qu'il n'a pas pu
+
+Vérifié, en local avec la réservation en ligne fermée comme en production : visiteur (recherche,
+catégories, filtres, tri, carte, langue, thème, devis depuis une fiche, demande particulière,
+dates prises puis « être rappelé », transport, repas, mot de passe oublié, connexion refusée,
+boutique), client (inscription, profil, favori, commande d'œuvre), propriétaire (assistant de
+publication, dates fermées, revenus), administrateur (devis, règlement et reçu, renonciation et
+remboursement, validation d'annonce, demandes, exports, fiches PDF, solde PayDunya). Puis le
+site en ligne, en visiteur, sur toutes les pages du plan du site.
+
+Six défauts corrigés le jour même : un « Tout est traité » affiché quand la console n'avait
+rien pu lire, trois listes « Aucun… » affichées avant la réponse, un tableau qui débordait,
+des boutons trop petits au doigt, un « 0 FCFA » qui se lisait « o FCFA », et **les photos en
+portrait qui n'étaient pas réduites à l'envoi** (seule la largeur était plafonnée).
+
+**Les photos déjà en ligne, à alléger sur votre accord.** 25 photos de 8 annonces (31, 32, 33,
+36, 53, 54, 56, 64) pèsent 33 Mo, la moitié du site : la fiche 32 coûte 11 Mo au téléphone,
+contre 3 pour une fiche ordinaire. La commande `passetemps:alleger-photos` les réduit en gardant
+la même adresse et l'original de côté (`originaux/`) ; sans `--appliquer`, elle ne fait que
+simuler.
+
+**Pas testable aujourd'hui** : le paiement en ligne et la réponse d'un propriétaire à une
+demande en ligne (la réservation est fermée), et les écrans d'administration de production
+(on n'y entre pas avec un script). Ils ont été testés de bout en bout le 31 octobre, tout
+ouvert en local ; à refaire après la réouverture avec le paiement réel de 200 F.
 
 ## À faire plus tard (noté le 4 novembre 2026)
 
