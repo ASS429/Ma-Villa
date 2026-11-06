@@ -230,7 +230,9 @@ export default function AdminReversements() {
         <section className="panneau">
           <h2 className="panneau-titre">Derniers versements</h2>
 
-          {(donnees?.derniers ?? []).length === 0 ? (
+          {!donnees ? (
+            <p className="console-sous-titre" style={{ margin: 0 }}>{chargement ? 'Chargement…' : 'Indisponible pour l’instant.'}</p>
+          ) : donnees.derniers.length === 0 ? (
             <p className="console-sous-titre" style={{ margin: 0 }}>Aucun versement enregistré.</p>
           ) : (
             <ul className="liste-versements">

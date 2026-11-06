@@ -425,6 +425,9 @@
   grid-template-columns: 1fr;
   gap: var(--space-4);
 }
+/* Une colonne de grille ne descend pas sous la largeur de son contenu : un tableau large
+   poussait toute la page au lieu de défiler dans son cadre (Revenus, tour du 6 novembre). */
+.console-grille > * { min-width: 0; }
 
 @media (min-width: 1024px) {
   .console-grille-2 { grid-template-columns: 1fr 1fr; align-items: start; }
@@ -2001,7 +2004,8 @@
   margin: 1px 0 0;
   font: var(--t-h2);
   color: var(--text-1);
-  font-variant-numeric: tabular-nums;
+  /* Cormorant : sans `lining-nums`, « 0 FCFA » se lit « o FCFA ». */
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
 .fonds-detail { display: flex; gap: var(--space-5); margin: 0; }
@@ -2457,3 +2461,13 @@
 .fiche-vehicule-regles dt { display: flex; align-items: center; gap: var(--space-2); min-width: 130px; font: var(--t-body-sm); color: var(--text-3); }
 .fiche-vehicule-regles dd { margin: 0; font: var(--t-body-sm); font-weight: 600; color: var(--text-1); }
 .fiche-vehicule-note { margin: 0; font: var(--t-caption); color: var(--text-3); }
+
+/* ── Au doigt, 44 px au moins ────────────────────────────────
+   Relevé au tour du 6 novembre, à 375 px : la croix d'une photo à 26 px, « + Tarif »,
+   « Fermer des dates » et « Supprimer » à 30 px, l'œil du mot de passe à 28 px. Seulement
+   sur écran tactile : à la souris, la mise en page reste celle qu'on a dessinée. */
+@media (pointer: coarse) {
+  .media-retirer { width: 44px; height: 44px; }
+  .bouton-tactile, .lien-danger, .oeuvre-retour { min-height: 44px; display: inline-flex; align-items: center; }
+  .recherche-404 input { min-height: 44px; }
+}

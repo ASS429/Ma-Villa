@@ -713,14 +713,14 @@ export default function GererVilla() {
                     </button>
                     <button
                       onClick={() => setShowTarifForm(showTarifForm === logement.id ? null : logement.id)}
-                      className="text-xs px-3 py-1.5 rounded-xl transition-all hover:opacity-80"
+                      className="bouton-tactile text-xs px-3 py-1.5 rounded-xl transition-all hover:opacity-80"
                       style={{ border: '1px solid var(--border)', color: 'var(--text-2)' }}
                     >
                       + Tarif
                     </button>
                     <button
                       onClick={() => startEditLogement(logement)}
-                      className="text-xs px-3 py-1.5 rounded-xl transition-all hover:opacity-80"
+                      className="bouton-tactile text-xs px-3 py-1.5 rounded-xl transition-all hover:opacity-80"
                       style={{ border: '1px solid var(--border)', color: 'var(--text-2)' }}
                     >
                       Éditer

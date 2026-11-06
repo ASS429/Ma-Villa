@@ -174,7 +174,9 @@ export default function Revenus() {
         <section className="panneau">
           <h2 className="panneau-titre">Versements reçus</h2>
 
-          {versements.length === 0 ? (
+          {!donnees ? (
+            <p className="console-sous-titre" style={{ margin: 0 }}>{chargement ? 'Chargement…' : 'Indisponible pour l’instant.'}</p>
+          ) : versements.length === 0 ? (
             <p className="console-sous-titre" style={{ margin: 0 }}>Aucun versement pour le moment.</p>
           ) : (
             <ul className="liste-versements">

@@ -111,7 +111,10 @@ export default function AdminAttentes() {
       <p className="console-sous-titre">
         {chargement
           ? 'Relevé en cours…'
-          : lignes.length === 0
+          : erreur && !donnees
+            // Sans réponse du serveur, on ne sait pas : « Tout est traité » serait faux.
+            ? 'La file de travail n’a pas pu être relevée.'
+            : lignes.length === 0
             ? 'Tout est traité.'
             : `${lignes.length} point${lignes.length > 1 ? 's' : ''} demande${lignes.length > 1 ? 'nt' : ''} une décision.`}
       </p>

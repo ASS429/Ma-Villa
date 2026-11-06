@@ -418,7 +418,9 @@ export default function AdminRemboursements() {
       <section className="panneau">
         <h2 className="panneau-titre">Derniers remboursements</h2>
 
-        {historique.length === 0 ? (
+        {!donnees ? (
+          <p className="console-sous-titre" style={{ margin: 0 }}>{chargement ? 'Chargement…' : 'Indisponible pour l’instant.'}</p>
+        ) : historique.length === 0 ? (
           <p className="console-sous-titre" style={{ margin: 0 }}>Aucun remboursement enregistré.</p>
         ) : (
           <ul className="liste-versements">
