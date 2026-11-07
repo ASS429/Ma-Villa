@@ -68,6 +68,23 @@ class Reglement extends Model
         return $this->belongsTo(Villa::class);
     }
 
+    /** Le trajet payé, quand le reçu n'est pas celui d'un séjour (depuis le 7 novembre 2026). */
+    public function demandeService(): BelongsTo
+    {
+        return $this->belongsTo(DemandeService::class);
+    }
+
+    /**
+     * Le rang du prochain reçu de l'année. À appeler dans une transaction : la ligne lue est
+     * verrouillée, et séjours comme trajets tirent dans la même suite, sans trou ni doublon.
+     */
+    public static function prochainRang(int $annee): int
+    {
+        $dernier = self::where('annee', $annee)->orderByDesc('rang')->lockForUpdate()->value('rang');
+
+        return $dernier ? $dernier + 1 : 1;
+    }
+
     public function getLibelleMoyenAttribute(): string
     {
         return self::MOYENS[$this->moyen] ?? $this->moyen;

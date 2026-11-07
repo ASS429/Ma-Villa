@@ -93,7 +93,7 @@
             <div class="marque-detail">{{ $emetteur['activite'] }} · {{ $emetteur['site'] }}</div>
         </td>
         <td class="doc">
-            <div class="doc-type">{{ $t['type'] }}</div>
+            <div class="doc-type">{{ $devis->demande_service_id ? ($en ? 'Transport quote' : 'Devis de transport') : $t['type'] }}</div>
             <div class="doc-numero">{{ $en ? 'No.' : 'N°' }} {{ $devis->numero }}</div>
             @if ($enLigne)<div class="en-ligne">{{ $t['en_ligne'] }}</div>@endif
         </td>

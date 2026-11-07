@@ -404,6 +404,8 @@ export interface DemandeService {
   repartition?: { prestataire: string; prix: number; prix_prestataire: number; commission: number } | null
   /** Console seulement : ce que le client a payé à PasseTemps, et le reversement au prestataire. */
   encaissement?: EncaissementService | null
+  /** Console seulement : le devis établi depuis cette demande. */
+  devis_lie?: { id: number; numero: string; total: number; statut: string; pdf: string } | null
   date_service: string
   heure: string | null
   personnes: number
@@ -437,6 +439,8 @@ export interface EncaissementService {
   encaisse_le: string
   reverse_le: string | null
   reference_reversement: string | null
+  /** Le reçu numéroté du paiement (même suite que les séjours), s'il est valide. */
+  recu: { id: number; numero: string; montant: number; client_nom: string; langue: 'fr' | 'en'; pdf: string; demande_service_id: number } | null
 }
 
 export const LIBELLES_STATUT_DEMANDE: Record<StatutDemandeService, string> = {

@@ -14,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * Les services aux voyageurs : transport et repas.
@@ -204,7 +205,7 @@ class DemandeServiceController extends Controller
 
         return response()->json(
             DemandeService::query()
-                ->with('traiteePar:id,name')
+                ->with(['traiteePar:id,name', 'recus', 'devis'])
                 ->when($request->filled('statut'), fn ($q) => $q->where('statut', $request->input('statut')))
                 ->when($request->input('argent') === 'a_reverser', fn ($q) => $q->aReverser())
                 // La plus proche du service d'abord : c'est l'urgence réelle,
@@ -245,7 +246,7 @@ class DemandeServiceController extends Controller
             $request->ip(),
         );
 
-        return response()->json($demande->fresh()->load('traiteePar:id,name'));
+        return response()->json($demande->fresh()->load(['traiteePar:id,name', 'recus', 'devis']));
     }
 
     /* ══ L'argent du service ══════════════════════════════════════ */
@@ -304,6 +305,14 @@ class DemandeServiceController extends Controller
             }
             $verrouillee->save();
 
+            $devis = $verrouillee->devis;
+            $this->etablirLeRecu($verrouillee, $d, $devis?->numero, $request->user());
+            if ($devis && $devis->statut === 'emis') {
+                $devis->statut = 'accepte';
+                $devis->suivi_le ??= now();
+                $devis->save();
+            }
+
             return true;
         });
 
@@ -315,7 +324,7 @@ class DemandeServiceController extends Controller
             'montant' => $d['montant'], 'part_prestataire' => $part, 'moyen' => $d['moyen'],
         ]);
 
-        return response()->json($demande->fresh()->load('traiteePar:id,name'));
+        return response()->json($demande->fresh()->load(['traiteePar:id,name', 'recus', 'devis']));
     }
 
     /** Une erreur de saisie se défait, tant que la part n'a pas été reversée. */
@@ -329,15 +338,31 @@ class DemandeServiceController extends Controller
         }
 
         $avant = $demande->encaissement;
-        $demande->forceFill([
-            'montant_encaisse' => null, 'part_prestataire' => null, 'prestataire' => null,
-            'moyen_encaissement' => null, 'reference_encaissement' => null,
-            'encaisse_le' => null, 'encaisse_par' => null,
-        ])->save();
+        DB::transaction(function () use ($demande, $request) {
+            $demande->forceFill([
+                'montant_encaisse' => null, 'part_prestataire' => null, 'prestataire' => null,
+                'moyen_encaissement' => null, 'reference_encaissement' => null,
+                'encaisse_le' => null, 'encaisse_par' => null,
+            ])->save();
+
+            // Le reçu porte désormais la mention « annulé » ; son numéro reste pris.
+            $demande->recus()->valide()->update([
+                'statut'         => 'annule',
+                'annule_le'      => now(),
+                'annule_motif'   => "Paiement du trajet {$demande->reference} annulé dans la console (erreur de saisie).",
+                'annule_par_nom' => $request->user()->name,
+            ]);
+
+            $devis = $demande->devis;
+            if ($devis && $devis->statut === 'accepte') {
+                $devis->statut = 'emis';
+                $devis->save();
+            }
+        });
 
         $this->consignerArgent($request, $demande, 'demande_service.encaissement_annule', $avant ?? []);
 
-        return response()->json($demande->fresh()->load('traiteePar:id,name'));
+        return response()->json($demande->fresh()->load(['traiteePar:id,name', 'recus', 'devis']));
     }
 
     /** La part a été versée au prestataire : elle cesse d'être à garder. */
@@ -371,7 +396,7 @@ class DemandeServiceController extends Controller
             'part_prestataire' => $demande->part_prestataire, 'prestataire' => $demande->prestataire,
         ]);
 
-        return response()->json($demande->fresh()->load('traiteePar:id,name'));
+        return response()->json($demande->fresh()->load(['traiteePar:id,name', 'recus', 'devis']));
     }
 
     public function annulerReversement(Request $request, DemandeService $demande): JsonResponse
@@ -386,10 +411,55 @@ class DemandeServiceController extends Controller
             'part_prestataire' => $demande->part_prestataire,
         ]);
 
-        return response()->json($demande->fresh()->load('traiteePar:id,name'));
+        return response()->json($demande->fresh()->load(['traiteePar:id,name', 'recus', 'devis']));
+    }
+
+    /** Une demande, pour reprendre ses éléments dans un devis. */
+    public function show(DemandeService $demande): JsonResponse
+    {
+        // Le nom anglais, pour un devis rédigé dans la langue du client.
+        return response()->json($demande->load(['traiteePar:id,name', 'recus', 'devis'])->toArray() + [
+            'libelle_prestation_en' => config("prestations.catalogue.{$demande->prestation}.libelle.en") ?? $demande->libelle_prestation,
+        ]);
     }
 
     /* ══ Interne ══════════════════════════════════════════════════ */
+
+    /**
+     * Le reçu du trajet : un règlement comme ceux des séjours, dans la même suite de numéros,
+     * rattaché à la demande. À appeler dans la transaction de l'encaissement.
+     *
+     * @param  array<string, mixed>  $d
+     */
+    private function etablirLeRecu(DemandeService $demande, array $d, ?string $devisNumero, User $auteur): Reglement
+    {
+        $annee = (int) now()->format('Y');
+        $rang = Reglement::prochainRang($annee);
+
+        $recu = new Reglement([
+            'moyen'            => $d['moyen'],
+            'reference'        => filled($d['reference'] ?? null) ? trim($d['reference']) : null,
+            'payeur_telephone' => filled($demande->telephone) ? mb_substr($demande->telephone, 0, 30) : null,
+            'recu_le'          => $d['recu_le'],
+        ]);
+        $recu->forceFill([
+            'demande_service_id' => $demande->id,
+            'annee'              => $annee,
+            'rang'               => $rang,
+            'numero'             => Reglement::numero($annee, $rang),
+            'cle'                => Str::random(40),
+            'montant'            => (int) $d['montant'],
+            'client_nom'         => $demande->nom,
+            // Le registre cite le devis s'il y en a un, sinon la demande.
+            'devis_numero'       => $devisNumero ?? $demande->reference,
+            'langue'             => $demande->langue === 'en' ? 'en' : 'fr',
+            'statut'             => 'valide',
+            'cree_par'           => $auteur->id,
+            'createur_nom'       => $auteur->name,
+        ])->save();
+
+        return $recu;
+    }
 
     /** @param  array<string, mixed>  $details */
     private function consignerArgent(Request $request, DemandeService $demande, string $action, array $details): void

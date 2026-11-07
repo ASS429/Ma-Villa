@@ -1,15 +1,16 @@
 import { useState, type FormEvent } from 'react'
-import { HandCoins, Send } from 'lucide-react'
+import { Download, HandCoins, Send } from 'lucide-react'
 import api from '../../services/api'
 import { useToast } from '../../context/ToastContext'
 import { erreursParChamp, messageErreur } from '../../lib/erreurs'
 import { aujourdhui, dateCourte, fcfa } from '../../lib/format'
 import { relireAttentes } from '../../lib/attentes'
-import { aideReference } from '../../lib/reglements'
+import { aideReference, lienEnvoiRecu } from '../../lib/reglements'
 import type { DemandeService } from '../../types'
 import Button from '../ui/Button'
 import { Champ, ChampSelection } from '../ui/Champ'
 import ConfirmModal from '../ConfirmModal'
+import BoutonWhatsApp from '../BoutonWhatsApp'
 
 /** Les moyens du serveur (`Reglement::MOYENS`), sans le chèque : un trajet ne se paie pas ainsi. */
 const MOYENS: Record<string, string> = {
@@ -34,7 +35,10 @@ const chiffres = (v: string) => v.replace(/\D/g, '')
  *
  * La part du prestataire suit la somme saisie (moins notre commission habituelle)
  * tant qu'on ne la corrige pas : une autre ville se paie plus cher, la
- * commission reste la même.
+ * commission reste la même. Un devis établi depuis la demande donne la somme.
+ *
+ * Le paiement établit un reçu numéroté, dans la même suite que les séjours
+ * (7 novembre 2026), à télécharger ou envoyer sur WhatsApp.
  */
 export default function ArgentDuService({ demande: d, onChange }: Props) {
   const toast = useToast()
@@ -45,8 +49,10 @@ export default function ArgentDuService({ demande: d, onChange }: Props) {
   const [envoi, setEnvoi] = useState(false)
   const [erreurs, setErreurs] = useState<Record<string, string>>({})
 
-  const [montant, setMontant] = useState(r ? String(r.prix) : '')
-  const [part, setPart] = useState(r ? String(r.prix_prestataire) : '')
+  // Le devis dit le prix confirmé au client ; sans devis, le prix affiché.
+  const prixDeDepart = d.devis_lie?.total ?? r?.prix ?? 0
+  const [montant, setMontant] = useState(prixDeDepart ? String(prixDeDepart) : '')
+  const [part, setPart] = useState(r && prixDeDepart ? String(Math.max(0, prixDeDepart - r.commission)) : '')
   const [partTouchee, setPartTouchee] = useState(false)
   const [moyen, setMoyen] = useState('wave')
   const [recuLe, setRecuLe] = useState(aujourdhui())
@@ -178,6 +184,19 @@ export default function ArgentDuService({ demande: d, onChange }: Props) {
 
       {e && (
         <>
+          {e.recu && (
+            <div className="argent-service-actions argent-service-recu">
+              <span className="argent-service-ligne">Reçu <strong>{e.recu.numero}</strong></span>
+              <a href={e.recu.pdf} target="_blank" rel="noopener noreferrer" className="btn btn-secondaire btn-sm">
+                <Download size={15} aria-hidden="true" />
+                <span>Reçu</span>
+              </a>
+              {(() => {
+                const envoi = lienEnvoiRecu(e.recu, d.telephone)
+                return envoi ? <BoutonWhatsApp href={envoi} taille="sm">Envoyer</BoutonWhatsApp> : null
+              })()}
+            </div>
+          )}
           <p className="argent-service-ligne">
             <strong>{fcfa(e.montant)} reçus</strong> par {e.libelle_moyen} le {dateCourte(e.encaisse_le)}
             {e.reference ? ` (réf. ${e.reference})` : ''} · commission {fcfa(e.commission)}

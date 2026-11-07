@@ -13,6 +13,8 @@ export interface Reglement {
   client_nom: string
   devis_id: number | null
   devis_numero: string | null
+  /** Le reçu d'un trajet est rattaché à sa demande, pas à un devis (7 nov. 2026). */
+  demande_service_id?: number | null
   langue: 'fr' | 'en'
   recu_le: string
   note: string | null
@@ -58,14 +60,18 @@ export interface TotalParMoyen {
 }
 
 /** Le reçu part sur WhatsApp, dans la langue du devis. Rien ne part sans ce geste. */
-export function lienEnvoiRecu(reglement: Reglement, telephone: string | null): string | null {
+export function lienEnvoiRecu(
+  reglement: Pick<Reglement, 'montant' | 'langue' | 'client_nom' | 'numero' | 'pdf' | 'demande_service_id'>,
+  telephone: string | null,
+): string | null {
   if (!telephone) return null
   const somme = fcfa(reglement.montant)
+  const trajet = Boolean(reglement.demande_service_id)
   return lienWhatsApp(
     telephone,
     reglement.langue === 'en'
-      ? `Hello ${reglement.client_nom}, we have received ${somme} for your stay. Here is your PasseTemps receipt ${reglement.numero}: ${reglement.pdf}`
-      : `Bonjour ${reglement.client_nom}, nous avons bien reçu ${somme} pour votre séjour. Voici votre reçu PasseTemps ${reglement.numero} : ${reglement.pdf}`,
+      ? `Hello ${reglement.client_nom}, we have received ${somme} for your ${trajet ? 'ride' : 'stay'}. Here is your PasseTemps receipt ${reglement.numero}: ${reglement.pdf}`
+      : `Bonjour ${reglement.client_nom}, nous avons bien reçu ${somme} pour votre ${trajet ? 'trajet' : 'séjour'}. Voici votre reçu PasseTemps ${reglement.numero} : ${reglement.pdf}`,
   )
 }
 

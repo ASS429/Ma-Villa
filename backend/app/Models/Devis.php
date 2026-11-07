@@ -36,6 +36,8 @@ class Devis extends Model
         'client_nom', 'occupant_nom', 'client_telephone', 'client_email',
         'date_arrivee', 'date_depart', 'personnes',
         'valable_jusqu_au', 'conditions', 'cachet', 'langue',
+        // Le trajet dont vient le devis, s'il en vient un (7 novembre 2026).
+        'demande_service_id',
     ];
 
     protected $hidden = ['cle'];

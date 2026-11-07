@@ -123,8 +123,7 @@ final class Encaissement
         $reservation ??= self::bloquerLesDates($devis);
 
         $annee = (int) now()->format('Y');
-        $dernier = Reglement::where('annee', $annee)->orderByDesc('rang')->lockForUpdate()->value('rang');
-        $rang = $dernier ? $dernier + 1 : 1;
+        $rang = Reglement::prochainRang($annee);
 
         $reglement = new Reglement([
             'moyen'            => $d['moyen'],

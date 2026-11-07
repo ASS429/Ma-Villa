@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * Une demande de service d'un accompagnant (transport, repas).
@@ -43,7 +45,7 @@ class DemandeService extends Model
         'origine',
     ];
 
-    protected $appends = ['reference', 'libelle_prestation', 'repartition', 'encaissement'];
+    protected $appends = ['reference', 'libelle_prestation', 'repartition', 'encaissement', 'devis_lie'];
 
     /** Le détail vit dans `encaissement` ; les colonnes brutes n'apportent rien à l'écran. */
     protected $hidden = [
@@ -77,6 +79,33 @@ class DemandeService extends Model
         return $this->belongsTo(User::class, 'traitee_par');
     }
 
+    /** Les reçus du trajet : un par paiement enregistré, annulé compris (son numéro reste pris). */
+    public function recus(): HasMany
+    {
+        return $this->hasMany(Reglement::class, 'demande_service_id');
+    }
+
+    /** Le devis établi depuis cette demande, s'il y en a un. */
+    public function devis(): HasOne
+    {
+        return $this->hasOne(Devis::class, 'demande_service_id')->latestOfMany();
+    }
+
+    /**
+     * Le devis lié, pour la console.
+     *
+     * @return array{id: int, numero: string, total: int, statut: string, pdf: string}|null
+     */
+    public function getDevisLieAttribute(): ?array
+    {
+        $devis = $this->devis;
+
+        return $devis ? [
+            'id' => $devis->id, 'numero' => $devis->numero, 'total' => (int) $devis->total,
+            'statut' => $devis->statut, 'pdf' => $devis->urlPdf(),
+        ] : null;
+    }
+
     /** Encaissée et pas encore reversée : la part du prestataire est à lui, pas à nous. */
     public function scopeAReverser(Builder $query): Builder
     {
@@ -96,6 +125,8 @@ class DemandeService extends Model
 
         $montant = (int) $this->montant_encaisse;
         $part = (int) $this->part_prestataire;
+        // Le reçu valide de ce paiement : le dernier, puisqu'un paiement annulé garde le sien.
+        $recu = $this->recus->where('statut', 'valide')->sortByDesc('id')->first();
 
         return [
             'montant'               => $montant,
@@ -108,6 +139,11 @@ class DemandeService extends Model
             'encaisse_le'           => $this->encaisse_le?->toDateString(),
             'reverse_le'            => $this->reverse_le?->toDateString(),
             'reference_reversement' => $this->reference_reversement,
+            'recu'                  => $recu ? [
+                'id' => $recu->id, 'numero' => $recu->numero, 'montant' => (int) $recu->montant,
+                'client_nom' => $recu->client_nom, 'langue' => $recu->langue, 'pdf' => $recu->pdf,
+                'demande_service_id' => $this->id,
+            ] : null,
         ];
     }
 

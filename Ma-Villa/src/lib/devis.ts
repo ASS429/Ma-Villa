@@ -48,6 +48,8 @@ export interface Devis {
   encaisse?: number
   solde?: number
   reservation_id?: number | null
+  /** Le trajet dont vient le devis (7 nov. 2026) : son paiement s'enregistre sur la demande. */
+  demande_service_id?: number | null
 }
 
 export const LIBELLES_STATUT_DEVIS: Record<StatutDevis, string> = {

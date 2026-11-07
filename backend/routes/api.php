@@ -237,6 +237,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/devis/{devis}', [DevisController::class, 'show']);
         Route::patch('/devis/{devis}', [DevisController::class, 'update'])->middleware('throttle:30,1');
         Route::delete('/devis/{devis}', [DevisController::class, 'destroy'])->middleware('throttle:30,1');
+        Route::get('/demandes-service/{demande}', [DemandeServiceController::class, 'show']);
         Route::patch('/demandes-service/{demande}', [DemandeServiceController::class, 'traiter']);
         // L'argent d'un service : PasseTemps encaisse, puis reverse au prestataire.
         Route::post('/demandes-service/{demande}/encaissement', [DemandeServiceController::class, 'encaisser'])->middleware('throttle:30,1');

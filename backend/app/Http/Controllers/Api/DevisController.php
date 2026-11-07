@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\DemandeService;
 use App\Models\Devis;
 use App\Models\DevisRefuse;
 use App\Models\JournalAdmin;
@@ -255,9 +256,12 @@ class DevisController extends Controller
     {
         $d = $this->valider($request, true);
 
+        // Un trajet ne bloque ni dates ni logement : ses conditions sont les siennes.
+        $service = empty($d['demande_service_id']) ? null : DemandeService::find($d['demande_service_id']);
+        $sorte = ! $service ? 'console' : ($service->prestation === 'location_sans_chauffeur' ? 'location' : 'transport');
         $devis = Devis::etablir('console', $this->attributs($d) + [
             'conditions' => $d['conditions']
-                ?? config(($d['langue'] ?? 'fr') === 'en' ? 'devis.conditions.console_en' : 'devis.conditions.console'),
+                ?? config(($d['langue'] ?? 'fr') === 'en' ? "devis.conditions.{$sorte}_en" : "devis.conditions.{$sorte}"),
         ], $d['lignes'], $request->user());
 
         JournalAdmin::consigner($request->user(), 'devis.etabli', $devis, $devis->numero, [
@@ -422,6 +426,7 @@ class DevisController extends Controller
             'client_telephone'       => ['nullable', 'string', 'max:30', 'regex:/^[^\p{L}]+$/u'],
             'client_email'           => 'nullable|email|max:160',
             'villa_id'               => 'nullable|integer|exists:villas,id',
+            'demande_service_id'     => 'nullable|integer|exists:demandes_service,id',
             'logement_id'            => 'nullable|integer|exists:logements,id',
             'tarif_id'               => 'nullable|integer|exists:tarifs,id',
             'date_arrivee'           => 'nullable|date',
@@ -454,6 +459,7 @@ class DevisController extends Controller
         $champs = array_intersect_key($d, array_flip([
             'titre', 'client_nom', 'occupant_nom', 'client_telephone', 'client_email',
             'villa_id', 'logement_id', 'tarif_id', 'date_arrivee', 'date_depart', 'personnes', 'cachet', 'langue',
+            'demande_service_id',
         ]));
 
         if (array_key_exists('validite_jours', $d) || ! $existant) {

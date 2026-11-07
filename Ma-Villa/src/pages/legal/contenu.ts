@@ -92,8 +92,11 @@ const MAJ_CONFIDENTIALITE = '5 novembre 2026'
  * Reprises du 5 novembre 2026, sur la même autorisation : le règlement auprès de
  * l'équipe contre un reçu (`App\\Services\\Encaissement`), le solde dû avant l'arrivée,
  * et ce que le barème laisse au propriétaire quand un client renonce.
+ *
+ * Reprise du 7 novembre 2026, sur accord de l'exploitant (« Oui ») : le transport se
+ * règle auprès de PasseTemps, qui reverse sa part au transporteur (article 7).
  */
-const MAJ_CGU = '5 novembre 2026'
+const MAJ_CGU = '7 novembre 2026'
 const MAJ_MENTIONS = '5 novembre 2026'
 
 /**
@@ -222,6 +225,7 @@ export const DOCUMENTS: Record<DocumentLegal['cle'], DocumentLegal> = {
           `Les services proposés aux voyageurs — transport, repas — se demandent sur la plateforme, sans compte. Une demande de service n'est pas une réservation : l'équipe ${EXPLOITANT} la reçoit, la transmet au prestataire et la confirme avec vous, notamment par WhatsApp.`,
           `Les prix affichés pour les services sont indicatifs (« à partir de ») ; le prix définitif vous est donné à la confirmation. Aucun service ne se règle en ligne sur la plateforme.`,
           `Le service est exécuté par le prestataire, qui en répond. Ses conditions d'annulation vous sont indiquées à la confirmation.`,
+          `Le transport se règle auprès de ${EXPLOITANT}, une fois le trajet confirmé ; ${EXPLOITANT} reverse sa part au transporteur, qui exécute le trajet et en répond.`,
         ],
       },
       {

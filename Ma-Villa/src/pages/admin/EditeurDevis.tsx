@@ -13,7 +13,9 @@ import {
 } from '../../lib/devis'
 import type { Langue, VillaDetail } from '../../types'
 import type { DemandeParticuliere } from '../../lib/particuliere'
-import Button from '../../components/ui/Button'
+import type { DemandeService } from '../../types'
+import { dateDuService } from '../../prestations/format'
+import Button, { ButtonLink } from '../../components/ui/Button'
 import ConfirmModal from '../../components/ConfirmModal'
 import Badge from '../../components/ui/Badge'
 import { Champ, ChampSelection, ChampZoneTexte } from '../../components/ui/Champ'
@@ -79,6 +81,8 @@ export default function EditeurDevis() {
   const { id } = useParams()
   const [params] = useSearchParams()
   const demandeId = params.get('demande')
+  // Depuis une demande de transport (7 nov. 2026) : `?service=`.
+  const serviceId = params.get('service')
   const navigate = useNavigate()
   const toast = useToast()
   const [form, setForm] = useState<Formulaire>(VIDE)
@@ -138,6 +142,37 @@ export default function EditeurDevis() {
       .catch((err) => toast.erreur(messageErreur(err, 'La demande particulière n’a pas pu être reprise.')))
     return () => { actif = false }
   }, [id, demandeId, toast])
+
+  // Depuis une demande de transport : le client et le trajet, une ligne au prix affiché, à
+  // ajuster si le prix confirmé diffère (une autre ville, 35 000 F au minimum).
+  useEffect(() => {
+    if (id || !serviceId) return
+    let actif = true
+    api.get(`/admin/demandes-service/${serviceId}`)
+      .then(({ data }: { data: DemandeService & { libelle_prestation_en?: string } }) => {
+        if (!actif) return
+        const langue = data.langue === 'en' ? 'en' : 'fr'
+        const libelle = langue === 'en' ? (data.libelle_prestation_en ?? data.libelle_prestation) : data.libelle_prestation
+        const quand = `${dateDuService(data.date_service, langue)}${data.heure ? (langue === 'en' ? ` at ${data.heure}` : ` à ${data.heure}`) : ''}`
+        setForm((f) => ({
+          ...f,
+          titre: libelle,
+          client_nom: data.nom,
+          client_telephone: data.telephone ?? '',
+          client_email: data.email ?? '',
+          langue,
+        }))
+        setLignes([{
+          designation: libelle,
+          detail: [data.lieu, quand, `${data.personnes} ${langue === 'en' ? 'passengers' : 'pers.'}`].join(' · '),
+          quantite: 1,
+          unite: data.prestation === 'location_sans_chauffeur' ? (langue === 'en' ? 'day' : 'jour') : (langue === 'en' ? 'car' : 'voiture'),
+          prix_unitaire: data.repartition?.prix ?? 0,
+        }])
+      })
+      .catch((err) => toast.erreur(messageErreur(err, 'La demande de transport n’a pas pu être reprise.')))
+    return () => { actif = false }
+  }, [id, serviceId, toast])
 
   useEffect(() => {
     if (!form.villa_id) return
@@ -203,6 +238,7 @@ export default function EditeurDevis() {
       cachet: form.cachet,
       langue: form.langue,
       ...(devis ? { statut: form.statut } : {}),
+      ...(!devis && serviceId ? { demande_service_id: Number(serviceId) } : {}),
       lignes: lignes.map((l) => ({
         designation: l.designation.trim(),
         detail: l.detail?.trim() || null,
@@ -313,7 +349,21 @@ export default function EditeurDevis() {
         )}
       </div>
 
-      {devis && <ReglementsDevis devis={devis} onChange={relireDevis} />}
+      {devis && !devis.demande_service_id && <ReglementsDevis devis={devis} onChange={relireDevis} />}
+      {/* Un trajet ne bloque ni dates ni logement : son paiement, son reçu et le reversement au
+          transporteur s'enregistrent sur la demande. */}
+      {devis?.demande_service_id && (
+        <section className="panneau">
+          <h2 className="panneau-titre">Paiement du trajet</h2>
+          <p className="tableau-second">
+            Ce devis vient de la demande S-{String(devis.demande_service_id).padStart(4, '0')}. Le paiement
+            du client, son reçu et le reversement au transporteur s’enregistrent sur la demande.
+          </p>
+          <div className="reservation-actions">
+            <ButtonLink to="/admin/demandes" variante="secondaire" taille="sm">Ouvrir les demandes</ButtonLink>
+          </div>
+        </section>
+      )}
 
       <form onSubmit={enregistrer} noValidate>
         <div className="console-grille console-grille-2">

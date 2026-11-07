@@ -60,6 +60,22 @@ return [
             .'shown. The booking is only confirmed once the PasseTemps team has agreed and payment has been '
             .'made under the agreed terms. A first payment holds the dates, and the balance is due before '
             .'arrival. If the booking is cancelled, the cancellation policy published on passetemps.sn applies.',
+        // Un trajet (7 novembre 2026) : ni dates à bloquer ni solde avant l'arrivée. CGU, article 7.
+        'transport'    => 'Devis établi pour le trajet décrit ci-dessus. Le règlement se fait auprès de '
+            .'l’équipe PasseTemps, une fois le trajet confirmé, contre un reçu ; PasseTemps reverse sa part '
+            .'au transporteur, qui exécute le trajet et en répond. Annulation gratuite jusqu’à 24 h avant le départ.',
+        'transport_en' => 'Quote prepared for the ride described above. Payment is made to the PasseTemps team '
+            .'once the ride is confirmed, against a receipt; PasseTemps pays the driver his share, and the driver '
+            .'carries out the ride and is answerable for it. Free cancellation up to 24 hours before departure.',
+        // La location sans chauffeur : pas de trajet ni de chauffeur, mais un véhicule confié.
+        'location'     => 'Devis établi pour la location décrite ci-dessus. Le règlement se fait auprès de '
+            .'l’équipe PasseTemps, une fois la location confirmée, contre un reçu ; PasseTemps reverse sa part '
+            .'au propriétaire du véhicule. Permis de conduire exigé, caution demandée à la remise des clés, '
+            .'carburant à la charge du client, assurance comprise. Annulation gratuite jusqu’à 24 h avant.',
+        'location_en'  => 'Quote prepared for the car hire described above. Payment is made to the PasseTemps team '
+            .'once the hire is confirmed, against a receipt; PasseTemps pays the car owner his share. Driving '
+            .'licence required, deposit taken when you collect the keys, fuel at your expense, insurance '
+            .'included. Free cancellation up to 24 hours before.',
     ],
 
 ];

@@ -10,6 +10,7 @@
         'avant' => 'Already paid', 'recu' => 'This receipt', 'reste' => 'Balance due', 'solde' => 'Paid in full', 'avant_arrivee' => 'The balance is due before your arrival.',
         'signature' => 'For PasseTemps', 'mention' => 'This receipt confirms the sum received. The booking is subject to the terms agreed with PasseTemps.',
         'annule_texte' => 'This receipt was cancelled and is no longer valid.',
+        'mention_service' => 'This receipt confirms the sum received for the service described above. PasseTemps pays the provider his share; the service follows the terms agreed with PasseTemps.',
     ] : [
         'titre' => 'Reçu', 'type' => 'Reçu de paiement', 'annule' => 'Reçu annulé', 'date' => 'Reçu le', 'moyen' => 'Moyen de paiement',
         'reference' => 'Référence', 'de' => 'Reçu de', 'somme' => 'Somme reçue', 'lettres' => 'Soit :', 'pour' => 'Pour',
@@ -17,6 +18,7 @@
         'avant' => 'Déjà réglé', 'recu' => 'Ce reçu', 'reste' => 'Reste à payer', 'solde' => 'Entièrement réglé', 'avant_arrivee' => 'Le solde est à régler avant votre arrivée.',
         'signature' => 'Pour PasseTemps', 'mention' => 'Ce reçu atteste de la somme reçue. La réservation suit les modalités convenues avec PasseTemps.',
         'annule_texte' => 'Ce reçu a été annulé et n’a plus de valeur.',
+        'mention_service' => 'Ce reçu atteste de la somme reçue pour le service décrit ci-dessus. PasseTemps reverse sa part au prestataire ; le service suit les modalités convenues avec PasseTemps.',
     ];
 @endphp
 <!DOCTYPE html>
@@ -123,6 +125,11 @@
     <tr>
         <td colspan="2">
             <div class="etiquette">{{ $t['pour'] }}</div>
+            @if ($service)
+            {{-- Un trajet (7 novembre 2026) : la prestation, la demande, le lieu et l'heure. --}}
+            <div class="valeur">{{ $prestation }}</div>
+            <div class="detail">{{ $detailService }}@if ($devis) · {{ $t['devis'] }} {{ $devis->numero }}@endif</div>
+            @else
             <div class="valeur">{{ $devis?->titre ?? $reglement->devis_numero }}</div>
             <div class="detail">
                 {{ $t['devis'] }} {{ $reglement->devis_numero }}@if ($lieu) · {{ $lieu }}@endif
@@ -130,11 +137,12 @@
                     · {{ $t['sejour'] }} {{ $t['du'] }} {{ $devis->date_arrivee->format('d/m/Y') }} {{ $t['au'] }} {{ $devis->date_depart?->format('d/m/Y') }}
                 @endif
             </div>
+            @endif
         </td>
     </tr>
 </table>
 
-@unless ($annule)
+@unless ($annule || $service)
 <h2>{{ $t['recap'] }}</h2>
 <table class="recap">
     <tr><td>{{ $t['total'] }}</td><td class="nombre">{{ $fcfa($total) }}</td></tr>
@@ -152,7 +160,7 @@
 
 <div class="signature"><div class="etiquette">{{ $t['signature'] }}</div></div>
 
-<p class="mention">{{ $t['mention'] }}</p>
+<p class="mention">{{ $service ? $t['mention_service'] : $t['mention'] }}</p>
 
 </body>
 </html>

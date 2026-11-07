@@ -170,6 +170,12 @@ export default function AdminReglements() {
                         <span>{r.devis_numero ?? 'Devis'}</span>
                       </Link>
                     )}
+                    {/* Le reçu d'un trajet se défait avec son paiement, sur la demande. */}
+                    {!r.devis_id && r.demande_service_id && (
+                      <Link to="/admin/demandes" className="btn btn-discret btn-sm">
+                        <span>Trajet · {r.devis_numero ?? 'demande'}</span>
+                      </Link>
+                    )}
                   </div>
                 </li>
               ))}

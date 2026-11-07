@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ConciergeBell, MessageCircle } from 'lucide-react'
+import { ConciergeBell, FileText, MessageCircle } from 'lucide-react'
 import api from '../../services/api'
 import { useToast } from '../../context/ToastContext'
 import { useRequete } from '../../lib/useRequete'
@@ -11,7 +11,7 @@ import { relireAttentes } from '../../lib/attentes'
 import { dateDuService, lienCarte } from '../../prestations/format'
 import { versPage, type Page } from '../../lib/page'
 import { LIBELLES_STATUT_DEMANDE, type DemandeService, type StatutDemandeService } from '../../types'
-import Button from '../../components/ui/Button'
+import Button, { ButtonLink } from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import Pagination from '../../components/console/Pagination'
 import ListeConsole from '../../components/console/ListeConsole'
@@ -204,6 +204,16 @@ export default function AdminDemandes() {
                   <MessageCircle size={15} aria-hidden="true" />
                   <span>Écrire à la famille</span>
                 </a>
+                {/* Le devis d'un trajet, comme celui d'un séjour : il part sur WhatsApp, le paiement suit. */}
+                {d.devis_lie ? (
+                  <ButtonLink to={`/admin/devis/${d.devis_lie.id}`} variante="secondaire" taille="sm" iconeAvant={<FileText size={15} aria-hidden="true" />}>
+                    Devis {d.devis_lie.numero}
+                  </ButtonLink>
+                ) : d.repartition && d.statut !== 'abandonnee' && !d.encaissement && (
+                  <ButtonLink to={`/admin/devis/nouveau?service=${d.id}`} variante="secondaire" taille="sm" iconeAvant={<FileText size={15} aria-hidden="true" />}>
+                    Établir un devis
+                  </ButtonLink>
+                )}
                 {d.statut === 'nouvelle' ? (
                   <>
                     <Button variante="primaire" taille="sm" disabled={enCours === d.id} onClick={() => changer(d, 'traitee')}>

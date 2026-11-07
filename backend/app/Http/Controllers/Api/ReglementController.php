@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Devis;
+use App\Models\DemandeService;
 use App\Models\JournalAdmin;
 use App\Models\Paiement;
 use App\Models\Reglement;
@@ -60,7 +61,7 @@ class ReglementController extends Controller
         $lignes = $this->requete($d)->get();
 
         $csv = Tableur::csv(
-            ['Reçu', 'Reçu le', 'Client', 'Devis', 'Moyen', 'Référence', 'Montant (FCFA)', 'Statut', 'Enregistré par', 'Note', 'Motif d’annulation'],
+            ['Reçu', 'Reçu le', 'Client', 'Devis ou demande', 'Moyen', 'Référence', 'Montant (FCFA)', 'Statut', 'Enregistré par', 'Note', 'Motif d’annulation'],
             $lignes->map(fn (Reglement $r) => [
                 $r->numero,
                 $r->recu_le?->format('d/m/Y'),
@@ -132,6 +133,14 @@ class ReglementController extends Controller
             'motif.required' => 'Dites pourquoi ce règlement est annulé.',
             'motif.min'      => 'Dites pourquoi ce règlement est annulé, en quelques mots.',
         ]);
+
+        // Le reçu d'un trajet se défait avec son paiement, sur la demande : sinon la part du
+        // transporteur resterait comptée comme reçue.
+        if ($reglement->demande_service_id) {
+            return response()->json([
+                'message' => 'Ce reçu est celui d’un trajet : annulez le paiement depuis la demande, dans « Demandes ».',
+            ], 409);
+        }
 
         Encaissement::annuler($reglement, $d['motif'], $request->user());
 
@@ -217,9 +226,24 @@ class ReglementController extends Controller
                 ->orWhere(fn ($m) => $m->whereDate('recu_le', $reglement->recu_le)->where('id', '<', $reglement->id)))
             ->sum('montant');
 
+        // Le reçu d'un trajet (7 novembre 2026) : une somme, un service, rien qui reste à payer.
+        $service = $reglement->demande_service_id ? DemandeService::find($reglement->demande_service_id) : null;
+        $prestation = $service
+            ? (config("prestations.catalogue.{$service->prestation}.libelle.".($en ? 'en' : 'fr')) ?? $service->libelle_prestation)
+            : null;
+        $detailService = $service ? collect([
+            ($en ? 'Request ' : 'Demande ').$service->reference,
+            $service->lieu !== '—' ? $service->lieu : null,
+            $service->date_service?->format('d/m/Y').($service->heure ? ($en ? ' at ' : ' à ').$service->heure : ''),
+        ])->filter()->implode(' · ') : null;
+
         return [
             'reglement' => $reglement,
-            'devis'     => $devis,
+            'service'   => $service,
+            'prestation' => $prestation,
+            'detailService' => $detailService,
+            // Le devis d'un trajet n'est pas celui du règlement (il ne porte rien à solder) : on le cite.
+            'devis'     => $devis ?? $service?->devis,
             'en'        => $en,
             'emetteur'  => DevisController::emetteur($en),
             'logo'      => DocumentPdf::imageLocale('logo.png'),

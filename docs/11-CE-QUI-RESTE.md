@@ -28,8 +28,8 @@ _Écrit pour être lu sans connaître le code. Chaque point dit **ce que c'est**
    `RESERVATIONS_OUVERTES` à `true` sur Railway, puis un paiement réel de 200 F.
 4. **Voir un comptable** avec `19-QUESTIONS-AU-COMPTABLE.md` : régime fiscal, facture, et ce que
    veut dire, pour une entreprise individuelle, détenir l'argent de tiers.
-5. **Valider la phrase des CGU sur le transport** (article 7) : PasseTemps encaisse et reverse
-   au transporteur depuis le 6 novembre. Proposition dans `juridique/A-REPRENDRE.md`.
+5. **Le montant de la caution** de la location sans chauffeur, pour l'afficher sur la page
+   Transport et dans les conditions du devis.
 6. **Les accords écrits des propriétaires** (Clé d'Or, Modou Sene, vidéos) et de vrais comptes pour
    ceux qui n'en ont pas.
 7. **Faire préciser l'activité au registre** si le comptable ou PayDunya le demandent : la liste
@@ -63,10 +63,16 @@ Elle a repris 17 photos (le site passe de 65 à 55,7 Mo, la fiche 32 de 7,3 à 1
 limite de deux minutes ; le reste — 12 PNG de 2 Mo nommés `.jpg` — est repris par une passe
 nocturne (4 h), qui rattrapera aussi tout import futur.
 
-⚠️ **8 images d'annonces sont signées ChatGPT** (manifeste C2PA « créée par gpt-image ») :
-annonce 53 (4 photos sur 5), 54 (1 sur 3), 64 (3 sur 5). Une image d'IA montrée comme la photo
-d'un logement peut tromper le client : **à décider** — demander de vraies photos au propriétaire,
-ou les retirer.
+**8 images d'annonces signées ChatGPT, retirées le 7 novembre** (manifeste C2PA « créée par
+gpt-image ») : annonce 53 (4 photos sur 5), 54 (1 sur 3), 64 (3 sur 5). Les fichiers restent sur le
+stockage, les lignes retirées sont au journal. Il reste à **demander de vraies photos** aux
+propriétaires de ces trois annonces.
+
+**Le transport a son devis et son reçu (7 novembre)**, comme un séjour : « Établir un devis »
+depuis la demande (client, trajet et prix repris, conditions du transport ou de la location), et
+chaque paiement établit un reçu RC- dans la même suite que les séjours, au même registre pour le
+comptable. Les CGU (article 7) disent depuis le même jour que le transport se règle auprès de
+PasseTemps, qui reverse au transporteur.
 
 **Le transport, tranché le 6 novembre.** PasseTemps encaisse et reverse au transporteur
 (Mamadou pour l'instant) : la console Demandes note le paiement du client, la part du

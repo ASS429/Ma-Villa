@@ -15,8 +15,11 @@
 > relevées en fin de page. Le même jour, la **confidentialité** aussi (seconde autorisation).
 >
 > **5 novembre 2026 — RCCM et NINEA reçus** : mentions légales, CGU, CGV et confidentialité les portent.
+>
+> **7 novembre 2026 — CGU article 7** : le transport se règle auprès de PasseTemps, qui reverse sa part au
+> transporteur (accord de l'exploitant : « Oui »). Ligne retirée ci-dessous.
 
-Dernière mise à jour : 6 novembre 2026.
+Dernière mise à jour : 7 novembre 2026.
 
 ---
 
@@ -32,7 +35,6 @@ Dernière mise à jour : 6 novembre 2026.
 
 | Art. | Ce qui manque ou a changé | Depuis | Origine |
 |---|---|---|---|
-| 7. Les services | **Le transport se règle à PasseTemps**, qui reverse sa part au transporteur (décision du 6 nov.). Le texte reste vrai (« aucun service ne se règle en ligne ») mais ne dit pas à qui l'on paie. Phrase proposée : « Le transport se règle auprès de PasseTemps, une fois le trajet confirmé ; PasseTemps reverse sa part au transporteur, qui exécute le trajet et en répond. » **À valider par l'exploitant.** | 6 nov. 2026 | Transport |
 | 7. Les services | **Location sans chauffeur** : permis exigé, caution à la remise des clés, carburant à la charge du client, assurance comprise (affiché sur la page Transport depuis le 6 nov.). Le montant de la caution n'est dit nulle part. | 6 nov. 2026 | Transport |
 | 7. Les services | **Règle d'annulation d'un service** (le partenaire propose « gratuite jusqu'à 24 h avant ») : le texte dit seulement qu'elle est « indiquée à la confirmation ». Elle est **affichée sur la fiche du véhicule** depuis le 6 nov. **À décider.** | 20 oct. 2026 | Demandes JOJ |
 | 6. Équipe | Si **`RESERVATIONS_ASSOCIES_OUVERTES`** passe à vrai : ces annonces se réservent en ligne. Réécrire l'article — prix du propriétaire **majoré de 14 %** (pas le barème prélevé), argent transmis **aux associés à chaque paiement** et non au propriétaire après le séjour, frais PayDunya sur leur part, remboursement par eux (engagement écrit à obtenir). **Avant** d'ouvrir. | 31 oct. 2026 | Circuit des associés |
