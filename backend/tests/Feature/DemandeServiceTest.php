@@ -421,4 +421,29 @@ class DemandeServiceTest extends TestCase
         $this->assertNull(DemandeService::find($ancienne->id));
         $this->assertNotNull(DemandeService::find($recente->id));
     }
+
+    /** Payée, elle est une pièce comptable : la personne s'efface, l'argent reste dix ans. */
+    public function test_une_demande_payee_perd_la_personne_mais_garde_l_argent(): void
+    {
+        $payee = DemandeService::create($this->demande([
+            'date_service' => now()->subMonths(13)->toDateString(), 'origine' => 'transport', 'email' => 'awa@exemple.sn',
+        ]));
+        $payee->forceFill([
+            'montant_encaisse' => 35000, 'part_prestataire' => 30000, 'prestataire' => 'Mamadou',
+            'moyen_encaissement' => 'wave', 'encaisse_le' => now()->subMonths(13)->toDateString(),
+        ])->save();
+        $tresAncienne = DemandeService::create($this->demande([
+            'date_service' => now()->subYears(10)->subDay()->toDateString(), 'origine' => 'transport',
+        ]));
+        $tresAncienne->forceFill(['montant_encaisse' => 35000, 'part_prestataire' => 30000, 'moyen_encaissement' => 'wave', 'encaisse_le' => now()->subYears(10)->subDays(2)->toDateString()])->save();
+
+        $this->artisan('passetemps:effacer-demandes-de-service')->assertSuccessful();
+
+        $restee = DemandeService::find($payee->id);
+        $this->assertNotNull($restee);
+        $this->assertSame(['—', '—', null, '—'], [$restee->nom, $restee->telephone, $restee->email, $restee->lieu]);
+        $this->assertSame(35000, $restee->encaissement['montant']);
+        $this->assertSame(30000, $restee->encaissement['part_prestataire']);
+        $this->assertNull(DemandeService::find($tresAncienne->id));
+    }
 }

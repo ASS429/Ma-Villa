@@ -59,6 +59,14 @@ portrait qui n'étaient pas réduites à l'envoi** (seule la largeur était plaf
 (31, 32, 33, 36, 53, 54, 56, 64) pesaient 33 Mo, la moitié du site : la fiche 32 coûtait 11 Mo
 au téléphone, contre 3 pour une fiche ordinaire. Une migration lance une fois
 `passetemps:alleger-photos` en production : même adresse, original gardé sous `originaux/`.
+Elle a repris 17 photos (le site passe de 65 à 55,7 Mo, la fiche 32 de 7,3 à 1,2 Mo) avant sa
+limite de deux minutes ; le reste — 12 PNG de 2 Mo nommés `.jpg` — est repris par une passe
+nocturne (4 h), qui rattrapera aussi tout import futur.
+
+⚠️ **8 images d'annonces sont signées ChatGPT** (manifeste C2PA « créée par gpt-image ») :
+annonce 53 (4 photos sur 5), 54 (1 sur 3), 64 (3 sur 5). Une image d'IA montrée comme la photo
+d'un logement peut tromper le client : **à décider** — demander de vraies photos au propriétaire,
+ou les retirer.
 
 **Le transport, tranché le 6 novembre.** PasseTemps encaisse et reverse au transporteur
 (Mamadou pour l'instant) : la console Demandes note le paiement du client, la part du

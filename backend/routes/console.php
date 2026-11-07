@@ -60,3 +60,15 @@ Schedule::command('passetemps:effacer-devis-et-demandes')
     ->daily()
     ->withoutOverlapping()
     ->runInBackground();
+
+/*
+ | Les photos trop lourdes, chaque nuit (6 novembre 2026). Une première passe au
+ | démarrage a été coupée par sa limite de deux minutes ; et un import peut encore
+ | déposer une photo brute (12 PNG de 2 Mo nommés .jpg sur trois annonces). Hors du
+ | démarrage, elle ne retarde jamais un déploiement. Sans rien à faire, elle ne lit
+ | que le poids des fichiers.
+ */
+Schedule::command('passetemps:alleger-photos --appliquer --duree-max=900')
+    ->dailyAt('04:00')
+    ->withoutOverlapping()
+    ->runInBackground();
