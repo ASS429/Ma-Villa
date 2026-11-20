@@ -24,7 +24,7 @@ class AnnonceEnLigne extends Notification implements ShouldQueue
     /**
      * Domaines sans boîte aux lettres : `passetemps.sn` n'a aucun
      * enregistrement MX (vérifié le 30/10/2026). Les comptes créés par import
-     * (Clé d'Or, Virage) y portent une adresse d'attente : leur écrire, c'est
+     * (Clé d'Or, lots importés) y portent une adresse d'attente : leur écrire, c'est
      * produire un rebond. À retirer le jour où le domaine reçoit du courrier.
      */
     private const DOMAINES_SANS_BOITE = ['passetemps.sn'];

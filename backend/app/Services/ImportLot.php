@@ -17,9 +17,9 @@ use Illuminate\Support\Str;
  * Importe un lot d'hébergements transmis par l'exploitant, pour plusieurs
  * propriétaires, dans le circuit des associés.
  *
- * Clé d'Or puis Virage avaient chacun leur import, taillé pour un seul
- * propriétaire et un seul logement par annonce. Un lot réunit ce qu'ils
- * savaient faire séparément, plus ce qui leur manquait : plusieurs logements
+ * Les premiers imports (Clé d'Or) étaient taillés pour un seul propriétaire
+ * et un seul logement par annonce. Un lot reprend ce qu'ils savaient faire,
+ * plus ce qui leur manquait : plusieurs logements
  * par annonce, une formule avec les repas, une durée minimale, un prix à la
  * semaine ou au mois.
  *
